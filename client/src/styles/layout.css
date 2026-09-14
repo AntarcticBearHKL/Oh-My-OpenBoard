@@ -398,13 +398,6 @@
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-}
-
-.board-group-header:hover .board-group-actions,
-.board-group-header:focus-within .board-group-actions {
-  opacity: 1;
 }
 
 .board-group-rename-input {
