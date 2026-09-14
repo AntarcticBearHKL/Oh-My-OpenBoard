@@ -1,6 +1,6 @@
 import { renderIcons } from './icons.js';
 
-const STORAGE_KEY = 'kanban-theme';
+const STORAGE_KEY = 'openagile:theme';
 
 function getPreferredTheme() {
   const stored = localStorage.getItem(STORAGE_KEY);

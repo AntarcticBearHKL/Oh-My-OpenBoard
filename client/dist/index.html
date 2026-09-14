@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="OpenAgile a Personal + AI-Agent Kanban Board - A fully local task management tool with no server required">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://analytics.gomogi.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://analytics.gomogi.com https://pb.kanvana.com; object-src 'none'; base-uri 'self'; form-action 'self'">
-  <title>OpenAgile Personal + AI-Agent Kanban</title>
+  <title>OpenAgile</title>
   <!-- Kanban favicon (inline SVG data URI) -->
   <link rel="icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='2' y='3' width='6' height='18' rx='1.5' fill='%233b82f6'/%3E%3Crect x='9' y='3' width='6' height='12' rx='1.5' fill='%2360a5fa'/%3E%3Crect x='16' y='3' width='6' height='8' rx='1.5' fill='%2393c5fd'/%3E%3C/svg%3E">
   <script defer src="https://analytics.gomogi.com/script.js" data-website-id="4ebd005d-0f3f-4956-8100-a78c3d89dda8"></script>
-  <script type="module" crossorigin src="./assets/index-CnpoXt7d.js"></script>
+  <script type="module" crossorigin src="./assets/index-BkRHPCD8.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-DK3Fl9T5.js">
-  <link rel="modulepreload" crossorigin href="./assets/styles-Dtv-r6h_.js">
+  <link rel="modulepreload" crossorigin href="./assets/styles-Cec8YSOH.js">
   <link rel="modulepreload" crossorigin href="./assets/vendor-BHeUymGf.js">
-  <link rel="modulepreload" crossorigin href="./assets/theme-BQtE9ZiH.js">
+  <link rel="modulepreload" crossorigin href="./assets/theme-72OnOU7E.js">
   <link rel="modulepreload" crossorigin href="./assets/security-DWl7zYWU.js">
-  <link rel="stylesheet" crossorigin href="./assets/styles-DCnDdUyd.css">
+  <link rel="stylesheet" crossorigin href="./assets/styles-B5qcN7xs.css">
 </head>
 <body>
   <!-- Skip link for accessibility -->
@@ -24,20 +24,18 @@
   <header>
     <nav class="controls" role="toolbar" aria-label="Board controls">
       <div class="brand">
+        <span class="brand-favicon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22">
+            <rect x="2" y="3" width="6" height="18" rx="1.5" fill="#3b82f6"></rect>
+            <rect x="9" y="3" width="6" height="12" rx="1.5" fill="#60a5fa"></rect>
+            <rect x="16" y="3" width="6" height="8" rx="1.5" fill="#93c5fd"></rect>
+          </svg>
+        </span>
         <span id="brand-text" class="brand-text">OpenAgile</span>
-      </div>
-
-      <div class="board-search" role="search" aria-label="Filter tasks">
-        <label class="sr-only" for="board-search-input">Search tasks</label>
-        <span data-lucide="search" aria-hidden="true"></span>
-        <input
-          id="board-search-input"
-          type="search"
-          inputmode="search"
-          placeholder="Search tasks…"
-          autocomplete="off"
-          aria-label="Search tasks by label, title, or description"
-        >
+        <button id="skills-btn" class="control-btn brand-skills-btn" type="button" aria-haspopup="dialog" title="Skills">
+          <span data-lucide="list-checks" aria-hidden="true"></span>
+          <span>Skills</span>
+        </button>
       </div>
 
       <div id="board-controls-menu" class="controls-actions">
@@ -122,6 +120,10 @@
       </div>
 
       <div class="toolbar-quick-actions">
+        <button id="search-btn" class="control-btn icon-only" type="button" aria-label="Search tasks" title="Search (Ctrl+K)">
+          <span data-lucide="search" aria-hidden="true"></span>
+        </button>
+
         <button id="notifications-quick-btn" class="control-btn icon-only" type="button" aria-haspopup="dialog" aria-label="Notifications">
           <span data-lucide="bell" aria-hidden="true"></span>
           <span id="notification-quick-badge" class="notification-badge hidden" aria-label="notifications count"></span>
@@ -437,6 +439,54 @@
           <span> Import Board</span>
         </button>
         <button type="button" id="boards-close-btn" class="btn btn-secondary">Close</button>
+      </div>
+    </article>
+  </div>
+
+  <!-- Skills Modal -->
+  <div id="skills-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="skills-modal-title">
+    <div class="modal-backdrop" data-close-modal></div>
+    <article class="modal-content skills-modal-content">
+      <header class="modal-header-row">
+        <h3 id="skills-modal-title">Skills</h3>
+        <button id="skills-close-modal-btn" type="button" class="icon-btn" aria-label="Close skills editor" title="Close">
+          <span data-lucide="x" aria-hidden="true"></span>
+        </button>
+      </header>
+      <div class="skills-layout">
+        <aside class="skills-list-pane" aria-label="Skills">
+          <div class="skills-list-header">
+            <span class="skills-list-heading">Skills</span>
+            <button id="skill-add-btn" type="button" class="icon-btn" aria-label="New skill" title="New skill">
+              <span data-lucide="plus" aria-hidden="true"></span>
+            </button>
+          </div>
+          <ul id="skills-list" class="skills-list" role="listbox" aria-label="Skills"></ul>
+        </aside>
+        <section class="skills-editor-pane" aria-label="Skill editor">
+          <div id="skills-empty-state" class="skills-empty-state">
+            <p class="skills-empty-title">No skills yet</p>
+            <p class="skills-empty-hint">Skills are plain-text usage guides the AI agent reads through MCP. Add one to describe how you want this board used.</p>
+          </div>
+          <form id="skill-form" class="skills-editor hidden" novalidate>
+            <div class="form-group">
+              <label for="skill-name">Name</label>
+              <input id="skill-name" type="text" maxlength="80" autocomplete="off" placeholder="Skill name">
+            </div>
+            <div class="form-group">
+              <label for="skill-description">Description</label>
+              <input id="skill-description" type="text" maxlength="200" autocomplete="off" placeholder="Short description shown in the list">
+            </div>
+            <div class="form-group skills-content-group">
+              <label for="skill-content">Usage guide</label>
+              <textarea id="skill-content" spellcheck="false" placeholder="Write the instructions the AI agent should follow…"></textarea>
+            </div>
+            <div class="skills-editor-actions">
+              <button id="skill-delete-btn" type="button" class="btn skills-delete-btn" title="Delete skill" aria-label="Delete skill">Delete</button>
+              <button id="skill-save-btn" type="submit" class="btn btn-primary">Save</button>
+            </div>
+          </form>
+        </section>
       </div>
     </article>
   </div>

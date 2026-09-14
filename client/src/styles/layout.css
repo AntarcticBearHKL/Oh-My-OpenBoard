@@ -91,13 +91,27 @@
   flex: 0 0 auto;
 }
 
+.brand-favicon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  line-height: 0;
+}
+
+.brand-favicon svg {
+  display: block;
+}
+
 .brand-text {
-  width: 220px;
-  max-width: 220px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   cursor: default;
+}
+
+.brand-skills-btn {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  margin-left: var(--space-1);
 }
 
 .session-status {

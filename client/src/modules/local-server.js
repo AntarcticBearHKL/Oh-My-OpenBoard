@@ -76,17 +76,21 @@ async function boot() {
     else localStorage.removeItem(NO_BOARDS_KEY);
   } catch { /* ignore */ }
 
-  const boardId = getActiveBoardId() || info.defaultBoardId || DEFAULT_BOARD_ID;
+  const activeBoardId = getActiveBoardId();
+  const snapshotUrl = activeBoardId
+    ? `/api/snapshot?boardId=${encodeURIComponent(activeBoardId)}`
+    : '/api/snapshot';
 
   // Snapshot first (idempotent hydration), then tail strictly after snapshot.seq
   // so there is no replay gap and no duplicate application. This avoids full-log
   // replay, which is unsafe because `subtask.added` is not idempotent.
   try {
-    const snapshot = await getJson(`/api/snapshot?boardId=${encodeURIComponent(boardId)}`);
+    const snapshot = await getJson(snapshotUrl);
     if (Number.isFinite(snapshot?.seq)) {
       const serverHasBoard = Array.isArray(snapshot.state?.boards) && snapshot.state.boards.length > 0;
+      const hydrateKey = activeBoardId || snapshot.boardId || DEFAULT_BOARD_ID;
       if (serverHasBoard && (lastSeq === 0 || snapshot.seq > lastSeq)) {
-        hydrateFromSnapshotState(boardId, snapshot.state);
+        hydrateFromSnapshotState(hydrateKey, snapshot.state);
       }
       setSeq(snapshot.seq);
     }
@@ -109,6 +113,12 @@ function openStream() {
     let payload;
     try { payload = JSON.parse(e.data); } catch { return; }
     window.dispatchEvent(new CustomEvent('openagile:groups-changed', { detail: payload }));
+  });
+
+  source.addEventListener('skills', (e) => {
+    let payload;
+    try { payload = JSON.parse(e.data); } catch { return; }
+    window.dispatchEvent(new CustomEvent('openagile:skills-changed', { detail: payload }));
   });
 
   source.onmessage = (e) => {

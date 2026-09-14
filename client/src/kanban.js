@@ -1,13 +1,15 @@
 // Initialize icons early for initial HTML elements
 import './modules/icons.js';
 
-import { renderBoard, setBoardFilterQuery } from './modules/render.js';
+import { renderBoard } from './modules/render.js';
+import { initializeSpotlight } from './modules/spotlight.js';
 import { initializeModalHandlers } from './modules/modals.js';
 import { showEditModal } from './modules/modals.js';
 import { importTasks } from './modules/importexport.js';
 import { initializeThemeToggle } from './modules/theme.js';
 import { initializeBoardsUI } from './modules/boards.js';
 import { initializeBoardSidebar } from './modules/board-sidebar.js';
+import { initializeSkillsUI } from './modules/skills-modal.js';
 import { initializeSettingsUI } from './modules/settings.js';
 import { initializeNotifications } from './modules/notifications.js';
 import { initStorage, ensureBoardsInitialized, setActiveBoardId } from './modules/storage.js';
@@ -49,18 +51,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   initializeSettingsUI();
   initializeSwimLaneControls(() => renderBoard());
 
-  // Board-level filter (labels, title, description)
-  const boardSearchInput = document.getElementById('board-search-input');
-  if (boardSearchInput) {
-    boardSearchInput.addEventListener('input', () => {
-      setBoardFilterQuery(boardSearchInput.value);
-      renderBoard();
-    });
-  }
+  initializeSpotlight();
 
   // Boards (create/select + restore last active)
   initializeBoardsUI();
   initializeBoardSidebar();
+  initializeSkillsUI();
 
   // Auth/sync UI and auto-sync listener
   initializeAuthSyncUI();
@@ -120,8 +116,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.querySelectorAll('.column-menu').forEach(m => m.classList.add('hidden'));
 
       if (!isExpanded) {
-        boardSearchInput?.focus();
-        boardSearchInput?.select();
+        document.getElementById('search-btn')?.focus();
       }
     });
 
@@ -148,12 +143,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       menuBtn.focus();
     });
 
-    boardSearchInput?.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        closeMenu();
-        menuBtn.focus();
-      }
-    });
   }
 
   // Initial render
