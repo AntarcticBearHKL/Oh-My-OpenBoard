@@ -42,7 +42,7 @@ async function storedEvents() {
 
 beforeEach(async () => {
   _resetIdbForTesting();
-  await indexedDB.deleteDatabase('kanvana-db');
+  await indexedDB.deleteDatabase('openagile-db');
   await openStore();
   await initHlc();
 });

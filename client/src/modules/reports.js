@@ -1068,6 +1068,6 @@ function main() {
 }
 
 initStorage().then(main).catch((err) => {
-  console.error('[Kanvana] Failed to initialise storage for reports:', err);
+  console.error('[OpenAgile] Failed to initialise storage for reports:', err);
   main(); // attempt to render with empty state rather than blank page
 });

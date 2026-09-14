@@ -22,7 +22,7 @@ import {
 import { on, off, EVENT_EMITTED } from '../../../src/modules/events.js';
 import { applyEvents, createProjectionState } from '../../../src/modules/reducer.js';
 
-const DB_NAME = 'kanvana-db';
+const DB_NAME = 'openagile-db';
 
 function captureEvents() {
   const events = [];

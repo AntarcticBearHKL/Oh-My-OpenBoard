@@ -5,7 +5,7 @@ import { openStore } from '../../../src/modules/idb-store.js';
 import { EVENT_EMITTED, on, off } from '../../../src/modules/events.js';
 import { scheduleDomainEvent, _flushDomainEventsForTesting } from '../../../src/modules/event-sourcing/emitter.js';
 
-const DB_NAME = 'kanvana-db';
+const DB_NAME = 'openagile-db';
 
 beforeEach(async () => {
   resetLocalStorage();

@@ -70,7 +70,7 @@ beforeEach(async () => {
   _resetStorageForTesting();
   _resetIdbForTesting();
   _resetHlcForTesting();
-  await deleteDB('kanvana-db');
+  await deleteDB('openagile-db');
   getPb().authStore.clear();
   await initStorage();
 });

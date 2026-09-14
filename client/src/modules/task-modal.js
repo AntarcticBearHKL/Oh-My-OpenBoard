@@ -36,7 +36,7 @@ let selectCreatedLabelInTaskEditor = false;
 let labelSearchHighlightIndex = 0;
 let filteredLabelIds = []; // may contain '__create__' sentinel for the create-label button
 const CREATE_LABEL_SENTINEL = '__create__';
-const COMMENT_AUTHOR_KEY = 'kanvana:commentAuthor';
+const COMMENT_AUTHOR_KEY = 'openagile:commentAuthor';
 
 const RELATIONSHIP_LABELS = { prerequisite: 'Prerequisite', dependent: 'Dependent', related: 'Related' };
 const RELATIONSHIP_DESCRIPTIONS = {

@@ -278,7 +278,7 @@ export function reconcileBoard() {
   });
 
   refreshNotifications();
-  performance.mark('kanvana:board-render:reconcile');
+  performance.mark('openagile:board-render:reconcile');
 
   return true;
 }
@@ -325,5 +325,5 @@ export function renderBoard() {
   renderIcons();
   refreshNotifications();
 
-  performance.mark('kanvana:board-render:full');
+  performance.mark('openagile:board-render:full');
 }

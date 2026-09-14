@@ -280,6 +280,6 @@ function main() {
 }
 
 initStorage().then(main).catch((err) => {
-  console.error('[Kanvana] Failed to initialise storage for calendar:', err);
+  console.error('[OpenAgile] Failed to initialise storage for calendar:', err);
   main();
 });

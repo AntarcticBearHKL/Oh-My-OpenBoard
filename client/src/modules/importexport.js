@@ -13,7 +13,7 @@ import { createBoard, getActiveBoardName, listBoards, setActiveBoardId, loadTask
 import { normalizeBoardModelIds } from './board-serializer.js';
 import { emit, DATA_CHANGED } from './events.js';
 import { normalizePriority, isHexColor, boardDisplayName, normalizeDueDate, normalizeSubTasks } from './normalize.js';
-import { DONE_COLUMN_ID } from './constants.js';
+import { APP_NAME, DONE_COLUMN_ID } from './constants.js';
 import { formatBytes } from './security.js';
 
 export const IMPORT_LIMITS = {
@@ -55,7 +55,7 @@ function buildExportMeta() {
 
 function refreshBoardsUI(activeBoardId) {
   const brandEl = document.getElementById('brand-text') || document.querySelector('.brand-text');
-  if (brandEl) brandEl.textContent = getActiveBoardName();
+  if (brandEl) brandEl.textContent = APP_NAME;
 
   const selectEl = document.getElementById('board-select');
   if (!selectEl) return;

@@ -42,7 +42,7 @@ import {
 import { openStore } from '../../src/modules/idb-store.js';
 import { scheduleDomainEvent } from '../../src/modules/event-sourcing/emitter.js';
 
-const DB_NAME = 'kanvana-db';
+const DB_NAME = 'openagile-db';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 beforeEach(async () => {
@@ -62,7 +62,7 @@ test('initStorage on empty IDB leaves boards list empty', async () => {
 test('initStorage creates a stable HLC node id on boot', async () => {
   await initStorage();
   const db = await openStore();
-  expect(await db.get('kv', 'kanvana:hlc:node')).toMatch(UUID_RE);
+  expect(await db.get('kv', 'openagile:hlc:node')).toMatch(UUID_RE);
 });
 
 test('initStorage is safe to call twice in the same session', async () => {
@@ -165,7 +165,7 @@ test('saveSettings persists to IDB and survives a session reset', async () => {
 
 test('initStorage loads global settings from IDB', async () => {
   const db = await openDB(DB_NAME, 1, { upgrade(d) { d.createObjectStore('kv'); } });
-  await db.put('kv', { softDeleteEnabled: true }, 'kanvana:settings:global');
+  await db.put('kv', { softDeleteEnabled: true }, 'openagile:settings:global');
   db.close();
 
   await initStorage();

@@ -1,6 +1,7 @@
 import { generateUUID } from './utils.js';
 import { setupModalCloseHandlers } from './modals.js';
 import { emit, on, DATA_CHANGED } from './events.js';
+import { APP_NAME } from './constants.js';
 import {
   ensureBoardsInitialized,
   listBoards,
@@ -122,7 +123,7 @@ function boardSelectMatchesState(selectEl) {
 function refreshBrandText() {
   const brandEl = document.getElementById('brand-text') || document.querySelector('.brand-text');
   if (!brandEl) return;
-  brandEl.textContent = getActiveBoardName();
+  brandEl.textContent = APP_NAME;
 }
 
 // Board Create Modal helpers

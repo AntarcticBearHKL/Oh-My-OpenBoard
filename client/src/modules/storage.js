@@ -14,7 +14,7 @@ import { backfillEventLog } from './event-sourcing/backfill.js';
 
 const BOARDS_KEY = 'kanbanBoards';
 const ACTIVE_BOARD_KEY = 'kanbanActiveBoardId';
-const GLOBAL_SETTINGS_KEY = 'kanvana:settings:global';
+const GLOBAL_SETTINGS_KEY = 'openagile:settings:global';
 
 const LEGACY_COLUMNS_KEY = 'kanbanColumns';
 const LEGACY_TASKS_KEY = 'kanbanTasks';
@@ -474,7 +474,7 @@ export async function initStorage() {
       if (!quota) return;
       const pct = Math.round((usage / quota) * 100);
       if (pct >= 80) {
-        console.warn(`[Kanvana] Storage at ${pct}% of browser quota. Consider archiving old boards.`);
+        console.warn(`[OpenAgile] Storage at ${pct}% of browser quota. Consider archiving old boards.`);
       }
     }).catch(() => {});
   }
@@ -536,7 +536,7 @@ export function getBoardById(boardId) {
 export function getActiveBoardName() {
   const id = getActiveBoardId();
   const board = id ? getBoardById(id) : null;
-  if (!board) return listBoards().length === 0 ? 'Kanvana' : 'Untitled board';
+  if (!board) return listBoards().length === 0 ? 'OpenAgile' : 'Untitled board';
   const name = typeof board.name === 'string' ? board.name.trim() : '';
   return name || 'Untitled board';
 }

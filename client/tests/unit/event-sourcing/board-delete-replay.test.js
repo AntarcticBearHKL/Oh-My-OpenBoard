@@ -36,7 +36,7 @@ function remoteEvent(type, entityId, payload, counter) {
 beforeEach(async () => {
   _resetStorageForTesting();
   resetLocalStorage();
-  await deleteDB('kanvana-db');
+  await deleteDB('openagile-db');
   await initStorage();
 });
 

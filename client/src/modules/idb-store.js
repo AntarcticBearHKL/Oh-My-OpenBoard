@@ -3,7 +3,7 @@
 
 import { openDB } from 'idb';
 
-const DB_NAME = 'kanvana-db';
+const DB_NAME = 'openagile-db';
 const DB_VERSION = 2;
 const KV_STORE = 'kv';
 const EVENTS_STORE = 'events';
@@ -63,7 +63,7 @@ async function migrateReadModelFromKv(db) {
 export function schedulePersist(key, value) {
   if (!_db) return; // IDB not yet initialised (e.g. during testing without initStorage)
   const p = _db.put(KV_STORE, value, key).catch((err) => {
-    console.error('[Kanvana] IDB persist failed for key', key, err);
+    console.error('[OpenAgile] IDB persist failed for key', key, err);
   });
   _pendingPersists.add(p);
   p.finally(() => _pendingPersists.delete(p));
@@ -72,7 +72,7 @@ export function schedulePersist(key, value) {
 export function scheduleDelete(key) {
   if (!_db) return;
   const p = _db.delete(KV_STORE, key).catch((err) => {
-    console.error('[Kanvana] IDB delete failed for key', key, err);
+    console.error('[OpenAgile] IDB delete failed for key', key, err);
   });
   _pendingPersists.add(p);
   p.finally(() => _pendingPersists.delete(p));
@@ -81,7 +81,7 @@ export function scheduleDelete(key) {
 export function scheduleReadModelPersist(boardId, kind, value) {
   if (!_db) return;
   const p = _db.put(READ_MODEL_STORE, value, readModelKeyFor(boardId, kind)).catch((err) => {
-    console.error('[Kanvana] IDB read-model persist failed for key', readModelKeyFor(boardId, kind), err);
+    console.error('[OpenAgile] IDB read-model persist failed for key', readModelKeyFor(boardId, kind), err);
   });
   _pendingPersists.add(p);
   p.finally(() => _pendingPersists.delete(p));
@@ -90,7 +90,7 @@ export function scheduleReadModelPersist(boardId, kind, value) {
 export function scheduleReadModelDelete(boardId, kind) {
   if (!_db) return;
   const p = _db.delete(READ_MODEL_STORE, readModelKeyFor(boardId, kind)).catch((err) => {
-    console.error('[Kanvana] IDB read-model delete failed for key', readModelKeyFor(boardId, kind), err);
+    console.error('[OpenAgile] IDB read-model delete failed for key', readModelKeyFor(boardId, kind), err);
   });
   _pendingPersists.add(p);
   p.finally(() => _pendingPersists.delete(p));

@@ -29,7 +29,7 @@ export function scheduleDomainEvent(input) {
   emit(EVENT_EMITTED, event);
   if (!getDbRef()) return Promise.resolve();
   const pending = persistEvent(event).catch((err) => {
-    console.error('[Kanvana] Event persistence failed', err);
+    console.error('[OpenAgile] Event persistence failed', err);
   });
   pendingDomainEvents.add(pending);
   pending.finally(() => pendingDomainEvents.delete(pending));

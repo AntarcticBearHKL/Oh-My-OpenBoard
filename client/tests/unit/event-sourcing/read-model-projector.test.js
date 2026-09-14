@@ -4,7 +4,7 @@ import { emit, EVENT_EMITTED } from '../../../src/modules/events.js';
 
 const BOARD_ID = 'board-a';
 const BOARDS_KEY = 'kanbanBoards';
-const GLOBAL_SETTINGS_KEY = 'kanvana:settings:global';
+const GLOBAL_SETTINGS_KEY = 'openagile:settings:global';
 
 function safeParseArray(value) {
   return Array.isArray(value) ? value : null;

@@ -1,6 +1,6 @@
 import { openStore, KV_STORE } from '../idb-store.js';
 
-export const HLC_NODE_KEY = 'kanvana:hlc:node';
+export const HLC_NODE_KEY = 'openagile:hlc:node';
 export const MAX_DRIFT_MS = 60_000;
 
 let current = {
@@ -37,7 +37,7 @@ export async function emitLocal() {
   const now = Date.now();
 
   if (now - current.wallTime > MAX_DRIFT_MS && current.wallTime > 0) {
-    console.warn('[Kanvana] HLC drift exceeded 60000ms; accepting local wall time.');
+    console.warn('[OpenAgile] HLC drift exceeded 60000ms; accepting local wall time.');
   }
 
   if (now > current.wallTime) {
@@ -61,7 +61,7 @@ export function emitLocalSync() {
   const now = Date.now();
 
   if (now - current.wallTime > MAX_DRIFT_MS && current.wallTime > 0) {
-    console.warn('[Kanvana] HLC drift exceeded 60000ms; accepting local wall time.');
+    console.warn('[OpenAgile] HLC drift exceeded 60000ms; accepting local wall time.');
   }
 
   if (now > current.wallTime) {
@@ -82,7 +82,7 @@ export async function observeRemote(remoteHlc) {
   const newWall = Math.max(now, current.wallTime, remoteWall);
 
   if (now - current.wallTime > MAX_DRIFT_MS && current.wallTime > 0) {
-    console.warn('[Kanvana] HLC drift exceeded 60000ms; accepting local wall time.');
+    console.warn('[OpenAgile] HLC drift exceeded 60000ms; accepting local wall time.');
   }
 
   if (newWall === current.wallTime && newWall === remoteWall) {

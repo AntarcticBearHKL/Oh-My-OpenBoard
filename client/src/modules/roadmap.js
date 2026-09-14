@@ -147,6 +147,6 @@ function main() {
 }
 
 initStorage().then(main).catch((err) => {
-  console.error('[Kanvana] Failed to initialise storage for roadmap:', err);
+  console.error('[OpenAgile] Failed to initialise storage for roadmap:', err);
   main();
 });

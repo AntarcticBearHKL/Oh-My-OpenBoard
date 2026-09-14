@@ -4,7 +4,7 @@ const e2ePort = Number(process.env.E2E_PORT || 3100);
 const e2eBaseUrl = `http://127.0.0.1:${e2ePort}`;
 
 /**
- * Playwright configuration for kanvana E2E tests.
+ * Playwright configuration for openagile E2E tests.
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({

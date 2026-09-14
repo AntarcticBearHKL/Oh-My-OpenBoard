@@ -30,7 +30,7 @@ function orderById(tasks) {
   return Object.fromEntries(tasks.map((task) => [task.id, { column: task.column, order: task.order }]));
 }
 
-const DB_NAME = 'kanvana-db';
+const DB_NAME = 'openagile-db';
 
 beforeEach(async () => {
   _resetStorageForTesting();

@@ -12,7 +12,7 @@
 import { openStore, EVENTS_STORE, KV_STORE } from '../idb-store.js';
 import { scheduleDomainEvent } from './emitter.js';
 
-export const BACKFILL_FLAG_KEY = 'kanvana:migrations:eventBackfill:v1';
+export const BACKFILL_FLAG_KEY = 'openagile:migrations:eventBackfill:v1';
 
 // Column ids are only unique within a board ('done' exists on every board), so
 // the dedup key is board-scoped.

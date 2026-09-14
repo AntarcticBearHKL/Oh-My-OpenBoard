@@ -87,16 +87,16 @@ export async function seedSwimlaneBoard(page, settingsOverrides = {}) {
 
   await page.addInitScript((data) => {
     // Skip re-seeding on reload so persistence tests can verify data survives navigation.
-    if (sessionStorage.getItem('__kanvanaTestSeeded')) return;
-    sessionStorage.setItem('__kanvanaTestSeeded', '1');
+    if (sessionStorage.getItem('__openagileTestSeeded')) return;
+    sessionStorage.setItem('__openagileTestSeeded', '1');
 
     localStorage.clear();
-    indexedDB.deleteDatabase('kanvana-db');
+    indexedDB.deleteDatabase('openagile-db');
 
     // Open IDB and seed data inside the onupgradeneeded transaction.
     // IDB serialises operations per database, so the app's subsequent openDB()
     // call will wait for our delete + open + seed to finish before proceeding.
-    const req = indexedDB.open('kanvana-db', 2);
+    const req = indexedDB.open('openagile-db', 2);
     req.onupgradeneeded = () => {
       const store = req.result.createObjectStore('kv');
       const events = req.result.createObjectStore('events', { keyPath: 'id' });
@@ -116,12 +116,12 @@ export async function seedSwimlaneBoard(page, settingsOverrides = {}) {
 }
 
 /**
- * Read a value from the kanvana IDB key-value store.
+ * Read a value from the openagile IDB key-value store.
  */
 export async function readIDBValue(page, key) {
   return page.evaluate(async (k) => {
     const db = await new Promise((resolve, reject) => {
-      const req = indexedDB.open('kanvana-db', 2);
+      const req = indexedDB.open('openagile-db', 2);
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
     });

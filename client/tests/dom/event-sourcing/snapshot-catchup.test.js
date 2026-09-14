@@ -61,7 +61,7 @@ async function gzip(obj) {
 function snapRecord(hlcValue) {
   return {
     id: 'snap-1',
-    collectionId: 'kanvana_snapshots',
+    collectionId: 'openagile_snapshots',
     collectionName: 'snapshots',
     board_id: BOARD,
     hlc: hlcValue,
@@ -85,7 +85,7 @@ beforeEach(async () => {
   _resetStorageForTesting();
   _resetIdbForTesting();
   _resetHlcForTesting();
-  await deleteDB('kanvana-db');
+  await deleteDB('openagile-db');
   getPb().authStore.clear();
   await initStorage();
 });

@@ -17,7 +17,7 @@ import {
 } from '../../../src/modules/event-sourcing/snapshot.js';
 import { openStore } from '../../../src/modules/idb-store.js';
 
-const DB_NAME = 'kanvana-db';
+const DB_NAME = 'openagile-db';
 
 function makeHlc(wallTime, counter = 0, nodeId = 'node-a') {
   return { wallTime, counter, nodeId };

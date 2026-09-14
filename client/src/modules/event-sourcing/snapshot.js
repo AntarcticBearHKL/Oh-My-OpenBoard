@@ -100,7 +100,7 @@ export function checkAndScheduleSnapshot(key, state, hlc) {
       await gcEvents(key, hlc);
       if (_afterSnapshotSaved) await _afterSnapshotSaved(key, state, hlc);
     } catch (err) {
-      if (err?.code !== 11) console.error('[Kanvana] Snapshot failed', err);
+      if (err?.code !== 11) console.error('[OpenAgile] Snapshot failed', err);
     }
   }, jitter);
   _pendingSnapshots.set(key, id);

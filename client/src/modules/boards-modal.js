@@ -15,7 +15,7 @@ import { renderIcons } from './icons.js';
 import { exportBoard } from './importexport.js';
 import { emit, DATA_CHANGED } from './events.js';
 import { deleteBoardRemote, isAuthenticated } from './sync.js';
-import { DEFAULT_APP_KEYBINDINGS, matchesKey } from './constants.js';
+import { APP_NAME, DEFAULT_APP_KEYBINDINGS, matchesKey } from './constants.js';
 import { $id, $, h } from './dom.js';
 
 let editingBoardId = null;
@@ -37,7 +37,7 @@ function renderBoardsSelect() {
   if (active) selectEl.value = active;
 
   const brandEl = $id('brand-text') || $('.brand-text');
-  if (brandEl) brandEl.textContent = getActiveBoardName();
+  if (brandEl) brandEl.textContent = APP_NAME;
 }
 
 function renderBoardsList() {

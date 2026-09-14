@@ -92,7 +92,7 @@ test.describe('Swim lane toggle', () => {
   test('keeps swim lane column headers visible while vertically scrolling', async ({ page }) => {
     await page.evaluate(async ({ boardId, colTodoId }) => {
       const db = await new Promise((resolve, reject) => {
-        const req = indexedDB.open('kanvana-db', 2);
+        const req = indexedDB.open('openagile-db', 2);
         req.onsuccess = () => resolve(req.result);
         req.onerror = () => reject(req.error);
       });

@@ -13,7 +13,7 @@ import { GLOBAL_SNAPSHOT_KEY, saveSnapshot } from './snapshot.js';
 import { downloadAllSnapshots } from './snapshot-sync.js';
 import { hydrateFromSnapshotState } from '../storage.js';
 
-const LAST_SEEN_PREFIX = 'kanvana:sync:lastSeenHlc:';
+const LAST_SEEN_PREFIX = 'openagile:sync:lastSeenHlc:';
 
 let _unsubscribe = null;
 let _handlers = null;
@@ -142,8 +142,8 @@ async function onOnline() {
 export function initRealtime() {
   if (typeof window === 'undefined' || _handlers) return;
   _handlers = {
-    auth: () => { onAuthChanged().catch(err => console.error('[Kanvana] Realtime auth handler failed', err)); },
-    online: () => { onOnline().catch(err => console.error('[Kanvana] Realtime online handler failed', err)); },
+    auth: () => { onAuthChanged().catch(err => console.error('[OpenAgile] Realtime auth handler failed', err)); },
+    online: () => { onOnline().catch(err => console.error('[OpenAgile] Realtime online handler failed', err)); },
   };
   window.addEventListener('auth-changed', _handlers.auth);
   window.addEventListener('online', _handlers.online);

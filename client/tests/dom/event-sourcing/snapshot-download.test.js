@@ -38,7 +38,7 @@ async function gzip(obj) {
 function snapRecord(id, hlcValue) {
   return {
     id,
-    collectionId: 'kanvana_snapshots',
+    collectionId: 'openagile_snapshots',
     collectionName: 'snapshots',
     board_id: 'board-1',
     hlc: hlcValue,

@@ -46,7 +46,7 @@ export function initSyncIndicator() {
 
   const rerender = () => {
     renderSyncIndicator().catch((err) =>
-      console.error('[Kanvana] Sync indicator render failed', err)
+      console.error('[OpenAgile] Sync indicator render failed', err)
     );
   };
   _handlers = { rerender };

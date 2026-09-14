@@ -56,7 +56,7 @@ afterEach(async () => {
 beforeEach(async () => {
   _resetSyncQueueForTesting();
   _resetIdbForTesting();
-  await deleteDB('kanvana-db');
+  await deleteDB('openagile-db');
   getPb().authStore.clear();
   _setTimingForTesting({ debounceMs: 1 });
 });

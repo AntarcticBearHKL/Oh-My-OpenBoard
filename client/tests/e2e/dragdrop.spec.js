@@ -19,14 +19,14 @@ test.describe('Drag and Drop Performance', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.addInitScript((data) => {
-      if (sessionStorage.getItem('__kanvanaTestSeeded')) return;
-      sessionStorage.setItem('__kanvanaTestSeeded', '1');
+      if (sessionStorage.getItem('__openagileTestSeeded')) return;
+      sessionStorage.setItem('__openagileTestSeeded', '1');
 
       localStorage.clear();
-      indexedDB.deleteDatabase('kanvana-db');
+      indexedDB.deleteDatabase('openagile-db');
 
       const boardId = 'perf-test-board';
-      const req = indexedDB.open('kanvana-db', 2);
+      const req = indexedDB.open('openagile-db', 2);
       req.onupgradeneeded = () => {
         const store = req.result.createObjectStore('kv');
         const events = req.result.createObjectStore('events', { keyPath: 'id' });

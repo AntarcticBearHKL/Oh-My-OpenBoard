@@ -24,7 +24,7 @@ describe('group store', () => {
     expect(listGroups()).toEqual([]);
   });
 
-  test('createGroup persists id, name, order and collapsed under kanvana:groups', () => {
+  test('createGroup persists id, name, order and collapsed under openagile:groups', () => {
     const group = createGroup('Sprint 1');
 
     expect(group.id).toBeTruthy();
@@ -107,7 +107,7 @@ describe('group store', () => {
 });
 
 describe('board → group mapping', () => {
-  test('assignBoardToGroup persists the mapping under kanvana:boardGroup', () => {
+  test('assignBoardToGroup persists the mapping under openagile:boardGroup', () => {
     const group = createGroup('Sprint');
     expect(assignBoardToGroup('board-1', group.id)).toBe(true);
 

@@ -3,7 +3,7 @@ import { deleteDB } from 'idb';
 import { resetLocalStorage } from '../setup.js';
 import { compareHlc, emitLocal, observeRemote, _resetHlcForTesting, _setHlcForTesting } from '../../../src/modules/event-sourcing/hlc.js';
 
-const DB_NAME = 'kanvana-db';
+const DB_NAME = 'openagile-db';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 beforeEach(async () => {
@@ -74,7 +74,7 @@ test('emitLocal warns when local wall clock drift exceeds the bound', async () =
 
   await emitLocal();
 
-  expect(warn).toHaveBeenCalledWith('[Kanvana] HLC drift exceeded 60000ms; accepting local wall time.');
+  expect(warn).toHaveBeenCalledWith('[OpenAgile] HLC drift exceeded 60000ms; accepting local wall time.');
 });
 
 test('observeRemote advances counter from the remote HLC when remote wallTime wins', async () => {

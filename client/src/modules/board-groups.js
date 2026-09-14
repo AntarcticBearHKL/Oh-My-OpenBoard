@@ -1,11 +1,11 @@
 import { generateUUID } from './utils.js';
 import { emit, DATA_CHANGED } from './events.js';
 
-export const GROUPS_KEY = 'kanvana:groups';
-export const BOARD_GROUP_KEY = 'kanvana:boardGroup';
+export const GROUPS_KEY = 'openagile:groups';
+export const BOARD_GROUP_KEY = 'openagile:boardGroup';
 export const UNGROUPED_GROUP_ID = '__ungrouped__';
 
-const GROUPS_MIGRATED_KEY = 'kanvana:groupsMigrated';
+const GROUPS_MIGRATED_KEY = 'openagile:groupsMigrated';
 
 function markMigrated() {
   try { localStorage.setItem(GROUPS_MIGRATED_KEY, '1'); } catch { /* ignore */ }
@@ -214,7 +214,7 @@ export function initGroupSync() {
     })
     .catch(() => {});
 
-  window.addEventListener('kanvana:groups-changed', (event) => {
+  window.addEventListener('openagile:groups-changed', (event) => {
     adoptGroupsState(event.detail);
     emit(DATA_CHANGED);
   });

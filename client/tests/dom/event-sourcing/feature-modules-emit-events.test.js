@@ -6,7 +6,7 @@ import { addColumn } from '../../../src/modules/columns.js';
 import { addLabel, deleteLabel } from '../../../src/modules/labels.js';
 import { deleteTask, updateTask } from '../../../src/modules/tasks.js';
 
-const DB_NAME = 'kanvana-db';
+const DB_NAME = 'openagile-db';
 
 beforeEach(async () => {
   _resetStorageForTesting();

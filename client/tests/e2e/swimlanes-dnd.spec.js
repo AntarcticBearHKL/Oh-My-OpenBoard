@@ -16,7 +16,7 @@ const BOARD_ID = TEST_BOARD_ID;
 async function writeIDBValue(page, key, value) {
   await page.evaluate(async ({ k, v }) => {
     const db = await new Promise((resolve, reject) => {
-      const req = indexedDB.open('kanvana-db', 2);
+      const req = indexedDB.open('openagile-db', 2);
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
     });

@@ -1,4 +1,4 @@
-// Bridge to the Kanvana harness server (same origin, same port as the MCP
+// Bridge to the OpenAgile harness server (same origin, same port as the MCP
 // endpoint). The browser stays local-first for instant UI; this module keeps it
 // in step with the server's authoritative event log:
 //
@@ -15,8 +15,8 @@ import { NO_BOARDS_KEY } from './constants.js';
 import { observeRemote } from './event-sourcing/hlc.js';
 import { getActiveBoardId, hydrateFromSnapshotState } from './storage.js';
 
-const SEQ_KEY = 'kanvana:harness:seq';
-const CLIENT_KEY = 'kanvana:harness:clientId';
+const SEQ_KEY = 'openagile:harness:seq';
+const CLIENT_KEY = 'openagile:harness:clientId';
 const DEFAULT_BOARD_ID = '00000000-0000-4000-8000-000000000001';
 
 const remoteIds = new Set();
@@ -108,7 +108,7 @@ function openStream() {
   source.addEventListener('groups', (e) => {
     let payload;
     try { payload = JSON.parse(e.data); } catch { return; }
-    window.dispatchEvent(new CustomEvent('kanvana:groups-changed', { detail: payload }));
+    window.dispatchEvent(new CustomEvent('openagile:groups-changed', { detail: payload }));
   });
 
   source.onmessage = (e) => {
@@ -134,7 +134,7 @@ export function initLocalServer() {
   if (started) return Promise.resolve();
   started = true;
   return boot().catch((err) => {
-    console.warn('[kanvana] local server bridge unavailable:', err?.message || err);
+    console.warn('[openagile] local server bridge unavailable:', err?.message || err);
   });
 }
 
