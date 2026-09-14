@@ -7,7 +7,7 @@
 
 ## 1. Problem Statement
 
-Kanvana's current cloud sync (PR #89) is whole-record last-write-wins (LWW) push/pull against PocketBase. This is safe for a single device but unsafe for the product's primary multi-device workflow:
+OpenAgile's current cloud sync (PR #89) is whole-record last-write-wins (LWW) push/pull against PocketBase. This is safe for a single device but unsafe for the product's primary multi-device workflow:
 
 > A user moves between mobile and laptop. They edit a task on the phone in the morning. They open the laptop later — the change must appear without manual sync, and without any silent data loss.
 
@@ -71,7 +71,7 @@ The 39 decisions below are the contract for implementation. Any deviation must b
 3. **Pure event sourcing (Option A).** The event log is the absolute, definitive source of truth. The IDB `kanbanBoard:{boardId}:tasks` / `:columns` / `:labels` keys become **read-model cache** maintained exclusively by the reducer. They are never mutated by feature modules directly. On boot: load latest snapshot → replay events since → render.
 4. **Offline-only-forever is a first-class mode.** A user who never logs in must have full functionality. All reducer + snapshot logic runs client-side; PocketBase is optional fan-out.
 5. **Hybrid Logical Clock (HLC) for total event ordering.** Every event carries `hlc: { wallTime, counter, nodeId }`. All replicas sort by HLC. `hlc` is canonical for ordering; `at` (ISO timestamp) is retained for display only. Wall-clock-skew tolerant.
-6. **HLC node ID** generated once on first boot via `crypto.randomUUID()`, persisted at IDB key `kanvana:hlc:node`, never rotated.
+6. **HLC node ID** generated once on first boot via `crypto.randomUUID()`, persisted at IDB key `openagile:hlc:node`, never rotated.
 
 ### 4.2 Event Model
 
@@ -158,7 +158,7 @@ The 39 decisions below are the contract for implementation. Any deviation must b
     - On auth/login: subscribe to `events` collection filtered by owner (one subscription, not per-board).
     - Realtime apply: every received event passes through the same reducer as local events. Idempotent by UUID handles echo + duplicates for free.
     - Catch-up: on launch and reconnect, `events.list({ filter: 'hlc > lastSeenHlc' })` → replay → set `lastSeenHlc`.
-33. **`lastSeenHlc` persisted in IDB** at key `kanvana:sync:lastSeenHlc` (per board, plus one for global scope).
+33. **`lastSeenHlc` persisted in IDB** at key `openagile:sync:lastSeenHlc` (per board, plus one for global scope).
 34. **Per-device subscription is the user-owner filter only** for v1. Multi-user shared boards later expands the filter expression.
 
 ### 4.9 Sync Rejection & Queue Behavior
@@ -304,9 +304,9 @@ After the ~30-day quiet period, legacy collections are dropped entirely via a fo
 
 ### 5.5 IDB Schema Version Bump
 
-Current: `kanvana-db` version 1, single `kv` object store.
+Current: `openagile-db` version 1, single `kv` object store.
 
-New: `kanvana-db` version 2, multiple stores:
+New: `openagile-db` version 2, multiple stores:
 
 | Store | Key | Notes |
 |---|---|---|
@@ -318,7 +318,7 @@ New: `kanvana-db` version 2, multiple stores:
 **Migration on first open of v2:**
 
 1. Open as v1 read-only, copy existing keys forward.
-2. The `kanvana:hlc:node` key is created if absent.
+2. The `openagile:hlc:node` key is created if absent.
 3. Existing `kanbanBoard:{id}:tasks` etc. keys are migrated to the new `read_model` store (rekey, same shape).
 4. `pendingHardDeletes` and `events:{boardId}` keys are deleted.
 5. `kanbanSyncMap` localStorage key is left in place until post-migration confirmation (see §4.7 #31), then cleared.
@@ -359,7 +359,7 @@ New: `kanvana-db` version 2, multiple stores:
 **Migration prompt** (shown if device is offline at migration time):
 
 > Title: **Go online to upgrade**
-> Body: Kanvana has a new sync engine that needs to connect to the sync server once to upgrade your boards. Please go online and click `Go Online` in the header. Your boards will stay safe — nothing is changed until the upgrade completes.
+> Body: OpenAgile has a new sync engine that needs to connect to the sync server once to upgrade your boards. Please go online and click `Go Online` in the header. Your boards will stay safe — nothing is changed until the upgrade completes.
 
 **Delete confirmation** (extends existing `confirmDialog`):
 
@@ -370,7 +370,7 @@ New: `kanvana-db` version 2, multiple stores:
 
 For a board that has never been snapshotted (edge case: brand-new device hitting a board that hasn't crossed a snapshot threshold yet), bootstrap = replay all events from `hlc 0`.
 
-**Expected scale:** typical Kanvana board ~200 tasks, ~30 events per task over its lifetime = ~6000 events. Reducer processes ~10k events/sec → <1 second bootstrap. Acceptable.
+**Expected scale:** typical OpenAgile board ~200 tasks, ~30 events per task over its lifetime = ~6000 events. Reducer processes ~10k events/sec → <1 second bootstrap. Acceptable.
 
 **Pathological scale:** 10k-task board with full history = ~300k events → ~30 second bootstrap. Mitigation: snapshot trigger (#22) ensures this is rare; if encountered, snapshot immediately on first apply and serve from snapshot thereafter.
 

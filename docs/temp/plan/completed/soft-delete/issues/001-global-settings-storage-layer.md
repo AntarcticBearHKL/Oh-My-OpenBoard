@@ -9,7 +9,7 @@
 
 ## What to build
 
-Introduce a global (cross-board) settings store in IndexedDB under the key `kanvana:settings:global`. Expose `loadGlobalSettings()` and `saveGlobalSettings()` functions that read and write this key. The initial global settings object contains a single field: `softDeleteEnabled` (boolean, default `false`).
+Introduce a global (cross-board) settings store in IndexedDB under the key `openagile:settings:global`. Expose `loadGlobalSettings()` and `saveGlobalSettings()` functions that read and write this key. The initial global settings object contains a single field: `softDeleteEnabled` (boolean, default `false`).
 
 This is the foundation slice that all other deletion-redesign slices depend on. The store must be completely independent of the per-board settings store (`kanbanBoard:{boardId}:settings`) — reads and writes must not bleed between the two.
 

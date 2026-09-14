@@ -1,7 +1,7 @@
 # Global settings layer separate from per-board settings
 
 App-wide configuration that applies across all boards is stored under a dedicated IDB key
-(`kanvana:settings:global`) accessed via `loadGlobalSettings()` / `saveGlobalSettings()`.
+(`openagile:settings:global`) accessed via `loadGlobalSettings()` / `saveGlobalSettings()`.
 This is separate from the existing per-board settings (`kanbanBoard:{boardId}:settings`).
 
 The need emerged when `softDeleteEnabled` was introduced: the purge operation it governs spans
@@ -23,7 +23,7 @@ global settings are explicitly global. Scales naturally as future cross-board pr
 ## Consequences
 
 - `storage.js` gains `loadGlobalSettings()` and `saveGlobalSettings()` operating on the
-  `kanvana:settings:global` IDB key.
+  `openagile:settings:global` IDB key.
 - The Settings UI should visually separate "Board settings" from "App settings" so users
   understand which settings travel with a board and which are device-wide.
 - `softDeleteEnabled` was the first global setting, then removed in issue #111. The global

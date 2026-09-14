@@ -1,8 +1,8 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
-const url = new URL(process.env.KANVANA_MCP_URL || 'http://127.0.0.1:8787/mcp');
-const client = new Client({ name: 'kanvana-harness-smoke', version: '1.0.0' });
+const url = new URL(process.env.OPENAGILE_MCP_URL || 'http://127.0.0.1:8787/mcp');
+const client = new Client({ name: 'openagile-harness-smoke', version: '1.0.0' });
 const transport = new StreamableHTTPClientTransport(url);
 
 await client.connect(transport);

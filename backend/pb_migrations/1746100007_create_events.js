@@ -5,7 +5,7 @@
 // not synced and remain local-only.
 migrate((app) => {
     const collection = new Collection({
-        id: "kanvana_events",
+        id: "openagile_events",
         name: "events",
         type: "base",
         listRule: "owner = @request.auth.id",
@@ -29,7 +29,7 @@ migrate((app) => {
                 name: "board",
                 type: "relation",
                 required: true,
-                collectionId: "kanvana_boards",
+                collectionId: "openagile_boards",
                 cascadeDelete: true,
                 minSelect: 0,
                 maxSelect: 1,
@@ -39,7 +39,7 @@ migrate((app) => {
                 name: "task",
                 type: "relation",
                 required: false,
-                collectionId: "kanvana_tasks",
+                collectionId: "openagile_tasks",
                 // No cascade: event history is preserved even when the task is deleted.
                 cascadeDelete: false,
                 minSelect: 0,

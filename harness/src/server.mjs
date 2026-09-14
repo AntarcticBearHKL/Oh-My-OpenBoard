@@ -1,4 +1,4 @@
-// Kanvana harness — ONE port serving:
+// OpenAgile harness — ONE port serving:
 //   • the built frontend (client/dist)
 //   • MCP over Streamable HTTP at /mcp
 //   • a browser bridge: GET /api/stream (SSE), POST /api/events, GET /api/snapshot
@@ -21,8 +21,8 @@ import { registerTools } from './mcp-tools.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DIST_DIR = resolve(HERE, '..', '..', 'client', 'dist');
-const HOST = process.env.KANVANA_HOST || '127.0.0.1';
-const PORT = Number(process.env.KANVANA_PORT || process.env.PORT || 8787);
+const HOST = process.env.OPENAGILE_HOST || '127.0.0.1';
+const PORT = Number(process.env.OPENAGILE_PORT || process.env.PORT || 8787);
 const VERSION = '1.0.0';
 
 const MIME = {
@@ -142,7 +142,7 @@ async function handleMcp(req, res) {
         enableJsonResponse: true
       });
       transport.onclose = () => { if (transport.sessionId) transports.delete(transport.sessionId); };
-      const server = new McpServer({ name: 'kanvana-harness', version: VERSION });
+      const server = new McpServer({ name: 'openagile-harness', version: VERSION });
       registerTools(server);
       await server.connect(transport);
       await transport.handleRequest(req, res, parsedBody);
@@ -218,7 +218,7 @@ async function handleRequest(req, res) {
     }
 
     if (path === '/api/harness' && req.method === 'GET') {
-      sendJson(res, 200, { harness: true, name: 'kanvana-harness', version: VERSION, defaultBoardId: DEFAULT_BOARD_ID, ...getStats() });
+      sendJson(res, 200, { harness: true, name: 'openagile-harness', version: VERSION, defaultBoardId: DEFAULT_BOARD_ID, ...getStats() });
       return;
     }
 

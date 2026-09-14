@@ -16,7 +16,7 @@ When tasks move through the board, get edited by AI agents, or are deleted along
 
 ## Solution
 
-Add a two-log audit trail to Kanvana:
+Add a two-log audit trail to OpenAgile:
 
 1. **Task Activity Log** — an embedded event array on each task that records every meaningful change to that task (field edits, column moves, label/relationship changes). Visible as a collapsible log list at the bottom of the task edit modal.
 
@@ -178,5 +178,5 @@ Prior art: `client/tests/unit/importexport.test.js`
 
 The `columnHistory` field on tasks is intentionally kept alongside the new `activityLog`. It is purpose-built for CFD and lead-time report calculations and should not be replaced. Column moves write to both. This redundancy is recorded in `docs/adr/0001-two-log-audit-trail.md`.
 
-The actor identity for all current UI-driven operations is `{ type: "human", id: null }`. AI agents integrating with Kanvana are responsible for passing their own actor object to every write operation; the system does not infer or inject actor identity automatically.
+The actor identity for all current UI-driven operations is `{ type: "human", id: null }`. AI agents integrating with OpenAgile are responsible for passing their own actor object to every write operation; the system does not infer or inject actor identity automatically.
 

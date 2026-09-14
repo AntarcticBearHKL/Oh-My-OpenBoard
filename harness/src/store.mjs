@@ -1,4 +1,4 @@
-// Server-side authoritative event log + read-model projection for the Kanvana
+// Server-side authoritative event log + read-model projection for the OpenAgile
 // harness. It reuses the client's PURE reducer (client/src/modules/reducer.js)
 // so the server and every browser project the identical domain events.
 //
@@ -123,7 +123,7 @@ export function emit(type, {
   boardId = DEFAULT_BOARD_ID,
   entityId = '',
   payload = {},
-  actor = { type: 'agent', id: 'kanvana-harness' },
+  actor = { type: 'agent', id: 'openagile-harness' },
   scope = 'board'
 } = {}) {
   const event = {
@@ -169,14 +169,14 @@ function seedDefaultBoardIfEmpty() {
   const now = new Date().toISOString();
   appendEvent({
     id: randomUUID(), type: 'board.created', hlc: emitLocalSync(), at: now,
-    actor: { type: 'agent', id: 'kanvana-harness' }, scope: 'board',
+    actor: { type: 'agent', id: 'openagile-harness' }, scope: 'board',
     board_id: DEFAULT_BOARD_ID, entity_id: DEFAULT_BOARD_ID,
     payload: { board: { id: DEFAULT_BOARD_ID, name: 'Default Board', createdAt: now } }
   });
   for (const column of STABLE_COLUMNS) {
     appendEvent({
       id: randomUUID(), type: 'column.created', hlc: emitLocalSync(), at: now,
-      actor: { type: 'agent', id: 'kanvana-harness' }, scope: 'board',
+      actor: { type: 'agent', id: 'openagile-harness' }, scope: 'board',
       board_id: DEFAULT_BOARD_ID, entity_id: column.id,
       payload: { column: { ...column } }
     });
@@ -184,7 +184,7 @@ function seedDefaultBoardIfEmpty() {
   for (const label of STABLE_LABELS) {
     appendEvent({
       id: randomUUID(), type: 'label.created', hlc: emitLocalSync(), at: now,
-      actor: { type: 'agent', id: 'kanvana-harness' }, scope: 'board',
+      actor: { type: 'agent', id: 'openagile-harness' }, scope: 'board',
       board_id: DEFAULT_BOARD_ID, entity_id: label.id,
       payload: { label: { ...label } }
     });

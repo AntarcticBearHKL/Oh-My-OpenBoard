@@ -1,23 +1,23 @@
-# Kanvana Documentation
+# OpenAgile Documentation
 
-´´´Kanvana == "Kanban" + "Nirvana" a Kanban Board´´´
+´´´OpenAgile == "Kanban" + "Nirvana" a Kanban Board´´´
 
 
 [![GitHub stars](https://img.shields.io/github/stars/mdiener21/kanvana.svg?style=social)](https://github.com/mdiener21/kanvana/stargazers)
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Now-blue)](https://mdiener21.github.io/kanvana/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Now-blue)](https://mdiener21.github.io/openagile/)
 
 > **Your data, your browser, your workflow.** A local-first Kanban board that runs entirely in your browser — no servers, no accounts, no tracking.
 
-**[Use it Live Here](https://mdiener21.github.io/kanvana/)**
+**[Use it Live Here](https://mdiener21.github.io/openagile/)**
 
 
 **Building with AI agents?** Try the new **AI Agent Ops Starter** board template to track 2–5 agents in parallel, review handoffs, and improve prompts in one local-first workspace. If that sounds useful, give the repo a ⭐ and help more agent builders discover it.
 
 ---
 
-## What is Kanvana?
+## What is OpenAgile?
 
-Kanvana == "Kanban" + "Nirvana" is a Kanban Board, browser-based task manager built for speed, privacy, and simplicity. All your data stays in your browser's IndexedDB — nothing leaves your machine unless you choose to export it.
+OpenAgile == "Kanban" + "Nirvana" is a Kanban Board, browser-based task manager built for speed, privacy, and simplicity. All your data stays in your browser's IndexedDB — nothing leaves your machine unless you choose to export it.
 
 **Key highlights:**
 

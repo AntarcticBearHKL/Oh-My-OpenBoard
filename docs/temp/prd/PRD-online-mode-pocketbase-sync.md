@@ -4,7 +4,7 @@
 
 ## 1. Problem Statement
 
-Kanvana is local-first by default. Users can work fully offline in the browser, but they also need an optional way to sign in, persist boards to PocketBase, and restore those boards on another device.
+OpenAgile is local-first by default. Users can work fully offline in the browser, but they also need an optional way to sign in, persist boards to PocketBase, and restore those boards on another device.
 
 Online Mode is the current product contract for that optional backend path. It must keep offline use safe, make backend availability visible, and avoid hidden merge behavior.
 
@@ -31,11 +31,11 @@ Online Mode does not change the local-first storage model. IndexedDB remains the
 
 ### Local-First Default
 
-Users can use Kanvana without a backend. If PocketBase is unreachable, the board remains usable offline and no local data is blocked.
+Users can use OpenAgile without a backend. If PocketBase is unreachable, the board remains usable offline and no local data is blocked.
 
 ### Backend Availability
 
-On board page load, Kanvana probes the PocketBase health endpoint:
+On board page load, OpenAgile probes the PocketBase health endpoint:
 
 ```text
 <VITE_PB_URL or same-origin /> + /api/health
@@ -90,7 +90,7 @@ Clicking `Sync` first verifies authentication, then asks:
 | Push to Cloud | Pushes every local board to PocketBase, enables auto-sync, schedules one auto-sync for each board, then shows success feedback. |
 | Pull from Cloud | Requires a second confirmation, replaces local board data with PocketBase data, re-renders the board, rebuilds board UI, then shows success feedback. |
 
-If pull finds no remote boards, Kanvana shows `No data found in cloud.` and leaves local data unchanged.
+If pull finds no remote boards, OpenAgile shows `No data found in cloud.` and leaves local data unchanged.
 
 ### Auto-Sync
 
@@ -145,7 +145,7 @@ The sync map lives in `localStorage` under `kanbanSyncMap` and maps local UUIDs 
 
 ## 5. User Stories
 
-- As an offline-first user, I can use Kanvana even when PocketBase is unavailable.
+- As an offline-first user, I can use OpenAgile even when PocketBase is unavailable.
 - As a user trying to go online, I can see immediately when the sync backend is unreachable.
 - As a user or support person, I can see the exact backend health URL that failed.
 - As a user, I can sign in with email/password or supported OAuth providers.

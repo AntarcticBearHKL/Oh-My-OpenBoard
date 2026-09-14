@@ -12,7 +12,7 @@
 
 ## Baseline
 
-- Fresh worktree: `/home/mdiener/dev/kanvana/.worktrees/audit-trail-build`
+- Fresh worktree: `/home/mdiener/dev/openagile/.worktrees/audit-trail-build`
 - Branch: `feature/audit-trail-build`
 - `npm run test:unit`: passing before feature work
 - `npm run test:dom`: passing before feature work

@@ -1,13 +1,13 @@
 # 📊 Kanban Board Templates & Use Cases: Build Your Perfect Workflow
 
 [![GitHub stars](https://img.shields.io/github/stars/mdiener21/kanvana.svg?style=social)](https://github.com/mdiener21/kanvana/stargazers)
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Now-blue)](https://mdiener21.github.io/kanvana/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Now-blue)](https://mdiener21.github.io/openagile/)
 
 > **Transform ideas into action!** Discover board templates tailored for projects, life, and creativity—paired with smart columns and labels for ultimate productivity.
 
-Kanvana a personal + AI Agent Kanban Boards adapt to any workflow. Below, explore common board types with recommended columns and labels. These templates provide a solid foundation—customize as you go!
+OpenAgile a personal + AI Agent Kanban Boards adapt to any workflow. Below, explore common board types with recommended columns and labels. These templates provide a solid foundation—customize as you go!
 
-**🚀 [Try the Live Demo](https://mdiener21.github.io/kanvana/) and experiment with boards!**
+**🚀 [Try the Live Demo](https://mdiener21.github.io/openagile/) and experiment with boards!**
 
 ## ✅ Best Practices for Creating Boards
 

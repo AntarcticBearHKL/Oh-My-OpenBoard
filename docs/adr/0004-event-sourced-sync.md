@@ -4,7 +4,7 @@
 
 Supersedes [ADR-0001](0001-two-log-audit-trail.md) and [ADR-0002](0002-permanent-delete-default-soft-delete-opt-in.md).
 
-Kanvana's multi-device sync is **pure event sourcing**. Every domain mutation is recorded as an
+OpenAgile's multi-device sync is **pure event sourcing**. Every domain mutation is recorded as an
 immutable event ordered by a Hybrid Logical Clock (HLC); the tasks, columns, and labels held in
 IndexedDB are reducer-maintained **projections** rebuilt from the event stream. PocketBase is an
 optional fan-out, not a dependency — offline-only-forever remains a first-class mode.

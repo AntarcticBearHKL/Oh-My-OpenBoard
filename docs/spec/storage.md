@@ -22,7 +22,7 @@ await initStorage(); // loads IDB → in-memory state
 
 ## IDB Schema
 
-- **Database name**: `kanvana-db`
+- **Database name**: `openagile-db`
 - **Version**: `1`
 - **Object store**: `kv` (key-value, out-of-line key)
 
@@ -71,7 +71,7 @@ When `initStorage()` finds an empty IDB but non-empty localStorage, it runs `mig
 1. If `kanbanBoards` key exists in localStorage → multi-board migration: copies all per-board keys to IDB and deletes localStorage keys
 2. If legacy single-board keys (`kanbanTasks`, `kanbanColumns`, `kanbanLabels`) exist → wraps them into a default board in IDB
 
-After migration, localStorage is cleared of all Kanvana keys.
+After migration, localStorage is cleared of all OpenAgile keys.
 
 ### Schema changes
 

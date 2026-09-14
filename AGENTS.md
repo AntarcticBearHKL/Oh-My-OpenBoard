@@ -1,10 +1,10 @@
-# Kanvana — Agent & Developer Guide
+# OpenAgile — Agent & Developer Guide
 
 > **This file is the source of truth for `CLAUDE.md` and `GEMINI.md`** (both are symlinks here).
 > Edit `AGENTS.md` directly; the symlinks pick up changes automatically.
 
-Kanvana is a local-first Kanban board that runs entirely in the browser. No server is required for
-the core app. All data persists in **IndexedDB** (`kanvana-db`). An optional PocketBase backend
+OpenAgile is a local-first Kanban board that runs entirely in the browser. No server is required for
+the core app. All data persists in **IndexedDB** (`openagile-db`). An optional PocketBase backend
 provides auth and cloud sync when deployed.
 
 ---

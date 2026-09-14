@@ -34,5 +34,5 @@ Wire `settings.js` to call `runPurge`:
 ## Run tests (environment note)
 
 `npm`/`node` are not on PATH in the default WSL non-login shell. Use:
-`wsl bash -lc "cd ~/dev/kanvana/client && npm run test:unit -- tests/unit/sync.test.js"`
+`wsl bash -lc "cd ~/dev/openagile/client && npm run test:unit -- tests/unit/sync.test.js"`
 (node bin: `/home/mdiener/.nvm/versions/node/v24.13.1/bin`).

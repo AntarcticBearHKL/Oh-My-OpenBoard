@@ -72,7 +72,7 @@ Drains IDB events where `synced=false` to the PocketBase `events` collection, th
 
 ### Hybrid Logical Clock (`event-sourcing/hlc.js`)
 
-- A node id is generated once and persisted at `kanvana:hlc:node`.
+- A node id is generated once and persisted at `openagile:hlc:node`.
 - `emitLocal()` returns a monotonic stamp; `observeRemote(hlc)` merges a remote stamp forward.
 - `compareHlc(a, b)` gives the total order used everywhere events are sorted.
 - Clock drift beyond `MAX_DRIFT_MS` (60 s) is logged as a warning (multi-device single-user is
@@ -174,8 +174,8 @@ in #116. New sync work goes through the event stream only.
 | IDB `events` store | IndexedDB | local event log (`synced` flag drives the outbound queue) |
 | IDB `snapshots` store | IndexedDB | local projection snapshots |
 | IDB projection stores | IndexedDB | reducer read model (tasks/columns/labels per board) |
-| `kanvana:hlc:node` | localStorage | persisted HLC node id |
-| `kanvana:sync:lastSeenHlc:<scope>` | IDB KV | per-scope catch-up watermark |
+| `openagile:hlc:node` | localStorage | persisted HLC node id |
+| `openagile:sync:lastSeenHlc:<scope>` | IDB KV | per-scope catch-up watermark |
 | `pocketbase_auth` | localStorage | PocketBase SDK auth (SDK-managed) |
 
 ## Docker / Deployment

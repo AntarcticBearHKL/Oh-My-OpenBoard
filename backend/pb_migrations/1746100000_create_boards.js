@@ -1,6 +1,6 @@
 migrate((app) => {
     const collection = new Collection({
-        id: "kanvana_boards",
+        id: "openagile_boards",
         name: "boards",
         type: "base",
         listRule: "owner = @request.auth.id",

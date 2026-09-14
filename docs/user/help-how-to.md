@@ -1,7 +1,7 @@
 # Help (In-App)
 
 [![GitHub stars](https://img.shields.io/github/stars/mdiener21/kanvana.svg?style=social)](https://github.com/mdiener21/kanvana/stargazers)
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Now-blue)](https://mdiener21.github.io/kanvana/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Now-blue)](https://mdiener21.github.io/openagile/)
 
 This file is the canonical user-facing text for the in-app **Help** modal.
 
@@ -13,7 +13,7 @@ This file is the canonical user-facing text for the in-app **Help** modal.
 
 ## Support & Community
 
-Loving Kanvana the Kanban Board? Help us grow!
+Loving OpenAgile the Kanban Board? Help us grow!
 
 - **⭐ Star the Repo**: Show your support on [GitHub](https://github.com/mdiener21/kanvana) to help others discover it!
 - **📚 Full Documentation**: Dive deeper with guides, templates, and specs at [docs/](https://github.com/mdiener21/kanvana/tree/main/docs).
@@ -21,7 +21,7 @@ Loving Kanvana the Kanban Board? Help us grow!
 
 Your feedback keeps the app improving! 🚀
 
-### About Kanvana Web PWA App
+### About OpenAgile Web PWA App
 
 This is a fully local personal + AI Agent Kanban board.
 

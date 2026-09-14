@@ -50,7 +50,7 @@ migrate((app) => {
 
     // ── snapshots: new collection ───────────────────────────────────────────
     const snapshots = new Collection({
-        id: "kanvana_snapshots",
+        id: "openagile_snapshots",
         name: "snapshots",
         type: "base",
         listRule: "owner = @request.auth.id",
@@ -137,7 +137,7 @@ migrate((app) => {
         id: "evt_board",
         name: "board",
         required: true,
-        collectionId: "kanvana_boards",
+        collectionId: "openagile_boards",
         cascadeDelete: true,
         minSelect: 0,
         maxSelect: 1,
@@ -147,7 +147,7 @@ migrate((app) => {
         id: "evt_task",
         name: "task",
         required: false,
-        collectionId: "kanvana_tasks",
+        collectionId: "openagile_tasks",
         cascadeDelete: false,
         minSelect: 0,
         maxSelect: 1,

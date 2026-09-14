@@ -2,7 +2,7 @@
 
 ## Product Scope
 
-Kanvana is a local-first kanban application with an optional PocketBase-powered backend for multi-device sync. All application state lives in the browser and can be exported to or imported from JSON files.
+OpenAgile is a local-first kanban application with an optional PocketBase-powered backend for multi-device sync. All application state lives in the browser and can be exported to or imported from JSON files.
 
 ## Specification Index
 

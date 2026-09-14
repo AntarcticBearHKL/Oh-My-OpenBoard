@@ -1,4 +1,4 @@
-# Kanvana — Domain Model Context
+# OpenAgile — Domain Model Context
 
 > Hand-maintained source of truth. Update this file when entity schemas, workflows, or architecture
 > boundaries change. Do not regenerate from graphify output.
@@ -51,7 +51,7 @@ Board ──< Column ──< Task ──< SubTask
 
 ## 3. Storage Layer
 
-All state is local-first, stored in **IndexedDB** (`kanvana-db`, **version 2**). Event sourcing (#112)
+All state is local-first, stored in **IndexedDB** (`openagile-db`, **version 2**). Event sourcing (#112)
 added three object stores alongside the original `kv`:
 
 | Object store | Content |
@@ -76,9 +76,9 @@ The storage layer is split into three modules:
 |---|---|
 | `kanbanBoards` | Board list array |
 | `kanbanActiveBoardId` | Active board ID string |
-| `kanvana:settings:global` | Global (cross-board) settings object |
-| `kanvana:hlc:node` | Persisted Hybrid Logical Clock node id |
-| `kanvana:sync:lastSeenHlc:{scope}` | Per-scope catch-up watermark |
+| `openagile:settings:global` | Global (cross-board) settings object |
+| `openagile:hlc:node` | Persisted Hybrid Logical Clock node id |
+| `openagile:sync:lastSeenHlc:{scope}` | Per-scope catch-up watermark |
 
 **Pattern:** `initStorage()` (async, called once at startup) → synchronous CRUD functions read/write
 in-memory `state` → fire-and-forget IDB writes via `scheduleReadModelPersist()` → `renderBoard()`.
@@ -290,7 +290,7 @@ mechanics: `docs/spec/backend-storage-pb.md`.
 
 Each event carries an HLC stamp (`hlc`). `compareHlc()` gives a total order across devices; the reducer
 re-sorts by HLC on replay, so server insertion order is irrelevant. Node id persisted at
-`kanvana:hlc:node`; drift past 60 s is logged.
+`openagile:hlc:node`; drift past 60 s is logged.
 
 ### Event Envelope
 

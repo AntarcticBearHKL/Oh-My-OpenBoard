@@ -1,6 +1,6 @@
 # Keyboard Shortcuts
 
-Kanvana supports keyboard shortcuts for fast board management, modal handling, task editing, and accessible list activation. Global shortcuts avoid form fields so typing in inputs, textareas, and selects does not trigger board actions.
+OpenAgile supports keyboard shortcuts for fast board management, modal handling, task editing, and accessible list activation. Global shortcuts avoid form fields so typing in inputs, textareas, and selects does not trigger board actions.
 
 | Area | Key binding | Action | Notes |
 |---|---|---|---|

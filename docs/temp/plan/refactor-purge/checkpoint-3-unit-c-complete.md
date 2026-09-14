@@ -39,4 +39,4 @@ The purge semantic gap is closed:
 ## Run tests (environment note)
 
 `npm`/`node` not on PATH in default WSL shell, and the inherited PATH contains spaces. Use a clean explicit PATH:
-`wsl bash -lc "export PATH=/home/mdiener/.nvm/versions/node/v24.13.1/bin:/usr/bin:/bin; cd ~/dev/kanvana/client && npm test"`
+`wsl bash -lc "export PATH=/home/mdiener/.nvm/versions/node/v24.13.1/bin:/usr/bin:/bin; cd ~/dev/openagile/client && npm test"`

@@ -2,7 +2,7 @@
 
 ## Context
 
-Kanvana is local-first with IndexedDB as the per-device source of truth and optional PocketBase push/pull. The current sync model (PR #89) relies on last-write-wins (LWW) on whole records, which is unsafe for multi-device workflows (e.g., laptop + phone offline edits) where user data can be silently overwritten.
+OpenAgile is local-first with IndexedDB as the per-device source of truth and optional PocketBase push/pull. The current sync model (PR #89) relies on last-write-wins (LWW) on whole records, which is unsafe for multi-device workflows (e.g., laptop + phone offline edits) where user data can be silently overwritten.
 
 After evaluating CRDTs and finding them overly complex and disruptive to our read-model and reporting layers, this document outlines a shift to **Event Sourcing (Command-Based Sync)**. This approach models user interactions as an append-only stream of immutable events, eliminating complex mathematical merging, preventing silent data loss, keeping PocketBase clean, and building an organic foundation for future multi-user support without over-engineering.
 

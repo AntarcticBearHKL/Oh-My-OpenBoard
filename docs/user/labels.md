@@ -1,13 +1,13 @@
 # 🏷️ Labels & Label Groups: Organize Your Tasks Like a Pro
 
 [![GitHub stars](https://img.shields.io/github/stars/mdiener21/kanvana.svg?style=social)](https://github.com/mdiener21/kanvana/stargazers)
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Now-blue)](https://mdiener21.github.io/kanvana/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Now-blue)](https://mdiener21.github.io/openagile/)
 
 > Labels help you categorize and filter tasks without changing your workflow columns.
 
 Use **columns** to track workflow state (To Do → In Progress → Done) and use **labels** for categories like type, area, context, and activity. With **label groups**, you can keep labels organized and easy to scan.
 
-**🚀 [Use it LIVE here](https://mdiener21.github.io/kanvana/) and see labels in action!**
+**🚀 [Use it LIVE here](https://mdiener21.github.io/openagile/) and see labels in action!**
 
 ## 📁 Quick Example Boards
 

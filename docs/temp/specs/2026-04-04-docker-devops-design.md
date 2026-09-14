@@ -8,7 +8,7 @@
 
 ## Overview
 
-Kanvana is a static frontend (Vite build output) paired with an optional PocketBase backend. This
+OpenAgile is a static frontend (Vite build output) paired with an optional PocketBase backend. This
 design wraps both into a single Docker Compose stack so developers can spin up the full environment
 in one command, and self-hosters can deploy to any VPS with the same compose file.
 
@@ -64,7 +64,7 @@ Three Docker Compose services. PocketBase is intentionally not port-mapped to th
 | Service      | Image                          | Exposed port (host) | Internal port | Notes                        |
 |--------------|--------------------------------|---------------------|---------------|------------------------------|
 | `nginx`      | `nginx:alpine`                 | `${NGINX_PORT:-80}` | 80            | Serves static files + proxy  |
-| `pocketbase` | `ghcr.io/<owner>/kanvana:…`    | none                | 8090          | Internal only; data on volume|
+| `pocketbase` | `ghcr.io/<owner>/openagile:…`    | none                | 8090          | Internal only; data on volume|
 
 > **Why no `app` service?** The frontend is pure static — it has no runtime server. The Vite build
 > output (`dist/`) is baked into the `nginx` image at build time. There is no Node.js process in
@@ -113,7 +113,7 @@ services:
       target: dev
     command: npm run dev -- --host 0.0.0.0 --port 80 --open false
     working_dir: /app
-    image: ghcr.io/<owner>/kanvana:${IMAGE_TAG:-latest}
+    image: ghcr.io/<owner>/openagile:${IMAGE_TAG:-latest}
     ports:
       - "${NGINX_PORT:-8080}:80"
     volumes:
@@ -124,7 +124,7 @@ services:
     restart: unless-stopped
 
   pocketbase:
-    image: ghcr.io/<owner>/kanvana-pb:${PB_VERSION:-latest}
+    image: ghcr.io/<owner>/openagile-pb:${PB_VERSION:-latest}
     # PocketBase official image or custom — no host port mapping
     expose:
       - "8090"
@@ -139,7 +139,7 @@ volumes:
 
 > **PocketBase image:** Use `spectado/pocketbase` (Docker Hub, publicly accessible, port 80). The
 > previously noted `ghcr.io/muchobig/pocketbase` image requires authentication and is not publicly
-> accessible. Pin via `PB_VERSION` tag (e.g. `0.22.0`). The Kanvana repo does not build a custom
+> accessible. Pin via `PB_VERSION` tag (e.g. `0.22.0`). The OpenAgile repo does not build a custom
 > PocketBase image. Note: `spectado/pocketbase` exposes port **80** (not 8090) — all nginx proxy
 > targets must use `http://pocketbase:80`.
 
@@ -337,8 +337,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/kanvana:latest
-            ghcr.io/${{ github.repository_owner }}/kanvana:sha-${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/openagile:latest
+            ghcr.io/${{ github.repository_owner }}/openagile:sha-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 ```
@@ -373,7 +373,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd /opt/kanvana
+            cd /opt/openagile
             docker compose pull
             docker compose up -d --remove-orphans
             docker image prune -f
@@ -381,7 +381,7 @@ jobs:
 
 **Required secrets:** `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`
 
-**VPS directory assumption:** The compose stack lives at `/opt/kanvana/` on the VPS. The VPS
+**VPS directory assumption:** The compose stack lives at `/opt/openagile/` on the VPS. The VPS
 operator must place `docker-compose.yml` (no override) and a `.env` file there during initial
 setup. The deployment workflow only pulls the new image and restarts containers — it does not
 modify the compose or env files.
@@ -425,7 +425,7 @@ by `ci.yml` (which uses Node 20). Standardize all CI Node usage to `node-version
 
 ```bash
 git clone <repo>
-cd kanvana
+cd openagile
 npm install
 npm run build          # produce dist/
 docker compose up      # starts nginx (port 8080) + pocketbase
@@ -521,7 +521,7 @@ local customization, not the default, since `/data` is already in `.gitignore`.
 One-time steps for a new VPS:
 
 1. Install Docker + Docker Compose plugin
-2. `mkdir -p /opt/kanvana && cd /opt/kanvana`
+2. `mkdir -p /opt/openagile && cd /opt/openagile`
 3. Copy `docker-compose.yml` from the repository
 4. Create `.env` with production values (at minimum: `NGINX_PORT=80`, `PB_VERSION=<tag>`)
 5. Set up an external reverse proxy (e.g. Caddy or nginx outside Docker) for TLS termination,
@@ -557,7 +557,7 @@ Update to the spec's PocketBase URL Validation section:
 
 ### 2. CSP `connect-src` in Docker production
 
-When Kanvana is served via the Docker nginx stack, PocketBase is proxied at the same origin.
+When OpenAgile is served via the Docker nginx stack, PocketBase is proxied at the same origin.
 The existing `connect-src 'self'` in all three HTML files is sufficient — no dynamic
 `<pocketbase-origin>` needs to be appended. The CSP `connect-src` dynamic update described in
 the PocketBase spec's Security section applies only to non-Docker self-hosted deployments where

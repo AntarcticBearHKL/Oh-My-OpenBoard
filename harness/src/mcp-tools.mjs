@@ -1,4 +1,4 @@
-// MCP tools for the Kanvana harness. Each tool mutates the shared board by
+// MCP tools for the OpenAgile harness. Each tool mutates the shared board by
 // appending domain events through store.emit(); the browser's event-sourcing
 // pipeline projects the same events, so the UI updates live.
 
@@ -25,7 +25,7 @@ import {
   setGroups
 } from './store.mjs';
 
-const AGENT_ID = process.env.KANVANA_AGENT_NAME || 'kanvana-harness';
+const AGENT_ID = process.env.OPENAGILE_AGENT_NAME || 'openagile-harness';
 const AGENT = { type: 'agent', id: AGENT_ID };
 
 const ok = (data) => ({

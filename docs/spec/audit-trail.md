@@ -43,7 +43,7 @@ Events stored here (task-scoped):
 
 ## Board Event Store
 
-**IDB key**: `events:{boardId}` in the `kv` store of `kanvana-db`.
+**IDB key**: `events:{boardId}` in the `kv` store of `openagile-db`.
 
 Events stored here (board-scoped):
 - `task.column_moved` — cross-column moves

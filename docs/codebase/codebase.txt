@@ -49,7 +49,7 @@ client/src
 client/src/activity.html
 client/src/calendar.html
 client/src/images
-client/src/images/kanvana-logo-color-32x23.svg
+client/src/images/openagile-logo-color-32x23.svg
 client/src/impressum.html
 client/src/index.html
 client/src/kanban.js
@@ -236,7 +236,7 @@ POCKETBASE_ADMIN_PASSWORD=strongpassword
 
 # deploy env vars
 APP_DIR="/my/app/dir"
-SERVICE_NAME="kanvana_pb"
+SERVICE_NAME="openagile_pb"
 COMPOSE_FILE="docker-compose.yml"
 HEALTH_URL="https://example.com/health"
 
@@ -335,7 +335,7 @@ Top 10 largest files:
 client/playwright-report/index.html: 576.5KB
 playwright-report/index.html: 569.0KB
 client/tests/fixtures/performance-board.json: 242.0KB
-client/src/images/kanvana-logo-color-32x23.svg: 203.7KB
+client/src/images/openagile-logo-color-32x23.svg: 203.7KB
 docs/user/image-1.png: 103.6KB
 client/package-lock.json: 94.0KB
 docs/temp/plan/completed/2026-04-04-pocketbase-backend.md: 75.5KB

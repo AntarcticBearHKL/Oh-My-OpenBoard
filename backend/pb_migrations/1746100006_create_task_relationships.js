@@ -4,7 +4,7 @@
 // key "${taskLocalId}::${targetTaskLocalId}" used for sync deduplication.
 migrate((app) => {
     const collection = new Collection({
-        id: "kanvana_task_relationships",
+        id: "openagile_task_relationships",
         name: "task_relationships",
         type: "base",
         listRule: "owner = @request.auth.id",
@@ -28,7 +28,7 @@ migrate((app) => {
                 name: "board",
                 type: "relation",
                 required: true,
-                collectionId: "kanvana_boards",
+                collectionId: "openagile_boards",
                 cascadeDelete: true,
                 minSelect: 0,
                 maxSelect: 1,
@@ -38,7 +38,7 @@ migrate((app) => {
                 name: "task",
                 type: "relation",
                 required: true,
-                collectionId: "kanvana_tasks",
+                collectionId: "openagile_tasks",
                 // Deleting a task removes its relationship records.
                 cascadeDelete: true,
                 minSelect: 0,
@@ -49,7 +49,7 @@ migrate((app) => {
                 name: "target_task",
                 type: "relation",
                 required: true,
-                collectionId: "kanvana_tasks",
+                collectionId: "openagile_tasks",
                 // No cascade: relationship records survive target deletion and
                 // are cleaned up during the next sync push.
                 cascadeDelete: false,

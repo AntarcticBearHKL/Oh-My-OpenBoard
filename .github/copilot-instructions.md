@@ -1,4 +1,4 @@
-# Copilot instructions (kanvana)
+# Copilot instructions (openagile)
 
 ## Big picture
 - This is a **local-first, no-backend** kanban app: all state lives in **browser `localStorage`** and the UI is plain DOM.

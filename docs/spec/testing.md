@@ -55,7 +55,7 @@ Storage tests are split across two files:
 ### IDB test infrastructure
 
 - `fake-indexeddb` (dev dep) polyfills `globalThis.indexedDB` in Node.js via `tests/unit/setup.js` (`import 'fake-indexeddb/auto'`).
-- `beforeEach` in `storage-idb.test.js` calls `resetLocalStorage()` (which calls `_resetStorageForTesting()`) **and** `await deleteDB('kanvana-db')` to give each test a completely empty database.
+- `beforeEach` in `storage-idb.test.js` calls `resetLocalStorage()` (which calls `_resetStorageForTesting()`) **and** `await deleteDB('openagile-db')` to give each test a completely empty database.
 - `_resetStorageForTesting()` calls `_db.close()` before nulling `_db` so `deleteDB()` is never blocked by an open connection.
 - `_flushPersistsForTesting()` awaits `Promise.all([..._pendingPersists])` before cross-session assertions; avoids timing races from fire-and-forget IDB writes.
 
@@ -90,7 +90,7 @@ expect(loadTasks().some(t => t.title === 'Persisted task')).toBe(true);
 `npm run test:perf` is a dedicated serial Chromium suite, separate from the functional E2E suite. It
 generates fixed synthetic 400-task and 1,000-task boards in standard and swimlane views. Each scenario
 runs three cold starts and five real `page.mouse` SortableJS drops per start. It prints one
-`KANVANA_PERFORMANCE` JSON record and attaches the same JSON to the Playwright result.
+`OPENAGILE_PERFORMANCE` JSON record and attaches the same JSON to the Playwright result.
 
 The harness reports fixture IndexedDB backfill and first-render startup separately from steady-state
 drop latency. After the moves, it forces garbage collection through the Chromium DevTools Protocol,
@@ -122,9 +122,9 @@ board-sized DOM, or material interaction slowdown.
 To collect a candidate baseline without enforcing the existing thresholds:
 
 ```bash
-KANVANA_PERF_CALIBRATE=1 npm run test:perf
+OPENAGILE_PERF_CALIBRATE=1 npm run test:perf
 ```
 
-Set `KANVANA_PERF_RUNS` to a positive integer for additional repetitions. Update
+Set `OPENAGILE_PERF_RUNS` to a positive integer for additional repetitions. Update
 `tests/performance/performance-budgets.js` and this table together only after repeated runs on a stable
 runner explain why a changed baseline is expected.

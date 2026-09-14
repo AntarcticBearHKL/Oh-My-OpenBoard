@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add an optional PocketBase backend to Kanvana so users can self-host multi-user sync while keeping the local-first IDB experience unchanged.
+**Goal:** Add an optional PocketBase backend to OpenAgile so users can self-host multi-user sync while keeping the local-first IDB experience unchanged.
 
-**Architecture:** A new `storage-adapter.js` module becomes the single storage import point for all consumers; the existing `storage.js` becomes the IDB adapter; a new `pb-storage.js` implements the PocketBase adapter behind the same interface. The active adapter is selected at startup based on `kanvana-pb-config` in IDB.
+**Architecture:** A new `storage-adapter.js` module becomes the single storage import point for all consumers; the existing `storage.js` becomes the IDB adapter; a new `pb-storage.js` implements the PocketBase adapter behind the same interface. The active adapter is selected at startup based on `openagile-pb-config` in IDB.
 
 **Tech Stack:** Vanilla JS ES modules, PocketBase JS SDK (`pocketbase` npm package), Vitest (unit + DOM tests), existing `idb` wrapper, existing `normalize.js` / `security.js` utilities.
 
@@ -20,7 +20,7 @@
 | **Create** | `src/modules/pb-auth.js` | PocketBase auth: `initWithCredentials`, `initWithApiKey`, logout, token refresh, mid-session expiry timer, URL validation, config persistence, audit logging |
 | **Create** | `src/modules/pb-storage.js` | PocketBase adapter implementing the full adapter interface; in-memory cache + idMap; write queue per collection |
 | **Create** | `src/modules/pb-sync.js` | Write helpers: diff (detect create/update/delete), sanitize fields, normalize JSON fields, fire PB REST calls with timeout |
-| **Create** | `src/modules/pb-migration.js` | One-time IDB → PocketBase migration; idempotent per-record (kanvana_id pre-check); progress events |
+| **Create** | `src/modules/pb-migration.js` | One-time IDB → PocketBase migration; idempotent per-record (openagile_id pre-check); progress events |
 | **Create** | `src/modules/pb-status.js` | Mode badge DOM element, offline/online event handler, connectivity ping, sync-error toast |
 | **Create** | `src/modules/app-settings.js` | App Settings modal UI: backend section (connect form, connected state, disconnect) |
 | **Modify** | `src/modules/storage.js` | Add `getFullState()` export for migration use (read-only snapshot of in-memory state) |
@@ -281,9 +281,9 @@ npm run test:unit -- --reporter=verbose tests/unit/pb-auth.test.js
 
 import { openDB } from 'idb';
 
-const DB_NAME = 'kanvana-db';
+const DB_NAME = 'openagile-db';
 const KV_STORE = 'kv';
-const CONFIG_KEY = 'kanvana-pb-config';
+const CONFIG_KEY = 'openagile-pb-config';
 
 // ── URL Validation ─────────────────────────────────────────────────────────────
 
@@ -352,8 +352,8 @@ export async function clearConfig() {
 function audit(level, event, detail = {}) {
   const payload = { event, timestamp: new Date().toISOString(), ...detail };
   // eslint-disable-next-line no-console
-  console[level]('[Kanvana Security]', event, payload);
-  document.dispatchEvent(new CustomEvent('kanvana:audit', { detail: payload }));
+  console[level]('[OpenAgile Security]', event, payload);
+  document.dispatchEvent(new CustomEvent('openagile:audit', { detail: payload }));
 }
 
 // ── Interactive auth ───────────────────────────────────────────────────────────
@@ -696,7 +696,7 @@ function withTimeout(promise, ms = WRITE_TIMEOUT_MS) {
  * @param {string} collection  Collection name (e.g. 'tasks')
  * @param {object} diff        { creates, updates, deletes } from diffRecords()
  * @param {Function} toPayload (record) → PB API payload object
- * @param {object} idMap       Map<kanvana_id, pb_id> for this collection (mutated on create)
+ * @param {object} idMap       Map<openagile_id, pb_id> for this collection (mutated on create)
  * @param {string} userId      PocketBase user ID
  */
 export async function applyWrite(pb, collection, diff, toPayload, idMap, userId) {
@@ -739,7 +739,7 @@ git commit -m "feat: add pb-sync.js — diff, sanitize, and write helpers for Po
 ## Task 5: Create `pb-migration.js` — One-Time IDB → PocketBase Migration
 
 Reads all boards from the IDB in-memory state snapshot and creates them in PocketBase.
-Idempotent: pre-checks `kanvana_id` before creating any record.
+Idempotent: pre-checks `openagile_id` before creating any record.
 
 **Files:**
 - Create: `src/modules/pb-migration.js`
@@ -765,19 +765,19 @@ function makeState(overrides = {}) {
 }
 
 function makePb(existingRecords = {}) {
-  // existingRecords: { 'tasks': [{ kanvana_id: '...', id: 'pb-id' }] }
+  // existingRecords: { 'tasks': [{ openagile_id: '...', id: 'pb-id' }] }
   return {
     collection: vi.fn((col) => ({
       getList: vi.fn(async (_page, _perPage, opts) => {
         const filter = opts?.filter || '';
-        const match = filter.match(/kanvana_id="([^"]+)"/);
-        const kanvanaId = match?.[1];
+        const match = filter.match(/openagile_id="([^"]+)"/);
+        const openagileId = match?.[1];
         const items = (existingRecords[col] || []).filter(
-          (r) => r.kanvana_id === kanvanaId
+          (r) => r.openagile_id === openagileId
         );
         return { items };
       }),
-      create: vi.fn(async (payload) => ({ id: `pb-${payload.kanvana_id}` })),
+      create: vi.fn(async (payload) => ({ id: `pb-${payload.openagile_id}` })),
     })),
   };
 }
@@ -796,7 +796,7 @@ describe('migrateToPoketBase', () => {
 
   test('skips already-migrated records (idempotency)', async () => {
     // Board already exists in PB
-    const pb = makePb({ boards: [{ kanvana_id: 'board-1', id: 'pb-existing' }] });
+    const pb = makePb({ boards: [{ openagile_id: 'board-1', id: 'pb-existing' }] });
     const state = makeState();
     const idMap = await migrateToPoketBase(pb, state, 'user-1', vi.fn());
     // Should NOT call create for the board
@@ -833,7 +833,7 @@ npm run test:unit -- --reporter=verbose tests/unit/pb-migration.test.js
  * Exports:
  *   migrateToPoketBase(pb, state, userId, onProgress) → Promise<idMap>
  *
- * The function is idempotent: it pre-checks kanvana_id before each create.
+ * The function is idempotent: it pre-checks openagile_id before each create.
  * onProgress({ board, index, total }) is called before each board is processed.
  */
 
@@ -851,13 +851,13 @@ function withTimeout(promise, ms = MIGRATION_TIMEOUT_MS) {
 }
 
 /**
- * Check whether a record with the given kanvana_id already exists for this user.
+ * Check whether a record with the given openagile_id already exists for this user.
  * Returns the PocketBase record if found, null otherwise.
  */
-async function findExisting(pb, collection, kanvanaId, userId) {
+async function findExisting(pb, collection, openagileId, userId) {
   const result = await withTimeout(
     pb.collection(collection).getList(1, 1, {
-      filter: `kanvana_id="${kanvanaId}"&&user="${userId}"`,
+      filter: `openagile_id="${openagileId}"&&user="${userId}"`,
     })
   );
   return result.items[0] ?? null;
@@ -867,14 +867,14 @@ async function findExisting(pb, collection, kanvanaId, userId) {
  * Upsert a single record: skip if already exists, create otherwise.
  * Returns the PocketBase record id and stores in idMap.
  */
-async function upsert(pb, collection, kanvanaId, userId, payload, idMap) {
-  const existing = await findExisting(pb, collection, kanvanaId, userId);
+async function upsert(pb, collection, openagileId, userId, payload, idMap) {
+  const existing = await findExisting(pb, collection, openagileId, userId);
   if (existing) {
-    idMap.set(kanvanaId, existing.id);
+    idMap.set(openagileId, existing.id);
     return;
   }
   const created = await withTimeout(pb.collection(collection).create(payload));
-  idMap.set(kanvanaId, created.id);
+  idMap.set(openagileId, created.id);
 }
 
 /**
@@ -884,7 +884,7 @@ async function upsert(pb, collection, kanvanaId, userId, payload, idMap) {
  * @param {object}   state       Result of getFullState() from storage.js
  * @param {string}   userId      Authenticated PocketBase user ID
  * @param {Function} onProgress  ({ board, index, total }) → void
- * @returns {object} idMap: { boards, tasks, columns, labels } — each a Map<kanvana_id, pb_id>
+ * @returns {object} idMap: { boards, tasks, columns, labels } — each a Map<openagile_id, pb_id>
  */
 export async function migrateToPoketBase(pb, state, userId, onProgress) {
   const idMap = {
@@ -904,7 +904,7 @@ export async function migrateToPoketBase(pb, state, userId, onProgress) {
     const boardPayload = {
       ...sanitizeBoardFields(board),
       user: userId,
-      kanvana_id: board.id,
+      openagile_id: board.id,
     };
     await upsert(pb, 'boards', board.id, userId, boardPayload, idMap.boards);
     const pbBoardId = idMap.boards.get(board.id);
@@ -915,7 +915,7 @@ export async function migrateToPoketBase(pb, state, userId, onProgress) {
         ...sanitizeColumnFields(col),
         user: userId,
         board: pbBoardId,
-        kanvana_id: col.id,
+        openagile_id: col.id,
       };
       await upsert(pb, 'columns', col.id, userId, payload, idMap.columns);
     }
@@ -926,7 +926,7 @@ export async function migrateToPoketBase(pb, state, userId, onProgress) {
         ...sanitizeLabelFields(label),
         user: userId,
         board: pbBoardId,
-        kanvana_id: label.id,
+        openagile_id: label.id,
       };
       await upsert(pb, 'labels', label.id, userId, payload, idMap.labels);
     }
@@ -938,7 +938,7 @@ export async function migrateToPoketBase(pb, state, userId, onProgress) {
         ...safe,
         user: userId,
         board: pbBoardId,
-        kanvana_id: task.id,
+        openagile_id: task.id,
       };
       await upsert(pb, 'tasks', task.id, userId, payload, idMap.tasks);
     }
@@ -950,7 +950,7 @@ export async function migrateToPoketBase(pb, state, userId, onProgress) {
       'board_settings',
       `settings-${board.id}`,
       userId,
-      { user: userId, board: pbBoardId, data: settingsData, kanvana_id: `settings-${board.id}` },
+      { user: userId, board: pbBoardId, data: settingsData, openagile_id: `settings-${board.id}` },
       new Map() // settings idMap not needed elsewhere
     );
   }
@@ -1068,7 +1068,7 @@ const state = {
   settings: {},
 };
 
-// ID maps: kanvana_id → pb_id
+// ID maps: openagile_id → pb_id
 const idMap = {
   boards: new Map(),
   tasks: new Map(),
@@ -1100,13 +1100,13 @@ function enqueueWrite(collection, fn) {
     });
 }
 
-function emitSyncError(collection, kanvanaId, err) {
+function emitSyncError(collection, openagileId, err) {
   document.dispatchEvent(
     new CustomEvent('pb:sync-error', {
       detail: {
         collection,
         operation: 'write',
-        kanvana_id: kanvanaId ?? '',
+        openagile_id: openagileId ?? '',
         error: err?.message ?? 'Unknown error',
         timestamp: new Date().toISOString(),
       },
@@ -1149,10 +1149,10 @@ export async function initStorage(pb, userId, boardsIdMap, tasksIdMap, columnsId
 
   const fetchAll = async () => {
     const boards = await pb.collection('boards').getFullList({ filter: `user="${userId}"` });
-    state.boards = boards.map(pbBoardToKanvana);
+    state.boards = boards.map(pbBoardToOpenAgile);
 
     for (const board of state.boards) {
-      idMap.boards.set(board.id, boards.find((b) => b.kanvana_id === board.id)?.id);
+      idMap.boards.set(board.id, boards.find((b) => b.openagile_id === board.id)?.id);
 
       const [tasks, cols, labels, settingsRecords] = await Promise.all([
         pb.collection('tasks').getFullList({ filter: `user="${userId}"&&board="${idMap.boards.get(board.id)}"` }),
@@ -1161,14 +1161,14 @@ export async function initStorage(pb, userId, boardsIdMap, tasksIdMap, columnsId
         pb.collection('board_settings').getFullList({ filter: `user="${userId}"&&board="${idMap.boards.get(board.id)}"` }),
       ]);
 
-      state.tasks[board.id] = tasks.map(pbTaskToKanvana);
-      state.columns[board.id] = cols.map(pbColumnToKanvana);
-      state.labels[board.id] = labels.map(pbLabelToKanvana);
+      state.tasks[board.id] = tasks.map(pbTaskToOpenAgile);
+      state.columns[board.id] = cols.map(pbColumnToOpenAgile);
+      state.labels[board.id] = labels.map(pbLabelToOpenAgile);
       state.settings[board.id] = settingsRecords[0]?.data ?? null;
 
-      for (const t of tasks) idMap.tasks.set(t.kanvana_id, t.id);
-      for (const c of cols) idMap.columns.set(c.kanvana_id, c.id);
-      for (const l of labels) idMap.labels.set(l.kanvana_id, l.id);
+      for (const t of tasks) idMap.tasks.set(t.openagile_id, t.id);
+      for (const c of cols) idMap.columns.set(c.openagile_id, c.id);
+      for (const l of labels) idMap.labels.set(l.openagile_id, l.id);
     }
 
     // Snapshot prevState for future diffing
@@ -1192,43 +1192,43 @@ function snapshotPrev() {
   }
 }
 
-// ── PB record → Kanvana object converters ──────────────────────────────────────
+// ── PB record → OpenAgile object converters ──────────────────────────────────────
 
-function pbBoardToKanvana(r) {
-  return { id: r.kanvana_id, name: r.name, createdAt: r.createdAt };
+function pbBoardToOpenAgile(r) {
+  return { id: r.openagile_id, name: r.name, createdAt: r.createdAt };
 }
-function pbTaskToKanvana(r) {
+function pbTaskToOpenAgile(r) {
   return {
-    id: r.kanvana_id, title: r.title, description: r.description,
+    id: r.openagile_id, title: r.title, description: r.description,
     priority: r.priority, dueDate: r.dueDate, column: r.column, order: r.order,
     labels: r.labels || [], columnHistory: r.columnHistory || [],
     relationships: r.relationships || [], subTasks: r.subTasks || [],
     creationDate: r.creationDate, changeDate: r.changeDate, doneDate: r.doneDate,
   };
 }
-function pbColumnToKanvana(r) {
-  return { id: r.kanvana_id, name: r.name, color: r.color, order: r.order, collapsed: r.collapsed };
+function pbColumnToOpenAgile(r) {
+  return { id: r.openagile_id, name: r.name, color: r.color, order: r.order, collapsed: r.collapsed };
 }
-function pbLabelToKanvana(r) {
-  return { id: r.kanvana_id, name: r.name, color: r.color, group: r.group };
+function pbLabelToOpenAgile(r) {
+  return { id: r.openagile_id, name: r.name, color: r.color, group: r.group };
 }
 
-// ── Kanvana → PB payload converters ──────────────────────────────────────────
+// ── OpenAgile → PB payload converters ──────────────────────────────────────────
 
 function taskPayload(task, userId) {
   const pbBoardId = idMap.boards.get(state.activeBoardId);
   const safe = sanitizeTaskFields(task);
-  return { ...safe, kanvana_id: task.id, user: userId, board: pbBoardId };
+  return { ...safe, openagile_id: task.id, user: userId, board: pbBoardId };
 }
 function columnPayload(col, userId) {
   const pbBoardId = idMap.boards.get(state.activeBoardId);
   const safe = sanitizeColumnFields(col);
-  return { ...safe, kanvana_id: col.id, user: userId, board: pbBoardId };
+  return { ...safe, openagile_id: col.id, user: userId, board: pbBoardId };
 }
 function labelPayload(label, userId) {
   const pbBoardId = idMap.boards.get(state.activeBoardId);
   const safe = sanitizeLabelFields(label);
-  return { ...safe, kanvana_id: label.id, user: userId, board: pbBoardId };
+  return { ...safe, openagile_id: label.id, user: userId, board: pbBoardId };
 }
 
 // ── Boards ─────────────────────────────────────────────────────────────────────
@@ -1353,7 +1353,7 @@ export function saveSettings(settings) {
     } else {
       await _pb.collection('board_settings').create({
         user: _userId, board: pbBoardId,
-        data: settings, kanvana_id: `settings-${boardId}`,
+        data: settings, openagile_id: `settings-${boardId}`,
       });
     }
   });
@@ -1960,7 +1960,7 @@ if (pbConfig) {
 
   } catch (err) {
     // PocketBase unavailable at startup — fall back to IDB adapter
-    console.warn('[Kanvana] PocketBase unavailable at startup, using local data:', err.message);
+    console.warn('[OpenAgile] PocketBase unavailable at startup, using local data:', err.message);
     await resetToIdbAdapter();
     updateBadge('pb-offline');
   }
@@ -2111,7 +2111,7 @@ As of v1.6, all modules import storage functions from `storage-adapter.js` inste
 - **IDB adapter** (`storage.js`) — default; local-first, no network
 - **PocketBase adapter** (`pb-storage.js`) — optional; activated after user connects a PocketBase instance
 
-The active adapter is set at startup by checking for `kanvana-pb-config` in IDB. Switching adapters (on connect, disconnect, or session expiry) is done via `setPbAdapter()` and `resetToIdbAdapter()` in `storage-adapter.js`.
+The active adapter is set at startup by checking for `openagile-pb-config` in IDB. Switching adapters (on connect, disconnect, or session expiry) is done via `setPbAdapter()` and `resetToIdbAdapter()` in `storage-adapter.js`.
 ```
 
 - [ ] **Step 3: Update `docs/spec/overview.md`**
@@ -2165,7 +2165,7 @@ npm audit
 - [ ] Auth failure message does not leak email existence (test in browser: wrong password → generic message)
 - [ ] Mode badge shows "Local" on fresh load with no PocketBase config
 - [ ] `localStorage` and DevTools Application → IndexedDB show no password stored after connect flow
-- [ ] `kanvana-pb-config` in IDB contains `tokenExpiry` field (not null for password auth) and no `password` field
+- [ ] `openagile-pb-config` in IDB contains `tokenExpiry` field (not null for password auth) and no `password` field
 
 - [ ] **Step 5: Final commit (if any cleanup needed)**
 
@@ -2201,7 +2201,7 @@ git commit -m "chore: final cleanup and verification for PocketBase backend inte
 | Security — AI agent `initWithApiKey` | Task 3 |
 | Architecture — timeouts on all calls | Tasks 4, 5, 6 |
 | Architecture — retry (token refresh only) | Task 3 |
-| Architecture — migration idempotency + kanvana_id pre-check | Task 5 |
+| Architecture — migration idempotency + openagile_id pre-check | Task 5 |
 | Architecture — `pb:sync-error` structured payload | Tasks 4, 6, 9 |
 | Architecture — startup resilience (IDB fallback if PB slow) | Task 12 |
 | Architecture — per-collection write serialization | Task 6 |
@@ -2212,4 +2212,4 @@ git commit -m "chore: final cleanup and verification for PocketBase backend inte
 
 **No placeholders found.** All steps contain actual code.
 
-**Type consistency check:** `idMap` is always `Map<kanvana_id, pb_id>`; `state` shape matches `storage.js` in all adapters; `diffRecords` returns `{ creates, updates, deletes }` consistently across `pb-sync.js`, `pb-storage.js`.
+**Type consistency check:** `idMap` is always `Map<openagile_id, pb_id>`; `state` shape matches `storage.js` in all adapters; `diffRecords` returns `{ creates, updates, deletes }` consistently across `pb-sync.js`, `pb-storage.js`.

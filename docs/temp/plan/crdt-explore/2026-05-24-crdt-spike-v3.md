@@ -2,7 +2,7 @@
 
 ## Context
 
-Kanvana is local-first with IndexedDB as the per-device source of truth and optional PocketBase push/pull. The current sync model (PR #89) relies on last-write-wins (LWW) on whole records, which is unsafe for single-user multi-device workflows (e.g., laptop + phone offline edits).
+OpenAgile is local-first with IndexedDB as the per-device source of truth and optional PocketBase push/pull. The current sync model (PR #89) relies on last-write-wins (LWW) on whole records, which is unsafe for single-user multi-device workflows (e.g., laptop + phone offline edits).
 
 After evaluating CRDTs and finding them overly complex and disruptive to our read-model/analytics, this document outlines a shift to **Event Sourcing (Command-Based Sync)**. This approach models user interactions as an append-only stream of commands, eliminating complex mathematical merging, preventing silent data loss, and keeping PocketBase as a simple, highly-available storage layer.
 
@@ -10,7 +10,7 @@ Out of scope for this spike: multi-user/shared boards and real-time WebSocket co
 
 ---
 
-## What concurrent multi-device editing actually looks like in Kanvana
+## What concurrent multi-device editing actually looks like in OpenAgile
 
 Under Event Sourcing, the realistic concurrent-edit scenarios for one user across two devices are resolved chronologically by the server:
 
@@ -78,7 +78,7 @@ The synchronization process operates seamlessly in the background using a hybrid
 
 1. **In the air (Phone):** User moves/edits tasks. Events append locally. UI updates instantly. `synced` = `false`.
 2. **On the ground:** Cellular connects. Background loop detects network, queries unsynced events, and pushes to PocketBase.
-3. **In the office (Laptop):** User opens Kanvana. App boots, pulls events since last sync, downloads the phone's events, and updates the local projection. Board reflects airplane work instantly.
+3. **In the office (Laptop):** User opens OpenAgile. App boots, pulls events since last sync, downloads the phone's events, and updates the local projection. Board reflects airplane work instantly.
 
 ---
 

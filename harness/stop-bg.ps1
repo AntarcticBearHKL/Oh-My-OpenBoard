@@ -1,4 +1,4 @@
-$port = if ($env:KANVANA_PORT) { [int]$env:KANVANA_PORT } else { 8787 }
+$port = if ($env:OPENAGILE_PORT) { [int]$env:OPENAGILE_PORT } else { 8787 }
 
 Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue |
   Select-Object -ExpandProperty OwningProcess -Unique |

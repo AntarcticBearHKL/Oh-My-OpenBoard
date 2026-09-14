@@ -6,7 +6,7 @@ All modules require TDD (red-green-refactor). See test layer guidance below.
 
 | Module | Change summary |
 |---|---|
-| `storage.js` | Add `loadGlobalSettings()` / `saveGlobalSettings()` for new `kanvana:settings:global` IDB key. Add pending hard-deletes queue CRUD: `getPendingHardDeletes()`, `addPendingHardDelete({ localTaskId, boardId })`, `clearPendingHardDeleteEntry(localTaskId)`. Update `purgeDeleted()` to operate on tasks only (columns and labels are unaffected). |
+| `storage.js` | Add `loadGlobalSettings()` / `saveGlobalSettings()` for new `openagile:settings:global` IDB key. Add pending hard-deletes queue CRUD: `getPendingHardDeletes()`, `addPendingHardDelete({ localTaskId, boardId })`, `clearPendingHardDeleteEntry(localTaskId)`. Update `purgeDeleted()` to operate on tasks only (columns and labels are unaffected). |
 | `tasks.js` | Branch `deleteTask()` on `softDeleteEnabled` global setting. **Permanent path:** immediately purge task from IDB, write board-level `task.deleted` audit event, call `addPendingHardDelete`. **Soft path:** set `deleted: true` and persist (existing behaviour). |
 | `task-card.js` | Update delete button confirmation dialog to read `softDeleteEnabled` and display the mode-aware message. Permanent mode: "Delete this task? This cannot be undone." Soft-delete mode: "You have soft-delete active, this will set the task as deleted and will not count or show in any location, to permanently delete you must click purge in the settings." |
 | `settings.js` | Add `softDeleteEnabled: false` default to global settings. Wire `loadGlobalSettings()` / `saveGlobalSettings()` storage calls. |

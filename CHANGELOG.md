@@ -141,7 +141,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed missing scale icon for the legal/impressum page.
 - Deleting a board while signed in now also deletes the mapped PocketBase board and its board-scoped columns, labels, tasks, relationships, and events before removing the local board.
 - Board changes from another device now refresh the board selector live (issue #114): remotely created or renamed boards appear in the dropdown without a reload.
-- Event-sourced PocketBase migration fixed for PocketBase v0.38.1 (issue #114): `events.board` is stored as TEXT (a client-side local UUID, not a `kanvana_boards` relation), so board-scoped events no longer fail validation; uses the v0.38.1 field API (`removeByName`/`add`).
+- Event-sourced PocketBase migration fixed for PocketBase v0.38.1 (issue #114): `events.board` is stored as TEXT (a client-side local UUID, not a `openagile_boards` relation), so board-scoped events no longer fail validation; uses the v0.38.1 field API (`removeByName`/`add`).
 - Added a follow-up PocketBase migration that defensively repairs deployed databases where `events.board` is still a relation, preventing `validation_missing_rel_records` failures when signed-in users save task changes.
 - Corrected the frontend reverse-proxy URL in the Nginx configuration.
 - Vite now loads the `client/.env.local` (dev) and `client/.env.production` (build) files: `envDir` was previously resolving to `client/src/`, so `VITE_PB_URL` was silently ignored and the app fell back to the same origin; the production build now correctly targets `https://pb.kanvana.com`. The Playwright e2e configs pin `VITE_PB_URL=/` so the sandboxed browser stays same-origin via the `/api` proxy.
@@ -192,7 +192,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added Udami web analytics for kanvana gdpr compliant no tracking web analytics, so I know how many people visit.
+- Added Udami web analytics for openagile gdpr compliant no tracking web analytics, so I know how many people visit.
 - Soft-delete for tasks, columns, and labels: `deleteTask`, `deleteColumn`, `deleteLabel` now mark entities with `deleted: true` instead of hard-removing them; all read paths (`loadTasks`, `loadColumns`, `loadLabels`, board-scoped variants) filter deleted records so callers never see them
 - `loadDeletedTasksForBoard(boardId)`, `loadDeletedColumnsForBoard(boardId)`, `loadDeletedLabelsForBoard(boardId)` — sync layer access to soft-deleted records before purge
 - `purgeDeleted(boardId)` — hard-removes all `deleted: true` records from IDB for a given board; called by sync layer after confirmed PocketBase deletes
@@ -271,17 +271,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - When no labels match the search query, the "Create label" button is auto-highlighted and navigable with keyboard (Enter opens Create Label modal with search text pre-filled; arrow keys can move between it and any partial matches); after creation the new label is auto-added and the search box is cleared
 - Updated `docs/spec/overview.md` to reflect IndexedDB storage (was still referencing localStorage in three places) and added all missing modules to the module map (normalize, security, dom, events, constants, task-card, task-modal, column-element, column-modal, boards-modal, labels-modal, swimlane-renderer, impressum)
 - Updated `docs/specification-kanban.md` ownership map to include all current modules with their corresponding spec files
-- Replaced the header's Lucide kanban icon with the Kanvana SVG logo while keeping the brand text bound to the active board name
-- **Storage backend migrated from `localStorage` to IndexedDB** (`idb` wrapper, `kanvana-db` database). All board data now persists in a key-value IDB object store (`kv`) instead of localStorage, removing the hard 5–10 MB browser limit. Writes are non-blocking (async fire-and-forget). One-time automatic migration runs on first load for existing users.
+- Replaced the header's Lucide kanban icon with the OpenAgile SVG logo while keeping the brand text bound to the active board name
+- **Storage backend migrated from `localStorage` to IndexedDB** (`idb` wrapper, `openagile-db` database). All board data now persists in a key-value IDB object store (`kv`) instead of localStorage, removing the hard 5–10 MB browser limit. Writes are non-blocking (async fire-and-forget). One-time automatic migration runs on first load for existing users.
 - Added `initStorage()` async entry point called once per page load in `kanban.js`, `reports.js`, and `calendar.js` before any board rendering. All other storage functions remain synchronous via in-memory state.
 - Added `loadTasksForBoard(id)`, `loadColumnsForBoard(id)`, `loadLabelsForBoard(id)`, `loadSettingsForBoard(id)` helpers for cross-board reads (used by board export).
 - Added non-blocking quota monitoring: logs a console warning when IDB usage exceeds 80% of the browser's storage quota.
 - Unit tests now use `fake-indexeddb` to polyfill IDB in Node.js; `_resetStorageForTesting()` resets in-memory state between tests. The reset function closes the IDB connection before nulling it so subsequent `deleteDB()` calls in test teardown are never blocked.
 - Added `_flushPersistsForTesting()` export that awaits all in-flight IDB writes (`_pendingPersists` Set) before assertions run, eliminating timing races in cross-session roundtrip tests.
 - Added `tests/unit/storage-idb.test.js` — 19 tests covering IDB-specific paths: fresh-start behaviour, cross-session persistence for tasks/columns/labels/settings/boards, `deleteBoard` IDB cleanup, multi-board and legacy single-board localStorage migration, idempotent re-migration guard, corrupt IDB resilience, and cross-board read helpers (`loadTasksForBoard` etc.).
-- Renamed the project from "personal-kanban" to "kanvana"  kanvana == "Kanban" + "nirvana" # smooth flow
+- Renamed the project from "personal-kanban" to "openagile"  openagile == "Kanban" + "nirvana" # smooth flow
 - Renamed link in page footer to Github Docs instead of "Documentation"
-- Documentation .md docs to refer to kanvana better reflect new name within the documentation.
+- Documentation .md docs to refer to openagile better reflect new name within the documentation.
 - Migrated all E2E tests from localStorage to IndexedDB seeding and assertions (`swimlanes-persistence`, `swimlanes-dnd`, `swimlanes-toggle`, `subtasks`, `create-task`, `dragdrop`); added `readIDBValue` / `readIDBSettings` helpers to `swimlanes.helpers.js`
 
 ### Fixed

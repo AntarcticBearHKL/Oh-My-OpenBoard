@@ -1,7 +1,7 @@
 services:
   kv-nginx:
     container_name: kv-nginx
-    image: kanvana_nginx:alpine
+    image: openagile_nginx:alpine
     build:
       context: .
       dockerfile: devops/local/nginx/Dockerfile
@@ -14,7 +14,7 @@ services:
 
   kv-frontend:
     container_name: kv-frontend
-    image: kanvana-frontend-dev
+    image: openagile-frontend-dev
     build:
       context: .
       dockerfile: devops/local/frontend/Dockerfile
@@ -28,7 +28,7 @@ services:
 
   kv-pocketbase:
     container_name: kv-pb
-    image: kanvana-pb:latest
+    image: openagile-pb:latest
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -39,7 +39,7 @@ services:
     volumes:
       - pb_data:/pocketbase/data
     environment:
-      POCKETBASE_ADMIN_EMAIL: ${POCKETBASE_ADMIN_EMAIL:-admin@kanvana.local}
+      POCKETBASE_ADMIN_EMAIL: ${POCKETBASE_ADMIN_EMAIL:-admin@openagile.local}
       POCKETBASE_ADMIN_PASSWORD: ${POCKETBASE_ADMIN_PASSWORD:-changeme123}
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8090/api/health" ]

@@ -8,7 +8,7 @@
 
 ## Overview
 
-Kanvana is a local-first kanban board that stores all data in browser IndexedDB. This design adds an
+OpenAgile is a local-first kanban board that stores all data in browser IndexedDB. This design adds an
 optional PocketBase backend that users can explicitly enable by connecting to a self-hosted PocketBase
 instance. The default local-only experience is unchanged.
 
@@ -46,7 +46,7 @@ src/modules/storage-adapter.js   ← single import point for all consumers
   └── PB adapter   →  src/modules/pb-storage.js      (new)
 ```
 
-On startup, `storage-adapter.js` checks IDB for a `kanvana-pb-config` key. If present and the auth
+On startup, `storage-adapter.js` checks IDB for a `openagile-pb-config` key. If present and the auth
 token is valid (or successfully refreshed), it activates the PocketBase adapter. Otherwise it
 activates the IDB adapter.
 
@@ -108,7 +108,7 @@ delete:       @request.auth.id != "" && user = @request.auth.id
 ```
 
 **PocketBase admin API:** The admin API (`/_/`) must never be exposed publicly. Self-hosters must
-place it behind a firewall rule or reverse-proxy block. Kanvana never calls admin routes — any
+place it behind a firewall rule or reverse-proxy block. OpenAgile never calls admin routes — any
 adapter code that would require admin credentials is forbidden.
 
 ### Collection: `boards`
@@ -119,7 +119,7 @@ adapter code that would require admin credentials is forbidden.
 | user         | relation | → users (required)                         |
 | name         | text     | Board display name                         |
 | createdAt    | date     |                                            |
-| kanvana_id   | text     | Original client-side UUID (migration key)  |
+| openagile_id   | text     | Original client-side UUID (migration key)  |
 
 ### Collection: `tasks`
 
@@ -128,16 +128,16 @@ adapter code that would require admin credentials is forbidden.
 | id             | auto     |                                                     |
 | user           | relation | → users                                             |
 | board          | relation | → boards                                            |
-| kanvana_id     | text     | Original client-side UUID                           |
+| openagile_id     | text     | Original client-side UUID                           |
 | title          | text     |                                                     |
 | description    | text     |                                                     |
 | priority       | text     | urgent\|high\|medium\|low\|none                     |
 | dueDate        | text     | YYYY-MM-DD or empty                                 |
-| column         | text     | kanvana_id of the column                            |
+| column         | text     | openagile_id of the column                            |
 | order          | number   |                                                     |
-| labels         | json     | array of label kanvana_ids                          |
-| columnHistory  | json     | `[{ column: kanvana_id, at: ISO }]`                 |
-| relationships  | json     | `[{ type, targetTaskId: kanvana_id }]`              |
+| labels         | json     | array of label openagile_ids                          |
+| columnHistory  | json     | `[{ column: openagile_id, at: ISO }]`                 |
+| relationships  | json     | `[{ type, targetTaskId: openagile_id }]`              |
 | subTasks       | json     | sub-task array                                      |
 | creationDate   | date     |                                                     |
 | changeDate     | date     |                                                     |
@@ -150,7 +150,7 @@ adapter code that would require admin credentials is forbidden.
 | id          | auto     |                               |
 | user        | relation | → users                       |
 | board       | relation | → boards                      |
-| kanvana_id  | text     | Original client-side UUID     |
+| openagile_id  | text     | Original client-side UUID     |
 | name        | text     |                               |
 | color       | text     | hex color                     |
 | order       | number   |                               |
@@ -163,7 +163,7 @@ adapter code that would require admin credentials is forbidden.
 | id          | auto     |                           |
 | user        | relation | → users                   |
 | board       | relation | → boards                  |
-| kanvana_id  | text     | Original client-side UUID |
+| openagile_id  | text     | Original client-side UUID |
 | name        | text     | max 40 chars              |
 | color       | text     | hex color                 |
 | group       | text     | optional label group      |
@@ -187,13 +187,13 @@ Using a single `data` JSON field for settings avoids schema churn as settings fi
 
 1. User opens a new top-level "App Settings" modal (global, not per-board)
 2. User enters PocketBase instance URL, email, and password
-3. Kanvana calls PocketBase auth endpoint via the PocketBase JS SDK
+3. OpenAgile calls PocketBase auth endpoint via the PocketBase JS SDK
 4. On success: migration flow starts (see Migration section)
 5. On failure: error message shown inline, no state change
 
 ### Token Persistence
 
-Stored in IDB under key `kanvana-pb-config`:
+Stored in IDB under key `openagile-pb-config`:
 
 ```js
 {
@@ -205,11 +205,11 @@ Stored in IDB under key `kanvana-pb-config`:
 ```
 
 - Password is never stored
-- On app startup, if `kanvana-pb-config` is present: attempt silent token refresh via PocketBase
+- On app startup, if `openagile-pb-config` is present: attempt silent token refresh via PocketBase
   auth refresh endpoint
 - If refresh succeeds: activate PocketBase adapter
 - If refresh fails: fall back to IDB adapter, surface "Reconnect to PocketBase" prompt in header
-- Logout: delete `kanvana-pb-config` from IDB, switch to IDB adapter, reload
+- Logout: delete `openagile-pb-config` from IDB, switch to IDB adapter, reload
 
 **Token expiry — mid-session:** `pb-auth.js` sets a JavaScript timer at startup to refresh the
 token 60 seconds before `tokenExpiry`. If the refresh fails mid-session, the app transitions to
@@ -223,7 +223,7 @@ default: 30 minutes) to limit the blast radius of any exfiltration.
 
 ### Disconnect
 
-A "Disconnect" button in App Settings clears `kanvana-pb-config`, switches back to the IDB adapter,
+A "Disconnect" button in App Settings clears `openagile-pb-config`, switches back to the IDB adapter,
 and reloads. Local IDB data (the migration snapshot) is still present and becomes active again.
 
 ---
@@ -250,18 +250,18 @@ synchronous from cache — identical behaviour to the IDB adapter.
 
 ### ID Mapping
 
-The adapter maintains an internal `idMap` that translates `kanvana_id` ↔ PocketBase record `id`:
+The adapter maintains an internal `idMap` that translates `openagile_id` ↔ PocketBase record `id`:
 
 ```js
 const idMap = {
-  boards: Map<kanvana_id, pb_id>,
-  tasks:  Map<kanvana_id, pb_id>,
-  columns: Map<kanvana_id, pb_id>,
-  labels: Map<kanvana_id, pb_id>
+  boards: Map<openagile_id, pb_id>,
+  tasks:  Map<openagile_id, pb_id>,
+  columns: Map<openagile_id, pb_id>,
+  labels: Map<openagile_id, pb_id>
 }
 ```
 
-The rest of the app always works with `kanvana_id` values. The adapter translates to/from PocketBase
+The rest of the app always works with `openagile_id` values. The adapter translates to/from PocketBase
 IDs internally when constructing API payloads. This preserves all existing cross-references
 (`task.column`, `task.labels[]`, `task.relationships[].targetTaskId`) without changes to any
 consuming module.
@@ -307,10 +307,10 @@ Fires automatically after the user successfully authenticates to PocketBase for 
    - `POST /api/collections/boards/records` — create board, store returned `pb_id` in `idMap`
    - Bulk-create all columns for that board
    - Bulk-create all labels for that board
-   - Bulk-create all tasks for that board (all `kanvana_id` references preserved)
+   - Bulk-create all tasks for that board (all `openagile_id` references preserved)
    - `POST /api/collections/board_settings/records` — create settings record
 4. On full success:
-   - Persist `kanvana-pb-config` to IDB
+   - Persist `openagile-pb-config` to IDB
    - Switch active adapter to PocketBase
    - Close migration modal with "Migration complete" message
    - Reload active board from PocketBase cache
@@ -418,7 +418,7 @@ apply to every implementation task in this feature.
 ### Zero-Trust Principles Applied
 
 1. **Never trust, always verify** — every request to PocketBase must carry a valid auth token.
-   No unauthenticated routes exist in Kanvana's PocketBase usage.
+   No unauthenticated routes exist in OpenAgile's PocketBase usage.
 2. **Least privilege** — collection rules grant the minimum access needed. No wildcard or
    open-read rules. AI agent tokens are scoped to their owning user's data only.
 3. **Deny by default** — all PocketBase collections default to deny-all. Access is granted
@@ -445,7 +445,7 @@ Content-Security-Policy:
 connects. Until then it is `'self'` only. Inline scripts are forbidden (`script-src 'self'` — no
 `unsafe-inline`). This is the primary mitigation against auth token exfiltration via XSS.
 
-**Docker deployment exception:** When Kanvana is served via the Docker nginx stack (see
+**Docker deployment exception:** When OpenAgile is served via the Docker nginx stack (see
 `docs/superpowers/specs/2026-04-04-docker-devops-design.md`), PocketBase is proxied at the same
 origin via nginx. In this case `connect-src 'self'` is sufficient — no dynamic
 `<pocketbase-origin>` needs to be appended. The dynamic update described above applies only to
@@ -477,7 +477,7 @@ PocketBase URL is the same origin (`http://localhost:8080/api`) and the connect 
 
 **Human users:**
 - Credentials (email + password) are sent directly to PocketBase's auth endpoint over HTTPS — they
-  never touch any Kanvana-controlled server
+  never touch any OpenAgile-controlled server
 - Passwords are never stored in IDB, in memory beyond the auth call, or in any log
 - Error messages on failed auth must be generic: "Authentication failed. Check your credentials and
   PocketBase URL." — never reveal whether the email exists on the instance
@@ -491,7 +491,7 @@ PocketBase URL is the same origin (`http://localhost:8080/api`) and the connect 
 - `pb-auth.js` refreshes the token 60 seconds before expiry via PocketBase's auth refresh endpoint
 - On refresh failure mid-session: immediately switch to read-only offline mode, clear the in-memory
   token, surface a "Session expired — please reconnect" prompt
-- On logout: delete `kanvana-pb-config` from IDB synchronously before any UI update
+- On logout: delete `openagile-pb-config` from IDB synchronously before any UI update
 
 ### AI Agent Authentication
 
@@ -503,13 +503,13 @@ They cannot authenticate interactively. The following model applies:
 - Agents authenticate using PocketBase's **API key** (long-lived token) mechanism rather than the
   interactive login flow, generated from their user account via PocketBase admin UI
 - Agent API keys are stored in the agent's own secure secret management system (e.g. environment
-  variable, vault) — never in Kanvana's IDB or source code
+  variable, vault) — never in OpenAgile's IDB or source code
 
-**Agent access to Kanvana:**
+**Agent access to OpenAgile:**
 - `pb-auth.js` exposes an `initWithApiKey(url, apiKey)` function alongside the interactive
   `initWithCredentials(url, email, password)` function
 - When called with an API key, `pb-auth.js` skips the interactive auth call and directly sets the
-  PocketBase SDK token to the provided key, then persists `kanvana-pb-config` with
+  PocketBase SDK token to the provided key, then persists `openagile-pb-config` with
   `{ url, token: apiKey, userId, tokenExpiry: null }`
 - `tokenExpiry: null` signals to the refresh timer that no mid-session refresh is needed (API keys
   do not expire by default in PocketBase)
@@ -537,7 +537,7 @@ call the same normalization functions before constructing its API payloads.
 
 ### Audit Logging
 
-`pb-auth.js` must log the following security events to the browser console (prefixed `[Kanvana
+`pb-auth.js` must log the following security events to the browser console (prefixed `[OpenAgile
 Security]`) and emit them as custom DOM events for potential future server-side capture:
 
 | Event                        | Log level | Detail                          |
@@ -566,7 +566,7 @@ Logs must never include: passwords, tokens, full URLs with credentials, or raw u
 
 ## AI Agent Integration
 
-AI agents interact with Kanvana's PocketBase backend as regular authenticated users. This section
+AI agents interact with OpenAgile's PocketBase backend as regular authenticated users. This section
 describes how agents connect and the constraints that apply.
 
 ### Authentication
@@ -575,7 +575,7 @@ Agents use `initWithApiKey(url, apiKey)` in `pb-auth.js`. This function:
 1. Validates the URL (same strict rules as human login)
 2. Sets the PocketBase SDK token directly (no interactive auth call)
 3. Fetches the current user record to confirm the token is valid and retrieves `userId`
-4. Persists `kanvana-pb-config` to IDB with `tokenExpiry: null`
+4. Persists `openagile-pb-config` to IDB with `tokenExpiry: null`
 
 Agents are responsible for supplying a valid API key at startup. If the key is invalid or expired,
 `initWithApiKey` throws and the adapter falls back to IDB mode.
@@ -583,10 +583,10 @@ Agents are responsible for supplying a valid API key at startup. If the key is i
 ### Programmatic Access Pattern
 
 An AI agent running in a non-browser environment (Node.js, server-side script) does not use the
-Kanvana UI at all — it uses the PocketBase REST API directly. The PocketBase collection schema
+OpenAgile UI at all — it uses the PocketBase REST API directly. The PocketBase collection schema
 described in this spec is the API contract the agent programs against.
 
-For agents running inside the Kanvana browser UI (e.g. a future in-app AI assistant), the standard
+For agents running inside the OpenAgile browser UI (e.g. a future in-app AI assistant), the standard
 `storage-adapter.js` interface is used — the agent calls the same `saveTasks()`, `loadTasks()` etc.
 functions as the human-facing UI code.
 
@@ -595,7 +595,7 @@ functions as the human-facing UI code.
 1. In PocketBase admin UI, create a new user account for the agent (e.g. `triage-agent@myorg.com`)
 2. Generate an API key for that account
 3. Store the API key in the agent's secret management system
-4. The agent initializes Kanvana with `initWithApiKey(pbUrl, apiKey)`
+4. The agent initializes OpenAgile with `initWithApiKey(pbUrl, apiKey)`
 5. No human credentials are involved; no interactive UI is required
 
 ---
@@ -628,10 +628,10 @@ The only operation in Phase 1 that retries is **token refresh**: one retry with 
 
 The migration sequence must be idempotent so that a partial migration followed by a retry produces no duplicate records.
 
-**Before creating any record**, `pb-migration.js` must query PocketBase for an existing record with matching `kanvana_id` for that user:
+**Before creating any record**, `pb-migration.js` must query PocketBase for an existing record with matching `openagile_id` for that user:
 
 ```
-GET /api/collections/{collection}/records?filter=(kanvana_id="{id}"&&user="{userId}")
+GET /api/collections/{collection}/records?filter=(openagile_id="{id}"&&user="{userId}")
 ```
 
 - If found: skip creation, store the returned `pb_id` in `idMap` (treat as already migrated)
@@ -639,7 +639,7 @@ GET /api/collections/{collection}/records?filter=(kanvana_id="{id}"&&user="{user
 
 This makes each per-board migration step re-entrant. A full retry of a partially completed board safely resumes without duplicates.
 
-**Implication:** `kanvana_id` must be indexed in PocketBase for each collection (set `Indexes` on the `kanvana_id` field in the PocketBase schema) to avoid full-collection scans during idempotency checks.
+**Implication:** `openagile_id` must be indexed in PocketBase for each collection (set `Indexes` on the `openagile_id` field in the PocketBase schema) to avoid full-collection scans during idempotency checks.
 
 ### `pb:sync-error` Event Payload
 
@@ -651,7 +651,7 @@ new CustomEvent('pb:sync-error', {
   detail: {
     collection: 'tasks' | 'columns' | 'labels' | 'board_settings' | 'boards',
     operation:  'create' | 'update' | 'delete',
-    kanvana_id: string,   // the kanvana_id of the affected record
+    openagile_id: string,   // the openagile_id of the affected record
     error:      string,   // human-readable error message (no internal details)
     timestamp:  string    // ISO date string
   }

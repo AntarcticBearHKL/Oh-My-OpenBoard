@@ -2,7 +2,7 @@
 
 ## Context
 
-Kanvana is local-first with IndexedDB as the per-device source of truth. The current sync (PR #89) is whole-record last-write-wins (LWW) push/pull against PocketBase — unsafe for multi-device because non-overlapping field edits on the same task silently clobber each other, and unsynced offline edits are at risk whenever the other device pushes a stale state back.
+OpenAgile is local-first with IndexedDB as the per-device source of truth. The current sync (PR #89) is whole-record last-write-wins (LWW) push/pull against PocketBase — unsafe for multi-device because non-overlapping field edits on the same task silently clobber each other, and unsynced offline edits are at risk whenever the other device pushes a stale state back.
 
 **Primary use case driving this change:** a single user moves between mobile and laptop. Changes made on one device must appear on the other quickly and without data loss. Concurrent same-task editing is rare; "stale-state-overwrite when the just-opened device pushes" is the dominant failure today.
 
@@ -23,7 +23,7 @@ The user-facing audit/activity-log feature is **dropped from v1** to minimize sc
 3. **Pure event sourcing (Option A)** — the event log is the absolute, definitive source of truth. The IDB `kanbanBoard:{boardId}:tasks` / `:columns` / `:labels` keys become **read-model cache** maintained exclusively by the reducer. They are never mutated by feature modules directly. On boot: load latest snapshot → replay events since → render.
 4. **Offline-only-forever is a first-class mode** — a user who never logs in must have full functionality. All reducer + snapshot logic runs client-side; PocketBase is optional fan-out.
 5. **Hybrid Logical Clock (HLC) for total event ordering** — every event carries `hlc: { wallTime, counter, nodeId }`. All replicas sort by HLC. `hlc` is canonical for ordering; `at` (ISO timestamp) is retained for display only. Wall-clock-skew tolerant.
-6. **HLC node ID** — generated once on first boot via `crypto.randomUUID()`, persisted at IDB key `kanvana:hlc:node`, never rotated.
+6. **HLC node ID** — generated once on first boot via `crypto.randomUUID()`, persisted at IDB key `openagile:hlc:node`, never rotated.
 
 ### Event model
 
@@ -105,7 +105,7 @@ The user-facing audit/activity-log feature is **dropped from v1** to minimize sc
     - On auth/login: subscribe to `events` collection filtered by owner (one subscription, not per-board).
     - Realtime apply: every received event passes through the same reducer as local events. Idempotent by UUID handles echo + duplicates for free.
     - Catch-up: on launch and reconnect, `events.list({ filter: 'hlc > lastSeenHlc' })` → replay → set `lastSeenHlc`.
-33. **`lastSeenHlc` persisted in IDB** at key `kanvana:sync:lastSeenHlc` (per board, plus one for global scope).
+33. **`lastSeenHlc` persisted in IDB** at key `openagile:sync:lastSeenHlc` (per board, plus one for global scope).
 34. **Per-device subscription is the user-owner filter only** for v1. Multi-user shared boards later expands the filter expression.
 
 ### Sync rejection & queue behavior

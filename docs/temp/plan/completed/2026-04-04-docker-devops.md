@@ -184,14 +184,14 @@ EXPOSE 80
 - [ ] **Step 2: Verify the image builds locally**
 
 ```bash
-docker build --target prod -t kanvana:local .
-# Expected: Successfully tagged kanvana:local
+docker build --target prod -t openagile:local .
+# Expected: Successfully tagged openagile:local
 ```
 
 - [ ] **Step 3: Verify the built image serves the app**
 
 ```bash
-docker run --rm -p 9999:80 kanvana:local &
+docker run --rm -p 9999:80 openagile:local &
 sleep 2
 curl -s -o /dev/null -w "%{http_code}" http://localhost:9999
 # Expected: 200
@@ -217,7 +217,7 @@ Check what GitHub org/username is used in this repo before writing the image nam
 
 ```bash
 git remote get-url origin
-# Note the owner name for use in ghcr.io/<owner>/kanvana below
+# Note the owner name for use in ghcr.io/<owner>/openagile below
 ```
 
 - [ ] **Step 1: Create `docker-compose.yml`**
@@ -230,7 +230,7 @@ services:
     build:
       context: .
       target: prod
-    image: ghcr.io/<owner>/kanvana:${IMAGE_TAG:-latest}
+    image: ghcr.io/<owner>/openagile:${IMAGE_TAG:-latest}
     ports:
       - "${NGINX_PORT:-80}:80"
     depends_on:
@@ -461,8 +461,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/kanvana:latest
-            ghcr.io/${{ github.repository_owner }}/kanvana:sha-${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/openagile:latest
+            ghcr.io/${{ github.repository_owner }}/openagile:sha-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -552,7 +552,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd /opt/kanvana
+            cd /opt/openagile
             docker compose pull
             docker compose up -d --remove-orphans
             docker image prune -f

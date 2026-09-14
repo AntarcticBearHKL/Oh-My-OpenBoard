@@ -2,7 +2,7 @@
 
 ## Context
 
-Kanvana is local-first with IndexedDB as the per-device source of truth and optional PocketBase push/pull. The current sync model (PR #89, 9 phases) is **last-write-wins (LWW) on whole records**, with integer `order` fields, optional task soft-delete (default off), and no merge logic — pulls overwrite, pushes overwrite. This works for a single device but is unsafe for the target use case: **the same user, working offline on multiple devices (e.g. laptop + phone), reconnecting and expecting nothing to be silently lost**.
+OpenAgile is local-first with IndexedDB as the per-device source of truth and optional PocketBase push/pull. The current sync model (PR #89, 9 phases) is **last-write-wins (LWW) on whole records**, with integer `order` fields, optional task soft-delete (default off), and no merge logic — pulls overwrite, pushes overwrite. This works for a single device but is unsafe for the target use case: **the same user, working offline on multiple devices (e.g. laptop + phone), reconnecting and expecting nothing to be silently lost**.
 
 CRDT-based systems would give us: no lost updates, automatic convergence, no manual conflict UI, partition tolerance, and no leader/lock coordination. This document is a **research spike** — it surveys what concurrent edits actually look like for our domain, compares three approaches, and recommends one. No implementation steps yet; the recommendation should feed a follow-up PRD/ADR.
 
@@ -10,7 +10,7 @@ Out of scope for this spike: multi-user/shared boards, real-time collaboration, 
 
 ---
 
-## What concurrent multi-device editing actually looks like in Kanvana
+## What concurrent multi-device editing actually looks like in OpenAgile
 
 Given the entity model (see `CONTEXT.md`, `client/src/modules/storage.js`, `backend/pb_migrations/`), the realistic concurrent-edit scenarios for one user across two devices are:
 

@@ -32,7 +32,7 @@ Users who want a recovery safety net can opt in to **soft-delete mode** via a ne
 * **Soft-Delete Notice:** As a board user in soft-delete mode (enabled in settings), I want the confirmation dialog to tell me the task will be soft deleted and hidden and how to permanently remove it, so that I understand the soft-delete behaviour before confirming.
 * **Workspace Cleanliness:** As a board user in soft-delete mode, I want deleted tasks not to be included in any and all board views, column counts, reports, and calendar, so that my workspace stays clean.
 * **Deletion Durability:** As a board user in soft-delete mode, I want soft-deleted tasks to stay retained — and stay counted for purge — even after I add, edit, move, or reorder other tasks, so that nothing is silently lost before I explicitly purge. Concretely: if I soft-delete 5 tasks and then continue working on the board, the Settings purge count must still read 5.
-* **Global Configuration:** As a kanvana user, I want to enable soft-delete from Settings on a global level for all boards, so that I can control deletion flow.
+* **Global Configuration:** As a openagile user, I want to enable soft-delete from Settings on a global level for all boards, so that I can control deletion flow.
 
 ### Purging Mechanics
 
@@ -50,7 +50,7 @@ Users who want a recovery safety net can opt in to **soft-delete mode** via a ne
 
 ### UX & Settings Polish
 
-* **Visual Settings Hierarchy:** As a kanvana user, I want the Settings panel to clearly separate global (app-wide) settings from board-specific settings, so that I know which settings affect all boards and which affect only the current board.
+* **Visual Settings Hierarchy:** As a openagile user, I want the Settings panel to clearly separate global (app-wide) settings from board-specific settings, so that I know which settings affect all boards and which affect only the current board.
 * **Clear Labeling:** As a board user, I want the soft-delete toggle to be clearly labelled as an app-wide setting, so that I understand it applies to all boards, not just the current one.
 
 ---
@@ -72,7 +72,7 @@ Users who want a recovery safety net can opt in to **soft-delete mode** via a ne
 
 ### Global Settings Layer
 
-A new IDB key (`kanvana:settings:global`) holds cross-board app settings, accessed via `loadGlobalSettings()` / `saveGlobalSettings()`. This is separate from the existing per-board settings store. `softDeleteEnabled` (default `false`) is the first global setting. The Settings UI must visually distinguish board settings from global/app settings.
+A new IDB key (`openagile:settings:global`) holds cross-board app settings, accessed via `loadGlobalSettings()` / `saveGlobalSettings()`. This is separate from the existing per-board settings store. `softDeleteEnabled` (default `false`) is the first global setting. The Settings UI must visually distinguish board settings from global/app settings.
 
 ### Pending Hard-Deletes Queue
 

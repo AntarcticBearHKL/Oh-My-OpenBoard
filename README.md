@@ -1,7 +1,7 @@
-# Kanvana: The Personal + AI Agent Kanban Board
+# OpenAgile: The Personal + AI Agent Kanban Board
 
 ```js
-kanvana == "Kanban" + "Nirvana" # smooth flow
+openagile == "Kanban" + "Nirvana" # smooth flow
 ```
 
 [![GitHub stars](https://img.shields.io/github/stars/mdiener21/kanvana.svg?style=social)](https://github.com/mdiener21/kanvana/stargazers)
@@ -73,7 +73,7 @@ Configure swim lanes in **Settings** or use the quick-access toggle in the board
 
 ### 🔄 Real-Time Multi-Device Sync (New!)
 
-Edit on your phone, see it on your laptop — within seconds. Kanvana uses **event-sourced sync**: every change is a domain event ordered by a Hybrid Logical Clock (HLC), so independent edits across devices converge without overwriting each other. Tasks, columns, and labels in your browser are projections rebuilt from the event stream.
+Edit on your phone, see it on your laptop — within seconds. OpenAgile uses **event-sourced sync**: every change is a domain event ordered by a Hybrid Logical Clock (HLC), so independent edits across devices converge without overwriting each other. Tasks, columns, and labels in your browser are projections rebuilt from the event stream.
 
 - **Opt-in, never required** — stays 100% local until you choose to sign in. No account, no cloud, no problem.
 - **Live across devices** — an optional PocketBase backend streams remote changes over Server-Sent Events in real time; a catch-up pull on launch means a just-opened device is immediately up to date.
@@ -134,7 +134,7 @@ The repository includes a pre-built static site in `dist/`. Simply upload it to 
 
 1. Copy the `dist/` folder.
 2. Upload to your web host (e.g., [Hetzner](https://www.hetzner.com/de/webhosting), Netlify, Vercel).
-3. Done! Your Kanvana achieved and the Kanban board is live.
+3. Done! Your OpenAgile achieved and the Kanban board is live.
 
 ## 🛠️ Development
 
@@ -146,7 +146,7 @@ The repository includes a pre-built static site in `dist/`. Simply upload it to 
 1. Clone the repo:
    ```bash
    git clone https://github.com/mdiener21/kanvana.git
-   cd kanvana
+   cd openagile
    ```
 
 2. Install dependencies:

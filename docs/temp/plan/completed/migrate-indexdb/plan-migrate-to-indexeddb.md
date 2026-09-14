@@ -2,7 +2,7 @@
 
 ## Context
 
-Kanvana targets multi-user / team usage. Current `localStorage` storage has three blocking problems at that scale:
+OpenAgile targets multi-user / team usage. Current `localStorage` storage has three blocking problems at that scale:
 
 1. **5–10 MB hard ceiling** — multiple boards + team data will hit this quickly
 2. **Full-array rewrites** — every mutation re-serializes the whole tasks array (O(n) cost)
@@ -27,7 +27,7 @@ IndexedDB solves all four and is the standard local-first foundation for apps th
 
 Replace `localStorage.getItem`/`setItem` calls with IDB operations via `idb`.
 
-**IDB database name:** `kanvana-db`  
+**IDB database name:** `openagile-db`  
 **IDB version:** `1`
 
 **Object stores:**

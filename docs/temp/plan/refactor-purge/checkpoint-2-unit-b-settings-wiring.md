@@ -31,4 +31,4 @@ Make `settings-ui.test.js` hermetic by mocking `sync.js`:
 
 ## Run tests (environment note)
 
-`npm`/`node` not on PATH in default WSL shell. Use `wsl bash -lc "cd ~/dev/kanvana/client && npm run test:unit"` / `test:dom`. If PATH still broken, prepend `/home/mdiener/.nvm/versions/node/v24.13.1/bin`.
+`npm`/`node` not on PATH in default WSL shell. Use `wsl bash -lc "cd ~/dev/openagile/client && npm run test:unit"` / `test:dom`. If PATH still broken, prepend `/home/mdiener/.nvm/versions/node/v24.13.1/bin`.
