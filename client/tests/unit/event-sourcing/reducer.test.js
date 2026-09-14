@@ -174,20 +174,7 @@ test('column events create update delete and reorder columns', () => {
     entity_id: 'column-a',
     payload: { fields: { name: 'Doing' } }
   }));
-  const reordered = applyEvent(updated, event({
-    id: 'column-reorder',
-    type: 'column.reordered',
-    entity_id: 'column-a',
-    payload: { order: [{ id: 'column-a', order: 1 }] }
-  }));
-  const deleted = applyEvent(reordered, event({
-    id: 'column-delete',
-    type: 'column.deleted',
-    entity_id: 'column-a'
-  }));
-
-  expect(reordered.columns).toEqual([{ id: 'column-a', name: 'Doing', color: '#000000', order: 1 }]);
-  expect(deleted.columns).toEqual([{ id: 'column-a', name: 'Doing', color: '#000000', order: 1, deleted: true }]);
+  expect(updated.columns).toEqual([{ id: 'column-a', name: 'Doing', color: '#000000', order: 2 }]);
 });
 
 test('settings.updated handles board and global settings', () => {

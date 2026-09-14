@@ -51,34 +51,3 @@ export function updateColumn(columnId, name, color, wipLimit) {
 
   return Promise.resolve();
 }
-
-// Update column positions after drag
-export function updateColumnPositions() {
-  const container = document.getElementById("board-container");
-  const columnElements = container.querySelectorAll(".task-column");
-  const columns = loadColumns();
-  
-  let anyMoved = false;
-  columnElements.forEach((colEl, index) => {
-    const columnId = colEl.dataset.column;
-    const column = columns.find(c => c.id === columnId);
-    if (column) {
-      const nextOrder = index + 1;
-      if (column.order !== nextOrder) {
-        anyMoved = true;
-      }
-      column.order = nextOrder;
-    }
-  });
-
-  // Emit a single event only when at least one column moved; details {} kept
-  // minimal as the PRD does not specify a bulk payload shape.
-  if (anyMoved) {
-    scheduleDomainEvent({
-      type: 'column.reordered',
-      boardId: getActiveBoardId(),
-      entityId: '',
-      payload: { order: columns.map((column) => ({ id: column.id, order: column.order })) }
-    });
-  }
-}

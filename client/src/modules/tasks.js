@@ -1,4 +1,5 @@
 import { generateUUID } from './utils.js';
+import { IN_PROGRESS_COLUMN_ID } from './constants.js';
 import { getActiveBoardId, getActiveBoardName, isDoneColumnId, loadColumns, loadLabels, loadSettings, loadTasks } from './storage.js';
 import { applySwimLaneAssignment } from './swimlanes.js';
 import { normalizePriority, normalizeRelationships, normalizeSubTasks } from './normalize.js';
@@ -733,6 +734,10 @@ export function removeAnnotation(taskId, annotationId) {
 }
 
 export function isTaskLocked(task) {
-  const column = loadColumns().find((entry) => entry.id === task?.column);
-  return String(column?.name || '').trim().toLowerCase() === 'in progress';
+  const columnId = task?.column;
+  if (!columnId) return false;
+
+  const column = loadColumns().find((entry) => entry.id === columnId);
+  return columnId === IN_PROGRESS_COLUMN_ID
+    || String(column?.name || '').trim().toLowerCase() === 'in progress';
 }

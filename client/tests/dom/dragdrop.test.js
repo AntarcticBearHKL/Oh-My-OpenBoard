@@ -32,7 +32,6 @@ vi.mock('../../src/modules/dialog.js', () => ({
 }));
 
 vi.mock('../../src/modules/columns.js', () => ({
-  updateColumnPositions: vi.fn(),
 }));
 
 vi.mock('../../src/modules/events.js', () => ({

@@ -10,7 +10,6 @@ import {
   saveSnapshot,
   loadSnapshot,
   gcEvents,
-  hydrateFromSnapshot,
   checkAndScheduleSnapshot,
   _resetSnapshotSchedulerForTesting,
   _setJitterForTesting
@@ -101,10 +100,6 @@ test('gcEvents for a board snapshot does not delete unrelated boards\' events', 
 
 // ── Snapshot trigger ───────────────────────────────────────────────────────────
 
-function settle() {
-  return new Promise(resolve => setTimeout(resolve, 20));
-}
-
 test('checkAndScheduleSnapshot schedules snapshot after 500 events with jitter delay', async () => {
   _setJitterForTesting(() => 0);
   const db = await openStore();
@@ -114,8 +109,7 @@ test('checkAndScheduleSnapshot schedules snapshot after 500 events with jitter d
 
   const state = createProjectionState({ tasks: [{ id: 'task-1', title: 'T', column: 'todo', columnHistory: [] }] });
   const hlc = makeHlc(SNAPSHOT_EVENT_THRESHOLD);
-  checkAndScheduleSnapshot('board-a', state, hlc);
-  await settle();
+  await checkAndScheduleSnapshot('board-a', state, hlc);
 
   const snapshot = await loadSnapshot('board-a');
   expect(snapshot).not.toBeNull();
@@ -130,8 +124,7 @@ test('checkAndScheduleSnapshot does not schedule when event count is below thres
   }
 
   const state = createProjectionState();
-  checkAndScheduleSnapshot('board-a', state, makeHlc(SNAPSHOT_EVENT_THRESHOLD - 1));
-  await settle();
+  await checkAndScheduleSnapshot('board-a', state, makeHlc(SNAPSHOT_EVENT_THRESHOLD - 1));
 
   expect(await loadSnapshot('board-a')).toBeNull();
 });
@@ -144,8 +137,7 @@ test('checkAndScheduleSnapshot ignores other boards when counting events', async
   }
 
   const state = createProjectionState({ tasks: [{ id: 'task-1', title: 'T', column: 'todo', columnHistory: [] }] });
-  checkAndScheduleSnapshot('board-a', state, makeHlc(SNAPSHOT_EVENT_THRESHOLD + 1));
-  await settle();
+  await checkAndScheduleSnapshot('board-a', state, makeHlc(SNAPSHOT_EVENT_THRESHOLD + 1));
 
   expect(await loadSnapshot('board-a')).toBeNull();
 });
@@ -158,8 +150,7 @@ test('checkAndScheduleSnapshot schedules when snapshot age exceeds 14 days', asy
 
   const state = createProjectionState({ tasks: [{ id: 'task-1', title: 'T', column: 'todo', columnHistory: [] }] });
   const hlc = makeHlc(2);
-  checkAndScheduleSnapshot('board-a', state, hlc);
-  await settle();
+  await checkAndScheduleSnapshot('board-a', state, hlc);
 
   const snapshot = await loadSnapshot('board-a');
   expect(snapshot).not.toBeNull();

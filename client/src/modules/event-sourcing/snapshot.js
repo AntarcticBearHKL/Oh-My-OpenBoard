@@ -80,21 +80,29 @@ async function shouldTakeSnapshot(key) {
 }
 
 export function checkAndScheduleSnapshot(key, state, hlc) {
-  if (_pendingSnapshots.has(key)) return;
+  const pending = _pendingSnapshots.get(key);
+  if (pending) return pending.done;
+
+  let finish;
+  const done = new Promise((resolve) => { finish = resolve; });
   const jitter = _getJitter();
   const id = setTimeout(async () => {
     _pendingSnapshots.delete(key);
     try {
       const { should } = await shouldTakeSnapshot(key);
-      if (!should) return;
-      await saveSnapshot(key, state, hlc);
-      await gcEvents(key, hlc);
-      if (_afterSnapshotSaved) await _afterSnapshotSaved(key, state, hlc);
+      if (should) {
+        await saveSnapshot(key, state, hlc);
+        await gcEvents(key, hlc);
+        if (_afterSnapshotSaved) await _afterSnapshotSaved(key, state, hlc);
+      }
     } catch (err) {
       if (err?.code !== 11) console.error('[OpenAgile] Snapshot failed', err);
+    } finally {
+      finish();
     }
   }, jitter);
-  _pendingSnapshots.set(key, id);
+  _pendingSnapshots.set(key, { id, done });
+  return done;
 }
 
 export function setAfterSnapshotSaved(fn) {
@@ -102,7 +110,7 @@ export function setAfterSnapshotSaved(fn) {
 }
 
 export function _resetSnapshotSchedulerForTesting() {
-  for (const id of _pendingSnapshots.values()) clearTimeout(id);
+  for (const { id } of _pendingSnapshots.values()) clearTimeout(id);
   _pendingSnapshots.clear();
   _getJitter = () => Math.floor(Math.random() * (MAX_JITTER_MS + 1));
   _afterSnapshotSaved = null;

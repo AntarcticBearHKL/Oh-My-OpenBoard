@@ -16,6 +16,7 @@ export const FIXED_COLUMNS = [
 ];
 
 export const FIXED_COLUMN_IDS = FIXED_COLUMNS.map((column) => column.id);
+export const IN_PROGRESS_COLUMN_ID = FIXED_COLUMNS[1].id;
 
 export const APP_NAME = 'OpenAgile';
 

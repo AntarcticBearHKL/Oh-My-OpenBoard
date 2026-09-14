@@ -337,7 +337,7 @@ test('edit modal leads with key, type, estimate, priority, due date and column',
   expect(document.getElementById('task-summary').classList.contains('hidden')).toBe(false);
 });
 
-test('an In Progress task locks AI fields but keeps annotations editable', () => {
+test('an In Progress task is fully read-only, including annotations', () => {
   mocks.loadTasks.mockReturnValue([TASK]);
   mocks.isTaskLocked.mockReturnValue(true);
   mocks.addAnnotation.mockReturnValue({
@@ -363,25 +363,22 @@ test('an In Progress task locks AI fields but keeps annotations editable', () =>
     'task-comment-input',
     'task-attachment-url',
     'task-custom-field-key',
-    'task-submit-btn'
+    'task-submit-btn',
+    'task-annotation-input',
+    'task-annotation-add-btn'
   ].forEach((id) => {
     expect(document.getElementById(id).disabled, id).toBe(true);
   });
 
-  expect(document.getElementById('task-annotation-input').disabled).toBe(false);
-  expect(document.getElementById('task-annotation-add-btn').disabled).toBe(false);
 
   const notice = document.getElementById('task-lock-notice');
   expect(notice.classList.contains('hidden')).toBe(false);
-  expect(notice.textContent).toBe('Subagent agent-7 is working on this task — content is locked.');
+  expect(notice.textContent).toContain('everything is read-only, including annotations.');
 
   expect(document.getElementById('task-claim-chip').classList.contains('hidden')).toBe(false);
   expect(document.getElementById('task-claim-agent').textContent).toBe('agent-7');
 
-  const input = document.getElementById('task-annotation-input');
-  input.value = 'Still here';
-  fireEvent.click(document.getElementById('task-annotation-add-btn'));
-  expect(mocks.addAnnotation).toHaveBeenCalledWith('t1', 'Still here', 'human');
+  expect(mocks.addAnnotation).not.toHaveBeenCalled();
 });
 
 test('add mode hides the summary, claim chip and annotations sections', () => {

@@ -221,7 +221,6 @@ export function createColumnElement(column) {
     class: 'task-column',
     'data-column': column.id,
     'data-wip': getWipState(taskCount, column),
-    draggable: 'false',
     'aria-labelledby': `column-title-${column.id}`,
     style: column?.color ? { '--column-accent': column.color } : {}
   }, headerDiv, ul, addRow);

@@ -657,21 +657,23 @@ function setTaskLocked(locked, task) {
     });
   }
 
+  const annotations = $id('task-annotations-fieldset');
+  if (annotations) {
+    annotations.querySelectorAll('input, button').forEach((control) => {
+      control.disabled = locked;
+    });
+  }
+
   const notice = $id('task-lock-notice');
   if (notice) {
     const claimedBy = task && typeof task.claimedBy === 'string' ? task.claimedBy.trim() : '';
     notice.textContent = locked
       ? (claimedBy
-          ? `Subagent ${claimedBy} is working on this task — content is locked.`
-          : 'This task is locked while a subagent works on it.')
+          ? `Subagent ${claimedBy} is working on this task — everything is read-only, including annotations.`
+          : 'This task is read-only while a subagent works on it, including annotations.')
       : '';
     notice.classList.toggle('hidden', !locked);
   }
-
-  const annotationInput = $id('task-annotation-input');
-  if (annotationInput) annotationInput.disabled = false;
-  const annotationAddBtn = $id('task-annotation-add-btn');
-  if (annotationAddBtn) annotationAddBtn.disabled = false;
 }
 
 function resetTaskLock() {

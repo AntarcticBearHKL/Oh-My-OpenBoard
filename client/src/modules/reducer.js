@@ -225,24 +225,6 @@ function applyColumnUpdated(state, event) {
   };
 }
 
-function applyColumnDeleted(state, event) {
-  return {
-    ...state,
-    columns: state.columns.map((column) => (column.id === event.entity_id ? { ...column, deleted: true } : column))
-  };
-}
-
-function applyColumnReordered(state, event) {
-  const order = Array.isArray(event.payload?.order) ? event.payload.order : [];
-  const orderByColumnId = new Map(order.map((entry) => [entry.id, entry.order]));
-  return {
-    ...state,
-    columns: state.columns.map((column) => (
-      orderByColumnId.has(column.id) ? { ...column, order: orderByColumnId.get(column.id) } : column
-    ))
-  };
-}
-
 function applyBoardCreated(state, event) {
   if (state.boards.some((board) => board.id === event.entity_id)) return state;
   return {
@@ -291,8 +273,6 @@ const handlers = {
   'label.deleted': applyLabelDeleted,
   'column.created': applyColumnCreated,
   'column.updated': applyColumnUpdated,
-  'column.deleted': applyColumnDeleted,
-  'column.reordered': applyColumnReordered,
   'board.created': applyBoardCreated,
   'board.updated': applyBoardUpdated,
   'board.deleted': applyBoardDeleted,
