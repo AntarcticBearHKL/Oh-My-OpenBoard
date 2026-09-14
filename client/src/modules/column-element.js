@@ -43,7 +43,7 @@ function syncSummaryButton(button) {
   const summary = columnId ? loadColumnSummaries()[columnId] : null;
   const hasSummary = Boolean(summary && typeof summary.text === 'string' && summary.text.trim());
   button.classList.toggle('has-summary', hasSummary);
-  button.title = hasSummary ? 'AI summary — has content' : 'AI summary — empty';
+  button.title = hasSummary ? 'Summary — has content' : 'Summary — empty';
 }
 
 function buildSummaryBody(column) {
@@ -120,7 +120,7 @@ function toggleColumnSummary(column, trigger) {
     class: 'column-summary-overlay',
     role: 'dialog',
     'aria-modal': 'true',
-    'aria-label': `AI summary for ${column.name}`,
+    'aria-label': `Summary for ${column.name}`,
     'data-column-id': column.id
   });
 
@@ -135,7 +135,7 @@ function toggleColumnSummary(column, trigger) {
   overlay.appendChild(h('div', { class: 'column-summary-panel' },
     h('header', { class: 'column-summary-header' },
       h('div', { class: 'column-summary-heading' },
-        h('p', { class: 'column-summary-eyebrow' }, 'AI summary'),
+        h('p', { class: 'column-summary-eyebrow' }, 'Summary'),
         h('h3', { class: 'column-summary-title' }, column.name)
       ),
       closeButton
@@ -183,16 +183,16 @@ export function createColumnElement(column) {
     type: 'button',
     class: 'column-summary-btn',
     'data-column-id': column.id,
-    'aria-label': `AI summary for ${column.name}`,
+    'aria-label': `Summary for ${column.name}`,
     'aria-haspopup': 'dialog',
     'aria-expanded': 'false',
-    title: 'AI summary',
+    title: 'Summary',
     onClick: (event) => {
       event.stopPropagation();
       toggleColumnSummary(column, summaryButton);
     }
   }, h('span', { 'data-lucide': 'sparkles', 'aria-hidden': 'true' }),
-     h('span', { class: 'column-summary-btn-label' }, 'AI 总结'));
+     h('span', { class: 'column-summary-btn-label' }, 'Summary'));
 
   syncSummaryButton(summaryButton);
 

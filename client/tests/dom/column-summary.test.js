@@ -37,7 +37,7 @@ beforeEach(() => {
   mocks.loadTasks.mockClear();
 });
 
-test('column header renders the AI summary button next to the task counter', () => {
+test('column header renders the summary button next to the task counter', () => {
   const columnEl = mountColumn();
   const header = columnEl.querySelector('.column-header');
   const counter = header.querySelector('.task-counter');
