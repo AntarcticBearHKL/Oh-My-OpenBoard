@@ -235,7 +235,21 @@ async function handleRequest(req, res) {
     }
 
     if (path === '/api/groups' && req.method === 'POST') {
-      const body = (await readJsonBody(req)) || {};
+      let body;
+      try {
+        body = await readJsonBody(req);
+      } catch {
+        sendJson(res, 400, { error: 'Invalid JSON body' });
+        return;
+      }
+      if (!Array.isArray(body?.groups)) {
+        sendJson(res, 400, { error: 'groups must be an array' });
+        return;
+      }
+      if (body.boardGroups !== undefined && (typeof body.boardGroups !== 'object' || body.boardGroups === null || Array.isArray(body.boardGroups))) {
+        sendJson(res, 400, { error: 'boardGroups must be an object' });
+        return;
+      }
       setGroups(body.groups);
       setBoardGroupMap(body.boardGroups);
       broadcastGroups();
@@ -249,7 +263,17 @@ async function handleRequest(req, res) {
     }
 
     if (path === '/api/skills' && req.method === 'POST') {
-      const body = (await readJsonBody(req)) || {};
+      let body;
+      try {
+        body = await readJsonBody(req);
+      } catch {
+        sendJson(res, 400, { error: 'Invalid JSON body' });
+        return;
+      }
+      if (!Array.isArray(body?.skills)) {
+        sendJson(res, 400, { error: 'skills must be an array' });
+        return;
+      }
       setSkills(body.skills);
       broadcastSkills();
       sendJson(res, 200, getSkillsState());
