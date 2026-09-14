@@ -504,3 +504,55 @@ No behaviour change in any batch. Ordered; each is reviewable in one sitting. "V
 | Harness + integration | `bg_...` (explore) | session `ses_f5f6574deffenulU1nJsGpkdKT` |
 | Test coverage | `bg_...` (explore) | session `ses_f5f630995ffeotCGOU3OuC5tvZ` |
 | Cocoa glassmorphism restyle | `bg_c8ab5f41` | `tool_0a0a64f7c0012FlFQ0597lVKNW` — **ignored** |
+
+---
+
+## Progress log
+
+Every entry below was verified with `npm run build` (exit 0), `npm run test:unit`
+and `npm run test:dom`, plus `node harness/test.mjs` whenever the harness
+changed. Current totals: unit 340, dom 180.
+
+| Work | Commit | Notes |
+|---|---|---|
+| Batch 1 - zero-reference client code | `bf9db90` | Also emptied the first-run seed: a new install now creates the board scaffold with no demo tasks |
+| Empty board + data reset | `bf9db90` | The previous harness data is in `harness/data/state.backup-*.json`; `harness/data` is gitignored, so it stays local |
+| Watchdog hardening | `bf9db90` | Fixed a 52-minute hang caused by a parent/child PID cycle, switched exemption to ports only, 90s execution limit, runs on battery |
+| Batch 2 - column-reorder remnants | `fb89353`, `66a0d17` | Columns are now fully fixed: no add, delete, reorder or rename. The column settings modal had no caller and is deleted |
+| In Progress fully read-only | `fb89353` | Annotations included. The lock keys off the fixed column id, and the annotation fieldset is locked explicitly because it sits outside `#task-form` |
+| Batch 9 - de-flake snapshot tests | `fb89353` | `checkAndScheduleSnapshot` returns a promise that settles when the scheduled work finishes; the test awaits it instead of sleeping |
+| Batch 4 - dialog/modals cycle | `d8ad76a` | Shared modal helper moved to `modal-utils.js`; seven dynamic dialog imports became one static import. The two dynamic imports with real reasons were kept |
+| Skill copy aligned | `c4e86c4` | Both seeded skills now state that In Progress is read-only including annotations |
+| Batch 3 - dead CSS, tokens, HTML | `0c740f7` | Re-scanned the current tree: every remaining candidate is produced dynamically; no token is unreferenced |
+| Batch 11 - five HTML pages | `4d58b60` | Brand titles, a favicon on every page, and one CSP per page (impressum carried a duplicate that would have blocked its own analytics) |
+| Batch 8 (partial) - POST shape validation | `21eee8f` | Malformed groups/skills POSTs now answer 400 instead of replacing the stored collection with `undefined` |
+| Batch 8 (partial) - board-scoped dedupe | `39ac617` | Added `harness/test.mjs` and `OPENAGILE_DATA_DIR`; a second board no longer loses its columns |
+| Batch 8 (partial) - project before commit | `548a1f4` | A projection failure no longer leaves the event log ahead of the read model |
+
+### Two audit claims that turned out to be wrong
+
+- `.sortable-ghost` is **live**: it is SortableJS's default `ghostClass` on the
+  subtask list.
+- The dynamic `icons.js` import in `swimlanes.js` is **needed**: `icons.js` calls
+  `createIcons()` at module load, which throws outside a browser. Converting it to
+  a static import broke two unit suites.
+
+### Still open
+
+- Batch 8 remainder: seq-epoch agreement, skills adoption clobbering local skills,
+  outbound retry for failed client POSTs
+- Batch 5 (extract duplicated helpers, constants, key and event registries)
+- Batch 6 (state/render hazards: double writes, double `DATA_CHANGED`, cached-task
+  mutation, direct writers that bypass the event log)
+- Batch 7 (retire the dormant legacy LWW sync stack)
+- Batch 10 (split the files over 250 LOC)
+- Batch 11 polish (six inline `style` attributes in `index.html`, the mixed
+  `.btn-small` / `.icon-btn` close-button idiom)
+- The UI/UX redesign pass
+
+### Environment note
+
+Subagent tasks stalled consistently in this environment (one run produced nine
+stalled tasks with zero file writes), so the work above was done sequentially by
+the main agent rather than in parallel. The plan in this document is still the
+right unit of work to hand to a fresh session or to parallel agents.
