@@ -1,5 +1,6 @@
 import { isDoneColumnId, loadTasks, loadSettings } from './storage.js';
-import { showEditModal, setupModalCloseHandlers } from './modals.js';
+import { showEditModal } from './modals.js';
+import { setupModalCloseHandlers } from './modal-utils.js';
 import { renderIcons } from './icons.js';
 import { calculateDaysUntilDue } from './dateutils.js';
 import { $id, h } from './dom.js';

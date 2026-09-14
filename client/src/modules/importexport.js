@@ -15,6 +15,7 @@ import { emit, DATA_CHANGED } from './events.js';
 import { normalizePriority, isHexColor, boardDisplayName, normalizeDueDate, normalizeSubTasks } from './normalize.js';
 import { APP_NAME, DONE_COLUMN_ID } from './constants.js';
 import { formatBytes } from './security.js';
+import { alertDialog, confirmDialog } from './dialog.js';
 
 export const IMPORT_LIMITS = {
   maxFileSizeBytes: 2 * 1024 * 1024,
@@ -538,10 +539,10 @@ export function exportTasks() {
 
   const integrity = inspectImportPayload(exportData, null);
   if (integrity.errors.length > 0) {
-    import('./dialog.js').then(({ alertDialog }) => alertDialog({
+    void alertDialog({
       title: 'Export Blocked',
       message: integrity.errors.join(' ')
-    }));
+    });
     return;
   }
 
@@ -586,10 +587,10 @@ export function exportBoard(boardId) {
 
   const integrity = inspectImportPayload(exportData, null);
   if (integrity.errors.length > 0) {
-    import('./dialog.js').then(({ alertDialog }) => alertDialog({
+    void alertDialog({
       title: 'Export Blocked',
       message: integrity.errors.join(' ')
-    }));
+    });
     return;
   }
 
@@ -610,10 +611,10 @@ export function exportBoard(boardId) {
 export function importTasks(file) {
   const metadataPreview = validateImportFileMetadata(file);
   if (metadataPreview.errors.length > 0) {
-    import('./dialog.js').then(({ alertDialog }) => alertDialog({
+    void alertDialog({
       title: 'Import Error',
       message: metadataPreview.errors.join(' ')
-    }));
+    });
     return;
   }
 
@@ -624,12 +625,10 @@ export function importTasks(file) {
 
       const preview = inspectImportPayload(data, file);
       if (preview.errors.length > 0) {
-        const { alertDialog } = await import('./dialog.js');
         await alertDialog({ title: 'Import Error', message: preview.errors.join(' ') });
         return;
       }
 
-      const { confirmDialog } = await import('./dialog.js');
       const confirmed = await confirmDialog({
         title: 'Review Import',
         message: buildImportConfirmationMessage(preview),
@@ -656,10 +655,8 @@ export function importTasks(file) {
 
       emit(DATA_CHANGED);
       document.dispatchEvent(new CustomEvent('kanban:boards-changed'));
-      const { alertDialog } = await import('./dialog.js');
       await alertDialog({ title: 'Import Complete', message: 'Board imported successfully!' });
     } catch (error) {
-      const { alertDialog } = await import('./dialog.js');
       await alertDialog({ title: 'Import Error', message: 'Error parsing JSON file: ' + error.message });
     }
   };

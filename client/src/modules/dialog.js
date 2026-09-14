@@ -1,4 +1,4 @@
-import { setupModalCloseHandlers } from './modals.js';
+import { setupModalCloseHandlers } from './modal-utils.js';
 import { $id } from './dom.js';
 
 let currentResolver = null;

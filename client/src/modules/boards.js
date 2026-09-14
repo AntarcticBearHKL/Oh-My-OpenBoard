@@ -1,5 +1,5 @@
 import { generateUUID } from './utils.js';
-import { setupModalCloseHandlers } from './modals.js';
+import { setupModalCloseHandlers } from './modal-utils.js';
 import { emit, on, DATA_CHANGED } from './events.js';
 import { APP_NAME } from './constants.js';
 import {

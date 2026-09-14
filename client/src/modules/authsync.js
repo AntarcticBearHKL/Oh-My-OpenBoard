@@ -1,5 +1,6 @@
 import { alertDialog } from './dialog.js';
-import { setupModalCloseHandlers, hideLoginModal } from './modals.js';
+import { hideLoginModal } from './modals.js';
+import { setupModalCloseHandlers } from './modal-utils.js';
 import {
   isAuthenticated,
   getUser,

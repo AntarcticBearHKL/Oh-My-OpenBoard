@@ -8,7 +8,7 @@ import {
   deleteSkill,
   initSkillsSync
 } from './skills.js';
-import { setupModalCloseHandlers } from './modals.js';
+import { setupModalCloseHandlers } from './modal-utils.js';
 import { emit, on, DATA_CHANGED } from './events.js';
 import { renderIcons } from './icons.js';
 import { $id, h } from './dom.js';
