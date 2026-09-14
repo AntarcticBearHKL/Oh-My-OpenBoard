@@ -358,6 +358,39 @@ export function deleteBoard(boardId) {
 
 const DEFAULT_SKILLS = [
   {
+    name: '人与 subagent 的协作工作方式',
+    description: '人与 AI subagent 在这块看板上如何分工与交接。',
+    content: [
+      '这块看板是「人 + 多个 AI subagent」共享的唯一事实来源。任务主要由 AI 填写与搬动，人负责看、定方向、写批注。',
+      '',
+      '【人的职责】',
+      '- 随时点开任务：看清它要干什么、包含哪些内容（描述、验收标准、子任务、附件、评论）。',
+      '- 用「批注 annotations」写下自己的想法和决定。批注是人跟 agent 沟通的通道。',
+      '- 决定优先级与验收标准；最终「算不算完成」由人拍板。',
+      '- 人一般不直接改 AI 写的内容，要改就用批注说。',
+      '',
+      '【AI / subagent 的职责】',
+      '- 动手前先读：get_task（含 annotations）、list_tasks、list_skills。',
+      '- 认领：claim_task 写明是哪个 subagent 在做；做完或中断时 release_task。',
+      '- 任务内容由 agent 填写与维护：描述、验收标准、子任务；comments 是 agent 的进度记录，',
+      '  annotations 是人的，任何时候都不要覆盖。',
+      '- 卡住时移到 Blocked 并写 set_blocked_reason。',
+      '- 只有验收标准全部满足，才移入 Archived。',
+      '- 任何时候新增或移动 item，都要顺手刷新那一列的总结 set_column_summary。',
+      '',
+      '【四列的语义（固定，不可增删）】',
+      '- Backlog：已立项、待认领。人在这里读需求、写批注。',
+      '- In Progress：已被某个 subagent 认领并在处理中 → 任务内容锁定（只读），但人仍然可以写批注。',
+      '- Blocked：卡住了，必须写原因；连续两次日报仍卡住就升级。',
+      '- Archived：已完成，是速度/完成点数的统计来源。',
+      '',
+      '【交接约定】',
+      '- 同一时刻一个任务只应被一个 subagent 认领；已被别人认领的任务不要动。',
+      '- 交接前把进展写进 comments 并刷新列总结，让人不用逐个点开也知道发生了什么。',
+      '- 人写完批注后，agent 应把它当成新的输入，并在 comments 里回应。'
+    ].join('\n')
+  },
+  {
     name: 'How to run this board with an AI agent',
     description: 'The intended division of labour between you and the agent.',
     content: [
@@ -406,6 +439,29 @@ const DEFAULT_SKILLS = [
       '- Velocity = completed story points per iteration (Reports).',
       '- Burndown compares remaining points against the ideal line for the iteration window.',
       '- Cycle time distribution tells you where work waits; attack the p90, not the average.',
+    ].join('\n')
+  },
+  {
+    name: 'Claiming work and column summaries',
+    description: 'Subagent ownership rules and the column summary the human reads.',
+    content: [
+      'This board is a subagent-level collaboration tool: a subagent picks a task up, works it, and puts it down.',
+      '',
+      'Claiming:',
+      '- Before starting, claim the task (claim_task with your agent name) so the human can see who owns it.',
+      '- Release it (release_task) when you stop, even if the task is not finished.',
+      '- Never work an unclaimed task; if it is claimed by someone else, leave it alone.',
+      '',
+      'Column summaries:',
+      '- Whenever you add or move an item, refresh the summary of the column you touched',
+      '  (set_column_summary) with one or two plain sentences: what is queued, what is moving,',
+      '  what is stuck and why.',
+      '- The human reads it by clicking the button next to the column count, so keep it current and',
+      '  concrete - no filler, no restating the column name.',
+      '',
+      'Annotations:',
+      '- Annotations belong to the human. Read them (get_task) before starting and never overwrite them.',
+      '- Use comments for your own progress notes; use add_annotation only if the human asked you to.',
     ].join('\n')
   },
   {

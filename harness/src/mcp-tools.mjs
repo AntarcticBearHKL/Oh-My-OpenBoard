@@ -318,9 +318,11 @@ export function registerTools(server) {
       .filter((t) => (needle ? `${t.title || ''} ${t.description || ''}`.toLowerCase().includes(needle) : true))
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
       .map((t) => ({
-        id: t.id, title: t.title, description: t.description || '',
+        id: t.id, key: t.key || '', title: t.title, description: t.description || '',
         column: t.column, columnName: columnsById.get(t.column) || '',
         priority: t.priority || 'none', dueDate: t.dueDate || '',
+        type: t.type || 'task', estimate: Number.isFinite(t.estimate) ? t.estimate : null,
+        claimedBy: t.claimedBy || '', assignee: t.assignee || '',
         labels: t.labels || [], subTasks: t.subTasks || [], relationships: t.relationships || []
       }));
     return ok(tasks);
@@ -856,6 +858,99 @@ export function registerTools(server) {
       actor: AGENT
     });
     return ok(next.map((entry) => entry.id));
+  });
+
+  server.registerTool('claim_task', {
+    title: 'Claim task',
+    description: 'Claim a task for the current subagent: records claimedBy/claimedAt and sets the assignee when empty.',
+    inputSchema: { taskId: z.string(), agent: z.string().optional() }
+  }, async ({ taskId, agent = AGENT_ID }) => {
+    const { task, boardId } = findTaskOrThrow(taskId);
+    const now = new Date().toISOString();
+    const fields = { claimedBy: agent, claimedAt: now, changeDate: now };
+    if (!task.assignee) fields.assignee = agent;
+    emit('task.updated', { boardId, entityId: taskId, payload: { fields }, actor: AGENT });
+    return ok({ taskId, claimedBy: agent, claimedAt: now });
+  });
+
+  server.registerTool('release_task', {
+    title: 'Release task',
+    description: 'Release a claimed task (clears claimedBy/claimedAt).',
+    inputSchema: { taskId: z.string() }
+  }, async ({ taskId }) => {
+    const { boardId } = findTaskOrThrow(taskId);
+    const now = new Date().toISOString();
+    emit('task.updated', {
+      boardId,
+      entityId: taskId,
+      payload: { fields: { claimedBy: '', claimedAt: null, changeDate: now } },
+      actor: AGENT
+    });
+    return ok({ taskId, claimedBy: '' });
+  });
+
+  server.registerTool('add_annotation', {
+    title: 'Add annotation',
+    description: 'Add a human annotation (note) to a task. Kept separate from agent comments.',
+    inputSchema: { taskId: z.string(), text: z.string(), author: z.string().optional() }
+  }, async ({ taskId, text, author = 'human' }) => {
+    const { task, boardId } = findTaskOrThrow(taskId);
+    const annotation = { id: randomUUID(), text: String(text), author, at: new Date().toISOString() };
+    const annotations = [...(Array.isArray(task.annotations) ? task.annotations : []), annotation];
+    emit('task.updated', {
+      boardId,
+      entityId: taskId,
+      payload: { fields: { annotations, changeDate: annotation.at } },
+      actor: AGENT
+    });
+    return ok(annotation);
+  });
+
+  server.registerTool('remove_annotation', {
+    title: 'Remove annotation',
+    description: 'Remove an annotation from a task.',
+    inputSchema: { taskId: z.string(), annotationId: z.string() }
+  }, async ({ taskId, annotationId }) => {
+    const { task, boardId } = findTaskOrThrow(taskId);
+    const annotations = (Array.isArray(task.annotations) ? task.annotations : [])
+      .filter((entry) => entry.id !== annotationId);
+    emit('task.updated', {
+      boardId,
+      entityId: taskId,
+      payload: { fields: { annotations, changeDate: new Date().toISOString() } },
+      actor: AGENT
+    });
+    return ok({ removed: annotationId });
+  });
+
+  server.registerTool('set_column_summary', {
+    title: 'Set column summary',
+    description: 'Store the agent summary of a column state. Shown to the human next to the column count.',
+    inputSchema: { boardId: z.string().optional(), column: z.string(), text: z.string() }
+  }, async ({ boardId, column, text }) => {
+    const bid = resolveBoard(boardId);
+    const target = resolveColumn(bid, column);
+    const settings = getSettings(bid) || {};
+    const summaries = { ...(settings.columnSummaries || {}) };
+    summaries[target.id] = { text: String(text), at: new Date().toISOString(), by: AGENT_ID };
+    emit('settings.updated', {
+      boardId: bid,
+      entityId: bid,
+      payload: { fields: { columnSummaries: summaries } },
+      actor: AGENT
+    });
+    return ok({ column: target.id, columnName: target.name, summary: summaries[target.id] });
+  });
+
+  server.registerTool('get_column_summary', {
+    title: 'Get column summary',
+    description: 'Return the stored summary for a column.',
+    inputSchema: { boardId: z.string().optional(), column: z.string() }
+  }, async ({ boardId, column }) => {
+    const bid = resolveBoard(boardId);
+    const target = resolveColumn(bid, column);
+    const summaries = (getSettings(bid) || {}).columnSummaries || {};
+    return ok({ column: target.id, columnName: target.name, summary: summaries[target.id] || null });
   });
 
   server.registerTool('list_skills', {
