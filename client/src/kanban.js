@@ -15,7 +15,6 @@ import { initializeNotifications } from './modules/notifications.js';
 import { initStorage, ensureBoardsInitialized, setActiveBoardId } from './modules/storage.js';
 import { initializeSwimLaneControls } from './modules/swimlanes.js';
 import { initializeAuthSyncUI } from './modules/authsync.js';
-import { initializeAutoSync } from './modules/autosync.js';
 import { initSyncQueue } from './modules/event-sourcing/sync-queue.js';
 import { initSnapshotSync } from './modules/event-sourcing/snapshot-sync.js';
 import { initRealtime } from './modules/event-sourcing/realtime.js';
@@ -60,7 +59,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Auth/sync UI and auto-sync listener
   initializeAuthSyncUI();
-  initializeAutoSync();
 
   // Event-sourced outbound push queue (drains unsynced events to PocketBase)
   initSyncQueue();

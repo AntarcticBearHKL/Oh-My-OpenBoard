@@ -862,7 +862,6 @@ export function loadTasks() {
 
 function emitLocalChange(boardId, entity) {
   if (typeof window === 'undefined') return;
-  window.dispatchEvent(new CustomEvent('kanban-local-change', { detail: { boardId, entity } }));
 }
 
 export function saveTasks(tasks) {
