@@ -107,7 +107,20 @@ export function deleteSkill(skillId) {
 export function adoptSkillsState(state) {
   if (!state || typeof state !== 'object') return;
   if (!Array.isArray(state.skills)) return;
-  writeJson(SKILLS_KEY, state.skills.map((skill, index) => normalizeSkill(skill, index)).filter(Boolean));
+
+  const incoming = state.skills.map((skill, index) => normalizeSkill(skill, index)).filter(Boolean);
+  const merged = new Map(incoming.map((skill) => [skill.id, skill]));
+  let hasLocalOnly = false;
+
+  listSkills().forEach((skill) => {
+    if (!merged.has(skill.id)) {
+      merged.set(skill.id, skill);
+      hasLocalOnly = true;
+    }
+  });
+
+  writeJson(SKILLS_KEY, [...merged.values()]);
+  if (hasLocalOnly) pushSkillsToServer();
 }
 
 export function initSkillsSync() {
