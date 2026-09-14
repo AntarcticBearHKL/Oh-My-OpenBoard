@@ -42,13 +42,45 @@ function setSeq(next) {
   }
 }
 
-function forward(event) {
-  fetch(`/api/events?clientId=${encodeURIComponent(clientId)}`, {
+const MAX_PENDING_FORWARDS = 500;
+const FORWARD_RETRY_MS = 5000;
+const pendingForwards = [];
+let retryTimer = null;
+
+function postEvent(event) {
+  return fetch(`/api/events?clientId=${encodeURIComponent(clientId)}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(event),
     keepalive: true
-  }).catch(() => { /* offline or no harness — local state stays intact */ });
+  }).then((res) => {
+    if (!res.ok) throw new Error(`harness responded ${res.status}`);
+  });
+}
+
+function scheduleForwardRetry() {
+  if (retryTimer || pendingForwards.length === 0) return;
+  retryTimer = setTimeout(() => {
+    retryTimer = null;
+    flushPendingForwards();
+  }, FORWARD_RETRY_MS);
+}
+
+function flushPendingForwards() {
+  if (pendingForwards.length === 0) return;
+  const batch = pendingForwards.splice(0, pendingForwards.length);
+  let failed = false;
+  Promise.all(batch.map((event) => postEvent(event).catch(() => {
+    failed = true;
+    if (pendingForwards.length < MAX_PENDING_FORWARDS) pendingForwards.push(event);
+  }))).then(() => { if (failed) scheduleForwardRetry(); });
+}
+
+function forward(event) {
+  postEvent(event).catch(() => {
+    if (pendingForwards.length < MAX_PENDING_FORWARDS) pendingForwards.push(event);
+    scheduleForwardRetry();
+  });
 }
 
 // Registered at module load (before the app emits its first-run scaffold) so no
@@ -97,6 +129,7 @@ async function boot() {
   } catch { /* snapshot unavailable — tail only */ }
 
   active = true;
+  flushPendingForwards();
   for (const event of buffered) forward(event);
   buffered.length = 0;
 
