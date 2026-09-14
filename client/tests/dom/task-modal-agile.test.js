@@ -6,6 +6,9 @@ const mocks = vi.hoisted(() => ({
   addTask: vi.fn(),
   updateTask: vi.fn(),
   setTaskBlockedReason: vi.fn(),
+  addAnnotation: vi.fn(),
+  removeAnnotation: vi.fn(() => true),
+  isTaskLocked: vi.fn(() => false),
   promptDialog: vi.fn(async () => null),
   loadTasks: vi.fn(() => []),
   loadColumns: vi.fn(() => [
@@ -18,7 +21,10 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../../src/modules/tasks.js', () => ({
   addTask: mocks.addTask,
   updateTask: mocks.updateTask,
-  setTaskBlockedReason: mocks.setTaskBlockedReason
+  setTaskBlockedReason: mocks.setTaskBlockedReason,
+  addAnnotation: mocks.addAnnotation,
+  removeAnnotation: mocks.removeAnnotation,
+  isTaskLocked: mocks.isTaskLocked
 }));
 
 vi.mock('../../src/modules/storage.js', () => ({

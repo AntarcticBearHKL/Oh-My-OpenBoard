@@ -724,3 +724,49 @@ export function moveTaskToTopInColumn(taskId, columnId, tasksCache) {
   }
   return tasks;
 }
+
+function emitTaskFields(taskId, fields) {
+  if (!taskId || !fields) return false;
+  const tasks = loadTasks();
+  if (!tasks.some((task) => task.id === taskId)) return false;
+  scheduleDomainEvent({
+    type: 'task.updated',
+    boardId: getActiveBoardId(),
+    entityId: taskId,
+    payload: { fields: { ...fields, changeDate: new Date().toISOString() } }
+  });
+  return true;
+}
+
+export function addAnnotation(taskId, text, author = 'human') {
+  const task = loadTasks().find((entry) => entry.id === taskId);
+  if (!task) return null;
+  const annotation = { id: generateUUID(), text: String(text || ''), author, at: new Date().toISOString() };
+  const annotations = [...(Array.isArray(task.annotations) ? task.annotations : []), annotation];
+  return emitTaskFields(taskId, { annotations }) ? annotation : null;
+}
+
+export function removeAnnotation(taskId, annotationId) {
+  const task = loadTasks().find((entry) => entry.id === taskId);
+  if (!task) return false;
+  const annotations = (Array.isArray(task.annotations) ? task.annotations : [])
+    .filter((entry) => entry.id !== annotationId);
+  return emitTaskFields(taskId, { annotations });
+}
+
+export function claimTask(taskId, agent) {
+  const task = loadTasks().find((entry) => entry.id === taskId);
+  if (!task) return false;
+  const fields = { claimedBy: String(agent || ''), claimedAt: new Date().toISOString() };
+  if (!task.assignee) fields.assignee = String(agent || '');
+  return emitTaskFields(taskId, fields);
+}
+
+export function releaseTask(taskId) {
+  return emitTaskFields(taskId, { claimedBy: '', claimedAt: null });
+}
+
+export function isTaskLocked(task) {
+  const column = loadColumns().find((entry) => entry.id === task?.column);
+  return String(column?.name || '').trim().toLowerCase() === 'in progress';
+}

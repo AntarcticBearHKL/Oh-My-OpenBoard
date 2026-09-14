@@ -1,13 +1,14 @@
 // Task add/edit modal — extracted from modals.js
 
 import { isDoneColumnId, loadLabels, loadColumns, loadSettings, loadTasks } from './storage.js';
-import { addTask, setTaskBlockedReason, updateTask } from './tasks.js';
+import { addAnnotation, addTask, isTaskLocked, removeAnnotation, setTaskBlockedReason, updateTask } from './tasks.js';
 import { renderIcons } from './icons.js';
 import { validateAndShowTaskTitleError, clearFieldError } from './validation.js';
 import { emit, DATA_CHANGED } from './events.js';
 import { createAccordionSection } from './accordion.js';
 import { generateUUID, labelTextColor } from './utils.js';
 import { promptDialog } from './dialog.js';
+import { normalizePriority } from './normalize.js';
 import {
   isBlockedColumnId,
   normalizeAcceptanceCriteria,
@@ -28,6 +29,7 @@ let selectedTaskRelationships = []; // [{ type, targetTaskId }]
 let selectedTaskSubTasks = []; // [{ id, title, completed, order }]
 let selectedTaskAcceptanceCriteria = []; // [{ id, text, done }]
 let selectedTaskComments = []; // [{ id, author, text, at }]
+let selectedTaskAnnotations = []; // [{ id, text, author, at }]
 let selectedTaskAttachments = []; // [{ id, name, url }]
 let selectedTaskCustomFields = {}; // { [key]: value }
 let subtaskSortable = null;
@@ -479,6 +481,210 @@ function formatCommentTimestamp(at) {
   return Number.isNaN(parsed.getTime()) ? (at || '') : parsed.toLocaleString();
 }
 
+const TYPE_LABELS = { story: 'Story', bug: 'Bug', task: 'Task', spike: 'Spike' };
+
+function formatRelativeTime(value) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '';
+  const minutes = Math.floor((Date.now() - parsed.getTime()) / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return parsed.toLocaleDateString();
+}
+
+function setSummaryType(value) {
+  const el = $id('task-summary-type');
+  if (!el) return;
+  const type = normalizeTaskType(value);
+  el.textContent = TYPE_LABELS[type];
+  el.className = `task-type task-type--${type}`;
+}
+
+function setSummaryEstimate(value) {
+  const el = $id('task-summary-estimate');
+  if (!el) return;
+  const estimate = normalizeEstimate(value);
+  el.textContent = estimate === null ? '' : `${estimate} pt${estimate === 1 ? '' : 's'}`;
+  el.classList.toggle('hidden', estimate === null);
+}
+
+function setSummaryPriority(value) {
+  const el = $id('task-summary-priority');
+  if (!el) return;
+  const priority = normalizePriority(value);
+  el.textContent = priority === 'none' ? 'No priority' : priority;
+  el.className = `task-priority priority-${priority}`;
+}
+
+function setSummaryDue(value) {
+  const el = $id('task-summary-due');
+  if (!el) return;
+  const raw = (value || '').toString().trim();
+  if (!raw) {
+    el.textContent = '';
+    el.classList.add('hidden');
+    return;
+  }
+  const parsed = new Date(raw.includes('T') ? raw : `${raw}T00:00:00`);
+  el.textContent = Number.isNaN(parsed.getTime()) ? raw : `Due ${parsed.toLocaleDateString()}`;
+  el.classList.remove('hidden');
+}
+
+function setSummaryColumn(columnId) {
+  const el = $id('task-summary-column');
+  if (!el) return;
+  const name = loadColumns().find((column) => column.id === columnId)?.name || '';
+  if (!name) {
+    el.textContent = '';
+    el.classList.add('hidden');
+    el.removeAttribute('title');
+    el.removeAttribute('aria-label');
+    return;
+  }
+  el.textContent = /^in\s/i.test(name) ? name : `In ${name}`;
+  el.title = `Column: ${name}`;
+  el.setAttribute('aria-label', `Column: ${name}`);
+  el.classList.remove('hidden');
+}
+
+function updateTaskSummary(task) {
+  const summary = $id('task-summary');
+  if (!summary) return;
+  summary.classList.remove('hidden');
+
+  const keyEl = $id('task-modal-key');
+  if (keyEl) {
+    const key = typeof task.key === 'string' ? task.key.trim() : '';
+    keyEl.textContent = key;
+    keyEl.classList.toggle('hidden', !key);
+  }
+
+  setSummaryType(task.type);
+  setSummaryEstimate(task.estimate);
+  setSummaryPriority(task.priority);
+  setSummaryDue(task.dueDate);
+  setSummaryColumn(task.column);
+
+  const claimChip = $id('task-claim-chip');
+  const claimAgent = $id('task-claim-agent');
+  const claimTime = $id('task-claim-time');
+  const claimedBy = typeof task.claimedBy === 'string' ? task.claimedBy.trim() : '';
+  if (claimChip && claimAgent && claimTime) {
+    claimChip.classList.toggle('hidden', !claimedBy);
+    claimAgent.textContent = claimedBy;
+    claimTime.textContent = claimedBy ? formatRelativeTime(task.claimedAt) : '';
+  }
+}
+
+function syncSummaryFromForm() {
+  if ($id('task-summary')?.classList.contains('hidden')) return;
+  setSummaryType($id('task-type')?.value);
+  setSummaryEstimate($id('task-estimate')?.value);
+  setSummaryPriority($id('task-priority')?.value);
+  setSummaryDue($id('task-due-date')?.value);
+  setSummaryColumn($id('task-column')?.value);
+}
+
+function renderAnnotationsList() {
+  const listEl = $id('task-annotations-list');
+  if (!listEl) return;
+
+  listEl.innerHTML = '';
+
+  if (selectedTaskAnnotations.length === 0) {
+    listEl.appendChild(h('li', { class: 'annotations-empty' }, 'No annotations yet.'));
+  } else {
+    selectedTaskAnnotations.forEach((annotation) => {
+      const author = annotation.author || 'human';
+      listEl.appendChild(h('li', {
+        class: 'annotation-item',
+        'data-annotation-id': annotation.id
+      },
+        h('div', { class: 'annotation-text' }, annotation.text),
+        h('div', { class: 'annotation-meta' },
+          h('span', { class: 'annotation-author' }, author),
+          h('span', { class: 'annotation-sep', 'aria-hidden': 'true' }, '·'),
+          h('span', { class: 'annotation-at' }, formatCommentTimestamp(annotation.at))
+        ),
+        h('button', {
+          type: 'button',
+          class: 'annotation-remove-btn',
+          title: 'Remove annotation',
+          'aria-label': `Remove annotation by ${author}`,
+          onClick: () => removeAnnotationEntry(annotation.id)
+        }, '×')
+      ));
+    });
+  }
+
+  const countEl = $id('task-annotations-count');
+  if (countEl) {
+    countEl.hidden = selectedTaskAnnotations.length === 0;
+    countEl.textContent = String(selectedTaskAnnotations.length);
+  }
+}
+
+function removeAnnotationEntry(annotationId) {
+  if (!editingTaskId) return;
+  const removed = removeAnnotation(editingTaskId, annotationId);
+  if (removed === false) return;
+  selectedTaskAnnotations = selectedTaskAnnotations.filter((entry) => entry.id !== annotationId);
+  renderAnnotationsList();
+}
+
+function addAnnotationFromInput() {
+  const input = $id('task-annotation-input');
+  const text = (input?.value || '').trim();
+  if (!text || !editingTaskId) return;
+  const annotation = addAnnotation(editingTaskId, text, 'human');
+  if (!annotation) return;
+  selectedTaskAnnotations.push(annotation);
+  input.value = '';
+  renderAnnotationsList();
+}
+
+function setTaskLocked(locked, task) {
+  const form = $id('task-form');
+  if (form) {
+    form.classList.toggle('task-form--locked', locked);
+    form.querySelectorAll('input, select, textarea, button').forEach((control) => {
+      if (control.id === 'cancel-task-btn') return;
+      control.disabled = locked;
+    });
+  }
+
+  const notice = $id('task-lock-notice');
+  if (notice) {
+    const claimedBy = task && typeof task.claimedBy === 'string' ? task.claimedBy.trim() : '';
+    notice.textContent = locked
+      ? (claimedBy
+          ? `Subagent ${claimedBy} is working on this task — content is locked.`
+          : 'This task is locked while a subagent works on it.')
+      : '';
+    notice.classList.toggle('hidden', !locked);
+  }
+
+  const annotationInput = $id('task-annotation-input');
+  if (annotationInput) annotationInput.disabled = false;
+  const annotationAddBtn = $id('task-annotation-add-btn');
+  if (annotationAddBtn) annotationAddBtn.disabled = false;
+}
+
+function resetTaskLock() {
+  setTaskLocked(false, null);
+}
+
+function hideAnnotationsSection() {
+  selectedTaskAnnotations = [];
+  $id('task-annotations-fieldset')?.classList.add('hidden');
+  const input = $id('task-annotation-input');
+  if (input) input.value = '';
+}
+
 function updateAcceptanceProgress() {
   const legend = $id('task-acceptance-progress');
   if (!legend) return;
@@ -704,6 +910,7 @@ function clearAgileInputs() {
   [
     'task-acceptance-input',
     'task-comment-input',
+    'task-annotation-input',
     'task-attachment-name',
     'task-attachment-url',
     'task-custom-field-key',
@@ -722,6 +929,12 @@ export function showModal(columnName, swimlaneContext) {
   selectedTaskSubTasks = [];
   returnToTaskModalAfterLabelsManager = false;
   selectCreatedLabelInTaskEditor = false;
+
+  resetTaskLock();
+  $id('task-summary')?.classList.add('hidden');
+  $id('task-modal-key')?.classList.add('hidden');
+  $id('task-claim-chip')?.classList.add('hidden');
+  hideAnnotationsSection();
 
   setTaskModalFullscreen(false);
   $id('task-fullpage-btn')?.classList.add('hidden');
@@ -802,6 +1015,7 @@ export function showEditModal(taskId) {
   selectedTaskComments = normalizeComments(task.comments).map((entry) => ({ ...entry }));
   selectedTaskAttachments = normalizeAttachments(task.attachments).map((entry) => ({ ...entry }));
   selectedTaskCustomFields = normalizeCustomFields(task.customFields);
+  selectedTaskAnnotations = Array.isArray(task.annotations) ? task.annotations.map((entry) => ({ ...entry })) : [];
   returnToTaskModalAfterLabelsManager = false;
   selectCreatedLabelInTaskEditor = false;
 
@@ -857,8 +1071,18 @@ export function showEditModal(taskId) {
   clearAgileInputs();
   renderAgileFields(typeof task.parentId === 'string' ? task.parentId : null);
 
+  updateTaskSummary(task);
+  $id('task-annotations-fieldset')?.classList.remove('hidden');
+  renderAnnotationsList();
+  const locked = isTaskLocked(task);
+  setTaskLocked(locked, task);
+
   modal.classList.remove('hidden');
-  taskTitle.focus();
+  if (locked) {
+    $id('task-annotation-input')?.focus();
+  } else {
+    taskTitle.focus();
+  }
 }
 
 function hideModal() {
@@ -868,6 +1092,9 @@ function hideModal() {
   selectedTaskSubTasks = [];
   if (subtaskSortable) { subtaskSortable.destroy(); subtaskSortable = null; }
   returnToTaskModalAfterLabelsManager = false;
+
+  resetTaskLock();
+  hideAnnotationsSection();
 
   const relResults = $id('task-relationship-results');
   if (relResults) { relResults.hidden = true; relResults.innerHTML = ''; }
@@ -1086,6 +1313,19 @@ export function initializeTaskModalHandlers(setupModalCloseHandlers) {
     if (e.key !== 'Enter') return;
     e.preventDefault();
     addCustomFieldFromInputs();
+  });
+
+  $id('task-annotation-add-btn')?.addEventListener('click', addAnnotationFromInput);
+  $id('task-annotation-input')?.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    addAnnotationFromInput();
+  });
+
+  ['task-type', 'task-estimate', 'task-priority', 'task-due-date', 'task-column'].forEach((id) => {
+    const el = $id(id);
+    el?.addEventListener('input', syncSummaryFromForm);
+    el?.addEventListener('change', syncSummaryFromForm);
   });
 
   $id('task-form').addEventListener('submit', async (e) => {

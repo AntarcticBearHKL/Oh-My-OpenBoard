@@ -1049,6 +1049,9 @@ function normalizeSettings(raw) {
   const swimLaneCollapsedKeys = normalizeStringKeys(obj.swimLaneCollapsedKeys);
   const swimLaneCellCollapsedKeys = normalizeStringKeys(obj.swimLaneCellCollapsedKeys);
   const swimLaneOrder = normalizeStringKeys(obj.swimLaneOrder);
+  const columnSummaries = obj.columnSummaries && typeof obj.columnSummaries === 'object' && !Array.isArray(obj.columnSummaries)
+    ? obj.columnSummaries
+    : {};
 
   return {
     showPriority,
@@ -1065,8 +1068,29 @@ function normalizeSettings(raw) {
     swimLaneLabelGroup,
     swimLaneCollapsedKeys,
     swimLaneCellCollapsedKeys,
-    swimLaneOrder
+    swimLaneOrder,
+    columnSummaries
   };
+}
+
+export function loadColumnSummaries() {
+  const summaries = loadSettings()?.columnSummaries;
+  return summaries && typeof summaries === 'object' && !Array.isArray(summaries) ? summaries : {};
+}
+
+export function saveColumnSummary(columnId, text, by = 'human') {
+  const id = typeof columnId === 'string' ? columnId : '';
+  if (!id) return false;
+
+  const settings = loadSettings();
+  const summaries = { ...(settings.columnSummaries || {}) };
+  const trimmed = String(text || '').trim();
+
+  if (trimmed) summaries[id] = { text: trimmed, at: new Date().toISOString(), by };
+  else delete summaries[id];
+
+  saveSettings({ ...settings, columnSummaries: summaries });
+  return true;
 }
 
 function normalizeGlobalSettings(raw) {

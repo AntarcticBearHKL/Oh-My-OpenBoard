@@ -164,9 +164,12 @@
   <!-- Task Modal -->
   <div id="task-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="task-modal-title">
     <div class="modal-backdrop" data-close-modal></div>
-    <article class="modal-content">
+    <article class="modal-content task-modal-content">
       <header class="modal-header-row">
-        <h3 id="task-modal-title">Add New Task</h3>
+        <div class="task-modal-heading">
+          <span id="task-modal-key" class="task-modal-key hidden"></span>
+          <h3 id="task-modal-title">Add New Task</h3>
+        </div>
         <div class="modal-header-actions">
           <button id="task-fullpage-btn" type="button" class="btn-small hidden" aria-pressed="false" title="Open in full page">
             <span data-lucide="maximize-2" aria-hidden="true"></span>
@@ -176,6 +179,40 @@
           </button>
         </div>
       </header>
+
+      <section id="task-summary" class="task-summary hidden" aria-label="Task summary">
+        <div class="task-summary-badges">
+          <span id="task-summary-type" class="task-type task-type--task"></span>
+          <span id="task-summary-estimate" class="task-summary-chip hidden"></span>
+          <span id="task-summary-priority" class="task-priority priority-none"></span>
+          <span id="task-summary-due" class="task-summary-chip hidden"></span>
+          <span id="task-summary-column" class="task-summary-chip hidden"></span>
+        </div>
+        <div id="task-claim-chip" class="task-claim-chip hidden">
+          <span data-lucide="bot" aria-hidden="true"></span>
+          <span>Claimed by <strong id="task-claim-agent"></strong></span>
+          <span id="task-claim-time" class="task-claim-time"></span>
+        </div>
+      </section>
+
+      <div id="task-lock-notice" class="task-lock-notice hidden" role="status"></div>
+
+      <section id="task-annotations-fieldset" class="task-annotations hidden" aria-labelledby="task-annotations-title">
+        <div class="task-annotations-header">
+          <h4 id="task-annotations-title" class="task-annotations-title">
+            <span data-lucide="message-square" aria-hidden="true"></span>
+            Annotations
+            <span id="task-annotations-count" class="annotations-count hidden"></span>
+          </h4>
+          <p class="task-annotations-hint">Your channel to the subagent &mdash; saved immediately.</p>
+        </div>
+        <ul id="task-annotations-list" class="annotations-list" role="list" aria-label="Human annotations"></ul>
+        <div class="task-annotation-add-row">
+          <input type="text" id="task-annotation-input" placeholder="Write an annotation…" autocomplete="off" maxlength="500" aria-label="New annotation">
+          <button type="button" id="task-annotation-add-btn" class="btn-small">Add</button>
+        </div>
+      </section>
+
       <form id="task-form" novalidate>
         <div class="task-form-columns">
           <div class="task-form-column-left">
