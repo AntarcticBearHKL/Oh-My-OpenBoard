@@ -556,3 +556,19 @@ Subagent tasks stalled consistently in this environment (one run produced nine
 stalled tasks with zero file writes), so the work above was done sequentially by
 the main agent rather than in parallel. The plan in this document is still the
 right unit of work to hand to a fresh session or to parallel agents.
+
+### Progress log update
+
+Completed after the table above was written:
+
+| Work | Commit | Notes |
+|---|---|---|
+| Batch 8 (partial) - skills adoption merges | `a515be7` | Adopting server skills no longer deletes a local-only skill |
+| Batch 11 polish | `17f0d6c` | The two icon close buttons use `.icon-btn`; the control-bar inline `text-decoration` moved into a rule |
+| Batch 7 - retire the legacy LWW stack | `750776c` | `autosync.js`, `sync.js`'s push/pull pair, their tests and the `kanban-local-change` dispatch are gone; PB client, auth and `deleteBoardRemote` stay |
+| Batch 8 (partial) - outbound retry | `f86d6fd` | A failed event forward is queued and retried, and the queue is drained when the harness becomes active again |
+
+Totals after these: unit 306, dom 180, `node harness/test.mjs` 5/5.
+
+Remaining: Batch 8's seq-epoch item, Batch 5, Batch 6, Batch 10, and the UI/UX
+redesign pass.
