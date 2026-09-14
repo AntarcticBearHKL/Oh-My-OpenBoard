@@ -380,7 +380,7 @@ const DEFAULT_SKILLS = [
       '',
       '【四列的语义（固定，不可增删）】',
       '- Backlog：已立项、待认领。人在这里读需求、写批注。',
-      '- In Progress：已被某个 subagent 认领并在处理中 → 任务内容锁定（只读），但人仍然可以写批注。',
+      '- In Progress：已被某个 subagent 认领并在处理中 → 任务内容完全锁定（只读，含批注）。',
       '- Blocked：卡住了，必须写原因；连续两次日报仍卡住就升级。',
       '- Archived：已完成，是速度/完成点数的统计来源。',
       '',
@@ -460,7 +460,7 @@ const DEFAULT_SKILLS = [
       '  concrete - no filler, no restating the column name.',
       '',
       'Annotations:',
-      '- Annotations belong to the human. Read them (get_task) before starting and never overwrite them.',
+      '- Annotations belong to the human. Read them (get_task) before starting and never overwrite them. While a task is In Progress the whole form, annotations included, is read-only.',
       '- Use comments for your own progress notes; use add_annotation only if the human asked you to.',
     ].join('\n')
   },
