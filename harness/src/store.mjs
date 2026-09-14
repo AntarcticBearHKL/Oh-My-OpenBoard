@@ -40,6 +40,7 @@ let meta = { nodeId: null, seq: 0 };
 let events = [];
 let groups = [];
 let boardGroups = {};
+let noBoards = false;
 const seenIds = new Set();
 const appliedIds = new Set();
 
@@ -142,7 +143,7 @@ export function emit(type, {
 // ── Persistence ───────────────────────────────────────────────────────────────
 
 function persistNow() {
-  const payload = JSON.stringify({ nodeId: meta.nodeId, seq: meta.seq, events, groups, boardGroups });
+  const payload = JSON.stringify({ nodeId: meta.nodeId, seq: meta.seq, events, groups, boardGroups, noBoards });
   const tmp = `${STATE_FILE}.tmp`;
   writeFileSync(tmp, payload);
   renameSync(tmp, STATE_FILE);
@@ -164,7 +165,7 @@ export function flushStore() {
 // ── Seed ──────────────────────────────────────────────────────────────────────
 
 function seedDefaultBoardIfEmpty() {
-  if (boards.length > 0) return;
+  if (boards.length > 0 || noBoards) return;
   const now = new Date().toISOString();
   appendEvent({
     id: randomUUID(), type: 'board.created', hlc: emitLocalSync(), at: now,
@@ -205,11 +206,13 @@ export function initStore() {
       if (Array.isArray(loaded?.events)) loadedEvents = loaded.events;
       if (Array.isArray(loaded?.groups)) groups = loaded.groups;
       if (loaded?.boardGroups && typeof loaded.boardGroups === 'object') boardGroups = loaded.boardGroups;
+      if (loaded?.noBoards === true) noBoards = true;
     } catch (err) {
       console.error('[harness] state file unreadable, starting fresh', err?.message);
       meta = { nodeId: null, seq: 0 };
       groups = [];
       boardGroups = {};
+      noBoards = false;
     }
   }
   if (!meta.nodeId) meta.nodeId = randomUUID();
@@ -322,10 +325,9 @@ export function createBoard(name, { groupId = '' } = {}) {
   const boardId = randomUUID();
   const board = { id: boardId, name: trimmed || 'Untitled board', createdAt: new Date().toISOString() };
   emit('board.created', { boardId, entityId: boardId, payload: { board } });
-  if (groupId) {
-    boardGroups[boardId] = String(groupId);
-    schedulePersist();
-  }
+  noBoards = false;
+  if (groupId) boardGroups[boardId] = String(groupId);
+  schedulePersist();
   return { ...board, groupId: boardGroups[boardId] || '' };
 }
 
@@ -340,12 +342,10 @@ export function renameBoard(boardId, name) {
 
 export function deleteBoard(boardId) {
   if (!getBoard(boardId)) throw new Error(`Board not found: ${boardId}`);
-  if (getBoards().length <= 1) throw new Error('Cannot delete the last board');
   emit('board.deleted', { boardId, entityId: boardId, payload: {} });
-  if (boardGroups[boardId]) {
-    delete boardGroups[boardId];
-    schedulePersist();
-  }
+  if (boardGroups[boardId]) delete boardGroups[boardId];
+  if (getBoards().length === 0) noBoards = true;
+  schedulePersist();
   return { deleted: boardId };
 }
 

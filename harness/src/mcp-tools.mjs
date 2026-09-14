@@ -195,7 +195,7 @@ export function registerTools(server) {
 
   server.registerTool('delete_board', {
     title: 'Delete board',
-    description: 'Delete a board and its tasks. The last remaining board cannot be deleted.',
+    description: 'Delete a board and its tasks. The last board can also be deleted; the app then shows an empty state until another board is created.',
     inputSchema: { boardId: z.string() }
   }, async ({ boardId }) => ok(deleteBoard(boardId)));
 
