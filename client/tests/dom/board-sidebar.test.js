@@ -4,8 +4,7 @@ import { mountToBody } from './setup.js';
 
 const mocks = vi.hoisted(() => ({
   boards: [],
-  activeId: 'board-1',
-  confirmResult: true
+  activeId: 'board-1'
 }));
 
 vi.mock('../../src/modules/storage.js', () => ({
@@ -13,16 +12,14 @@ vi.mock('../../src/modules/storage.js', () => ({
   listBoards: vi.fn(() => mocks.boards),
   getActiveBoardId: vi.fn(() => mocks.activeId),
   setActiveBoardId: vi.fn((id) => { mocks.activeId = id; }),
-  deleteBoard: vi.fn(() => true)
+  deleteBoard: vi.fn((id) => {
+    mocks.boards = mocks.boards.filter((board) => board.id !== id);
+    return true;
+  })
 }));
 
 vi.mock('../../src/modules/boards-modal.js', () => ({
   showBoardRenameModal: vi.fn()
-}));
-
-vi.mock('../../src/modules/dialog.js', () => ({
-  confirmDialog: vi.fn(async () => mocks.confirmResult),
-  alertDialog: vi.fn(async () => undefined)
 }));
 
 vi.mock('../../src/modules/icons.js', () => ({
@@ -31,7 +28,6 @@ vi.mock('../../src/modules/icons.js', () => ({
 
 import { initializeBoardSidebar } from '../../src/modules/board-sidebar.js';
 import { on, DATA_CHANGED } from '../../src/modules/events.js';
-import { confirmDialog } from '../../src/modules/dialog.js';
 import {
   assignBoardToGroup,
   createGroup,
@@ -60,19 +56,22 @@ function groupByName(name) {
   );
 }
 
+function rootItems() {
+  return Array.from(document.querySelectorAll('#board-list > .board-list-item'));
+}
+
 beforeEach(() => {
   mocks.boards = [
     { id: 'board-1', name: 'Work' },
     { id: 'board-2', name: 'Personal' }
   ];
   mocks.activeId = 'board-1';
-  mocks.confirmResult = true;
   mountToBody(FIXTURE);
   initializeBoardSidebar();
 });
 
 describe('sidebar group tree', () => {
-  test('renders stored groups and always shows Ungrouped last', () => {
+  test('renders stored groups', () => {
     createGroup('Sprint 1');
     const second = createGroup('Sprint 2');
     assignBoardToGroup('board-2', second.id);
@@ -81,10 +80,10 @@ describe('sidebar group tree', () => {
     initializeBoardSidebar();
 
     const names = groupElements().map((el) => el.querySelector('.board-group-name').textContent);
-    expect(names).toEqual(['Sprint 1', 'Sprint 2', 'Ungrouped']);
+    expect(names).toEqual(['Sprint 1', 'Sprint 2']);
   });
 
-  test('nests each board under its group and leaves unmapped boards in Ungrouped', () => {
+  test('nests each board under its group and renders unmapped boards at the root', () => {
     const group = createGroup('Sprint 1');
     assignBoardToGroup('board-2', group.id);
 
@@ -92,12 +91,12 @@ describe('sidebar group tree', () => {
     initializeBoardSidebar();
 
     const sprint = groupByName('Sprint 1');
-    const ungrouped = groupByName('Ungrouped');
-
     expect(sprint.querySelectorAll('.board-list-item')).toHaveLength(1);
     expect(sprint.querySelector('.board-list-item-name').textContent).toBe('Personal');
-    expect(ungrouped.querySelectorAll('.board-list-item')).toHaveLength(1);
-    expect(ungrouped.querySelector('.board-list-item-name').textContent).toBe('Work');
+
+    const items = rootItems();
+    expect(items).toHaveLength(1);
+    expect(items[0].querySelector('.board-list-item-name').textContent).toBe('Work');
   });
 
   test('marks the active iteration', () => {
@@ -158,21 +157,30 @@ describe('sidebar group tree', () => {
     expect(document.querySelector('.board-group-rename-input')).not.toBeNull();
   });
 
-  test('deleting a group keeps its boards and moves them to Ungrouped', async () => {
+  test('deleting a group needs two clicks and leaves its boards at the root', () => {
     const group = createGroup('Sprint 1');
     assignBoardToGroup('board-2', group.id);
     mountToBody(FIXTURE);
     initializeBoardSidebar();
 
-    fireEvent.click(groupByName('Sprint 1').querySelector('.board-group-delete'));
-    await Promise.resolve();
-    await Promise.resolve();
+    const deleteBtn = groupByName('Sprint 1').querySelector('.board-group-delete');
 
-    expect(confirmDialog).toHaveBeenCalled();
+    fireEvent.click(deleteBtn);
+    expect(deleteBtn.classList.contains('is-armed')).toBe(true);
+    expect(listGroups()).toHaveLength(1);
+
+    fireEvent.click(deleteBtn);
     expect(listGroups()).toEqual([]);
     expect(readBoardGroupMap()).toEqual({});
+    expect(rootItems()).toHaveLength(2);
+  });
 
-    const ungrouped = groupByName('Ungrouped');
-    expect(ungrouped.querySelectorAll('.board-list-item')).toHaveLength(2);
+  test('deleting an iteration needs two clicks', () => {
+    const first = document.querySelector('.board-list-item[data-board-id="board-1"] .board-list-delete');
+    fireEvent.click(first);
+    expect(first.classList.contains('is-armed')).toBe(true);
+
+    fireEvent.click(first);
+    expect(document.querySelector('.board-list-item[data-board-id="board-1"]')).toBeNull();
   });
 });

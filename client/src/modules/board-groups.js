@@ -168,6 +168,7 @@ export function assignBoardToGroup(boardId, groupId) {
 
 export function pruneBoardGroups(validBoardIds) {
   const valid = new Set(Array.isArray(validBoardIds) ? validBoardIds : []);
+  if (valid.size === 0) return false;
   const map = readBoardGroupMap();
 
   let changed = false;

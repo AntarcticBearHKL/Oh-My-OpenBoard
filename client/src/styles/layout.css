@@ -386,6 +386,19 @@
   color: var(--color-danger);
 }
 
+.board-list-delete.is-armed,
+.board-group-delete.is-armed {
+  opacity: 1;
+  background-color: var(--color-danger);
+  color: #ffffff;
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.board-list-item--root {
+  margin-top: var(--space-1);
+}
+
 .board-group-name {
   flex: 1 1 auto;
   min-width: 0;

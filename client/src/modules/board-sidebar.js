@@ -1,4 +1,3 @@
-import { alertDialog, confirmDialog } from './dialog.js';
 import { emit, on, DATA_CHANGED } from './events.js';
 import { renderIcons } from './icons.js';
 import {
@@ -10,8 +9,6 @@ import {
 } from './storage.js';
 import { showBoardRenameModal } from './boards-modal.js';
 import {
-  UNGROUPED_GROUP_ID,
-  assignBoardToGroup,
   createGroup,
   deleteGroup,
   initGroupSync,
@@ -40,9 +37,6 @@ export function initializeBoardSidebar() {
   const listEl = document.getElementById('board-list');
   if (!listEl) return;
 
-  // Ungrouped is synthetic, so its collapse state is session-only.
-  let ungroupedCollapsed = false;
-
   const syncSelect = (id) => {
     const selectEl = document.getElementById('board-select');
     if (selectEl) selectEl.value = id;
@@ -52,6 +46,42 @@ export function initializeBoardSidebar() {
     setActiveBoardId(boardId);
     syncSelect(boardId);
     emit(DATA_CHANGED);
+  };
+
+  const makeDeleteButton = (className, label, onConfirm) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = className;
+    btn.title = label;
+    btn.setAttribute('aria-label', label);
+    btn.innerHTML = '<span data-lucide="x" aria-hidden="true"></span>';
+
+    let timer = null;
+    const disarm = () => {
+      if (timer) { clearTimeout(timer); timer = null; }
+      btn.classList.remove('is-armed');
+      btn.innerHTML = '<span data-lucide="x" aria-hidden="true"></span>';
+      btn.title = label;
+      btn.setAttribute('aria-label', label);
+      renderIcons();
+    };
+
+    btn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (btn.classList.contains('is-armed')) {
+        if (timer) { clearTimeout(timer); timer = null; }
+        onConfirm();
+        return;
+      }
+      btn.classList.add('is-armed');
+      btn.textContent = '!';
+      btn.title = 'Click again to confirm';
+      btn.setAttribute('aria-label', 'Click again to confirm delete');
+      timer = setTimeout(disarm, 3000);
+    });
+    btn.addEventListener('blur', disarm);
+
+    return btn;
   };
 
   const startGroupRename = (groupId) => {
@@ -98,12 +128,13 @@ export function initializeBoardSidebar() {
     nameEl.className = 'board-list-item-name';
     nameEl.textContent = label;
 
-    const deleteBtn = document.createElement('button');
-    deleteBtn.type = 'button';
-    deleteBtn.className = 'board-list-delete';
-    deleteBtn.title = 'Delete iteration';
-    deleteBtn.setAttribute('aria-label', `Delete iteration ${label}`);
-    deleteBtn.innerHTML = '<span data-lucide="x" aria-hidden="true"></span>';
+    const deleteBtn = makeDeleteButton('board-list-delete', `Delete iteration ${label}`, () => {
+      if (deleteBoardById(board.id)) {
+        emit(DATA_CHANGED);
+      } else {
+        render();
+      }
+    });
 
     const item = document.createElement('li');
     item.className = `board-list-item${isActive ? ' board-list-item--active' : ''}`;
@@ -127,28 +158,12 @@ export function initializeBoardSidebar() {
       showBoardRenameModal(board.id);
     });
 
-    deleteBtn.addEventListener('click', async (event) => {
-      event.stopPropagation();
-      const ok = await confirmDialog({
-        title: 'Delete iteration',
-        message: `Delete the iteration "${label}"? Its columns and tasks will be removed.`,
-        confirmText: 'Delete'
-      });
-      if (!ok) return;
-      if (!deleteBoardById(board.id)) {
-        await alertDialog({ title: 'Unable to delete', message: 'This iteration could not be deleted.' });
-        return;
-      }
-      assignBoardToGroup(board.id, null);
-      emit(DATA_CHANGED);
-    });
-
     item.append(nameEl, deleteBtn);
     return item;
   };
 
-  const buildGroupElement = (group, boards, activeId, { synthetic = false } = {}) => {
-    const isCollapsed = synthetic ? ungroupedCollapsed : group.collapsed === true;
+  const buildGroupElement = (group, boards, activeId) => {
+    const isCollapsed = group.collapsed === true;
 
     const toggleBtn = document.createElement('button');
     toggleBtn.type = 'button';
@@ -159,24 +174,17 @@ export function initializeBoardSidebar() {
     toggleBtn.innerHTML = `<span data-lucide="${isCollapsed ? 'chevron-right' : 'chevron-down'}" aria-hidden="true"></span>`;
     toggleBtn.addEventListener('click', (event) => {
       event.stopPropagation();
-      if (synthetic) {
-        ungroupedCollapsed = !ungroupedCollapsed;
-        render();
-      } else if (toggleGroupCollapsed(group.id)) {
-        render();
-      }
+      if (toggleGroupCollapsed(group.id)) render();
     });
 
     const nameEl = document.createElement('span');
     nameEl.className = 'board-group-name';
     nameEl.textContent = group.name;
-    if (!synthetic) {
-      nameEl.title = 'Double-click to rename';
-      nameEl.addEventListener('dblclick', (event) => {
-        event.stopPropagation();
-        startGroupRename(group.id);
-      });
-    }
+    nameEl.title = 'Double-click to rename';
+    nameEl.addEventListener('dblclick', (event) => {
+      event.stopPropagation();
+      startGroupRename(group.id);
+    });
 
     const addBtn = document.createElement('button');
     addBtn.type = 'button';
@@ -187,36 +195,18 @@ export function initializeBoardSidebar() {
     addBtn.addEventListener('click', (event) => {
       event.stopPropagation();
       document.dispatchEvent(
-        new CustomEvent('kanban:open-board-create', {
-          detail: { groupId: synthetic ? null : group.id }
-        })
+        new CustomEvent('kanban:open-board-create', { detail: { groupId: group.id } })
       );
+    });
+
+    const deleteBtn = makeDeleteButton('board-group-delete', `Delete group ${group.name}`, () => {
+      deleteGroup(group.id);
+      render();
     });
 
     const actions = document.createElement('div');
     actions.className = 'board-group-actions';
-    actions.appendChild(addBtn);
-
-    if (!synthetic) {
-      const deleteBtn = document.createElement('button');
-      deleteBtn.type = 'button';
-      deleteBtn.className = 'board-group-delete';
-      deleteBtn.title = 'Delete group';
-      deleteBtn.setAttribute('aria-label', `Delete group ${group.name}`);
-      deleteBtn.innerHTML = '<span data-lucide="x" aria-hidden="true"></span>';
-      deleteBtn.addEventListener('click', async (event) => {
-        event.stopPropagation();
-        const ok = await confirmDialog({
-          title: 'Delete group',
-          message: `Delete the group "${group.name}"? Its iterations are not deleted — they move to Ungrouped.`,
-          confirmText: 'Delete'
-        });
-        if (!ok) return;
-        deleteGroup(group.id);
-        render();
-      });
-      actions.appendChild(deleteBtn);
-    }
+    actions.append(addBtn, deleteBtn);
 
     const header = document.createElement('div');
     header.className = 'board-group-header';
@@ -228,7 +218,7 @@ export function initializeBoardSidebar() {
     boards.forEach((board) => items.appendChild(buildBoardItem(board, activeId)));
 
     const groupEl = document.createElement('li');
-    groupEl.className = `board-group${isCollapsed ? ' is-collapsed' : ''}${synthetic ? ' board-group--ungrouped' : ''}`;
+    groupEl.className = `board-group${isCollapsed ? ' is-collapsed' : ''}`;
     groupEl.dataset.groupId = group.id;
     groupEl.append(header, items);
     return groupEl;
@@ -245,26 +235,23 @@ export function initializeBoardSidebar() {
 
     const knownGroupIds = new Set(groups.map((group) => group.id));
     const buckets = new Map(groups.map((group) => [group.id, []]));
-    const ungrouped = [];
+    const unassigned = [];
 
     for (const board of boards) {
       const groupId = boardGroupMap[board.id];
       if (groupId && knownGroupIds.has(groupId)) buckets.get(groupId).push(board);
-      else ungrouped.push(board);
+      else unassigned.push(board);
     }
 
     listEl.innerHTML = '';
     groups.forEach((group) => {
       listEl.appendChild(buildGroupElement(group, buckets.get(group.id) || [], activeId));
     });
-    listEl.appendChild(
-      buildGroupElement(
-        { id: UNGROUPED_GROUP_ID, name: 'Ungrouped', collapsed: ungroupedCollapsed },
-        ungrouped,
-        activeId,
-        { synthetic: true }
-      )
-    );
+    unassigned.forEach((board) => {
+      const item = buildBoardItem(board, activeId);
+      item.classList.add('board-list-item--root');
+      listEl.appendChild(item);
+    });
 
     renderIcons();
   };
