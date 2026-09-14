@@ -5,6 +5,16 @@ export const GROUPS_KEY = 'kanvana:groups';
 export const BOARD_GROUP_KEY = 'kanvana:boardGroup';
 export const UNGROUPED_GROUP_ID = '__ungrouped__';
 
+const GROUPS_MIGRATED_KEY = 'kanvana:groupsMigrated';
+
+function markMigrated() {
+  try { localStorage.setItem(GROUPS_MIGRATED_KEY, '1'); } catch { /* ignore */ }
+}
+
+function isMigrated() {
+  try { return localStorage.getItem(GROUPS_MIGRATED_KEY) === '1'; } catch { return false; }
+}
+
 const GROUPS_API = '/api/groups';
 
 function readJson(key, fallback) {
@@ -194,9 +204,11 @@ export function initGroupSync() {
       if (!state) return;
       if (Array.isArray(state.groups) && state.groups.length > 0) {
         adoptGroupsState(state);
+        markMigrated();
         emit(DATA_CHANGED);
-      } else if (listGroups().length > 0) {
+      } else if (!isMigrated() && listGroups().length > 0) {
         pushToServer();
+        markMigrated();
       }
     })
     .catch(() => {});
