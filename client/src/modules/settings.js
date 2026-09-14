@@ -1,6 +1,5 @@
 import { getActiveBoardId, loadSettings, saveSettings } from './storage.js';
 import { setupModalCloseHandlers } from './modal-utils.js';
-import { emit, DATA_CHANGED } from './events.js';
 import { $id, h } from './dom.js';
 import { scheduleDomainEvent } from './event-sourcing/emitter.js';
 
@@ -51,7 +50,6 @@ function applyAndRerender(next) {
     entityId: getActiveBoardId() || '',
     payload: { fields: next }
   });
-  emit(DATA_CHANGED);
 }
 
 export function initializeSettingsUI() {
