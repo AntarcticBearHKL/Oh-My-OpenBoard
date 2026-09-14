@@ -67,7 +67,7 @@ npm run test:dom     # Vitest DOM integration tests only
 npm run test:e2e     # Playwright E2E tests only
 ```
 
-Run the full test suite before opening a PR. CI runs all three layers.
+Run the full test suite before opening a PR.
 
 ---
 

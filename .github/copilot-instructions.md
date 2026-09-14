@@ -83,21 +83,12 @@ Mutations generally follow: **load → modify → save → `renderBoard()`**.
 
 ## Release Process
 
-Preferred approach: run the manual GitHub Actions workflow `Generate Release` (`.github/workflows/release.yml`).
+This project has no GitHub Actions / CI pipelines. Releases are cut manually:
 
-When asked to generate a release:
-
-1. **Trigger workflow** — run workflow dispatch on `main` with bump type (`patch|minor|major`).
-2. **Build** — workflow runs `npm ci` and `npm run build`.
-3. **Version bump** — workflow runs `scripts/prepare-release.mjs` to bump `package.json` version and promote `CHANGELOG.md` Unreleased entries into a new versioned section.
-4. **Lockfile update** — workflow runs `npm install --package-lock-only` so `package-lock.json` matches the new version.
-5. **Create release PR** — workflow commits release files on branch `release/vX.Y.Z` and opens/updates a PR into `main`.
-6. **Merge release PR** — once merged, workflow `.github/workflows/publish-release.yml` runs automatically on `main`.
-7. **Tag + publish** — publish workflow creates tag `vX.Y.Z` and publishes GitHub Release notes from `CHANGELOG.md`.
-
-If PR creation fails in workflow, enable repository setting: `Allow GitHub Actions to create and approve pull requests`.
-
-If workflow automation is unavailable, fall back to the manual process above using the same sequence.
+1. **Run the tests locally** — `cd client && npm test`.
+2. **Bump the version + promote the changelog** — `cd client && npm run release:prepare` (bumps `package.json`, promotes `CHANGELOG.md` `## [Unreleased]` into a dated section, updates the README version badge).
+3. **Update the lockfile** — `npm install --package-lock-only` in `client/`.
+4. **Commit + tag + push** — `git add -A && git commit -m "Release vX.Y.Z" && git tag vX.Y.Z && git push origin main --tags`.
 
 ### Release conventions
 

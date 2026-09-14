@@ -8,8 +8,6 @@ kanvana == "Kanban" + "Nirvana" # smooth flow
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Now-blue)](https://kanvana.com)
 [![Version](https://img.shields.io/badge/version-1.7.1-brightgreen)](CHANGELOG.md)
-[![CI](https://github.com/mdiener21/kanvana/actions/workflows/ci.yml/badge.svg)](https://github.com/mdiener21/kanvana/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-372%20passing-brightgreen)](https://github.com/mdiener21/kanvana/actions/workflows/ci.yml)
 
 > **Transform your productivity with a sleek, local-first Kanban board.** No servers, no tracking—just pure efficiency in your browser.
 
@@ -179,11 +177,11 @@ npm run preview
 
 ### Releasing a New Version
 
-Releases are fully automated via GitHub Actions — no local commands needed.
+Releases are cut manually — this project has no GitHub Actions / CI pipelines.
 
-**Step 1 — Keep `CHANGELOG.md` up to date during development**
+**Step 1 — Keep `CHANGELOG.md` up to date**
 
-As you merge features and fixes, add bullet points under `## [Unreleased]` in `CHANGELOG.md`. Use the standard sections:
+Add bullet points under `## [Unreleased]` in `CHANGELOG.md`:
 
 ```markdown
 ## [Unreleased]
@@ -195,30 +193,30 @@ As you merge features and fixes, add bullet points under `## [Unreleased]` in `C
 - Some bug fix
 ```
 
-This is a normal commit — not a release trigger.
+**Step 2 — Run the tests locally**
 
-**Step 2 — Trigger "Generate Release" on GitHub**
+```bash
+cd client
+npm test
+```
 
-1. Go to **Actions** → **Generate Release** → **Run workflow**
-2. Fill in the two inputs:
-   - **Version bump type** — `patch` (bug fixes), `minor` (new features), or `major` (breaking changes)
-   - **Skip tests** — leave unchecked to run the full test suite first (recommended); check to force a release without tests
-3. Click **Run workflow**
+**Step 3 — Bump the version and promote the changelog**
 
-The workflow runs in two jobs:
+```bash
+cd client
+npm run release:prepare
+```
 
-- **Run tests** — executes unit, DOM, and Playwright E2E tests (Firefox). If any test fails the workflow stops and no PR is created. Fix the failure and re-trigger. If _Skip tests_ was checked this job is skipped entirely.
-- **Create release PR** — only runs when tests passed or were deliberately skipped. Bumps `package.json`, promotes `## [Unreleased]` to a dated release section in `CHANGELOG.md`, updates the README version badge, and opens a pull request. The PR body clearly shows whether tests passed or were skipped.
+This bumps `package.json`, promotes `## [Unreleased]` to a dated release section, and updates the README version badge.
 
-**Step 3 — Review and merge the PR**
+**Step 4 — Commit, tag and push**
 
-Check that the changelog and version look correct, then merge the pull request. If the PR body shows tests were skipped, decide whether that is acceptable before merging.
-
-**Step 4 — Done**
-
-Merging triggers the **Publish Release** workflow automatically. It reads the version from `package.json`, creates and pushes the git tag, and publishes the GitHub Release with the changelog notes. No further action needed.
-
-> If your repo blocks Actions from creating PRs, enable: **Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests**.
+```bash
+git add -A
+git commit -m "Release vX.Y.Z"
+git tag vX.Y.Z
+git push origin main --tags
+```
 
 ### Run Tests
 
