@@ -1,6 +1,6 @@
 /* ==========================================================================
    Reports & Calendar Pages
-   Shared visual language with the board: --header-bg chrome, 1px subtle
+   Shared visual language with the board: glass chrome, 1px subtle
    borders, small radii, token spacing/type scale, quiet muted secondary text.
    ========================================================================== */
 
@@ -21,8 +21,10 @@ body.reports-page .rpt-header {
   gap: var(--space-3);
   margin: var(--space-3) var(--space-3) 0;
   padding: var(--space-2) var(--space-3);
-  background: var(--header-bg);
-  border: 1px solid var(--border-subtle);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   flex: 0 0 auto;
@@ -97,7 +99,7 @@ body.reports-page .rpt-link svg {
 }
 
 body.reports-page .rpt-link:hover {
-  background: var(--surface-muted);
+  background: var(--item-hover);
   color: var(--text);
 }
 
@@ -394,8 +396,8 @@ body.calendar-page .rpt-due-day.is-overdue {
 }
 
 body.calendar-page .rpt-due-day[aria-pressed="true"] {
-  background: var(--primary-soft);
-  border-color: var(--color-primary);
+  background: var(--item-selected);
+  border-color: var(--border);
 }
 
 body.calendar-page .rpt-due-day.is-outside {

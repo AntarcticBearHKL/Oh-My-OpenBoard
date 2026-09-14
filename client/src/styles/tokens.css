@@ -1,7 +1,11 @@
 /* ==========================================================================
    CSS Variables (Light/Dark themes)
-   Achromatic "stone" palette — near-black primary in light, near-white in dark.
-   Semantic colour is reserved for state (danger / warning / success / priority).
+
+   Warm cocoa design language, mirrored from the sister project's canvas theme:
+   a warm light-cocoa paper in light, a warm dark-cocoa paper in dark, and the
+   same frosted-glass chrome in BOTH themes. Semantic colour stays reserved for
+   state (danger / warning / success / priority); cocoa grey is reserved for
+   selected/active surfaces, never as a decorative button fill.
    ========================================================================== */
 
 :root {
@@ -10,10 +14,10 @@
   /* Typography */
   --font-sans: "Baloo 2", "Resource Han Rounded SC", "Yuanti SC", "YouYuan", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
 
-  /* Core palette */
-  --color-primary: oklch(0.205 0 0);
-  --color-primary-hover: oklch(0.32 0 0);
-  --color-on-primary: oklch(0.985 0 0);
+  /* Core palette — cocoa primary is near-black in light */
+  --color-primary: #171717;
+  --color-primary-hover: #000000;
+  --color-on-primary: #ffffff;
   --color-danger: oklch(0.577 0.245 27.325);
   --color-danger-bg: rgba(220, 38, 38, 0.08);
   --color-on-danger: #ffffff;
@@ -22,45 +26,54 @@
   --color-warning-bg: rgba(202, 138, 4, 0.12);
   --color-warning-fg: oklch(0.47 0.11 70);
 
-  /* Surface colors */
-  --app-bg: oklch(0.985 0 0);
-  --surface: oklch(1 0 0);
-  --surface-muted: oklch(0.97 0 0);
-  --surface-alt: oklch(0.97 0 0);
-  --surface-raised: oklch(1 0 0);
+  /* Surface colors — warm light-cocoa paper */
+  --app-bg: #f4f2ed;
+  --surface: #fbfaf7;
+  --surface-muted: #e7e5df;
+  --surface-alt: #e7e5df;
+  --surface-raised: #ffffff;
 
   /* Border colors */
-  --border: oklch(0.922 0 0);
-  --border-subtle: oklch(0.945 0 0);
-  --border-color: oklch(0.922 0 0);
+  --border: #d6d3ca;
+  --border-subtle: rgba(28, 25, 23, 0.10);
+  --border-color: #d6d3ca;
 
   /* Text colors */
-  --text: oklch(0.145 0 0);
-  --text-muted: oklch(0.556 0 0);
-  --text-subtle: oklch(0.32 0 0);
-  --text-secondary: oklch(0.32 0 0);
+  --text: #292524;
+  --text-muted: #78716c;
+  --text-subtle: #57534e;
+  --text-secondary: #57534e;
+  --text-faint: #a8a29e;
+  --text-placeholder: #8a8479;
 
   /* Form colors */
-  --input-bg: oklch(1 0 0);
+  --input-bg: #fbfaf7;
   --input-focus-ring: rgba(28, 25, 23, 0.12);
   --input-error-ring: rgba(220, 38, 38, 0.1);
 
   /* Component colors */
-  --scrollbar-track: oklch(0.97 0 0);
-  --footer-bg: oklch(0.985 0 0);
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(120, 113, 108, 0.45);
+  --scrollbar-thumb-hover: rgba(120, 113, 108, 0.7);
+  --footer-bg: #f4f2ed;
   --overlay-bg: rgba(28, 25, 23, 0.32);
 
-  /* Button variants */
-  --btn-secondary-bg: oklch(0.97 0 0);
-  --btn-secondary-fg: oklch(0.32 0 0);
-  --btn-secondary-hover-bg: oklch(0.945 0 0);
-  --btn-small-bg: oklch(0.97 0 0);
-  --btn-small-hover-bg: oklch(0.945 0 0);
-  --primary-light: rgba(28, 25, 23, 0.05);
+  /* Button variants — flat: transparent at rest, tinted on hover only */
+  --btn-secondary-bg: transparent;
+  --btn-secondary-fg: #57534e;
+  --btn-secondary-hover-bg: rgba(23, 23, 23, 0.06);
+  --btn-small-bg: transparent;
+  --btn-small-hover-bg: rgba(23, 23, 23, 0.06);
+  --primary-light: rgba(23, 23, 23, 0.06);
+
+  /* Interactive surface states */
+  --item-hover: rgba(23, 23, 23, 0.06);
+  --item-selected: rgba(23, 23, 23, 0.10);
+  --selection-fill: rgba(28, 25, 23, 0.06);
 
   /* Toggle switch */
   --switch-track: rgba(28, 25, 23, 0.18);
-  --switch-knob: oklch(1 0 0);
+  --switch-knob: #ffffff;
   --switch-track-on: var(--color-primary);
   --switch-knob-on: var(--color-on-primary);
 
@@ -71,18 +84,18 @@
   --priority-urgent-fg: oklch(0.45 0.19 27);
   --priority-medium-bg: rgba(202, 138, 4, 0.14);
   --priority-medium-fg: oklch(0.47 0.11 70);
-  --priority-low-bg: rgba(28, 25, 23, 0.06);
-  --priority-low-fg: oklch(0.44 0 0);
-  --priority-none-bg: rgba(28, 25, 23, 0.04);
-  --priority-none-fg: oklch(0.556 0 0);
+  --priority-low-bg: rgba(23, 23, 23, 0.06);
+  --priority-low-fg: #57534e;
+  --priority-none-bg: rgba(23, 23, 23, 0.04);
+  --priority-none-fg: #78716c;
 
-  /* Agile task type markers — quiet, stone-compatible */
-  --type-story-bg: rgba(28, 25, 23, 0.08);
-  --type-story-fg: oklch(0.32 0 0);
+  /* Agile task type markers — quiet, cocoa-compatible */
+  --type-story-bg: rgba(23, 23, 23, 0.08);
+  --type-story-fg: #57534e;
   --type-bug-bg: rgba(220, 38, 38, 0.1);
   --type-bug-fg: oklch(0.505 0.19 27);
-  --type-task-bg: rgba(28, 25, 23, 0.06);
-  --type-task-fg: oklch(0.44 0 0);
+  --type-task-bg: rgba(23, 23, 23, 0.06);
+  --type-task-fg: #57534e;
   --type-spike-bg: rgba(202, 138, 4, 0.14);
   --type-spike-fg: oklch(0.47 0.11 70);
 
@@ -100,9 +113,9 @@
   --sync-unsynced-fg: oklch(0.5 0.15 45);
   --sync-unsynced-bg: rgba(234, 88, 12, 0.1);
   --sync-unsynced-border: rgba(234, 88, 12, 0.2);
-  --sync-offline-fg: oklch(0.44 0 0);
-  --sync-offline-bg: rgba(28, 25, 23, 0.05);
-  --sync-offline-border: rgba(28, 25, 23, 0.1);
+  --sync-offline-fg: #57534e;
+  --sync-offline-bg: rgba(23, 23, 23, 0.05);
+  --sync-offline-border: rgba(23, 23, 23, 0.1);
 
   /* Shadows — soft and large */
   --shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.05);
@@ -126,6 +139,7 @@
   --radius-md: 8px;
   --radius-lg: 10px;
   --radius-xl: 14px;
+  --radius-popover: 18px;
   --radius-pill: 999px;
 
   /* Type scale */
@@ -139,62 +153,85 @@
   --text-2xl: 28px;
 
   /* Board chrome surfaces */
-  --header-bg: oklch(1 0 0);
-  --sidebar-bg: oklch(0.985 0 0);
-  --sidebar-hover: rgba(28, 25, 23, 0.05);
-  --row-hover: rgba(28, 25, 23, 0.04);
-  --row-divider: oklch(0.945 0 0);
+  --header-bg: #fbfaf7;
+  --sidebar-bg: #fbfaf7;
+  --sidebar-hover: rgba(23, 23, 23, 0.06);
+  --row-hover: rgba(23, 23, 23, 0.06);
+  --row-divider: rgba(28, 25, 23, 0.08);
   --focus-ring: rgba(28, 25, 23, 0.12);
-  --primary-soft: rgba(28, 25, 23, 0.06);
+  --primary-soft: rgba(23, 23, 23, 0.06);
+
+  /* Canvas — cocoa paper with a low-emphasis dot grid */
+  --canvas-bg: #f4f2ed;
+  --dot-color: rgba(68, 64, 60, 0.28);
+  --dot-tile: 22px;
+
+  /* Glass — the defining chrome surface (light cocoa) */
+  --glass-bg: rgba(251, 250, 247, 0.72);
+  --glass-bg-opaque: #fbfaf7;
+  --glass-border: rgba(28, 25, 23, 0.10);
+  --glass-blur: blur(24px) saturate(150%);
+  --glass-blur-lg: blur(40px) saturate(150%);
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --color-primary: oklch(0.922 0 0);
-  --color-primary-hover: oklch(0.98 0 0);
-  --color-on-primary: oklch(0.205 0 0);
+  /* Core palette — cocoa primary is near-white in dark */
+  --color-primary: #fafafa;
+  --color-primary-hover: #ffffff;
+  --color-on-primary: #171717;
   --color-danger: oklch(0.704 0.191 22.216);
   --color-danger-bg: rgba(248, 113, 113, 0.14);
-  --color-on-danger: oklch(0.145 0 0);
+  --color-on-danger: #171717;
   --color-success: oklch(0.75 0.14 155);
   --color-warning: oklch(0.78 0.13 75);
   --color-warning-bg: rgba(251, 191, 36, 0.16);
   --color-warning-fg: oklch(0.86 0.1 85);
 
-  --app-bg: oklch(0.145 0 0);
-  --surface: oklch(0.205 0 0);
-  --surface-muted: oklch(0.185 0 0);
-  --surface-alt: oklch(0.185 0 0);
-  --surface-raised: oklch(0.24 0 0);
+  /* Surface colors — warm dark-cocoa paper */
+  --app-bg: #181715;
+  --surface: #1f1d1a;
+  --surface-muted: #292524;
+  --surface-alt: #292524;
+  --surface-raised: #292524;
 
-  --border: rgba(255, 255, 255, 0.1);
-  --border-subtle: rgba(255, 255, 255, 0.07);
-  --border-color: rgba(255, 255, 255, 0.1);
+  --border: #44403c;
+  --border-subtle: rgba(255, 255, 255, 0.10);
+  --border-color: #44403c;
 
-  --text: oklch(0.985 0 0);
-  --text-muted: oklch(0.708 0 0);
-  --text-subtle: oklch(0.86 0 0);
-  --text-secondary: oklch(0.86 0 0);
+  --text: #f5f5f4;
+  --text-muted: #d6d3d1;
+  --text-subtle: #d6d3d1;
+  --text-secondary: #d6d3d1;
+  --text-faint: #78716c;
+  --text-placeholder: #a8a29e;
 
-  --input-bg: oklch(0.205 0 0);
+  --input-bg: #292524;
   --input-focus-ring: rgba(250, 250, 249, 0.25);
   --input-error-ring: rgba(248, 113, 113, 0.18);
 
-  --scrollbar-track: oklch(0.185 0 0);
-  --footer-bg: oklch(0.145 0 0);
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(120, 113, 108, 0.45);
+  --scrollbar-thumb-hover: rgba(120, 113, 108, 0.7);
+  --footer-bg: #181715;
   --overlay-bg: rgba(0, 0, 0, 0.6);
 
-  --btn-secondary-bg: rgba(250, 250, 249, 0.08);
-  --btn-secondary-fg: oklch(0.86 0 0);
-  --btn-secondary-hover-bg: rgba(250, 250, 249, 0.14);
-  --btn-small-bg: rgba(250, 250, 249, 0.06);
-  --btn-small-hover-bg: rgba(250, 250, 249, 0.12);
-  --primary-light: rgba(250, 250, 249, 0.1);
+  --btn-secondary-bg: transparent;
+  --btn-secondary-fg: #d6d3d1;
+  --btn-secondary-hover-bg: rgba(250, 250, 249, 0.10);
+  --btn-small-bg: transparent;
+  --btn-small-hover-bg: rgba(250, 250, 249, 0.10);
+  --primary-light: rgba(250, 250, 249, 0.10);
+
+  /* Interactive surface states */
+  --item-hover: rgba(250, 250, 249, 0.08);
+  --item-selected: rgba(250, 250, 249, 0.12);
+  --selection-fill: rgba(250, 250, 249, 0.10);
 
   /* Toggle switch */
   --switch-track: rgba(255, 255, 255, 0.18);
-  --switch-knob: oklch(0.86 0 0);
+  --switch-knob: #d6d3d1;
   --switch-track-on: var(--color-primary);
   --switch-knob-on: var(--color-on-primary);
 
@@ -205,18 +242,18 @@
   --priority-urgent-fg: oklch(0.82 0.12 25);
   --priority-medium-bg: rgba(251, 191, 36, 0.16);
   --priority-medium-fg: oklch(0.82 0.12 80);
-  --priority-low-bg: rgba(250, 250, 249, 0.1);
-  --priority-low-fg: oklch(0.75 0 0);
+  --priority-low-bg: rgba(250, 250, 249, 0.10);
+  --priority-low-fg: #d6d3d1;
   --priority-none-bg: rgba(250, 250, 249, 0.06);
-  --priority-none-fg: oklch(0.708 0 0);
+  --priority-none-fg: #d6d3d1;
 
   /* Agile task type markers – brighter for dark surfaces */
   --type-story-bg: rgba(250, 250, 249, 0.12);
-  --type-story-fg: oklch(0.86 0 0);
+  --type-story-fg: #d6d3d1;
   --type-bug-bg: rgba(248, 113, 113, 0.16);
   --type-bug-fg: oklch(0.78 0.13 25);
   --type-task-bg: rgba(250, 250, 249, 0.08);
-  --type-task-fg: oklch(0.75 0 0);
+  --type-task-fg: #d6d3d1;
   --type-spike-bg: rgba(251, 191, 36, 0.16);
   --type-spike-fg: oklch(0.84 0.11 85);
 
@@ -232,20 +269,32 @@
   --sync-unsynced-fg: oklch(0.78 0.12 50);
   --sync-unsynced-bg: rgba(251, 146, 60, 0.14);
   --sync-unsynced-border: rgba(251, 146, 60, 0.22);
-  --sync-offline-fg: oklch(0.75 0 0);
+  --sync-offline-fg: #d6d3d1;
   --sync-offline-bg: rgba(250, 250, 249, 0.07);
   --sync-offline-border: rgba(250, 250, 249, 0.12);
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
-  --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 18px 54px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 18px 54px rgba(0, 0, 0, 0.45);
 
   /* Board chrome surfaces */
-  --header-bg: oklch(0.205 0 0);
-  --sidebar-bg: oklch(0.185 0 0);
-  --sidebar-hover: rgba(255, 255, 255, 0.06);
-  --row-hover: rgba(255, 255, 255, 0.06);
+  --header-bg: #1f1d1a;
+  --sidebar-bg: #1f1d1a;
+  --sidebar-hover: rgba(250, 250, 249, 0.08);
+  --row-hover: rgba(250, 250, 249, 0.08);
   --row-divider: rgba(255, 255, 255, 0.08);
   --focus-ring: rgba(250, 250, 249, 0.25);
-  --primary-soft: rgba(250, 250, 249, 0.14);
+  --primary-soft: rgba(250, 250, 249, 0.08);
+
+  /* Canvas — warm dark cocoa paper with a low-emphasis dot grid */
+  --canvas-bg: #181715;
+  --dot-color: rgba(245, 245, 244, 0.24);
+  --dot-tile: 22px;
+
+  /* Glass — same frosted recipe, warm dark cocoa */
+  --glass-bg: rgba(31, 29, 26, 0.72);
+  --glass-bg-opaque: #1f1d1a;
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-blur: blur(24px) saturate(150%);
+  --glass-blur-lg: blur(40px) saturate(150%);
 }

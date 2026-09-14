@@ -77,7 +77,7 @@
 }
 
 .task-title:hover {
-  color: var(--column-accent-muted);
+  color: var(--column-accent-hover);
 }
 
 /* Right-aligned meta cluster */

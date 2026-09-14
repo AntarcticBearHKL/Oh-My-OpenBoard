@@ -80,7 +80,7 @@
 
 .notification-banner-close-btn:hover {
   opacity: 1;
-  background-color: var(--surface-muted);
+  background-color: var(--item-hover);
 }
 
 @media (max-width: 600px) {
@@ -109,8 +109,8 @@
 /* Custom scrollbar for notification banner list */
 .notification-banner-list::-webkit-scrollbar { width: 6px; }
 .notification-banner-list::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: 3px; }
-.notification-banner-list::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--color-danger) 40%, transparent); border-radius: 3px; }
-.notification-banner-list::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--color-danger) 60%, transparent); }
+.notification-banner-list::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+.notification-banner-list::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
 
 .notification-banner-item {
   display: inline-flex;
@@ -131,7 +131,7 @@
 }
 
 .notification-banner-item:hover {
-  background-color: var(--surface-muted);
+  background-color: var(--item-hover);
   border-color: var(--color-danger);
 }
 

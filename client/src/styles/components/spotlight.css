@@ -17,9 +17,11 @@
 .spotlight-panel {
   width: 100%;
   max-width: 640px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-popover);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
 }
@@ -52,7 +54,7 @@
 }
 
 .spotlight-field input::placeholder {
-  color: var(--text-muted);
+  color: var(--text-placeholder);
 }
 
 .spotlight-results {
@@ -77,7 +79,7 @@
 }
 
 .spotlight-item.is-active {
-  background: var(--primary-soft);
+  background: var(--item-selected);
 }
 
 .spotlight-key {

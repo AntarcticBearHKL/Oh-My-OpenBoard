@@ -19,7 +19,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--border);
+  border-right: 1px solid var(--glass-border);
   padding-right: var(--space-4);
   max-height: 62vh;
 }
@@ -65,8 +65,8 @@
 }
 
 .skill-item--active {
-  background-color: var(--primary-soft);
-  border-color: var(--color-primary);
+  background-color: var(--item-selected);
+  border-color: var(--border);
 }
 
 .skill-item:focus-visible {

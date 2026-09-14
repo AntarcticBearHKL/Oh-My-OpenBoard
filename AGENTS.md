@@ -71,6 +71,24 @@ Run the full test suite before opening a PR.
 
 ---
 
+## Local Server Hygiene
+
+Never start a long-lived server from a tool call. The call waits for the process to exit, so the
+agent stalls and a stray server keeps the port busy for hours. Launch detached instead
+(`harness/start-bg.ps1` / `harness/dev-bg.ps1`) or use a command that terminates on its own.
+
+`harness/watchdog.ps1` runs as the Scheduled Task `OpenAgile-Watchdog` every 2 minutes and kills any
+server launcher older than five minutes that is not whitelisted. Whitelisted ports:
+`8787` (harness), `3000`, `4173`, `5173`, `8011`, `8969`, and `4321`.
+
+For a visual check, serve the build on the sandbox port and shut it down when done:
+
+```bash
+npm run preview -- --port 4321 --strictPort
+```
+
+---
+
 ## Architecture Rules
 
 Read `CONTEXT.md` for the full domain model, entity schemas, and key workflows.

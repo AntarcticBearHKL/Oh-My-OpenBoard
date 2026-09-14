@@ -41,8 +41,9 @@ $script:LogPath = $LogPath
 $logDir = Split-Path -Parent $LogPath
 if (-not (Test-Path -LiteralPath $logDir)) { New-Item -ItemType Directory -Force -Path $logDir | Out-Null }
 
-# Ports that always belong to a real, wanted server.
-$WhitelistPorts = @(8787, 3000, 4173, 5173, 8011, 8969)
+# Ports that always belong to a real, wanted server. 4321 is the documented
+# sandbox port agents may serve a build on for visual checks.
+$WhitelistPorts = @(8787, 3000, 4173, 5173, 8011, 8969, 4321)
 # Project paths that always belong to a real, wanted server.
 $WhitelistPaths = @('infinite-canvas\web', 'LLMWorld\dashboard\web', 'kanvana\harness')
 # Agent/MCP infrastructure: never a stray, never touched.

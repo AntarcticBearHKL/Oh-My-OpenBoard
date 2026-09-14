@@ -1,0 +1,38 @@
+/* ==========================================================================
+   Glass fallback
+   Imported last: without backdrop-filter the frosted layers would show the dot
+   grid through them, so every glass surface falls back to opaque cocoa paper.
+   ========================================================================== */
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .controls,
+  .board-sidebar,
+  .task-column,
+  .swimlane-column-header,
+  .swimlane-cell,
+  .modal-content,
+  .modal-content .form-actions,
+  .spotlight-panel,
+  .column-summary-panel,
+  .relationship-results,
+  .rel-type-tooltip,
+  .footer,
+  body.reports-page .rpt-header,
+  .session-status {
+    background-color: var(--glass-bg-opaque);
+  }
+
+  .swimlane-cell {
+    background-color: color-mix(in srgb, var(--glass-bg-opaque) 82%, var(--surface-muted) 18%);
+  }
+
+  .controls-menu-mobile-header {
+    background: var(--glass-bg-opaque);
+  }
+
+  @media (min-width: 601px) {
+    .controls-actions {
+      background: var(--glass-bg-opaque);
+    }
+  }
+}

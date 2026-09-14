@@ -28,8 +28,8 @@
 
 /* Body state while dragging tasks */
 body.dragging .task-column {
-  /* Subtle highlight to show drop zones */
-  background-color: var(--row-hover);
+  /* Tint layered over the glass, never replacing it */
+  background-image: linear-gradient(var(--row-hover), var(--row-hover));
   overflow: visible;
 }
 
@@ -53,8 +53,8 @@ body.dragging .task-column.is-collapsed .tasks .show-more-btn {
 .task-column.is-collapsed.is-drop-hover {
   border-width: 3px;
   border-style: dashed;
-  border-color: color-mix(in srgb, var(--column-accent-muted) 80%, var(--border) 20%);
-  background-color: color-mix(in srgb, var(--surface) 90%, var(--column-accent-muted) 10%);
+  border-color: color-mix(in srgb, var(--column-accent-muted) 80%, var(--glass-border) 20%);
+  background-color: color-mix(in srgb, var(--glass-bg-opaque) 90%, var(--column-accent-muted) 10%);
   box-shadow:
     0 0 0 3px color-mix(in srgb, var(--column-accent-muted) 25%, transparent),
     var(--shadow-md);
@@ -87,9 +87,9 @@ body.dragging .swimlane-cell.is-column-collapsed .swimlane-tasks .task {
 }
 
 .swimlane-cell.is-column-collapsed.is-drop-hover {
-  outline: 2px dashed color-mix(in srgb, var(--column-accent-muted) 80%, var(--border) 20%);
+  outline: 2px dashed color-mix(in srgb, var(--column-accent-muted) 80%, var(--glass-border) 20%);
   outline-offset: -2px;
-  background-color: color-mix(in srgb, var(--surface) 88%, var(--column-accent-muted) 12%);
+  background-color: color-mix(in srgb, var(--glass-bg-opaque) 88%, var(--column-accent-muted) 12%);
   transition:
     outline-color 120ms ease-out,
     background-color 120ms ease-out;

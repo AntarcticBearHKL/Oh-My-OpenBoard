@@ -12,8 +12,10 @@
   padding: var(--space-2) var(--space-3);
   margin-bottom: var(--space-3);
   position: relative; /* Anchor for mobile menu dropdown */
-  background-color: var(--header-bg);
-  border: 1px solid var(--border-subtle);
+  background-color: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
 }
@@ -37,14 +39,14 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  background-color: var(--input-bg);
-  border: 1px solid var(--border-subtle);
+  background-color: var(--selection-fill);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
 }
 
 .board-search:hover {
-  border-color: var(--border);
+  background-color: var(--item-hover);
 }
 
 .board-search svg {
@@ -65,7 +67,7 @@
 }
 
 .board-search input::placeholder {
-  color: var(--text-muted);
+  color: var(--text-placeholder);
 }
 
 .board-search input:focus {
@@ -149,11 +151,13 @@
   top: 100%;
   right: 10px;
   flex-direction: column;
-  background: var(--surface);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
   padding: 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-md);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-popover);
   z-index: 200;
   min-width: 220px;
   gap: 4px;
@@ -178,7 +182,7 @@
 }
 
 .controls-actions .control-btn:hover {
-  background-color: var(--surface-muted);
+  background-color: var(--item-hover);
 }
 
 /* Swimlane quick toggle in menu */
@@ -329,8 +333,10 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: var(--space-2);
-  background-color: var(--sidebar-bg);
-  border: 1px solid var(--border-subtle);
+  background-color: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
 }
 
@@ -392,7 +398,7 @@
 
 .board-group-toggle:hover,
 .board-group-add:hover {
-  background-color: var(--surface);
+  background-color: var(--item-hover);
   color: var(--text);
 }
 
@@ -493,7 +499,7 @@
 }
 
 .board-list-item--active {
-  background-color: var(--primary-soft);
+  background-color: var(--item-selected);
   color: var(--color-primary);
   font-weight: 600;
 }
@@ -619,8 +625,10 @@
 .footer {
   margin-top: auto;
   padding: 16px;
-  background-color: var(--footer-bg);
-  border-top: 1px solid var(--border-subtle);
+  background-color: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border-top: 1px solid var(--glass-border);
   text-align: center;
   font-size: var(--text-md);
   color: var(--text-muted);

@@ -5,10 +5,11 @@
 /* --- Column Card --- */
 
 .task-column {
-  /* Column accent (can be overridden via inline style) — muted to sit on the stone base */
-  --column-accent: oklch(0.55 0.035 250);
-  --column-accent-muted: color-mix(in srgb, var(--column-accent) 55%, var(--text-muted));
-  --column-accent-hover: color-mix(in srgb, var(--column-accent) 72%, var(--text));
+  /* Column accent (can be overridden via inline style). Decorative use stays
+     low-chroma via --text-faint; hover text mixes with --text to keep contrast. */
+  --column-accent: #8a9bb5;
+  --column-accent-muted: color-mix(in srgb, var(--column-accent) 32%, var(--text-faint));
+  --column-accent-hover: color-mix(in srgb, var(--column-accent) 60%, var(--text));
   --column-bg-tint: color-mix(in srgb, var(--column-accent-muted) 6%, transparent);
   --task-bg-tint: color-mix(in srgb, var(--column-accent-muted) 5%, transparent);
   --task-border-tint: color-mix(in srgb, var(--column-accent-muted) 18%, transparent);
@@ -17,14 +18,16 @@
 
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: 0;
   margin: 0 0 0 -1px;
   padding: 0;
   flex: 0 0 var(--column-width, 300px);
   width: var(--column-width, 300px);
   min-width: var(--column-width, 300px);
-  background-color: var(--surface);
+  background-color: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
   display: flex;
   flex-direction: column;
   min-height: 220px;
@@ -50,10 +53,10 @@
   display: none;
 }
 
-/* Fallback accent colors (nth-child) — muted, stone-compatible */
-#board-container > .task-column:nth-child(3n + 1) { --column-accent: oklch(0.55 0.035 250); }
-#board-container > .task-column:nth-child(3n + 2) { --column-accent: oklch(0.62 0.09 75); }
-#board-container > .task-column:nth-child(3n + 3) { --column-accent: oklch(0.55 0.07 155); }
+/* Fallback accent colors (nth-child) — warm, low-chroma, cocoa-compatible */
+#board-container > .task-column:nth-child(3n + 1) { --column-accent: #8a9bb5; }
+#board-container > .task-column:nth-child(3n + 2) { --column-accent: #bd9a63; }
+#board-container > .task-column:nth-child(3n + 3) { --column-accent: #8fa88f; }
 
 /* Column header */
 .column-header {
@@ -62,8 +65,8 @@
   gap: var(--space-2);
   margin-bottom: 0;
   padding: var(--space-2) var(--space-3);
-  background: var(--surface-muted);
-  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-muted) 45%, transparent);
+  border-bottom: 1px solid var(--glass-border);
   cursor: default;
   user-select: none;
 }
@@ -103,11 +106,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--surface);
+  background-color: color-mix(in srgb, var(--surface-raised) 55%, transparent);
   color: var(--text-muted);
   /* Pill, not circle: min-width keeps an unlimited column's bare count a circle
      while "6/5" is free to grow. */
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-pill);
   min-width: 22px;
   width: auto;
@@ -221,8 +224,8 @@
 /* Custom scrollbar */
 .tasks::-webkit-scrollbar { width: 6px; }
 .tasks::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: 3px; }
-.tasks::-webkit-scrollbar-thumb { background: var(--column-accent-muted); border-radius: 3px; }
-.tasks::-webkit-scrollbar-thumb:hover { background: var(--column-accent-hover); }
+.tasks::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+.tasks::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
 
 .board-container-swimlanes {
   display: block;
@@ -255,7 +258,7 @@
   z-index: 5;
   padding-block: 4px;
   margin-block: -4px 0;
-  background: var(--app-bg);
+  background: var(--canvas-bg);
 }
 
 .swimlane-column-header,
@@ -263,14 +266,16 @@
   box-sizing: border-box;
   inline-size: 100%;
   min-width: 0;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   border-radius: 5px;
-  background: var(--surface);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
 }
 
 .swimlane-column-header {
-  --column-accent: oklch(0.55 0.035 250);
-  --column-accent-muted: color-mix(in srgb, var(--column-accent) 55%, var(--text-muted));
+  --column-accent: #8a9bb5;
+  --column-accent-muted: color-mix(in srgb, var(--column-accent) 32%, var(--text-faint));
   position: relative;
   z-index: 6;
   display: flex;
@@ -287,14 +292,14 @@
   width: 34px;
   height: 34px;
   border-radius: 5px;
-  border: 1px solid var(--border);
-  background: var(--surface);
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--text);
   flex: 0 0 auto;
 }
 
 .swimlane-column-collapse-btn:hover {
-  background: var(--surface-muted);
+  background: var(--item-hover);
 }
 
 .swimlane-column-header h2 {
@@ -372,11 +377,11 @@
   min-height: 26px;
   padding: 0 10px;
   border-radius: 999px;
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface-raised) 55%, transparent);
   color: var(--text);
   font-size: var(--text-sm);
   font-weight: 700;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
 }
 
 .swimlane-row-badge.is-muted {
@@ -398,8 +403,8 @@
 }
 
 .swimlane-row-toggle:hover {
-  border-color: var(--border);
-  background: var(--surface-muted);
+  border-color: transparent;
+  background: var(--item-hover);
 }
 
 .swimlane-row {
@@ -414,9 +419,9 @@
 }
 
 .swimlane-cell {
-  --column-accent: oklch(0.55 0.035 250);
-  --column-accent-muted: color-mix(in srgb, var(--column-accent) 55%, var(--text-muted));
-  --column-accent-hover: color-mix(in srgb, var(--column-accent) 72%, var(--text));
+  --column-accent: #8a9bb5;
+  --column-accent-muted: color-mix(in srgb, var(--column-accent) 32%, var(--text-faint));
+  --column-accent-hover: color-mix(in srgb, var(--column-accent) 60%, var(--text));
   --column-bg-tint: color-mix(in srgb, var(--column-accent-muted) 6%, transparent);
   --task-bg-tint: color-mix(in srgb, var(--column-accent-muted) 5%, transparent);
   --task-border-tint: color-mix(in srgb, var(--column-accent-muted) 18%, transparent);
@@ -427,7 +432,7 @@
   flex-direction: column;
   min-height: 100%;
   padding: 12px;
-  background: color-mix(in srgb, var(--surface) 96%, var(--surface-muted));
+  background: color-mix(in srgb, var(--glass-bg) 82%, var(--surface-muted) 18%);
   overflow: visible;
 }
 
@@ -503,15 +508,15 @@
   height: 24px;
   padding: 0;
   border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--surface);
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--text-muted);
   cursor: pointer;
   flex: 0 0 auto;
 }
 
 .swimlane-cell-toggle:hover {
-  background: var(--surface-muted);
+  background: var(--item-hover);
   color: var(--text);
 }
 
@@ -543,8 +548,8 @@
   height: 24px;
   padding: 0;
   border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--surface);
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--text-muted);
   cursor: pointer;
   flex: 0 0 auto;
@@ -552,7 +557,7 @@
 }
 
 .swimlane-cell-add-btn:hover {
-  background: var(--surface-muted);
+  background: var(--item-hover);
   color: var(--text);
 }
 
@@ -570,9 +575,9 @@
   gap: 6px;
   height: 30px;
   padding: 0 12px;
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
-  background-color: var(--surface);
+  background-color: transparent;
   color: var(--text-subtle);
   font-family: inherit;
   font-size: var(--text-xs);
@@ -589,13 +594,13 @@
 
 .column-summary-btn:hover,
 .column-summary-btn[aria-expanded="true"] {
-  background-color: var(--primary-soft);
-  border-color: var(--text-muted);
+  background-color: var(--item-hover);
+  border-color: transparent;
   color: var(--text);
 }
 
 .column-summary-btn.has-summary {
-  border-color: var(--color-primary);
+  border-color: transparent;
   color: var(--text);
 }
 
@@ -638,9 +643,11 @@ body.column-summary-open {
   width: min(900px, 100%);
   margin: 0 auto;
   padding: clamp(28px, 4vw, 56px) clamp(20px, 5vw, 64px) clamp(24px, 3vw, 44px);
-  background-color: var(--surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-xl);
+  background-color: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur-lg);
+  backdrop-filter: var(--glass-blur-lg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-popover);
   box-shadow: var(--shadow-lg);
   color: var(--text);
   animation: column-summary-rise 220ms cubic-bezier(0.22, 1, 0.36, 1);

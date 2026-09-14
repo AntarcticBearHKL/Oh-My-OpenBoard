@@ -32,3 +32,6 @@
 
 /* Responsive overrides (must come last) */
 @import './responsive.css';
+
+/* Glass fallback — must stay last so it wins over the component surfaces */
+@import './glass.css';

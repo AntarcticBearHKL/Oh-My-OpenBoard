@@ -32,7 +32,8 @@
     overflow: hidden;
   }
 
-  /* Mobile header: keep one row and open search as an overlay */
+  /* Mobile header: keep one row and open search as an overlay.
+     No backdrop-filter: it would become the containing block for the fixed overlays below. */
   .controls {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -40,6 +41,9 @@
     padding: 8px 10px;
     flex-wrap: nowrap;
     align-items: center;
+    background-color: var(--glass-bg-opaque);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 
   .brand {
@@ -91,10 +95,11 @@
     z-index: 361;
     justify-content: space-between;
     padding: 8px 10px;
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    background: color-mix(in srgb, var(--surface) 94%, transparent);
-    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-popover);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
     opacity: 0;
     pointer-events: none;
     transform: translateY(-8px);
@@ -162,8 +167,10 @@
     border-radius: 0;
     box-shadow: none;
     background:
-      radial-gradient(circle at top left, var(--primary-soft), transparent 36%),
-      linear-gradient(180deg, var(--surface-muted) 0%, var(--surface) 100%);
+      radial-gradient(circle at top left, var(--selection-fill), transparent 36%),
+      linear-gradient(180deg, var(--surface-muted) 0%, var(--glass-bg-opaque) 100%);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior: contain;
@@ -180,9 +187,10 @@
     align-items: center;
     justify-content: space-between;
     padding: calc(env(safe-area-inset-top) + 18px) 16px 14px;
-    background: linear-gradient(180deg, var(--surface) 0%, color-mix(in srgb, var(--surface) 82%, transparent) 100%);
-    border-bottom: 1px solid var(--border-subtle);
-    backdrop-filter: blur(14px);
+    background: linear-gradient(180deg, var(--glass-bg-opaque) 0%, color-mix(in srgb, var(--glass-bg-opaque) 82%, transparent) 100%);
+    border-bottom: 1px solid var(--glass-border);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
   }
 
   .controls-menu-mobile-title {
@@ -197,13 +205,13 @@
     height: 44px;
     border-radius: 12px;
     opacity: 1;
-    background: var(--surface-muted);
+    background: transparent;
     color: var(--text);
-    border: 1px solid var(--border);
+    border: 1px solid transparent;
   }
 
   .controls-menu-close-btn:hover {
-    background: var(--surface-alt);
+    background: var(--item-hover);
   }
 
   .controls-actions .control-btn,
@@ -232,8 +240,8 @@
     width: 100%;
     max-height: 40vh;
     padding: var(--space-2);
-    border-right: 1px solid var(--border-subtle);
-    border-bottom: 1px solid var(--border-subtle);
+    border-right: 1px solid var(--glass-border);
+    border-bottom: 1px solid var(--glass-border);
     overflow-x: hidden;
     overflow-y: auto;
   }

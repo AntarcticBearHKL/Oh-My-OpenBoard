@@ -93,7 +93,7 @@
 }
 
 .control-btn:hover {
-  background-color: var(--surface-muted);
+  background-color: var(--item-hover);
   color: var(--text);
 }
 
