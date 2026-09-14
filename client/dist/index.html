@@ -9,11 +9,11 @@
   <!-- Kanban favicon (inline SVG data URI) -->
   <link rel="icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='2' y='3' width='6' height='18' rx='1.5' fill='%233b82f6'/%3E%3Crect x='9' y='3' width='6' height='12' rx='1.5' fill='%2360a5fa'/%3E%3Crect x='16' y='3' width='6' height='8' rx='1.5' fill='%2393c5fd'/%3E%3C/svg%3E">
   <script defer src="https://analytics.gomogi.com/script.js" data-website-id="4ebd005d-0f3f-4956-8100-a78c3d89dda8"></script>
-  <script type="module" crossorigin src="./assets/index-bQ3awtNS.js"></script>
+  <script type="module" crossorigin src="./assets/index-Ce0d4r-o.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-DK3Fl9T5.js">
   <link rel="modulepreload" crossorigin href="./assets/styles-CD0OeAZI.js">
   <link rel="modulepreload" crossorigin href="./assets/vendor-pQokwluA.js">
-  <link rel="modulepreload" crossorigin href="./assets/theme-BDNHzLFG.js">
+  <link rel="modulepreload" crossorigin href="./assets/theme-BZw5b1m_.js">
   <link rel="modulepreload" crossorigin href="./assets/security-DWl7zYWU.js">
   <link rel="stylesheet" crossorigin href="./assets/styles-CF6Is09c.css">
 </head>
@@ -392,41 +392,6 @@
         <div class="form-actions">
           <button type="button" id="cancel-task-btn" class="btn btn-secondary">Cancel</button>
           <button type="submit" id="task-submit-btn" class="btn btn-primary">Add Task</button>
-        </div>
-      </form>
-    </article>
-  </div>
-
-  <!-- Column Modal -->
-  <div id="column-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="column-modal-title">
-    <div class="modal-backdrop" data-close-modal></div>
-    <article class="modal-content">
-      <header class="modal-header-row">
-        <h3 id="column-modal-title">Add New Column</h3>
-        <button id="column-close-btn" type="button" class="icon-btn" aria-label="Close" title="Close">
-          <span data-lucide="x" aria-hidden="true"></span>
-        </button>
-      </header>
-      <form id="column-form" novalidate>
-        <div class="form-group">
-          <label for="column-name">Column Name <span aria-hidden="true">*</span></label>
-          <input type="text" id="column-name" required placeholder="Enter column name..." aria-required="true">
-        </div>
-        <div class="form-group">
-          <label for="column-color">Color</label>
-          <div class="color-picker-row">
-            <input type="color" id="column-color" value="#3b82f6">
-            <input type="text" id="column-color-hex" class="color-hex-display" value="#3b82f6" maxlength="7" spellcheck="false" aria-label="Hex color code">
-          </div>
-        </div>
-        <div class="form-group" id="column-wip-limit-group">
-          <label for="column-wip-limit">WIP Limit</label>
-          <input type="number" id="column-wip-limit" min="0" max="999" step="1" value="0" inputmode="numeric" placeholder="0" aria-describedby="column-wip-limit-hint">
-          <small id="column-wip-limit-hint" class="form-hint">0 = unlimited. The board shows a warning at the limit and a breach above it &mdash; tasks are never blocked.</small>
-        </div>
-        <div class="form-actions">
-          <button type="button" id="cancel-column-btn" class="btn btn-secondary">Cancel</button>
-          <button type="submit" id="column-submit-btn" class="btn btn-primary">Add Column</button>
         </div>
       </form>
     </article>

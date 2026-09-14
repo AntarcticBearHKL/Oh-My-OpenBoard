@@ -8,8 +8,6 @@ import { showModal, showEditModal, hideModal as hideTaskModal,
   getReturnToTaskModalFlag, setReturnToTaskModalFlag,
   getSelectCreatedLabelFlag, setSelectCreatedLabelFlag,
   restoreTaskModalAfterLabelsManager } from './task-modal.js';
-import { showColumnModal, showEditColumnModal, hideColumnModal,
-  initializeColumnModalHandlers } from './column-modal.js';
 import { showLabelsModal, hideLabelModal, hideLabelsModal,
   initializeLabelsModalHandlers, setTaskModalState } from './labels-modal.js';
 import { hideBoardsModal, hideBoardRenameModal,
@@ -97,7 +95,6 @@ export function initializeModalHandlers() {
       if (isModalOpen('board-rename-modal')) { hideBoardRenameModal(); return; }
       if (isModalOpen('boards-modal')) { hideBoardsModal(); return; }
       if (isModalOpen('help-modal')) { hideHelpModal(); return; }
-      if (isModalOpen('column-modal')) { hideColumnModal(); return; }
       if (isModalOpen('task-modal')) { hideTaskModal(); }
     }
   });
@@ -109,8 +106,6 @@ export {
   setupModalCloseHandlers,
   showModal,
   showEditModal,
-  showColumnModal,
-  showEditColumnModal,
   showLabelsModal,
   showBoardsModal
 };

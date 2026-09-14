@@ -66,28 +66,3 @@ export function validateAndShowTaskTitleError(titleInput) {
   return true;
 }
 
-/**
- * Validate that a column name is not empty
- * @param {string} name - The name value to validate
- * @returns {boolean} - True if valid, false otherwise
- */
-export function validateColumnName(name) {
-  return (name?.trim() || '').length > 0;
-}
-
-/**
- * Validate column name and show error if invalid
- * @param {HTMLElement} nameInput - The name input element
- * @returns {boolean} - True if valid, false if invalid
- */
-export function validateAndShowColumnNameError(nameInput) {
-  const name = nameInput?.value?.trim() || '';
-  
-  if (!validateColumnName(name)) {
-    showFieldError(nameInput, 'Column name is required');
-    return false;
-  }
-  
-  clearFieldError(nameInput);
-  return true;
-}

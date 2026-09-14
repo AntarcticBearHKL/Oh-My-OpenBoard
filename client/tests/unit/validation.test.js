@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest';
-import { validateTaskTitle, validateColumnName } from '../../src/modules/validation.js';
+import { validateTaskTitle } from '../../src/modules/validation.js';
 
 // ── validateTaskTitle ───────────────────────────────────────────────
 
@@ -26,13 +26,4 @@ test('validateTaskTitle returns false for null and undefined', () => {
 
 // ── validateColumnName ──────────────────────────────────────────────
 
-test('validateColumnName returns true for non-empty string', () => {
-  expect(validateColumnName('To Do')).toBe(true);
-});
 
-test('validateColumnName returns false for empty/whitespace/null', () => {
-  expect(validateColumnName('')).toBe(false);
-  expect(validateColumnName('   ')).toBe(false);
-  expect(validateColumnName(null)).toBe(false);
-  expect(validateColumnName(undefined)).toBe(false);
-});
