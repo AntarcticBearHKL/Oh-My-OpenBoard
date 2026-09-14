@@ -112,6 +112,10 @@
 }
 
 /* Menu items style in dropdown */
+a.control-btn {
+  text-decoration: none;
+}
+
 .controls-actions .control-btn {
   width: 100%;
   justify-content: flex-start;
