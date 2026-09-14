@@ -509,6 +509,7 @@ export function listBoards() {
     // event log only gets the flag — without this filter the board resurrects.
     .filter((b) => b && typeof b.id === 'string' && !b.deleted)
     .map((b) => ({
+      ...b,
       id: b.id,
       name: typeof b.name === 'string' ? b.name : 'Untitled board',
       createdAt: typeof b.createdAt === 'string' ? b.createdAt : undefined
@@ -690,11 +691,37 @@ export function renameBoard(boardId, newName) {
   return true;
 }
 
+const BOARD_ITERATION_FIELDS = ['startDate', 'endDate', 'goal'];
+
+export function updateBoardFields(boardId, fields) {
+  ensureBoardsInitialized();
+  const id = typeof boardId === 'string' ? boardId : '';
+  if (!id || !fields || typeof fields !== 'object') return false;
+
+  const allowed = {};
+  for (const key of BOARD_ITERATION_FIELDS) {
+    if (fields[key] === undefined) continue;
+    allowed[key] = typeof fields[key] === 'string' ? fields[key].trim() : '';
+  }
+  if (Object.keys(allowed).length === 0) return false;
+
+  const boards = listBoards();
+  if (!boards.some((b) => b.id === id)) return false;
+
+  saveBoards(boards.map((b) => (b.id === id ? { ...b, ...allowed } : b)));
+  scheduleDomainEvent({
+    type: 'board.updated',
+    boardId: id,
+    entityId: id,
+    payload: { fields: allowed }
+  });
+  return true;
+}
+
 export function deleteBoard(boardId) {
   ensureBoardsInitialized();
   const id = typeof boardId === 'string' ? boardId : '';
   if (!id) return false;
-
   const boards = listBoards();
   if (!boards.some((b) => b.id === id)) return false;
   if (boards.length <= 1) return false; // never delete last board

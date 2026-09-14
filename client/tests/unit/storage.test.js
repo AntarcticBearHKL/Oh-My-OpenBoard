@@ -7,6 +7,7 @@ import {
   getActiveBoardName,
   createBoard,
   renameBoard,
+  updateBoardFields,
   deleteBoard,
   loadColumns,
   saveColumns,
@@ -89,6 +90,43 @@ test('renameBoard returns false for empty name', () => {
   ensureBoardsInitialized();
   const board = createBoard('Board');
   expect(renameBoard(board.id, '')).toBe(false);
+});
+
+test('updateBoardFields stores iteration fields on the board', () => {
+  ensureBoardsInitialized();
+  const board = createBoard('Iteration');
+
+  const result = updateBoardFields(board.id, {
+    startDate: '2026-09-01',
+    endDate: '2026-09-14',
+    goal: 'Ship v1'
+  });
+
+  expect(result).toBe(true);
+  const stored = listBoards().find(b => b.id === board.id);
+  expect(stored.startDate).toBe('2026-09-01');
+  expect(stored.endDate).toBe('2026-09-14');
+  expect(stored.goal).toBe('Ship v1');
+});
+
+test('renameBoard preserves iteration fields', () => {
+  ensureBoardsInitialized();
+  const board = createBoard('Original');
+  updateBoardFields(board.id, { goal: 'Ship v1' });
+
+  renameBoard(board.id, 'Renamed');
+
+  const stored = listBoards().find(b => b.id === board.id);
+  expect(stored.name).toBe('Renamed');
+  expect(stored.goal).toBe('Ship v1');
+});
+
+test('updateBoardFields returns false without fields or board', () => {
+  ensureBoardsInitialized();
+  const board = createBoard('Board');
+
+  expect(updateBoardFields(board.id, {})).toBe(false);
+  expect(updateBoardFields('non-existent', { goal: 'x' })).toBe(false);
 });
 
 test('deleteBoard removes board and its data', () => {

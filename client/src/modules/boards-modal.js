@@ -7,6 +7,7 @@ import {
   setActiveBoardId,
   getActiveBoardName,
   renameBoard,
+  updateBoardFields,
   deleteBoard as deleteBoardById
 } from './storage.js';
 import { confirmDialog, alertDialog } from './dialog.js';
@@ -66,7 +67,7 @@ function renderBoardsList() {
     }, h('span', { 'data-lucide': 'download' }));
 
     const editBtn = h('button', {
-      class: 'btn-small', title: 'Rename board',
+      class: 'btn-small', title: 'Edit board',
       onClick: () => showBoardRenameModal(board.id)
     }, h('span', { 'data-lucide': 'pencil' }));
 
@@ -143,9 +144,16 @@ function showBoardRenameModal(boardId) {
   const title = $id('board-rename-modal-title');
   const submitBtn = $id('board-rename-submit-btn');
 
-  if (title) title.textContent = 'Rename Board';
+  if (title) title.textContent = 'Edit Board';
   if (submitBtn) submitBtn.textContent = 'Save';
   if (input) input.value = (board.name || '').toString();
+
+  const startDate = $id('board-start-date');
+  if (startDate) startDate.value = typeof board.startDate === 'string' ? board.startDate.slice(0, 10) : '';
+  const endDate = $id('board-end-date');
+  if (endDate) endDate.value = typeof board.endDate === 'string' ? board.endDate.slice(0, 10) : '';
+  const goal = $id('board-goal');
+  if (goal) goal.value = typeof board.goal === 'string' ? board.goal : '';
 
   modal?.classList.remove('hidden');
   input?.focus();
@@ -237,6 +245,12 @@ export function initializeBoardsModalHandlers(setupModalCloseHandlers) {
       await alertDialog({ title: 'Error', message: 'Unable to rename board.' });
       return;
     }
+
+    updateBoardFields(editingBoardId, {
+      startDate: $id('board-start-date')?.value ?? '',
+      endDate: $id('board-end-date')?.value ?? '',
+      goal: $id('board-goal')?.value ?? ''
+    });
 
     hideBoardRenameModal();
     renderBoardsSelect();

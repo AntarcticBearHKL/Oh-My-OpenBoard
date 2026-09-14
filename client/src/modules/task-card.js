@@ -8,6 +8,17 @@ import { calculateDaysUntilDue, formatCountdown, getCountdownClassName } from '.
 import { emit, DATA_CHANGED } from './events.js';
 import { labelTextColor } from './utils.js';
 import { h, cx } from './dom.js';
+import { STALE_AFTER_DAYS, TASK_TYPES, isTaskStale, normalizeEstimate, taskAgeDays } from './agile.js';
+
+const TYPE_LABELS = { story: 'Story', bug: 'Bug', task: 'Task', spike: 'Spike' };
+const TYPE_ABBREVIATIONS = { story: 'S', bug: 'B', task: 'T', spike: 'SP' };
+
+function assigneeInitials(name) {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return '?';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+}
 
 function formatDisplayDate(value, locale) {
   const raw = (value || '').toString().trim();
@@ -123,6 +134,15 @@ export function createTaskElement(task, settings, labelsMap = null, today = null
 
   const meta = h('div', { class: 'task-meta' });
 
+  const taskType = typeof task.type === 'string' ? task.type.trim().toLowerCase() : '';
+  if (TASK_TYPES.includes(taskType)) {
+    meta.appendChild(h('span', {
+      class: cx('task-type', `task-type--${taskType}`),
+      title: `Type: ${TYPE_LABELS[taskType]}`,
+      'aria-label': `Type: ${TYPE_LABELS[taskType]}`
+    }, TYPE_ABBREVIATIONS[taskType]));
+  }
+
   if (settings?.showPriority !== false) {
     const rawPriority = typeof task.priority === 'string' ? task.priority.toLowerCase().trim() : '';
     const priority = (['urgent', 'high', 'medium', 'low', 'none'].includes(rawPriority)) ? rawPriority : 'none';
@@ -149,6 +169,24 @@ export function createTaskElement(task, settings, labelsMap = null, today = null
 
       meta.appendChild(h('span', { class: cx('task-date', dueDateExtraClass) }, dueDateText));
     }
+  }
+
+  const estimate = normalizeEstimate(task.estimate);
+  if (estimate !== null) {
+    meta.appendChild(h('span', {
+      class: 'task-estimate',
+      title: `Estimate: ${estimate} point${estimate === 1 ? '' : 's'}`,
+      'aria-label': `Estimate: ${estimate}`
+    }, String(estimate)));
+  }
+
+  const assignee = typeof task.assignee === 'string' ? task.assignee.trim() : '';
+  if (assignee) {
+    meta.appendChild(h('span', {
+      class: 'task-assignee',
+      title: `Assignee: ${assignee}`,
+      'aria-label': `Assignee: ${assignee}`
+    }, assigneeInitials(assignee)));
   }
 
   const labels = labelsMap || new Map(loadLabels().map(l => [l.id, l]));
@@ -188,6 +226,39 @@ export function createTaskElement(task, settings, labelsMap = null, today = null
     ));
   }
 
+  const blockedReason = typeof task.blockedReason === 'string' ? task.blockedReason.trim() : '';
+  if (blockedReason) {
+    meta.appendChild(h('span', {
+      class: 'task-blocked',
+      title: `Blocked: ${blockedReason}`,
+      'aria-label': `Blocked: ${blockedReason}`
+    }, h('span', { 'data-lucide': 'ban', 'aria-hidden': 'true' })));
+  }
+
+  const now = today || new Date();
+  const staleTask = !isDoneColumnId(task.column) && isTaskStale(task, now);
+  if (staleTask) li.classList.add('task-stale');
+
+  const ageDays = taskAgeDays(task, now);
+  if (settings?.showAge !== false && ageDays !== null) {
+    const ageTitle = staleTask
+      ? `Age: ${ageDays} day${ageDays === 1 ? '' : 's'} — no updates in over ${STALE_AFTER_DAYS} days`
+      : `Age: ${ageDays} day${ageDays === 1 ? '' : 's'}`;
+    meta.appendChild(h('span', {
+      class: cx('task-age', staleTask && 'task-age--stale'),
+      title: ageTitle,
+      'aria-label': ageTitle
+    }, `${ageDays}d`));
+  }
+
+  if (staleTask) {
+    meta.appendChild(h('span', {
+      class: 'task-stale-dot',
+      title: `No updates in over ${STALE_AFTER_DAYS} days`,
+      'aria-label': 'Stale task'
+    }));
+  }
+
   const actions = h('div', { class: 'task-actions' });
 
   const deleteBtn = document.createElement('button');
@@ -211,6 +282,13 @@ export function createTaskElement(task, settings, labelsMap = null, today = null
 
   actions.appendChild(deleteBtn);
 
-  li.appendChild(h('div', { class: 'task-row' }, titleEl, meta, actions));
+  const taskKey = typeof task.key === 'string' ? task.key.trim() : '';
+
+  li.appendChild(h('div', { class: 'task-row' },
+    taskKey ? h('span', { class: 'task-key', title: `Key: ${taskKey}` }, taskKey) : null,
+    titleEl,
+    meta,
+    actions
+  ));
   return li;
 }

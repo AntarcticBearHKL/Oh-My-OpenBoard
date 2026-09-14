@@ -1,8 +1,9 @@
 import Sortable from 'sortablejs';
-import { moveTaskToTopInColumn, updateTaskPositionsFromDrop } from './tasks.js';
+import { moveTaskToTopInColumn, setTaskBlockedReason, updateTaskPositionsFromDrop } from './tasks.js';
 import { updateColumnPositions } from './columns.js';
 import { emit, DATA_CHANGED, DRAG_RECONCILE_BEGIN, DRAG_RECONCILE_END } from './events.js';
 import { isDoneColumnId } from './storage.js';
+import { promptDialog } from './dialog.js';
 
 // Store Sortable instances for cleanup
 let taskSortables = [];
@@ -37,6 +38,21 @@ function shouldForceFallbackForTasks() {
     window.matchMedia('(pointer: coarse)').matches;
 
   return hasTouchPoints || isCoarsePointer;
+}
+
+async function promptBlockedReason(taskId) {
+  const reason = await promptDialog({
+    title: 'Task blocked',
+    message: 'Why is this task blocked? Leave empty to skip.',
+    placeholder: 'e.g. Waiting on API keys',
+    confirmText: 'Save reason',
+    cancelText: 'Skip'
+  });
+  if (typeof reason === 'string' && reason.trim()) {
+    setTaskBlockedReason(taskId, reason);
+    return true;
+  }
+  return false;
 }
 
 // Initialize all drag and drop functionality
@@ -300,8 +316,9 @@ function initTaskSortables() {
         const renderModule = isSwimlaneView ? await import('./render.js') : null;
         if (renderModule) renderModule.beginDragReconcile();
         else emit(DRAG_RECONCILE_BEGIN);
+        let dropResult = null;
         try {
-          const dropResult = updateTaskPositionsFromDrop(evt);
+          dropResult = updateTaskPositionsFromDrop(evt);
           if (!dropResult) return;
 
           const toColumnEl = getTaskContainerElement(evt.to);
@@ -320,6 +337,16 @@ function initTaskSortables() {
         } finally {
           if (renderModule) renderModule.endDragReconcile();
           else emit(DRAG_RECONCILE_END);
+        }
+
+        if (dropResult?.enteredBlocked) {
+          const reasonStored = await promptBlockedReason(dropResult.movedTaskId);
+          if (reasonStored) {
+            // Reconcile only patches due dates on reused cards, so a full repaint
+            // is what surfaces the new blocked indicator after the prompt closes.
+            const { renderBoard } = await import('./render.js');
+            renderBoard();
+          }
         }
       }
     });

@@ -5,10 +5,13 @@ const mocks = vi.hoisted(() => ({
   sortableInstances: [],
   updateTaskPositionsFromDrop: vi.fn(),
   moveTaskToTopInColumn: vi.fn(),
+  setTaskBlockedReason: vi.fn(),
+  promptDialog: vi.fn(async () => null),
   isDoneColumnId: vi.fn((columnId) => columnId === 'done'),
   loadTasks: vi.fn(() => []),
   beginDragReconcile: vi.fn(),
   endDragReconcile: vi.fn(),
+  renderBoard: vi.fn(),
 }));
 
 vi.mock('sortablejs', () => ({
@@ -21,6 +24,11 @@ vi.mock('sortablejs', () => ({
 vi.mock('../../src/modules/tasks.js', () => ({
   updateTaskPositionsFromDrop: mocks.updateTaskPositionsFromDrop,
   moveTaskToTopInColumn: mocks.moveTaskToTopInColumn,
+  setTaskBlockedReason: mocks.setTaskBlockedReason,
+}));
+
+vi.mock('../../src/modules/dialog.js', () => ({
+  promptDialog: mocks.promptDialog,
 }));
 
 vi.mock('../../src/modules/columns.js', () => ({
@@ -42,6 +50,7 @@ vi.mock('../../src/modules/storage.js', () => ({
 vi.mock('../../src/modules/render.js', () => ({
   beginDragReconcile: mocks.beginDragReconcile,
   endDragReconcile: mocks.endDragReconcile,
+  renderBoard: mocks.renderBoard,
 }));
 
 function mountBoard({ targetColumn = 'done', collapsed = false } = {}) {
@@ -85,10 +94,14 @@ beforeEach(() => {
   mocks.sortableInstances.length = 0;
   mocks.updateTaskPositionsFromDrop.mockReset();
   mocks.moveTaskToTopInColumn.mockReset();
+  mocks.setTaskBlockedReason.mockReset();
+  mocks.promptDialog.mockReset();
+  mocks.promptDialog.mockResolvedValue(null);
   mocks.isDoneColumnId.mockClear();
   mocks.loadTasks.mockClear();
   mocks.beginDragReconcile.mockClear();
   mocks.endDragReconcile.mockClear();
+  mocks.renderBoard.mockClear();
 });
 
 afterEach(() => {
@@ -196,4 +209,63 @@ test('reinitializing during an active column drag clears the column drag class',
   initDragDrop();
 
   expect(document.body.classList.contains('dragging-column')).toBe(false);
+});
+
+test('dropping a task into Blocked prompts for a reason and stores it', async () => {
+  const evt = mountBoard({ targetColumn: 'blocked' });
+  mocks.updateTaskPositionsFromDrop.mockReturnValue({
+    movedTaskId: 'task-1',
+    fromColumn: 'todo',
+    toColumn: 'blocked',
+    didChangeColumn: true,
+    enteredBlocked: true,
+  });
+  mocks.promptDialog.mockResolvedValueOnce('Waiting on API keys');
+
+  const { initDragDrop } = await import('../../src/modules/dragdrop.js');
+  initDragDrop();
+
+  await getTaskEndHandler()(evt);
+
+  expect(mocks.promptDialog).toHaveBeenCalledTimes(1);
+  expect(mocks.setTaskBlockedReason).toHaveBeenCalledWith('task-1', 'Waiting on API keys');
+  expect(mocks.renderBoard).toHaveBeenCalledTimes(1);
+});
+
+test('skipping the blocked-reason prompt leaves the reason empty', async () => {
+  const evt = mountBoard({ targetColumn: 'blocked' });
+  mocks.updateTaskPositionsFromDrop.mockReturnValue({
+    movedTaskId: 'task-1',
+    fromColumn: 'todo',
+    toColumn: 'blocked',
+    didChangeColumn: true,
+    enteredBlocked: true,
+  });
+  mocks.promptDialog.mockResolvedValueOnce(null);
+
+  const { initDragDrop } = await import('../../src/modules/dragdrop.js');
+  initDragDrop();
+
+  await getTaskEndHandler()(evt);
+
+  expect(mocks.setTaskBlockedReason).not.toHaveBeenCalled();
+  expect(mocks.renderBoard).not.toHaveBeenCalled();
+});
+
+test('a normal column drop does not prompt for a blocked reason', async () => {
+  const evt = mountBoard({ targetColumn: 'review' });
+  mocks.updateTaskPositionsFromDrop.mockReturnValue({
+    movedTaskId: 'task-1',
+    fromColumn: 'todo',
+    toColumn: 'review',
+    didChangeColumn: true,
+    enteredBlocked: false,
+  });
+
+  const { initDragDrop } = await import('../../src/modules/dragdrop.js');
+  initDragDrop();
+
+  await getTaskEndHandler()(evt);
+
+  expect(mocks.promptDialog).not.toHaveBeenCalled();
 });

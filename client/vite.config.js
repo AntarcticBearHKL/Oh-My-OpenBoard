@@ -18,6 +18,7 @@ export default defineConfig({
         index: 'src/index.html',
         reports: 'src/reports.html',
         calendar: 'src/calendar.html',
+        roadmap: 'src/roadmap.html',
         impressum: 'src/impressum.html'
       },
       output: {

@@ -9,8 +9,6 @@
     "build:watch": "vite build --watch",
     "preview": "vite preview",
     "release:prepare": "node scripts/prepare-release.mjs",
-    "release:generate": "gh workflow run release.yml",
-    "release:publish": "gh workflow run publish-release.yml",
     "test": "npm run test:unit && npm run test:dom && npm run test:e2e",
     "test:unit": "vitest run --config vitest.config.js",
     "test:dom": "vitest run --config vitest.dom.config.js",

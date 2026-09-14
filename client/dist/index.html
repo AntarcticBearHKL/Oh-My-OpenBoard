@@ -9,13 +9,13 @@
   <!-- Kanban favicon (inline SVG data URI) -->
   <link rel="icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='2' y='3' width='6' height='18' rx='1.5' fill='%233b82f6'/%3E%3Crect x='9' y='3' width='6' height='12' rx='1.5' fill='%2360a5fa'/%3E%3Crect x='16' y='3' width='6' height='8' rx='1.5' fill='%2393c5fd'/%3E%3C/svg%3E">
   <script defer src="https://analytics.gomogi.com/script.js" data-website-id="4ebd005d-0f3f-4956-8100-a78c3d89dda8"></script>
-  <script type="module" crossorigin src="./assets/index-W8NVWlPe.js"></script>
+  <script type="module" crossorigin src="./assets/index-DKCuv37I.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-DK3Fl9T5.js">
-  <link rel="modulepreload" crossorigin href="./assets/styles-Dbd5Uawv.js">
+  <link rel="modulepreload" crossorigin href="./assets/styles-CiCE6imh.js">
   <link rel="modulepreload" crossorigin href="./assets/vendor-BHeUymGf.js">
-  <link rel="modulepreload" crossorigin href="./assets/theme-DtgF87_2.js">
+  <link rel="modulepreload" crossorigin href="./assets/theme-Avmj8BPk.js">
   <link rel="modulepreload" crossorigin href="./assets/security-DWl7zYWU.js">
-  <link rel="stylesheet" crossorigin href="./assets/styles-DNMHy_88.css">
+  <link rel="stylesheet" crossorigin href="./assets/styles-C3UnKttx.css">
 </head>
 <body>
   <!-- Skip link for accessibility -->
@@ -85,6 +85,13 @@
           <span data-lucide="calendar-days" aria-hidden="true"></span>
           <span><a class="control-btn" href="./calendar.html" style="text-decoration:none;">
           View Calendar
+        </a></span>
+        </button>
+
+        <button id="show-roadmap-btn" class="control-btn" type="button" aria-pressed="false" aria-label="Show Roadmap">
+          <span data-lucide="git-branch" aria-hidden="true"></span>
+          <span><a class="control-btn" href="./roadmap.html" style="text-decoration:none;">
+          View Roadmap
         </a></span>
         </button>
 
@@ -206,6 +213,32 @@
               </select>
               <span id="task-column-help" class="sr-only">Select which column to place this task in</span>
             </div>
+            <div class="task-form-grid">
+              <div class="form-group">
+                <label for="task-type">Type</label>
+                <select id="task-type">
+                  <option value="story">Story</option>
+                  <option value="bug">Bug</option>
+                  <option value="task" selected>Task</option>
+                  <option value="spike">Spike</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="task-estimate">Estimate</label>
+                <input id="task-estimate" type="number" min="0" step="1" inputmode="numeric" placeholder="—" aria-label="Story point estimate">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="task-assignee">Assignee</label>
+              <input id="task-assignee" type="text" maxlength="80" autocomplete="off" placeholder="Unassigned">
+            </div>
+            <div class="form-group">
+              <label for="task-parent">Parent (Epic)</label>
+              <select id="task-parent">
+                <option value="">None</option>
+                <!-- Options populated dynamically -->
+              </select>
+            </div>
           </div>
           <div class="task-form-column-right">
             <fieldset class="form-group">
@@ -258,6 +291,61 @@
                   maxlength="200"
                   aria-label="New sub-task title"
                 >
+              </div>
+            </fieldset>
+            <fieldset class="form-group" id="task-acceptance-fieldset">
+              <legend>
+                <span data-lucide="check-square" aria-hidden="true"></span>
+                Acceptance criteria
+                <span id="task-acceptance-progress" class="subtasks-progress-legend" hidden></span>
+              </legend>
+              <ul id="task-acceptance-list" class="acceptance-list" role="list" aria-label="Acceptance criteria"></ul>
+              <div class="task-subtask-add-row">
+                <input
+                  type="text"
+                  id="task-acceptance-input"
+                  placeholder="Add a criterion and press Enter…"
+                  autocomplete="off"
+                  maxlength="200"
+                  aria-label="New acceptance criterion"
+                >
+              </div>
+            </fieldset>
+            <fieldset class="form-group" id="task-comments-fieldset">
+              <legend>
+                <span data-lucide="message-square" aria-hidden="true"></span>
+                Comments
+                <span id="task-comments-count" class="subtasks-progress-legend" hidden></span>
+              </legend>
+              <ul id="task-comments-list" class="comments-list" role="list" aria-label="Comments"></ul>
+              <div class="task-comment-add-row">
+                <input type="text" id="task-comment-author" placeholder="You" autocomplete="off" maxlength="60" aria-label="Comment author">
+                <input type="text" id="task-comment-input" placeholder="Add a comment…" autocomplete="off" maxlength="500" aria-label="New comment">
+                <button type="button" id="task-comment-add-btn" class="btn-small" aria-label="Add comment">Add</button>
+              </div>
+            </fieldset>
+            <fieldset class="form-group" id="task-attachments-fieldset">
+              <legend>
+                <span data-lucide="paperclip" aria-hidden="true"></span>
+                Attachments
+              </legend>
+              <ul id="task-attachments-list" class="attachments-list" role="list" aria-label="Attachments"></ul>
+              <div class="task-attachment-add-row">
+                <input type="text" id="task-attachment-name" placeholder="Name" autocomplete="off" maxlength="80" aria-label="Attachment name">
+                <input type="url" id="task-attachment-url" placeholder="https://…" autocomplete="off" aria-label="Attachment URL">
+                <button type="button" id="task-attachment-add-btn" class="btn-small" aria-label="Add attachment">Add</button>
+              </div>
+            </fieldset>
+            <fieldset class="form-group" id="task-custom-fields-fieldset">
+              <legend>
+                <span data-lucide="settings-2" aria-hidden="true"></span>
+                Custom fields
+              </legend>
+              <ul id="task-custom-fields-list" class="custom-fields-list" role="list" aria-label="Custom fields"></ul>
+              <div class="task-custom-field-add-row">
+                <input type="text" id="task-custom-field-key" placeholder="Field" autocomplete="off" maxlength="60" aria-label="Custom field name">
+                <input type="text" id="task-custom-field-value" placeholder="Value" autocomplete="off" maxlength="200" aria-label="Custom field value">
+                <button type="button" id="task-custom-field-add-btn" class="btn-small" aria-label="Add custom field">Add</button>
               </div>
             </fieldset>
           </div>
@@ -484,12 +572,12 @@
     </article>
   </div>
 
-  <!-- Board Rename Modal -->
+  <!-- Board Rename / Iteration Modal -->
   <div id="board-rename-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="board-rename-modal-title">
     <div class="modal-backdrop" data-close-modal></div>
     <article class="modal-content">
       <header class="modal-header-row">
-        <h3 id="board-rename-modal-title">Rename Board</h3>
+        <h3 id="board-rename-modal-title">Edit Board</h3>
         <button id="board-rename-close-btn" type="button" class="icon-btn" aria-label="Close" title="Close">
           <span data-lucide="x" aria-hidden="true"></span>
         </button>
@@ -498,6 +586,20 @@
         <div class="form-group">
           <label for="board-rename-name">Board Name <span aria-hidden="true">*</span></label>
           <input type="text" id="board-rename-name" required placeholder="Enter board name..." aria-required="true">
+        </div>
+        <div class="task-form-grid">
+          <div class="form-group">
+            <label for="board-start-date">Start date</label>
+            <input type="date" id="board-start-date">
+          </div>
+          <div class="form-group">
+            <label for="board-end-date">End date</label>
+            <input type="date" id="board-end-date">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="board-goal">Iteration goal</label>
+          <input type="text" id="board-goal" maxlength="200" autocomplete="off" placeholder="Optional goal for this iteration">
         </div>
         <div class="form-actions">
           <button type="button" id="cancel-board-rename-btn" class="btn btn-secondary">Cancel</button>
@@ -547,6 +649,7 @@
         </button>
       </header>
       <p id="dialog-modal-message"></p>
+      <input id="dialog-modal-input" type="text" autocomplete="off" hidden aria-label="Dialog input">
       <div class="form-actions">
         <button type="button" id="dialog-cancel-btn" class="btn btn-secondary">Cancel</button>
         <button type="button" id="dialog-confirm-btn" class="btn btn-primary">OK</button>

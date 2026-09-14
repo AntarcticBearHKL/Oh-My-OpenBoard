@@ -1,12 +1,22 @@
 // Task add/edit modal — extracted from modals.js
 
 import { isDoneColumnId, loadLabels, loadColumns, loadSettings, loadTasks } from './storage.js';
-import { addTask, updateTask } from './tasks.js';
+import { addTask, setTaskBlockedReason, updateTask } from './tasks.js';
 import { renderIcons } from './icons.js';
 import { validateAndShowTaskTitleError, clearFieldError } from './validation.js';
 import { emit, DATA_CHANGED } from './events.js';
 import { createAccordionSection } from './accordion.js';
 import { generateUUID, labelTextColor } from './utils.js';
+import { promptDialog } from './dialog.js';
+import {
+  isBlockedColumnId,
+  normalizeAcceptanceCriteria,
+  normalizeAttachments,
+  normalizeComments,
+  normalizeCustomFields,
+  normalizeEstimate,
+  normalizeTaskType
+} from './agile.js';
 import Sortable from 'sortablejs';
 import { $id, h, cx } from './dom.js';
 
@@ -16,12 +26,17 @@ let editingTaskId = null;
 let selectedTaskLabels = [];
 let selectedTaskRelationships = []; // [{ type, targetTaskId }]
 let selectedTaskSubTasks = []; // [{ id, title, completed, order }]
+let selectedTaskAcceptanceCriteria = []; // [{ id, text, done }]
+let selectedTaskComments = []; // [{ id, author, text, at }]
+let selectedTaskAttachments = []; // [{ id, name, url }]
+let selectedTaskCustomFields = {}; // { [key]: value }
 let subtaskSortable = null;
 let returnToTaskModalAfterLabelsManager = false;
 let selectCreatedLabelInTaskEditor = false;
 let labelSearchHighlightIndex = 0;
 let filteredLabelIds = []; // may contain '__create__' sentinel for the create-label button
 const CREATE_LABEL_SENTINEL = '__create__';
+const COMMENT_AUTHOR_KEY = 'kanvana:commentAuthor';
 
 const RELATIONSHIP_LABELS = { prerequisite: 'Prerequisite', dependent: 'Dependent', related: 'Related' };
 const RELATIONSHIP_DESCRIPTIONS = {
@@ -442,6 +457,263 @@ function renderSubTaskList() {
   updateSubTasksProgressLegend();
 }
 
+function loadCommentAuthor() {
+  try {
+    const stored = localStorage.getItem(COMMENT_AUTHOR_KEY);
+    return (stored || '').trim() || 'You';
+  } catch {
+    return 'You';
+  }
+}
+
+function saveCommentAuthor(author) {
+  try {
+    localStorage.setItem(COMMENT_AUTHOR_KEY, author);
+  } catch {
+    return;
+  }
+}
+
+function formatCommentTimestamp(at) {
+  const parsed = new Date(at);
+  return Number.isNaN(parsed.getTime()) ? (at || '') : parsed.toLocaleString();
+}
+
+function updateAcceptanceProgress() {
+  const legend = $id('task-acceptance-progress');
+  if (!legend) return;
+  const total = selectedTaskAcceptanceCriteria.length;
+  if (total === 0) {
+    legend.hidden = true;
+    legend.textContent = '';
+    return;
+  }
+  const done = selectedTaskAcceptanceCriteria.filter((entry) => entry.done).length;
+  legend.textContent = `${done} / ${total}`;
+  legend.hidden = false;
+}
+
+function renderAcceptanceCriteriaList() {
+  const listEl = $id('task-acceptance-list');
+  if (!listEl) return;
+
+  listEl.innerHTML = '';
+  selectedTaskAcceptanceCriteria.forEach((criterion) => {
+    const checkbox = h('input', {
+      type: 'checkbox',
+      'aria-label': `Mark "${criterion.text}" done`
+    });
+    checkbox.checked = criterion.done === true;
+    checkbox.addEventListener('change', () => {
+      criterion.done = checkbox.checked;
+      listEl.querySelector(`[data-criterion-id="${criterion.id}"]`)?.classList.toggle('acceptance-item--done', criterion.done);
+      updateAcceptanceProgress();
+    });
+
+    const textInput = h('input', {
+      type: 'text',
+      class: 'acceptance-text-input',
+      maxlength: '200',
+      'aria-label': 'Acceptance criterion'
+    });
+    textInput.value = criterion.text;
+    textInput.addEventListener('input', () => {
+      criterion.text = textInput.value;
+    });
+
+    const removeBtn = h('button', {
+      type: 'button',
+      class: 'acceptance-remove-btn',
+      title: 'Remove criterion',
+      'aria-label': `Remove criterion "${criterion.text}"`,
+      onClick: () => {
+        selectedTaskAcceptanceCriteria = selectedTaskAcceptanceCriteria.filter((entry) => entry.id !== criterion.id);
+        renderAcceptanceCriteriaList();
+      }
+    }, '×');
+
+    listEl.appendChild(h('li', {
+      class: cx('acceptance-item', criterion.done && 'acceptance-item--done'),
+      'data-criterion-id': criterion.id
+    }, checkbox, textInput, removeBtn));
+  });
+
+  updateAcceptanceProgress();
+}
+
+function renderCommentsList() {
+  const listEl = $id('task-comments-list');
+  if (!listEl) return;
+
+  listEl.innerHTML = '';
+  selectedTaskComments.forEach((comment) => {
+    const removeBtn = h('button', {
+      type: 'button',
+      class: 'comment-remove-btn',
+      title: 'Remove comment',
+      'aria-label': `Remove comment by ${comment.author}`,
+      onClick: () => {
+        selectedTaskComments = selectedTaskComments.filter((entry) => entry.id !== comment.id);
+        renderCommentsList();
+      }
+    }, '×');
+
+    listEl.appendChild(h('li', { class: 'comment-item' },
+      h('div', { class: 'comment-body' },
+        h('div', { class: 'comment-meta' },
+          h('span', { class: 'comment-author' }, comment.author),
+          h('span', { class: 'comment-at' }, formatCommentTimestamp(comment.at))
+        ),
+        h('div', { class: 'comment-text' }, comment.text)
+      ),
+      removeBtn
+    ));
+  });
+
+  const countEl = $id('task-comments-count');
+  if (countEl) {
+    countEl.hidden = selectedTaskComments.length === 0;
+    countEl.textContent = String(selectedTaskComments.length);
+  }
+}
+
+function renderAttachmentsList() {
+  const listEl = $id('task-attachments-list');
+  if (!listEl) return;
+
+  listEl.innerHTML = '';
+  selectedTaskAttachments.forEach((attachment) => {
+    const link = h('a', {
+      href: attachment.url,
+      target: '_blank',
+      rel: 'noopener noreferrer',
+      class: 'attachment-link',
+      title: attachment.url
+    }, attachment.name);
+    if (link.protocol !== 'https:' && link.protocol !== 'http:') {
+      link.removeAttribute('href');
+    }
+
+    const removeBtn = h('button', {
+      type: 'button',
+      class: 'attachment-remove-btn',
+      title: 'Remove attachment',
+      'aria-label': `Remove attachment ${attachment.name}`,
+      onClick: () => {
+        selectedTaskAttachments = selectedTaskAttachments.filter((entry) => entry.id !== attachment.id);
+        renderAttachmentsList();
+      }
+    }, '×');
+
+    listEl.appendChild(h('li', { class: 'attachment-item' }, link, removeBtn));
+  });
+}
+
+function renderCustomFieldsList() {
+  const listEl = $id('task-custom-fields-list');
+  if (!listEl) return;
+
+  listEl.innerHTML = '';
+  Object.entries(selectedTaskCustomFields).forEach(([key, value]) => {
+    const keyInput = h('input', {
+      type: 'text',
+      class: 'custom-field-key-input',
+      maxlength: '60',
+      'aria-label': 'Custom field name'
+    });
+    keyInput.value = key;
+
+    const valueInput = h('input', {
+      type: 'text',
+      class: 'custom-field-value-input',
+      maxlength: '200',
+      'aria-label': `Value for ${key}`
+    });
+    valueInput.value = value === null || value === undefined ? '' : String(value);
+
+    keyInput.addEventListener('change', () => {
+      const nextKey = keyInput.value.trim();
+      if (!nextKey || nextKey === key) {
+        keyInput.value = key;
+        return;
+      }
+      const next = {};
+      for (const [entryKey, entryValue] of Object.entries(selectedTaskCustomFields)) {
+        next[entryKey === key ? nextKey : entryKey] = entryKey === key ? valueInput.value : entryValue;
+      }
+      selectedTaskCustomFields = next;
+      renderCustomFieldsList();
+    });
+    valueInput.addEventListener('input', () => {
+      selectedTaskCustomFields[key] = valueInput.value;
+    });
+
+    const removeBtn = h('button', {
+      type: 'button',
+      class: 'custom-field-remove-btn',
+      title: 'Remove field',
+      'aria-label': `Remove field ${key}`,
+      onClick: () => {
+        delete selectedTaskCustomFields[key];
+        renderCustomFieldsList();
+      }
+    }, '×');
+
+    listEl.appendChild(h('li', { class: 'custom-field-item' }, keyInput, valueInput, removeBtn));
+  });
+}
+
+function renderParentTaskOptions(preferredId = null) {
+  const select = $id('task-parent');
+  if (!select) return;
+
+  const previous = typeof preferredId === 'string' ? preferredId : '';
+  select.innerHTML = '';
+  select.appendChild(h('option', { value: '' }, 'None'));
+
+  loadTasks().forEach((task) => {
+    if (task.id === editingTaskId) return;
+    const title = task.title || '(untitled)';
+    const label = task.key ? `${task.key} · ${title}` : title;
+    select.appendChild(h('option', { value: task.id }, label));
+  });
+
+  select.value = previous;
+  if (select.value !== previous) select.value = '';
+}
+
+function renderAgileFields(preferredParentId = null) {
+  renderParentTaskOptions(preferredParentId);
+  renderAcceptanceCriteriaList();
+  renderCommentsList();
+  renderAttachmentsList();
+  renderCustomFieldsList();
+
+  const commentAuthor = $id('task-comment-author');
+  if (commentAuthor) commentAuthor.value = loadCommentAuthor();
+}
+
+function resetAgileState() {
+  selectedTaskAcceptanceCriteria = [];
+  selectedTaskComments = [];
+  selectedTaskAttachments = [];
+  selectedTaskCustomFields = {};
+}
+
+function clearAgileInputs() {
+  [
+    'task-acceptance-input',
+    'task-comment-input',
+    'task-attachment-name',
+    'task-attachment-url',
+    'task-custom-field-key',
+    'task-custom-field-value'
+  ].forEach((id) => {
+    const el = $id(id);
+    if (el) el.value = '';
+  });
+}
+
 export function showModal(columnName, swimlaneContext) {
   currentColumn = columnName || loadColumns()[0]?.id || 'todo';
   editingTaskId = null;
@@ -477,6 +749,15 @@ export function showModal(columnName, swimlaneContext) {
   }
   if (taskDueDate) taskDueDate.value = '';
 
+  resetAgileState();
+  clearAgileInputs();
+  const taskType = $id('task-type');
+  if (taskType) taskType.value = 'task';
+  const taskEstimate = $id('task-estimate');
+  if (taskEstimate) taskEstimate.value = '';
+  const taskAssignee = $id('task-assignee');
+  if (taskAssignee) taskAssignee.value = '';
+
   if (swimlaneContext) {
     const { groupBy, laneKey } = swimlaneContext;
     if (laneKey && laneKey !== '__no-group__') {
@@ -503,6 +784,7 @@ export function showModal(columnName, swimlaneContext) {
   updateTaskLabelsSelection();
   renderActiveTaskRelationships();
   renderSubTaskList();
+  renderAgileFields(null);
   modal.classList.remove('hidden');
   taskTitle.focus();
 }
@@ -516,6 +798,10 @@ export function showEditModal(taskId) {
   selectedTaskLabels = task.labels || [];
   selectedTaskRelationships = Array.isArray(task.relationships) ? [...task.relationships] : [];
   selectedTaskSubTasks = Array.isArray(task.subTasks) ? task.subTasks.map((s) => ({ ...s })) : [];
+  selectedTaskAcceptanceCriteria = normalizeAcceptanceCriteria(task.acceptanceCriteria).map((entry) => ({ ...entry }));
+  selectedTaskComments = normalizeComments(task.comments).map((entry) => ({ ...entry }));
+  selectedTaskAttachments = normalizeAttachments(task.attachments).map((entry) => ({ ...entry }));
+  selectedTaskCustomFields = normalizeCustomFields(task.customFields);
   returnToTaskModalAfterLabelsManager = false;
   selectCreatedLabelInTaskEditor = false;
 
@@ -547,6 +833,16 @@ export function showEditModal(taskId) {
   const dueForInput = rawDue.includes('T') ? rawDue.slice(0, 10) : rawDue;
   if (taskDueDate) taskDueDate.value = dueForInput;
 
+  const taskType = $id('task-type');
+  if (taskType) taskType.value = normalizeTaskType(task.type);
+  const taskEstimate = $id('task-estimate');
+  if (taskEstimate) {
+    const estimate = normalizeEstimate(task.estimate);
+    taskEstimate.value = estimate === null ? '' : String(estimate);
+  }
+  const taskAssignee = $id('task-assignee');
+  if (taskAssignee) taskAssignee.value = typeof task.assignee === 'string' ? task.assignee : '';
+
   const labelSearch = $id('task-label-search');
   if (labelSearch) labelSearch.value = '';
 
@@ -558,6 +854,8 @@ export function showEditModal(taskId) {
   updateTaskLabelsSelection();
   renderActiveTaskRelationships();
   renderSubTaskList();
+  clearAgileInputs();
+  renderAgileFields(typeof task.parentId === 'string' ? task.parentId : null);
 
   modal.classList.remove('hidden');
   taskTitle.focus();
@@ -703,7 +1001,94 @@ export function initializeTaskModalHandlers(setupModalCloseHandlers) {
     renderSubTaskList();
   });
 
-  $id('task-form').addEventListener('submit', (e) => {
+  const acceptanceInput = $id('task-acceptance-input');
+  acceptanceInput?.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const text = acceptanceInput.value.trim();
+    if (!text) return;
+    selectedTaskAcceptanceCriteria.push({ id: generateUUID(), text, done: false });
+    acceptanceInput.value = '';
+    renderAcceptanceCriteriaList();
+  });
+
+  function addCommentFromInputs() {
+    const authorInput = $id('task-comment-author');
+    const textInput = $id('task-comment-input');
+    const text = (textInput?.value || '').trim();
+    if (!text) return;
+    const author = (authorInput?.value || '').trim() || 'You';
+    saveCommentAuthor(author);
+    if (authorInput) authorInput.value = author;
+    selectedTaskComments.push({ id: generateUUID(), author, text, at: new Date().toISOString() });
+    if (textInput) textInput.value = '';
+    renderCommentsList();
+  }
+
+  $id('task-comment-add-btn')?.addEventListener('click', addCommentFromInputs);
+  $id('task-comment-input')?.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    addCommentFromInputs();
+  });
+
+  function addAttachmentFromInputs() {
+    const nameInput = $id('task-attachment-name');
+    const urlInput = $id('task-attachment-url');
+    const name = (nameInput?.value || '').trim();
+    const url = (urlInput?.value || '').trim();
+    if (!name || !url) return;
+
+    let parsed = null;
+    try {
+      parsed = new URL(url);
+    } catch {
+      parsed = null;
+    }
+    if (!parsed || (parsed.protocol !== 'http:' && parsed.protocol !== 'https:')) {
+      urlInput?.classList.add('invalid');
+      return;
+    }
+
+    urlInput?.classList.remove('invalid');
+    selectedTaskAttachments.push({ id: generateUUID(), name, url });
+    if (nameInput) nameInput.value = '';
+    if (urlInput) urlInput.value = '';
+    renderAttachmentsList();
+  }
+
+  $id('task-attachment-add-btn')?.addEventListener('click', addAttachmentFromInputs);
+  $id('task-attachment-url')?.addEventListener('input', (e) => e.target.classList.remove('invalid'));
+  $id('task-attachment-url')?.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    addAttachmentFromInputs();
+  });
+  $id('task-attachment-name')?.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    addAttachmentFromInputs();
+  });
+
+  function addCustomFieldFromInputs() {
+    const keyInput = $id('task-custom-field-key');
+    const valueInput = $id('task-custom-field-value');
+    const key = (keyInput?.value || '').trim();
+    if (!key) return;
+    selectedTaskCustomFields[key] = valueInput?.value ?? '';
+    if (keyInput) keyInput.value = '';
+    if (valueInput) valueInput.value = '';
+    renderCustomFieldsList();
+  }
+
+  $id('task-custom-field-add-btn')?.addEventListener('click', addCustomFieldFromInputs);
+  $id('task-custom-field-value')?.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    addCustomFieldFromInputs();
+  });
+
+  $id('task-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const titleInput = $id('task-title');
 
@@ -714,11 +1099,40 @@ export function initializeTaskModalHandlers(setupModalCloseHandlers) {
     const priority = $id('task-priority')?.value;
     const dueDate = $id('task-due-date')?.value;
     const column = $id('task-column').value;
+    const extraFields = {
+      type: $id('task-type')?.value,
+      estimate: normalizeEstimate($id('task-estimate')?.value),
+      assignee: ($id('task-assignee')?.value || '').trim(),
+      parentId: $id('task-parent')?.value || null,
+      acceptanceCriteria: selectedTaskAcceptanceCriteria,
+      comments: selectedTaskComments,
+      attachments: selectedTaskAttachments,
+      customFields: selectedTaskCustomFields
+    };
 
     if (editingTaskId) {
-      updateTask(editingTaskId, title, description, priority, dueDate, column, selectedTaskLabels, selectedTaskRelationships, selectedTaskSubTasks);
+      const editingId = editingTaskId;
+      const previousTask = loadTasks().find((task) => task.id === editingId);
+      updateTask(editingId, title, description, priority, dueDate, column, selectedTaskLabels, selectedTaskRelationships, selectedTaskSubTasks, extraFields);
+
+      const columns = loadColumns();
+      const enteredBlocked = !isBlockedColumnId(previousTask?.column, columns) && isBlockedColumnId(column, columns);
+      if (enteredBlocked) {
+        const reason = await promptDialog({
+          title: 'Task blocked',
+          message: 'Why is this task blocked?',
+          placeholder: 'e.g. Waiting on API keys',
+          confirmText: 'Save reason',
+          cancelText: 'Skip'
+        });
+        if (typeof reason === 'string' && reason.trim()) {
+          setTaskBlockedReason(editingId, reason);
+          const { renderBoard } = await import('./render.js');
+          renderBoard();
+        }
+      }
     } else {
-      addTask(title, description, priority, dueDate, column, selectedTaskLabels, selectedTaskRelationships, selectedTaskSubTasks);
+      addTask(title, description, priority, dueDate, column, selectedTaskLabels, selectedTaskRelationships, selectedTaskSubTasks, extraFields);
     }
     hideModal();
     emit(DATA_CHANGED);

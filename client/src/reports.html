@@ -22,6 +22,10 @@
 
     <div class="rpt-header-right" role="group" aria-label="Reports actions">
       <div class="rpt-badge" id="reports-board-badge" title="Active board">?</div>
+      <a class="rpt-link" href="./roadmap.html">
+        <span data-lucide="git-branch" aria-hidden="true"></span>
+        <span>Roadmap</span>
+      </a>
       <a class="rpt-link" href="./index.html">
         <span data-lucide="kanban" aria-hidden="true"></span>
         <span>Back to Board</span>
@@ -134,6 +138,72 @@
         </div>
       </div>
       <div id="reports-cfd-chart" class="rpt-chart"></div>
+    </section>
+
+    <section class="reports-kpis" aria-label="Velocity report">
+      <div class="rpt-card-header">
+        <h2 class="rpt-card-title">Velocity (completed story points per iteration)</h2>
+        <div class="rpt-badge" id="reports-velocity-badge" title="Iterations tracked">0</div>
+      </div>
+      <p class="rpt-card-hint">Each bar is one iteration (board). Add story-point estimates to tasks for meaningful velocity.</p>
+      <div class="rpt-kpi-grid" role="group" aria-label="Velocity KPIs">
+        <div class="rpt-kpi">
+          <div class="rpt-kpi-label">Avg velocity</div>
+          <div class="rpt-kpi-value" id="reports-velocity-avg">–</div>
+        </div>
+        <div class="rpt-kpi">
+          <div class="rpt-kpi-label">Last iteration</div>
+          <div class="rpt-kpi-value" id="reports-velocity-last">–</div>
+        </div>
+        <div class="rpt-kpi">
+          <div class="rpt-kpi-label">Iterations tracked</div>
+          <div class="rpt-kpi-value" id="reports-velocity-count">0</div>
+        </div>
+      </div>
+      <div id="reports-velocity-chart" class="rpt-chart"></div>
+    </section>
+
+    <section class="reports-kpis" aria-label="Burndown report">
+      <div class="rpt-card-header">
+        <h2 class="rpt-card-title">Burndown (remaining story points)</h2>
+        <div class="rpt-controls" role="group" aria-label="Burndown controls">
+          <label class="rpt-control">
+            <span class="rpt-control-label">Range</span>
+            <select id="reports-burndown-range" class="rpt-select" aria-label="Burndown range">
+              <option value="14">14d</option>
+              <option value="30" selected>30d</option>
+              <option value="60">60d</option>
+              <option value="90">90d</option>
+            </select>
+          </label>
+        </div>
+        <div class="rpt-badge" id="reports-burndown-badge" title="Remaining points today">0</div>
+      </div>
+      <p class="rpt-card-hint">Remaining points per day against the ideal line. Rows without estimates count as 0 points.</p>
+      <div id="reports-burndown-chart" class="rpt-chart"></div>
+    </section>
+
+    <section class="reports-kpis" aria-label="Cycle time distribution report">
+      <div class="rpt-card-header">
+        <h2 class="rpt-card-title">Cycle time distribution</h2>
+        <div class="rpt-badge" id="reports-cycle-badge" title="Completed tasks measured">0</div>
+      </div>
+      <p class="rpt-card-hint">Days from a task first entering a working column to it reaching Archived.</p>
+      <div class="rpt-kpi-grid" role="group" aria-label="Cycle time KPIs">
+        <div class="rpt-kpi">
+          <div class="rpt-kpi-label">Median cycle</div>
+          <div class="rpt-kpi-value" id="reports-cycle-median">–</div>
+        </div>
+        <div class="rpt-kpi">
+          <div class="rpt-kpi-label">Average cycle</div>
+          <div class="rpt-kpi-value" id="reports-cycle-avg">–</div>
+        </div>
+        <div class="rpt-kpi">
+          <div class="rpt-kpi-label">P90 cycle</div>
+          <div class="rpt-kpi-value" id="reports-cycle-p90">–</div>
+        </div>
+      </div>
+      <div id="reports-cycle-chart" class="rpt-chart"></div>
     </section>
 
     <section class="reports-kpis" aria-label="Daily updates report">

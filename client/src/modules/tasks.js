@@ -1,10 +1,39 @@
 import { generateUUID } from './utils.js';
-import { getActiveBoardId, isDoneColumnId, loadColumns, loadLabels, loadSettings, loadTasks } from './storage.js';
+import { getActiveBoardId, getActiveBoardName, isDoneColumnId, loadColumns, loadLabels, loadSettings, loadTasks } from './storage.js';
 import { applySwimLaneAssignment } from './swimlanes.js';
 import { normalizePriority, normalizeRelationships, normalizeSubTasks } from './normalize.js';
+import {
+  isBlockedColumnId,
+  nextTaskKey,
+  normalizeAcceptanceCriteria,
+  normalizeAttachments,
+  normalizeComments,
+  normalizeCustomFields,
+  normalizeEstimate,
+  normalizeTaskType
+} from './agile.js';
 import { scheduleDomainEvent } from './event-sourcing/emitter.js';
 
 const RELATIONSHIP_INVERSE = { prerequisite: 'dependent', dependent: 'prerequisite', related: 'related' };
+
+function normalizeAgileFields(fields = {}) {
+  const source = fields && typeof fields === 'object' ? fields : {};
+  const parentId = (source.parentId ?? '').toString().trim();
+  return {
+    type: normalizeTaskType(source.type),
+    estimate: normalizeEstimate(source.estimate),
+    assignee: (source.assignee ?? '').toString().trim(),
+    parentId: parentId || null,
+    acceptanceCriteria: normalizeAcceptanceCriteria(source.acceptanceCriteria),
+    comments: normalizeComments(source.comments),
+    attachments: normalizeAttachments(source.attachments),
+    customFields: normalizeCustomFields(source.customFields)
+  };
+}
+
+function sameJson(a, b) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
 
 function reorderColumnTasks(tasks, columnId, pinnedTaskId = null) {
   const columnTasks = tasks
@@ -99,7 +128,7 @@ function syncRelationshipInverses(tasks, taskId, oldRelationships, newRelationsh
 }
 
 // Add a new task
-export function addTask(title, description, priority, dueDate, columnName, labels = [], relationships = [], subTasks = []) {
+export function addTask(title, description, priority, dueDate, columnName, labels = [], relationships = [], subTasks = [], extraFields = {}) {
   if (!title || title.trim() === '') return;
 
   const tasks = loadTasks();
@@ -123,8 +152,10 @@ export function addTask(title, description, priority, dueDate, columnName, label
 
   const nowIso = new Date().toISOString();
   const normalizedRelationships = normalizeRelationships(relationships);
+  const agileFields = normalizeAgileFields(extraFields);
   let newTask = {
     id: generateUUID(),
+    key: nextTaskKey(getActiveBoardName(), tasks),
     title: title.trim(),
     description: (description || '').toString().trim(),
     priority: normalizePriority(priority),
@@ -134,6 +165,16 @@ export function addTask(title, description, priority, dueDate, columnName, label
     labels: [...labels],
     relationships: normalizedRelationships,
     subTasks: normalizeSubTasks(subTasks),
+    type: agileFields.type,
+    estimate: agileFields.estimate,
+    assignee: agileFields.assignee,
+    parentId: agileFields.parentId,
+    acceptanceCriteria: agileFields.acceptanceCriteria,
+    comments: agileFields.comments,
+    attachments: agileFields.attachments,
+    customFields: agileFields.customFields,
+    blockedReason: '',
+    blockedAt: null,
     creationDate: nowIso,
     changeDate: nowIso,
     columnHistory: [{ column: columnName, at: nowIso }],
@@ -168,7 +209,7 @@ export function addTask(title, description, priority, dueDate, columnName, label
 }
 
 // Update an existing task
-export function updateTask(taskId, title, description, priority, dueDate, columnName, labels = [], relationships = [], subTasks = []) {
+export function updateTask(taskId, title, description, priority, dueDate, columnName, labels = [], relationships = [], subTasks = [], extraFields = undefined) {
   if (!title || title.trim() === '') return;
   
   const tasks = loadTasks();
@@ -194,6 +235,8 @@ export function updateTask(taskId, title, description, priority, dueDate, column
     const nextPriority = normalizePriority(priority);
     const nextDueDate = normalizeDueDate(dueDate);
     const nextSubTasks = normalizeSubTasks(subTasks);
+    const agileFields = extraFields === undefined ? null : normalizeAgileFields(extraFields);
+    if (agileFields && agileFields.parentId === taskId) agileFields.parentId = null;
     const changedFields = {};
 
     tasks[taskIndex].title = nextTitle;
@@ -204,6 +247,16 @@ export function updateTask(taskId, title, description, priority, dueDate, column
     tasks[taskIndex].labels = [...labels];
     tasks[taskIndex].relationships = newRelationships;
     tasks[taskIndex].subTasks = nextSubTasks;
+    if (agileFields) {
+      tasks[taskIndex].type = agileFields.type;
+      tasks[taskIndex].estimate = agileFields.estimate;
+      tasks[taskIndex].assignee = agileFields.assignee;
+      tasks[taskIndex].parentId = agileFields.parentId;
+      tasks[taskIndex].acceptanceCriteria = agileFields.acceptanceCriteria;
+      tasks[taskIndex].comments = agileFields.comments;
+      tasks[taskIndex].attachments = agileFields.attachments;
+      tasks[taskIndex].customFields = agileFields.customFields;
+    }
 
     syncRelationshipInverses(tasks, taskId, oldRelationships, newRelationships, nowIso);
 
@@ -223,6 +276,33 @@ export function updateTask(taskId, title, description, priority, dueDate, column
     if (normalizeDueDate(previousTask.dueDate) !== nextDueDate) {
       changedFields.dueDate = nextDueDate;
     }
+    if (agileFields) {
+      if (normalizeTaskType(previousTask.type) !== agileFields.type) {
+        changedFields.type = agileFields.type;
+      }
+      if (normalizeEstimate(previousTask.estimate) !== agileFields.estimate) {
+        changedFields.estimate = agileFields.estimate;
+      }
+      if ((previousTask.assignee ?? '').toString().trim() !== agileFields.assignee) {
+        changedFields.assignee = agileFields.assignee;
+      }
+      const previousParentId = (previousTask.parentId ?? '').toString().trim() || null;
+      if (previousParentId !== agileFields.parentId) {
+        changedFields.parentId = agileFields.parentId;
+      }
+      if (!sameJson(normalizeAcceptanceCriteria(previousTask.acceptanceCriteria), agileFields.acceptanceCriteria)) {
+        changedFields.acceptanceCriteria = agileFields.acceptanceCriteria;
+      }
+      if (!sameJson(normalizeComments(previousTask.comments), agileFields.comments)) {
+        changedFields.comments = agileFields.comments;
+      }
+      if (!sameJson(normalizeAttachments(previousTask.attachments), agileFields.attachments)) {
+        changedFields.attachments = agileFields.attachments;
+      }
+      if (!sameJson(normalizeCustomFields(previousTask.customFields), agileFields.customFields)) {
+        changedFields.customFields = agileFields.customFields;
+      }
+    }
     if (prevColumn !== nextColumn) {
     }
     const previousLabels = Array.isArray(previousTask.labels) ? previousTask.labels : [];
@@ -235,6 +315,14 @@ export function updateTask(taskId, title, description, priority, dueDate, column
       tasks[taskIndex].doneDate = nowIso;
     } else if (isDoneColumnId(prevColumn) && !isDoneColumnId(nextColumn)) {
       delete tasks[taskIndex].doneDate;
+    }
+
+    const columns = loadColumns();
+    if (isBlockedColumnId(prevColumn, columns) && !isBlockedColumnId(nextColumn, columns)) {
+      tasks[taskIndex].blockedReason = '';
+      tasks[taskIndex].blockedAt = null;
+      changedFields.blockedReason = '';
+      changedFields.blockedAt = null;
     }
 
     tasks[taskIndex].changeDate = nowIso;
@@ -416,9 +504,10 @@ function buildOrderByColumnFromDom() {
  * Update task positions from a drag-drop event (optimized for performance).
  * Only updates the moved task and reorders tasks in affected columns.
  * @param {object} evt - Sortable event with oldIndex, newIndex, from, to, item
- * @returns {object} - { movedTaskId, fromColumn, toColumn, didChangeColumn }
+ * @param {object} [options] - { blockedReason } applied when the task enters Blocked
+ * @returns {object} - { movedTaskId, fromColumn, toColumn, didChangeColumn, enteredBlocked, leftBlocked }
  */
-export function updateTaskPositionsFromDrop(evt) {
+export function updateTaskPositionsFromDrop(evt, options = {}) {
   const movedTaskId = evt.item?.dataset?.taskId;
   if (!movedTaskId) return null;
 
@@ -438,6 +527,16 @@ export function updateTaskPositionsFromDrop(evt) {
   const settings = loadSettings();
   const labels = loadLabels();
   const isSwimlaneView = settings.swimLanesEnabled === true;
+  const columns = loadColumns();
+  const enteredBlocked = didChangeColumn
+    && isBlockedColumnId(toColumn, columns)
+    && !isBlockedColumnId(fromColumn, columns);
+  const leftBlocked = didChangeColumn
+    && isBlockedColumnId(fromColumn, columns)
+    && !isBlockedColumnId(toColumn, columns);
+  const nextBlockedReason = enteredBlocked && typeof options.blockedReason === 'string'
+    ? options.blockedReason.trim()
+    : '';
 
   // Find the moved task
   const movedTaskIndex = tasks.findIndex(t => t.id === movedTaskId);
@@ -486,6 +585,14 @@ export function updateTaskPositionsFromDrop(evt) {
           nextTask.doneDate = nowIso;
         } else if (isDoneColumnId(task.column) && !isDoneColumnId(toColumn)) {
           delete nextTask.doneDate;
+        }
+
+        if (enteredBlocked) {
+          nextTask.blockedReason = nextBlockedReason;
+          nextTask.blockedAt = nextBlockedReason ? nowIso : null;
+        } else if (leftBlocked) {
+          nextTask.blockedReason = '';
+          nextTask.blockedAt = null;
         }
       }
 
@@ -543,6 +650,23 @@ export function updateTaskPositionsFromDrop(evt) {
     }
   }
 
+  // task.moved only carries column/order, so blocked transitions ride a
+  // task.updated event to replay from the log alone (ADR-0005).
+  if (enteredBlocked || leftBlocked) {
+    scheduleDomainEvent({
+      type: 'task.updated',
+      boardId: dropBoardId,
+      entityId: movedTaskId,
+      payload: {
+        fields: {
+          blockedReason: nextBlockedReason,
+          blockedAt: nextBlockedReason ? nowIso : null,
+          changeDate: nowIso
+        }
+      }
+    });
+  }
+
   return {
     movedTaskId,
     fromColumn,
@@ -551,8 +675,31 @@ export function updateTaskPositionsFromDrop(evt) {
     toLaneKey,
     didChangeColumn,
     didChangeLane,
+    enteredBlocked,
+    leftBlocked,
     tasks: finalTasks
   };
+}
+
+export function setTaskBlockedReason(taskId, reason) {
+  const tasks = loadTasks();
+  if (!tasks.some((task) => task.id === taskId)) return false;
+
+  const nowIso = new Date().toISOString();
+  const nextReason = typeof reason === 'string' ? reason.trim() : '';
+  scheduleDomainEvent({
+    type: 'task.updated',
+    boardId: getActiveBoardId(),
+    entityId: taskId,
+    payload: {
+      fields: {
+        blockedReason: nextReason,
+        blockedAt: nextReason ? nowIso : null,
+        changeDate: nowIso
+      }
+    }
+  });
+  return true;
 }
 
 export function moveTaskToTopInColumn(taskId, columnId, tasksCache) {

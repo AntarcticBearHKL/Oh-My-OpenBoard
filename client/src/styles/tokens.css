@@ -32,6 +32,7 @@
   /* Form colors */
   --input-bg: #ffffff;
   --input-focus-ring: rgba(59, 130, 246, 0.2);
+  --input-error-ring: rgba(220, 38, 38, 0.1);
 
   /* Component colors */
   --scrollbar-track: #f1f5f9;
@@ -55,6 +56,20 @@
   --priority-low-fg: #92a1b8;
   --priority-none-bg: rgba(107, 114, 128, 0.08);
   --priority-none-fg: #6b7280;
+
+  /* Agile task type markers */
+  --type-story-bg: rgba(59, 130, 246, 0.15);
+  --type-story-fg: #2563eb;
+  --type-bug-bg: rgba(220, 38, 38, 0.15);
+  --type-bug-fg: #dc2626;
+  --type-task-bg: rgba(107, 114, 128, 0.12);
+  --type-task-fg: #6b7280;
+  --type-spike-bg: rgba(245, 158, 11, 0.18);
+  --type-spike-fg: #b45309;
+
+  /* Stale task warning */
+  --stale-fg: #b45309;
+  --stale-bg: rgba(245, 158, 11, 0.12);
 
   /* Shadows */
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -126,6 +141,13 @@
   --priority-medium-fg: #fbbf24;
   --priority-low-fg: #9ca3af;
   --priority-none-fg: #9ca3af;
+
+  /* Agile task type markers – brighter for dark surfaces */
+  --type-story-fg: #60a5fa;
+  --type-bug-fg: #f87171;
+  --type-task-fg: #9ca3af;
+  --type-spike-fg: #fbbf24;
+  --stale-fg: #fbbf24;
 
   /* Board chrome surfaces */
   --header-bg: #1f2937;

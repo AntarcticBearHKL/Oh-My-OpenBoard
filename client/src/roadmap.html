@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Personal Kanban Roadmap">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://pb.kanvana.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <title>Kanban Roadmap</title>
+  <link rel="stylesheet" href="styles/index.css">
+</head>
+<body class="reports-page">
+  <header class="rpt-header" role="banner">
+    <div class="rpt-header-left">
+      <span data-lucide="square-kanban" aria-hidden="true" class="rpt-logo"></span>
+      <div class="rpt-header-titles">
+        <h1 class="rpt-title" id="roadmap-title">Roadmap</h1>
+        <div class="rpt-subtitle">Iterations timeline</div>
+      </div>
+    </div>
+
+    <div class="rpt-header-right" role="group" aria-label="Roadmap actions">
+      <div class="rpt-badge" id="roadmap-board-badge" title="Active board">?</div>
+      <a class="rpt-link" href="./reports.html">
+        <span data-lucide="chart-column" aria-hidden="true"></span>
+        <span>Reports</span>
+      </a>
+      <a class="rpt-link" href="./index.html">
+        <span data-lucide="kanban" aria-hidden="true"></span>
+        <span>Back to Board</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="rpt-main" aria-label="Roadmap">
+    <section class="reports-kpis" aria-label="Iteration timeline">
+      <div class="rpt-card-header">
+        <h2 class="rpt-card-title">Iterations timeline</h2>
+        <div class="rpt-badge" id="roadmap-count" title="Iterations">0</div>
+      </div>
+      <p class="rpt-card-hint">Each row is one iteration (board). Set iteration dates from the board, or the range is derived from its tasks.</p>
+      <div class="roadmap-axis" aria-hidden="true">
+        <span class="roadmap-axis-label" id="roadmap-range-label"></span>
+      </div>
+      <div id="roadmap-list" class="roadmap-list" role="list"></div>
+    </section>
+
+    <section class="reports-kpis" aria-label="Iteration details">
+      <div class="rpt-card-header">
+        <h2 class="rpt-card-title">Iteration details</h2>
+      </div>
+      <div id="roadmap-table" class="roadmap-table" role="table"></div>
+    </section>
+  </main>
+
+  <script type="module" src="./modules/roadmap.js"></script>
+</body>
+</html>

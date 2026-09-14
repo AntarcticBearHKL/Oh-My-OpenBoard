@@ -82,7 +82,8 @@ export function createReadModelProjector(ctx) {
 
     const known = new Map((state.boards || []).map((board) => [board.id, board]));
     for (const board of snapshotState.boards || []) {
-      if (!known.has(board.id)) known.set(board.id, board);
+      const existing = known.get(board.id);
+      known.set(board.id, existing ? { ...existing, ...board } : board);
     }
 
     writeBoard(key, {

@@ -1,7 +1,9 @@
 import { test, expect, beforeEach } from 'vitest';
 import { resetLocalStorage } from './setup.js';
 import { createBoard, getActiveBoardId, loadDeletedTasksForBoard, loadTasks, saveColumns, saveLabels, saveSettings, saveTasks } from '../../src/modules/storage.js';
-import { addTask, updateTask, deleteTask, moveTaskToTopInColumn, updateTaskPositionsFromDrop } from '../../src/modules/tasks.js';
+import { addTask, updateTask, deleteTask, moveTaskToTopInColumn, setTaskBlockedReason, updateTaskPositionsFromDrop } from '../../src/modules/tasks.js';
+
+const BLOCKED_COLUMN_ID = '00000000-0000-4000-8000-000000000032';
 
 beforeEach(() => {
   resetLocalStorage();
@@ -309,4 +311,187 @@ test('subTasks persist through storage round-trip', () => {
   const task = reloaded[0];
   expect(task.subTasks[0].title).toBe('Persist me');
   expect(task.subTasks[0].completed).toBe(true);
+});
+
+// ── agile task fields ───────────────────────────────────────────────
+
+test('addTask generates a board-prefixed key', () => {
+  addTask('First', '', 'none', '', 'todo', []);
+  addTask('Second', '', 'none', '', 'todo', []);
+
+  const tasks = loadTasks();
+  expect(tasks.find(t => t.title === 'First').key).toBe('TES-1');
+  expect(tasks.find(t => t.title === 'Second').key).toBe('TES-2');
+});
+
+test('addTask defaults the agile fields', () => {
+  addTask('Plain', '', 'none', '', 'todo', []);
+  const task = loadTasks()[0];
+
+  expect(task.type).toBe('task');
+  expect(task.estimate).toBeNull();
+  expect(task.assignee).toBe('');
+  expect(task.parentId).toBeNull();
+  expect(task.acceptanceCriteria).toEqual([]);
+  expect(task.comments).toEqual([]);
+  expect(task.attachments).toEqual([]);
+  expect(task.customFields).toEqual({});
+  expect(task.blockedReason).toBe('');
+  expect(task.blockedAt).toBeNull();
+});
+
+test('addTask persists provided agile fields', () => {
+  addTask('Rich', '', 'none', '', 'todo', [], [], [], {
+    type: 'bug',
+    estimate: 5,
+    assignee: 'Ada',
+    parentId: 'epic-1',
+    acceptanceCriteria: [{ id: 'ac1', text: 'Works offline', done: true }],
+    comments: [{ id: 'c1', author: 'Ada', text: 'First', at: '2026-01-01T00:00:00.000Z' }],
+    attachments: [{ id: 'at1', name: 'Spec', url: 'https://example.com/spec.pdf' }],
+    customFields: { Sprint: '12' }
+  });
+
+  const task = loadTasks()[0];
+  expect(task.type).toBe('bug');
+  expect(task.estimate).toBe(5);
+  expect(task.assignee).toBe('Ada');
+  expect(task.parentId).toBe('epic-1');
+  expect(task.acceptanceCriteria).toEqual([{ id: 'ac1', text: 'Works offline', done: true }]);
+  expect(task.comments[0]).toMatchObject({ author: 'Ada', text: 'First' });
+  expect(task.attachments[0]).toMatchObject({ name: 'Spec', url: 'https://example.com/spec.pdf' });
+  expect(task.customFields).toEqual({ Sprint: '12' });
+});
+
+test('updateTask persists agile fields and rejects a self-parent', () => {
+  addTask('Original', '', 'none', '', 'todo', []);
+  const task = loadTasks()[0];
+
+  updateTask(task.id, 'Original', '', 'none', '', 'todo', [], [], [], {
+    type: 'spike',
+    estimate: 3,
+    assignee: 'Grace',
+    parentId: task.id,
+    acceptanceCriteria: [{ id: 'ac1', text: 'Investigate', done: false }],
+    customFields: { Epic: 'X' }
+  });
+
+  const updated = loadTasks().find(t => t.id === task.id);
+  expect(updated.type).toBe('spike');
+  expect(updated.estimate).toBe(3);
+  expect(updated.assignee).toBe('Grace');
+  expect(updated.parentId).toBeNull();
+  expect(updated.acceptanceCriteria[0].text).toBe('Investigate');
+  expect(updated.customFields).toEqual({ Epic: 'X' });
+});
+
+test('updateTask without extraFields leaves agile fields untouched', () => {
+  addTask('Keep', '', 'none', '', 'todo', [], [], [], { type: 'bug', estimate: 8, assignee: 'Ada' });
+  const task = loadTasks()[0];
+
+  updateTask(task.id, 'Keep renamed', '', 'none', '', 'todo', []);
+
+  const updated = loadTasks().find(t => t.id === task.id);
+  expect(updated.title).toBe('Keep renamed');
+  expect(updated.type).toBe('bug');
+  expect(updated.estimate).toBe(8);
+  expect(updated.assignee).toBe('Ada');
+});
+
+// ── blocked reason transitions ──────────────────────────────────────
+
+function withDropDocument(fromColumnId, toColumnId, taskId, callback) {
+  const item = { dataset: { taskId } };
+  const from = { dataset: { column: fromColumnId }, closest: () => from };
+  const to = { dataset: { column: toColumnId }, closest: () => to };
+  const fromColumn = { dataset: { column: fromColumnId }, querySelectorAll: () => [] };
+  const toColumn = { dataset: { column: toColumnId }, querySelectorAll: () => [item] };
+  const originalDocument = globalThis.document;
+  globalThis.document = {
+    getElementById: () => null,
+    querySelectorAll: () => [fromColumn, toColumn]
+  };
+
+  try {
+    return callback({ from, to, item });
+  } finally {
+    if (originalDocument) {
+      globalThis.document = originalDocument;
+    } else {
+      delete globalThis.document;
+    }
+  }
+}
+
+test('updateTaskPositionsFromDrop flags and records a move into Blocked', () => {
+  addTask('Blocker', '', 'none', '', 'todo', []);
+  const [task] = loadTasks();
+
+  const result = withDropDocument('todo', BLOCKED_COLUMN_ID, task.id, (evt) =>
+    updateTaskPositionsFromDrop(evt, { blockedReason: 'Waiting on API keys' })
+  );
+
+  expect(result.enteredBlocked).toBe(true);
+  expect(result.leftBlocked).toBe(false);
+
+  const moved = loadTasks().find(t => t.id === task.id);
+  expect(moved.column).toBe(BLOCKED_COLUMN_ID);
+  expect(moved.blockedReason).toBe('Waiting on API keys');
+  expect(typeof moved.blockedAt).toBe('string');
+  expect(Number.isNaN(new Date(moved.blockedAt).getTime())).toBe(false);
+});
+
+test('updateTaskPositionsFromDrop leaves the reason empty when none is provided', () => {
+  addTask('Blocker', '', 'none', '', 'todo', []);
+  const [task] = loadTasks();
+
+  withDropDocument('todo', BLOCKED_COLUMN_ID, task.id, (evt) => updateTaskPositionsFromDrop(evt));
+
+  const moved = loadTasks().find(t => t.id === task.id);
+  expect(moved.blockedReason).toBe('');
+  expect(moved.blockedAt).toBeNull();
+});
+
+test('updateTaskPositionsFromDrop clears blocked fields when leaving Blocked', () => {
+  saveTasks([{
+    id: 't1',
+    title: 'Was blocked',
+    column: BLOCKED_COLUMN_ID,
+    order: 1,
+    priority: 'none',
+    labels: [],
+    blockedReason: 'Waiting on API keys',
+    blockedAt: '2026-01-01T00:00:00.000Z'
+  }]);
+
+  const result = withDropDocument(BLOCKED_COLUMN_ID, 'todo', 't1', (evt) =>
+    updateTaskPositionsFromDrop(evt)
+  );
+
+  expect(result.leftBlocked).toBe(true);
+  expect(result.enteredBlocked).toBe(false);
+
+  const moved = loadTasks().find(t => t.id === 't1');
+  expect(moved.column).toBe('todo');
+  expect(moved.blockedReason).toBe('');
+  expect(moved.blockedAt).toBeNull();
+});
+
+test('setTaskBlockedReason stores a trimmed reason and clears on empty', () => {
+  addTask('Task', '', 'none', '', 'todo', []);
+  const task = loadTasks()[0];
+
+  expect(setTaskBlockedReason(task.id, '  Waiting on API  ')).toBe(true);
+  const blocked = loadTasks().find(t => t.id === task.id);
+  expect(blocked.blockedReason).toBe('Waiting on API');
+  expect(blocked.blockedAt).toBeTruthy();
+
+  setTaskBlockedReason(task.id, '');
+  const cleared = loadTasks().find(t => t.id === task.id);
+  expect(cleared.blockedReason).toBe('');
+  expect(cleared.blockedAt).toBeNull();
+});
+
+test('setTaskBlockedReason returns false for a missing task', () => {
+  expect(setTaskBlockedReason('missing', 'nope')).toBe(false);
 });

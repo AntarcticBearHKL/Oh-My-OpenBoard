@@ -165,3 +165,219 @@
 }
 
 .help-content li { margin: 6px 0; }
+
+/* ==========================================================================
+   Task modal: agile fields
+   ========================================================================== */
+
+.task-form-grid {
+  display: flex;
+  gap: 12px;
+}
+
+.task-form-grid > .form-group {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+@media (max-width: 480px) {
+  .task-form-grid {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+.acceptance-list,
+.comments-list,
+.attachments-list,
+.custom-fields-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.acceptance-item,
+.comment-item,
+.attachment-item,
+.custom-field-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-muted);
+  border: 1px solid var(--border-subtle);
+  min-width: 0;
+}
+
+.acceptance-item input[type="checkbox"] {
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.acceptance-text-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-family: inherit;
+}
+
+.acceptance-text-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background-color: var(--input-bg);
+}
+
+.acceptance-item--done .acceptance-text-input {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.acceptance-remove-btn,
+.comment-remove-btn,
+.attachment-remove-btn,
+.custom-field-remove-btn {
+  flex-shrink: 0;
+  padding: 2px 6px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  font-size: var(--text-md);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.acceptance-remove-btn:hover,
+.comment-remove-btn:hover,
+.attachment-remove-btn:hover,
+.custom-field-remove-btn:hover {
+  color: var(--color-danger);
+  background-color: var(--color-danger-bg);
+}
+
+.comment-item {
+  align-items: flex-start;
+}
+
+.comment-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.comment-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.comment-author {
+  font-weight: 600;
+  color: var(--text-subtle);
+}
+
+.comment-text {
+  font-size: var(--text-sm);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.attachment-link {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--text-sm);
+  color: var(--color-primary);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment-link:hover {
+  text-decoration: underline;
+}
+
+.custom-field-key-input,
+.custom-field-value-input {
+  min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background-color: var(--input-bg);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-family: inherit;
+}
+
+.custom-field-key-input {
+  flex: 0 0 38%;
+}
+
+.custom-field-value-input {
+  flex: 1 1 auto;
+}
+
+.custom-field-key-input:focus,
+.custom-field-value-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.task-comment-add-row,
+.task-attachment-add-row,
+.task-custom-field-add-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.task-comment-add-row input,
+.task-attachment-add-row input,
+.task-custom-field-add-row input {
+  width: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px 8px;
+  font-size: var(--text-sm);
+}
+
+#task-comment-author {
+  flex: 0 1 30%;
+}
+
+.task-attachment-add-row input[type="url"].invalid {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px var(--input-error-ring);
+}
+
+#dialog-modal-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background-color: var(--input-bg);
+  color: var(--text);
+  font-size: var(--text-base);
+  font-family: inherit;
+}
+
+#dialog-modal-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--input-focus-ring);
+}
