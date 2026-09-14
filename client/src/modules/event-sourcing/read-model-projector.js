@@ -1,4 +1,5 @@
 import { applyEvent, createProjectionState } from '../reducer.js';
+import { NO_BOARDS_KEY } from '../constants.js';
 import { keyFor } from '../idb-store.js';
 import { GLOBAL_SNAPSHOT_KEY } from './snapshot.js';
 import { DATA_CHANGED, EVENT_EMITTED, emit, off, on } from '../events.js';
@@ -50,8 +51,18 @@ export function createReadModelProjector(ctx) {
     }), event);
 
     writeBoard(boardId, projected);
+    if (event.type === 'board.created' || event.type === 'board.deleted') {
+      syncBoardsEmptiedFlag(projected.boards);
+    }
     checkAndScheduleSnapshot(boardId, projected, event.hlc);
     emit(DATA_CHANGED, { event });
+  }
+
+  function syncBoardsEmptiedFlag(boards) {
+    try {
+      if ((boards || []).some((board) => board && !board.deleted)) localStorage.removeItem(NO_BOARDS_KEY);
+      else localStorage.setItem(NO_BOARDS_KEY, '1');
+    } catch { /* ignore */ }
   }
 
   function writeBoard(boardId, projected) {
@@ -86,13 +97,15 @@ export function createReadModelProjector(ctx) {
       known.set(board.id, existing ? { ...existing, ...board } : board);
     }
 
+    const mergedBoards = [...known.values()];
     writeBoard(key, {
-      boards: [...known.values()],
+      boards: mergedBoards,
       tasks: snapshotState.tasks || [],
       columns: snapshotState.columns || [],
       labels: snapshotState.labels || [],
       settings: snapshotState.settings || {}
     });
+    syncBoardsEmptiedFlag(mergedBoards);
     emit(DATA_CHANGED, { hydrated: key });
   }
 

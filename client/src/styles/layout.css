@@ -559,6 +559,34 @@
   border-radius: var(--radius-lg);
 }
 
+.board-empty-state {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-6) var(--space-4);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.board-empty-title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.board-empty-hint {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
 /* Footer */
 .footer {
   margin-top: auto;

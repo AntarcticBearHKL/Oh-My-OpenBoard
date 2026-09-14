@@ -139,10 +139,13 @@ test('deleteBoard removes board and its data', () => {
   expect(listBoards().length).toBe(1);
 });
 
-test('deleteBoard returns false when only one board exists', () => {
+test('deleteBoard removes the last board and does not re-seed a default one', () => {
   ensureBoardsInitialized();
   const boards = listBoards();
-  expect(deleteBoard(boards[0].id)).toBe(false);
+  expect(deleteBoard(boards[0].id)).toBe(true);
+  expect(listBoards()).toEqual([]);
+  ensureBoardsInitialized();
+  expect(listBoards()).toEqual([]);
 });
 
 test('deleteBoard switches active board if deleted board was active', () => {

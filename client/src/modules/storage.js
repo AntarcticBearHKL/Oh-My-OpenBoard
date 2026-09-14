@@ -1,6 +1,6 @@
 import { generateUUID } from './utils.js';
 import { normalizePriority as sharedNormalizePriority, isHexColor, defaultColumnColor, normalizeStringKeys, normalizeRelationships, normalizeSubTasks } from './normalize.js';
-import { DONE_COLUMN_ID, DONE_COLUMN_ROLE, FIXED_COLUMNS, isDoneColumn } from './constants.js';
+import { DONE_COLUMN_ID, DONE_COLUMN_ROLE, FIXED_COLUMNS, NO_BOARDS_KEY, isDoneColumn } from './constants.js';
 import { openStore, KV_STORE, READ_MODEL_STORE, schedulePersist, scheduleDelete, scheduleReadModelPersist, scheduleReadModelDelete, keyFor, readModelKeyFor, _flushPersistsForTesting as _flushIdbPersistsForTesting, _resetIdbForTesting } from './idb-store.js';
 // Re-export IDB helpers that tests import from this module for backward compatibility.
 import { normalizeBoardModelIds } from './board-serializer.js';
@@ -26,6 +26,17 @@ const DEFAULT_BOARD_ID = 'default';
 // same account converge onto a single board instead of accruing duplicates.
 // Valid uuid-v4 shape so it passes existing id validation/UUID_RE checks.
 const STABLE_DEFAULT_BOARD_ID = '00000000-0000-4000-8000-000000000001';
+function boardsEmptied() {
+  try { return localStorage.getItem(NO_BOARDS_KEY) === '1'; } catch { return false; }
+}
+
+function markBoardsEmptied() {
+  try { localStorage.setItem(NO_BOARDS_KEY, '1'); } catch { /* ignore */ }
+}
+
+function clearBoardsEmptied() {
+  try { localStorage.removeItem(NO_BOARDS_KEY); } catch { /* ignore */ }
+}
 const ALLOWED_SWIMLANE_GROUP_BY = new Set(['label', 'label-group', 'priority']);
 
 // ── In-memory state ────────────────────────────────────────────────────────────
@@ -525,7 +536,8 @@ export function getBoardById(boardId) {
 export function getActiveBoardName() {
   const id = getActiveBoardId();
   const board = id ? getBoardById(id) : null;
-  const name = typeof board?.name === 'string' ? board.name.trim() : '';
+  if (!board) return listBoards().length === 0 ? 'Kanvana' : 'Untitled board';
+  const name = typeof board.name === 'string' ? board.name.trim() : '';
   return name || 'Untitled board';
 }
 
@@ -581,8 +593,12 @@ export function ensureBoardsInitialized() {
     return;
   }
 
+  // Every board was deliberately deleted — don't resurrect a default one.
+  if (boardsEmptied()) return;
+
   // First run: seed default board directly into state (IDB is either empty or
   // not yet initialised — migration from localStorage is handled in initStorage()).
+  clearBoardsEmptied();
   const created = nowIso();
   const boardId = STABLE_DEFAULT_BOARD_ID;
   const defaults = stableDefaultBoardData();
@@ -647,6 +663,7 @@ export function createBoard(name) {
   const defaults = defaultBoardData(false);
   const board = { id, name: boardName, createdAt: nowIso() };
   saveBoards([...boards, board]);
+  clearBoardsEmptied();
 
   state.columns[id] = defaults.columns;
   state.tasks[id] = [];
@@ -724,7 +741,6 @@ export function deleteBoard(boardId) {
   if (!id) return false;
   const boards = listBoards();
   if (!boards.some((b) => b.id === id)) return false;
-  if (boards.length <= 1) return false; // never delete last board
 
   const remaining = boards.filter((b) => b.id !== id);
   saveBoards(remaining);
@@ -743,9 +759,12 @@ export function deleteBoard(boardId) {
   scheduleDelete(keyFor(id, 'settings'));
 
   if (state.activeBoardId === id) {
-    state.activeBoardId = remaining[0].id;
-    schedulePersist(ACTIVE_BOARD_KEY, remaining[0].id);
+    const nextActive = remaining[0]?.id || null;
+    state.activeBoardId = nextActive;
+    if (nextActive) schedulePersist(ACTIVE_BOARD_KEY, nextActive);
   }
+
+  if (remaining.length === 0) markBoardsEmptied();
 
   scheduleDomainEvent({
     type: 'board.deleted',

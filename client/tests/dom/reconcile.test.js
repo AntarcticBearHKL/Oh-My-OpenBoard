@@ -22,6 +22,7 @@ vi.mock('../../src/modules/icons.js', () => ({ renderIcons: vi.fn() }));
 const refreshNotifications = vi.fn();
 vi.mock('../../src/modules/notifications.js', () => ({ refreshNotifications }));
 vi.mock('../../src/modules/storage.js', () => ({
+  listBoards: () => mocks.boards,
   loadColumns: () => mocks.columns,
   loadTasks: () => mocks.tasks,
   loadLabels: () => mocks.labels,
@@ -30,6 +31,7 @@ vi.mock('../../src/modules/storage.js', () => ({
 }));
 
 beforeEach(() => {
+  mocks.boards = [{ id: 'board-1', name: 'Test' }];
   mocks.columns = [
     { id: 'todo', name: 'To Do', order: 1 },
     { id: 'done', name: 'Done', order: 2, role: 'done' },

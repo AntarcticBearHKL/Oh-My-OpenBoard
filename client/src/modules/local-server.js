@@ -11,6 +11,7 @@
 // fails and nothing connects.
 
 import { emit, on, EVENT_EMITTED } from './events.js';
+import { NO_BOARDS_KEY } from './constants.js';
 import { observeRemote } from './event-sourcing/hlc.js';
 import { getActiveBoardId, hydrateFromSnapshotState } from './storage.js';
 
@@ -70,6 +71,11 @@ async function boot() {
   try { info = await getJson('/api/harness'); } catch { return; }
   if (!info?.harness) return;
 
+  try {
+    if (Number.isFinite(info.boards) && info.boards === 0) localStorage.setItem(NO_BOARDS_KEY, '1');
+    else localStorage.removeItem(NO_BOARDS_KEY);
+  } catch { /* ignore */ }
+
   const boardId = getActiveBoardId() || info.defaultBoardId || DEFAULT_BOARD_ID;
 
   // Snapshot first (idempotent hydration), then tail strictly after snapshot.seq
@@ -125,9 +131,11 @@ async function ingest(event) {
 }
 
 export function initLocalServer() {
-  if (started) return;
+  if (started) return Promise.resolve();
   started = true;
-  boot().catch((err) => console.warn('[kanvana] local server bridge unavailable:', err?.message || err));
+  return boot().catch((err) => {
+    console.warn('[kanvana] local server bridge unavailable:', err?.message || err);
+  });
 }
 
 export function isLocalServerActive() {

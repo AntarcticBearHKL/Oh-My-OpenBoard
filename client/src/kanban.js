@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Load all board data from IDB into memory before any rendering.
   await initStorage();
 
-  initLocalServer();
+  await initLocalServer();
 
   // Deep-link support (e.g., from calendar.html): open a task modal by ID.
   const urlParams = new URLSearchParams(window.location.search);

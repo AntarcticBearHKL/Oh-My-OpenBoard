@@ -21,6 +21,8 @@ export function isFixedColumn(columnId) {
   return typeof columnId === 'string' && FIXED_COLUMN_IDS.includes(columnId);
 }
 
+export const NO_BOARDS_KEY = 'kanvana:noBoards';
+
 export const LEGACY_COLUMN_ALIASES = new Map([
   ['todo', FIXED_COLUMNS[0].id],
   ['inprogress', FIXED_COLUMNS[1].id],

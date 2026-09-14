@@ -136,7 +136,7 @@ export function initializeBoardSidebar() {
       });
       if (!ok) return;
       if (!deleteBoardById(board.id)) {
-        await alertDialog({ title: 'Unable to delete', message: 'You cannot delete the last iteration.' });
+        await alertDialog({ title: 'Unable to delete', message: 'This iteration could not be deleted.' });
         return;
       }
       assignBoardToGroup(board.id, null);

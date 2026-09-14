@@ -1,6 +1,6 @@
 // Thin orchestrator — delegates to task-card.js, column-element.js, swimlane-renderer.js
 
-import { isDoneColumnId, loadColumns, loadTasks, loadLabels, loadSettings } from './storage.js';
+import { isDoneColumnId, listBoards, loadColumns, loadTasks, loadLabels, loadSettings } from './storage.js';
 import { initDragDrop } from './dragdrop.js';
 import { renderIcons } from './icons.js';
 import { refreshNotifications } from './notifications.js';
@@ -194,6 +194,7 @@ export function syncMovedTaskDueDate(taskId, toColumn, tasksCache) {
 export function reconcileBoard() {
   const container = document.getElementById('board-container');
   if (!container) return false;
+  if (listBoards().length === 0) return false;
 
   const settings = loadSettings();
   // Swimlane boards have a different DOM shape; the reconcile adapter only
@@ -284,6 +285,15 @@ export function reconcileBoard() {
 
 // Render all columns and tasks
 export function renderBoard() {
+  const boardContainer = document.getElementById('board-container');
+  if (boardContainer && listBoards().length === 0) {
+    boardContainer.innerHTML = '<div class="board-empty-state"><p class="board-empty-title">No iterations yet</p><p class="board-empty-hint">Create one with the + button in a group on the left.</p></div>';
+    boardContainer.dataset.viewMode = 'empty';
+    boardContainer.classList.remove('board-container-swimlanes');
+    renderIcons();
+    return;
+  }
+
   const columns = loadColumns();
   const tasks = loadTasks();
   const labels = loadLabels();
