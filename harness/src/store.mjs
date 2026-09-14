@@ -103,12 +103,20 @@ function appendEvent(raw) {
   if (seenIds.has(raw.id)) return null;
   if (raw.type.endsWith('.created') && entityExists(raw.type, raw.entity_id, raw.board_id)) return null;
 
-  if (raw.hlc) observeRemote(raw.hlc);
+  const nextSeq = meta.seq + 1;
+  const event = { ...raw, seq: nextSeq };
 
-  const event = { ...raw, seq: ++meta.seq };
+  try {
+    project(event);
+  } catch (err) {
+    console.error('[OpenAgile] Rejected an event that failed to project:', raw.type, err);
+    return null;
+  }
+
+  if (raw.hlc) observeRemote(raw.hlc);
+  meta.seq = nextSeq;
   events.push(event);
   seenIds.add(event.id);
-  project(event);
   schedulePersist();
   return event;
 }
