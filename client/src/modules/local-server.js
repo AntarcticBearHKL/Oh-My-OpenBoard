@@ -76,6 +76,11 @@ function flushPendingForwards() {
   }))).then(() => { if (failed) scheduleForwardRetry(); });
 }
 
+function resetSeq() {
+  lastSeq = 0;
+  try { localStorage.removeItem(SEQ_KEY); } catch { /* ignore */ }
+}
+
 function forward(event) {
   postEvent(event).catch(() => {
     if (pendingForwards.length < MAX_PENDING_FORWARDS) pendingForwards.push(event);
@@ -121,6 +126,8 @@ async function boot() {
     if (Number.isFinite(snapshot?.seq)) {
       const serverHasBoard = Array.isArray(snapshot.state?.boards) && snapshot.state.boards.length > 0;
       const hydrateKey = activeBoardId || snapshot.boardId || DEFAULT_BOARD_ID;
+      // A stored seq ahead of the server means the harness store was reset: new epoch.
+      if (lastSeq > snapshot.seq) resetSeq();
       if (serverHasBoard && (lastSeq === 0 || snapshot.seq > lastSeq)) {
         hydrateFromSnapshotState(hydrateKey, snapshot.state);
       }
