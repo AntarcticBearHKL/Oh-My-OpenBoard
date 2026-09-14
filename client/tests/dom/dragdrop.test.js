@@ -84,11 +84,6 @@ function getTaskStartHandler() {
   return taskSortable.options.onStart;
 }
 
-function getColumnStartHandler() {
-  const columnSortable = mocks.sortableInstances.find((instance) => instance.options.draggable === '.task-column');
-  return columnSortable.options.onStart;
-}
-
 beforeEach(() => {
   vi.useFakeTimers();
   mocks.sortableInstances.length = 0;
@@ -197,17 +192,13 @@ test('reinitializing during an active task drag clears transient drag state', as
   expect(targetList.dataset.wasHidden).toBeUndefined();
 });
 
-test('reinitializing during an active column drag clears the column drag class', async () => {
+test('initDragDrop does not make columns reorderable', async () => {
   mountBoard();
 
   const { initDragDrop } = await import('../../src/modules/dragdrop.js');
   initDragDrop();
-  getColumnStartHandler()();
 
-  expect(document.body.classList.contains('dragging-column')).toBe(true);
-
-  initDragDrop();
-
+  expect(mocks.sortableInstances.some((instance) => instance.options.draggable === '.task-column')).toBe(false);
   expect(document.body.classList.contains('dragging-column')).toBe(false);
 });
 

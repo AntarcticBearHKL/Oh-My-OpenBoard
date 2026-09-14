@@ -4,9 +4,9 @@
 
 /* Notification Banner */
 .notification-banner {
-  background-color: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: 8px;
+  background-color: var(--color-danger-bg);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent);
+  border-radius: var(--radius-md);
   margin: 0 10px 10px 10px;
   padding: 12px 16px;
   animation: banner-appear 0.3s ease-out;
@@ -109,8 +109,8 @@
 /* Custom scrollbar for notification banner list */
 .notification-banner-list::-webkit-scrollbar { width: 6px; }
 .notification-banner-list::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: 3px; }
-.notification-banner-list::-webkit-scrollbar-thumb { background: rgba(239, 68, 68, 0.4); border-radius: 3px; }
-.notification-banner-list::-webkit-scrollbar-thumb:hover { background: rgba(239, 68, 68, 0.6); }
+.notification-banner-list::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--color-danger) 40%, transparent); border-radius: 3px; }
+.notification-banner-list::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--color-danger) 60%, transparent); }
 
 .notification-banner-item {
   display: inline-flex;
@@ -120,7 +120,7 @@
   background-color: var(--surface);
   border: 1px solid var(--border-subtle);
   border-radius: 3px;
-  font-size: 12px;
+  font-size: var(--text-sm);
   cursor: pointer;
   transition: background-color var(--transition-fast), border-color var(--transition-fast);
   max-width: 100%;
@@ -147,7 +147,7 @@
 }
 
 .notification-banner-item .due-date {
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--text-muted);
   white-space: nowrap;
   flex-shrink: 0;
@@ -187,9 +187,9 @@
   height: 18px;
   padding: 0 5px;
   background-color: var(--color-danger);
-  color: white;
-  border-radius: 10px;
-  font-size: 11px;
+  color: var(--color-on-danger);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-xs);
   font-weight: 700;
   margin-left: 4px;
 }
@@ -252,7 +252,7 @@
 
 .notification-item-title {
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--text-base);
   color: var(--text);
   margin-bottom: 4px;
   overflow: hidden;
@@ -264,7 +264,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--text-muted);
 }
 
@@ -297,7 +297,7 @@
   padding: 24px;
   text-align: center;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--text-base);
 }
 
 /* Mobile adjustments for notifications */
@@ -328,7 +328,7 @@
   }
 
   .notification-banner-item .due-date {
-    font-size: 11px;
+    font-size: var(--text-xs);
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: none;

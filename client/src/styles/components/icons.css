@@ -5,7 +5,6 @@
 /* Base icon button pattern */
 .icon-btn,
 .add-task-btn-icon,
-.column-drag-handle,
 .delete-task-btn {
   background: none;
   border: none;
@@ -21,22 +20,16 @@
 
 .icon-btn:hover,
 .add-task-btn-icon:hover,
-.column-drag-handle:hover,
 .delete-task-btn:hover {
   opacity: 1;
 }
 
 .icon-btn svg,
 .add-task-btn-icon svg,
-.column-drag-handle svg,
 .delete-task-btn svg {
   width: 16px;
   height: 16px;
   stroke-width: 2;
-}
-
-.column-drag-handle {
-  display: none;
 }
 
 /* Add task button (swimlane headers) */
@@ -55,18 +48,4 @@
 
 .delete-task-btn svg {
   stroke: var(--color-danger);
-}
-
-/* Column drag handle */
-.column-drag-handle {
-  opacity: 0.5;
-  cursor: grab;
-}
-
-.column-drag-handle:active {
-  cursor: grabbing;
-}
-
-.column-drag-handle svg {
-  stroke: var(--text-muted);
 }

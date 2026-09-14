@@ -603,7 +603,7 @@ body.reports-page .roadmap-bar {
   bottom: 2px;
   border-radius: var(--radius-sm);
   background: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-on-primary);
   font-size: var(--text-xs);
   font-weight: 600;
   display: flex;

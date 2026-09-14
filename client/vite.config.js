@@ -39,7 +39,7 @@ export default defineConfig({
     emptyOutDir: true
   },
   server: {
-    port: 3000,
+    port: 5173,
     open: !process.env.CI && !process.env.DOCKER,
     // Opt-in same-origin proxy to PocketBase for live e2e: the sandboxed test
     // browser can only reach its own origin, so a cross-origin call to PB :8090

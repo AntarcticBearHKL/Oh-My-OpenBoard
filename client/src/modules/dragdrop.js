@@ -1,13 +1,11 @@
 import Sortable from 'sortablejs';
 import { moveTaskToTopInColumn, setTaskBlockedReason, updateTaskPositionsFromDrop } from './tasks.js';
-import { updateColumnPositions } from './columns.js';
 import { emit, DATA_CHANGED, DRAG_RECONCILE_BEGIN, DRAG_RECONCILE_END } from './events.js';
 import { isDoneColumnId } from './storage.js';
 import { promptDialog } from './dialog.js';
 
 // Store Sortable instances for cleanup
 let taskSortables = [];
-let columnSortable = null;
 let autoScrollInterval = null;
 let lastTouchX = 0;
 let lastTouchY = 0;
@@ -59,21 +57,14 @@ async function promptBlockedReason(taskId) {
 export function initDragDrop() {
   destroySortables();
   initTaskSortables();
-  initColumnSortable();
 }
 
 // Clean up existing sortable instances
 function destroySortables() {
   taskSortables.forEach(sortable => sortable.destroy());
   taskSortables = [];
-  
-  if (columnSortable) {
-    columnSortable.destroy();
-    columnSortable = null;
-  }
-  
+
   cleanupTaskDragState({ restoreCollapsedDropZones: true });
-  cleanupColumnDragState();
 }
 
 function removePointerTracking() {
@@ -92,10 +83,6 @@ function cleanupTaskDragState({ restoreCollapsedDropZones = false } = {}) {
   if (restoreCollapsedDropZones) {
     hideCollapsedDropZones();
   }
-}
-
-function cleanupColumnDragState() {
-  document.body.classList.remove('dragging-column');
 }
 
 // Auto-scroll logic for board and task-list scrolling during drag
@@ -352,41 +339,5 @@ function initTaskSortables() {
     });
     
     taskSortables.push(sortable);
-  });
-}
-
-// Initialize sortable for column reordering
-function initColumnSortable() {
-  const container = document.getElementById('board-container');
-  if (!container) return;
-  if (isSwimlaneViewEnabled()) return;
-  
-  columnSortable = new Sortable(container, {
-    animation: 150,
-    delay: 150,
-    delayOnTouchOnly: true,
-    touchStartThreshold: 5,
-    ghostClass: 'column-ghost',
-    chosenClass: 'column-chosen',
-    dragClass: 'column-drag',
-    handle: '.column-header', // Drag via header (including title)
-    filter: 'button:not(.column-drag-handle), a, input, select, textarea, [contenteditable]',
-    preventOnFilter: true,
-    draggable: '.task-column',
-    scrollSensitivity: 80,
-    scrollSpeed: 15,
-    forceFallback: false,
-    fallbackOnBody: true,
-    
-    onStart: function(evt) {
-      document.body.classList.add('dragging-column');
-    },
-    
-    onEnd: function(evt) {
-      cleanupColumnDragState();
-      
-      // Update column positions in storage
-      updateColumnPositions();
-    }
   });
 }

@@ -5,34 +5,45 @@ import { showModal } from './modals.js';
 import { getWipState, wipCounterLabel, applyWipCounter } from './wip-limit.js';
 import { h } from './dom.js';
 
-let activeSummaryPopover = null;
+let activeSummaryOverlay = null;
 let activeSummaryTrigger = null;
-let summaryOutsideHandler = null;
 let summaryKeyHandler = null;
 
-function closeColumnSummary() {
-  if (activeSummaryTrigger) {
-    activeSummaryTrigger.setAttribute('aria-expanded', 'false');
+function closeColumnSummary({ restoreFocus = true } = {}) {
+  const trigger = activeSummaryTrigger;
+
+  if (trigger) {
+    trigger.setAttribute('aria-expanded', 'false');
   }
-  if (activeSummaryPopover) {
-    activeSummaryPopover.remove();
-  }
-  if (summaryOutsideHandler) {
-    document.removeEventListener('mousedown', summaryOutsideHandler, true);
-    document.removeEventListener('click', summaryOutsideHandler, true);
-    summaryOutsideHandler = null;
+  if (activeSummaryOverlay) {
+    activeSummaryOverlay.remove();
   }
   if (summaryKeyHandler) {
     document.removeEventListener('keydown', summaryKeyHandler, true);
     summaryKeyHandler = null;
   }
-  activeSummaryPopover = null;
+  document.body.classList.remove('column-summary-open');
+  activeSummaryOverlay = null;
   activeSummaryTrigger = null;
+
+  if (restoreFocus && trigger && typeof trigger.focus === 'function' && document.contains(trigger)) {
+    trigger.focus();
+  }
+  syncSummaryButton(trigger);
 }
 
 function formatSummaryTimestamp(at) {
   const parsed = new Date(at);
   return Number.isNaN(parsed.getTime()) ? '' : parsed.toLocaleString();
+}
+
+function syncSummaryButton(button) {
+  if (!button || !button.dataset) return;
+  const columnId = button.dataset.columnId;
+  const summary = columnId ? loadColumnSummaries()[columnId] : null;
+  const hasSummary = Boolean(summary && typeof summary.text === 'string' && summary.text.trim());
+  button.classList.toggle('has-summary', hasSummary);
+  button.title = hasSummary ? 'AI summary — has content' : 'AI summary — empty';
 }
 
 function buildSummaryBody(column) {
@@ -103,53 +114,52 @@ function toggleColumnSummary(column, trigger) {
     return;
   }
 
-  closeColumnSummary();
+  closeColumnSummary({ restoreFocus: false });
 
-  const popover = h('div', {
-    class: 'column-summary-popover',
+  const overlay = h('div', {
+    class: 'column-summary-overlay',
     role: 'dialog',
+    'aria-modal': 'true',
     'aria-label': `AI summary for ${column.name}`,
     'data-column-id': column.id
-  },
-    h('div', { class: 'column-summary-popover-header' },
-      h('h3', { class: 'column-summary-popover-title' },
-        'AI summary',
-        h('span', { class: 'column-summary-popover-column' }, column.name)
+  });
+
+  const closeButton = h('button', {
+    type: 'button',
+    class: 'column-summary-close',
+    'aria-label': 'Close summary',
+    title: 'Close',
+    onClick: () => closeColumnSummary()
+  }, '×');
+
+  overlay.appendChild(h('div', { class: 'column-summary-panel' },
+    h('header', { class: 'column-summary-header' },
+      h('div', { class: 'column-summary-heading' },
+        h('p', { class: 'column-summary-eyebrow' }, 'AI summary'),
+        h('h3', { class: 'column-summary-title' }, column.name)
       ),
-      h('button', {
-        type: 'button',
-        class: 'column-summary-close',
-        'aria-label': 'Close summary',
-        title: 'Close',
-        onClick: () => closeColumnSummary()
-      }, '×')
+      closeButton
     ),
     buildSummaryBody(column)
-  );
+  ));
 
-  document.body.appendChild(popover);
+  overlay.addEventListener('click', (event) => {
+    if (event.target === overlay) closeColumnSummary();
+  });
 
-  const rect = trigger.getBoundingClientRect();
-  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
-  const left = Math.max(8, Math.min(rect.left, viewportWidth - 296));
-  popover.style.top = `${Math.round(rect.bottom + 6)}px`;
-  popover.style.left = `${Math.round(left)}px`;
+  document.body.appendChild(overlay);
+  document.body.classList.add('column-summary-open');
 
   trigger.setAttribute('aria-expanded', 'true');
-  activeSummaryPopover = popover;
+  activeSummaryOverlay = overlay;
   activeSummaryTrigger = trigger;
 
-  summaryOutsideHandler = (event) => {
-    if (popover.contains(event.target) || trigger.contains(event.target)) return;
-    closeColumnSummary();
-  };
   summaryKeyHandler = (event) => {
     if (event.key === 'Escape') closeColumnSummary();
   };
-
-  document.addEventListener('mousedown', summaryOutsideHandler, true);
-  document.addEventListener('click', summaryOutsideHandler, true);
   document.addEventListener('keydown', summaryKeyHandler, true);
+
+  closeButton.focus();
 }
 
 function getTaskCountInColumn(columnId) {
@@ -181,7 +191,10 @@ export function createColumnElement(column) {
       event.stopPropagation();
       toggleColumnSummary(column, summaryButton);
     }
-  }, h('span', { 'data-lucide': 'sparkles', 'aria-hidden': 'true' }));
+  }, h('span', { 'data-lucide': 'sparkles', 'aria-hidden': 'true' }),
+     h('span', { class: 'column-summary-btn-label' }, 'AI 总结'));
+
+  syncSummaryButton(summaryButton);
 
   const headerDiv = h('header', { class: 'column-header' }, columnTitle, taskCounter, summaryButton);
 

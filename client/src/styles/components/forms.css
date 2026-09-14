@@ -13,7 +13,7 @@ fieldset.form-group {
 fieldset.form-group legend {
   display: block;
   margin-bottom: 6px;
-  font-size: 14px;
+  font-size: var(--text-base);
   font-weight: 500;
   color: var(--text-subtle);
   padding: 0;
@@ -26,7 +26,7 @@ fieldset.form-group legend {
 .form-group label {
   display: block;
   margin-bottom: 6px;
-  font-size: 14px;
+  font-size: var(--text-base);
   font-weight: 500;
   color: var(--text-subtle);
 }
@@ -41,7 +41,7 @@ fieldset.form-group legend {
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  font-size: 14px;
+  font-size: var(--text-base);
   font-family: inherit;
   box-sizing: border-box;
   background-color: var(--input-bg);
@@ -57,7 +57,7 @@ fieldset.form-group legend {
 .form-hint {
   display: block;
   margin-top: 6px;
-  font-size: 12px;
+  font-size: var(--text-sm);
   line-height: 1.45;
   color: var(--text-muted);
 }
@@ -74,10 +74,10 @@ fieldset.form-group legend {
   display: inline-block;
   max-width: 100%;
   padding: 2px 6px;
-  border-radius: 4px;
-  background: var(--input-focus-ring, rgba(79, 142, 247, 0.12));
-  color: var(--color-primary, #4f8ef7);
-  font-size: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--primary-soft);
+  color: var(--text-subtle);
+  font-size: var(--text-sm);
   text-decoration: none;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -132,7 +132,7 @@ fieldset.form-group legend {
 
 .color-hex-display.invalid {
   border-color: var(--color-danger);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+  box-shadow: 0 0 0 3px var(--input-error-ring);
 }
 
 .form-group input[type="color"] {
@@ -155,7 +155,7 @@ fieldset.form-group legend {
 .form-group.error input[type="text"],
 .form-group.error textarea {
   border-color: var(--color-danger);
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+  box-shadow: 0 0 0 3px var(--input-error-ring);
 }
 
 .form-group.error label {
@@ -163,7 +163,7 @@ fieldset.form-group legend {
 }
 
 .form-group.error-message {
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--color-danger);
   margin-top: 4px;
   display: none;

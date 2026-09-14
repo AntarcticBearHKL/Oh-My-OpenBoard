@@ -3,6 +3,9 @@
    Import order matters: tokens → base → utilities → layout → components → responsive
    ========================================================================== */
 
+/* Fonts first — the @font-face rules must be registered before base styles use them */
+@import './fonts.css';
+
 /* Tokens & Base */
 @import './tokens.css';
 @import './base.css';

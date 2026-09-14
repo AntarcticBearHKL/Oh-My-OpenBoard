@@ -34,7 +34,7 @@
   position: absolute;
   inset: 0 auto 0 0;
   width: 2px;
-  background: var(--column-accent);
+  background: var(--column-accent-muted);
   opacity: 0;
   transition: opacity var(--transition-fast);
 }
@@ -77,7 +77,7 @@
 }
 
 .task-title:hover {
-  color: var(--column-accent);
+  color: var(--column-accent-muted);
 }
 
 /* Right-aligned meta cluster */
@@ -184,7 +184,7 @@
   border-radius: var(--radius-sm);
   font-weight: 700;
   text-transform: uppercase;
-  font-size: 10px;
+  font-size: var(--text-2xs);
   letter-spacing: 0.03em;
   white-space: nowrap;
 }
@@ -249,7 +249,7 @@
 
 .subtasks-donut-fill {
   fill: none;
-  stroke: var(--color-primary, #3b82f6);
+  stroke: var(--color-primary, oklch(0.205 0 0));
   stroke-width: 2;
   stroke-linecap: round;
   transform: rotate(-90deg);
@@ -258,7 +258,7 @@
 }
 
 .subtasks-donut-fill.subtasks-donut-complete {
-  stroke: var(--color-success, #22c55e);
+  stroke: var(--color-success, oklch(0.55 0.13 152));
 }
 
 /* ==========================================================================
@@ -282,7 +282,7 @@
   height: 16px;
   padding: 0 3px;
   border-radius: var(--radius-sm);
-  font-size: 9px;
+  font-size: var(--text-2xs);
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.02em;
@@ -318,7 +318,7 @@
   border-radius: var(--radius-sm);
   background-color: var(--priority-low-bg);
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -332,7 +332,7 @@
   border-radius: var(--radius-pill);
   background-color: var(--primary-soft);
   color: var(--color-primary);
-  font-size: 9px;
+  font-size: var(--text-2xs);
   font-weight: 700;
   text-transform: uppercase;
 }

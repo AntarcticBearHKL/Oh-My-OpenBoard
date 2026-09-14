@@ -47,7 +47,11 @@ import {
   ListChecks,
   Sparkles,
   Bot,
-  MessageSquare
+  MessageSquare,
+  Ban,
+  CheckSquare,
+  Paperclip,
+  Settings2
 } from 'lucide';
 
 // Map of all icons used in the app (PascalCase keys for createIcons)
@@ -95,7 +99,11 @@ const icons = {
   ListChecks,
   Sparkles,
   Bot,
-  MessageSquare
+  MessageSquare,
+  Ban,
+  CheckSquare,
+  Paperclip,
+  Settings2
 };
 
 /**

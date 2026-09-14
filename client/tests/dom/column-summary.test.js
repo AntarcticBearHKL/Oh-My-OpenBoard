@@ -26,6 +26,11 @@ function mountColumn() {
   return document.querySelector('.task-column');
 }
 
+function openSummary() {
+  fireEvent.click(document.querySelector('.column-summary-btn'));
+  return document.querySelector('.column-summary-overlay');
+}
+
 beforeEach(() => {
   mocks.summaries = {};
   mocks.saveColumnSummary.mockClear();
@@ -42,7 +47,7 @@ test('column header renders the AI summary button next to the task counter', () 
   expect(counter.nextElementSibling).toBe(button);
 });
 
-test('summary button opens a popover with the stored summary and metadata', () => {
+test('summary button opens a full-screen dialog with the stored summary and metadata', () => {
   mocks.summaries = {
     'col-backlog': {
       text: 'Two tasks left to triage.',
@@ -52,61 +57,72 @@ test('summary button opens a popover with the stored summary and metadata', () =
   };
   mountColumn();
 
-  fireEvent.click(document.querySelector('.column-summary-btn'));
+  const overlay = openSummary();
 
-  const popover = document.querySelector('.column-summary-popover');
-  expect(popover).not.toBeNull();
-  expect(popover.querySelector('.column-summary-text').textContent).toBe('Two tasks left to triage.');
+  expect(overlay).not.toBeNull();
+  expect(overlay.getAttribute('role')).toBe('dialog');
+  expect(overlay.getAttribute('aria-modal')).toBe('true');
+  expect(overlay.querySelector('.column-summary-panel')).not.toBeNull();
+  expect(overlay.querySelector('.column-summary-title').textContent).toBe('Backlog');
+  expect(overlay.querySelector('.column-summary-text').textContent).toBe('Two tasks left to triage.');
 
-  const meta = popover.querySelector('.column-summary-meta').textContent;
+  const meta = overlay.querySelector('.column-summary-meta').textContent;
   expect(meta).toContain('Updated');
   expect(meta).toContain('claude-sonnet');
+
+  expect(document.activeElement).toBe(overlay.querySelector('.column-summary-close'));
+  expect(document.body.classList.contains('column-summary-open')).toBe(true);
 });
 
-test('summary popover shows the empty state when the column has no summary', () => {
+test('summary dialog shows the empty state when the column has no summary', () => {
   mountColumn();
 
-  fireEvent.click(document.querySelector('.column-summary-btn'));
+  const overlay = openSummary();
 
-  expect(document.querySelector('.column-summary-empty').textContent).toBe('No summary yet');
-  expect(document.querySelector('.column-summary-popover').textContent).toContain('Agents write these over MCP.');
+  expect(overlay.querySelector('.column-summary-empty').textContent).toBe('No summary yet');
+  expect(overlay.textContent).toContain('Agents write these over MCP.');
 });
 
-test('summary popover closes on Escape', () => {
+test('summary dialog closes on Escape and the close control, and restores the trigger state', () => {
   mountColumn();
-  fireEvent.click(document.querySelector('.column-summary-btn'));
-  expect(document.querySelector('.column-summary-popover')).not.toBeNull();
+  openSummary();
 
   fireEvent.keyDown(document, { key: 'Escape' });
 
-  expect(document.querySelector('.column-summary-popover')).toBeNull();
+  expect(document.querySelector('.column-summary-overlay')).toBeNull();
+  expect(document.body.classList.contains('column-summary-open')).toBe(false);
   expect(document.querySelector('.column-summary-btn').getAttribute('aria-expanded')).toBe('false');
+
+  openSummary();
+  fireEvent.click(document.querySelector('.column-summary-close'));
+  expect(document.querySelector('.column-summary-overlay')).toBeNull();
 });
 
-test('summary popover closes on an outside click', () => {
+test('summary dialog closes on a backdrop click but stays open on a panel click', () => {
   mountColumn();
-  fireEvent.click(document.querySelector('.column-summary-btn'));
-  expect(document.querySelector('.column-summary-popover')).not.toBeNull();
+  const overlay = openSummary();
 
-  fireEvent.mouseDown(document.body);
+  fireEvent.click(overlay.querySelector('.column-summary-panel'));
+  expect(document.querySelector('.column-summary-overlay')).not.toBeNull();
 
-  expect(document.querySelector('.column-summary-popover')).toBeNull();
+  fireEvent.click(overlay);
+  expect(document.querySelector('.column-summary-overlay')).toBeNull();
 });
 
-test('clicking the summary button again closes the popover', () => {
+test('clicking the summary button again closes the dialog', () => {
   mountColumn();
   const button = document.querySelector('.column-summary-btn');
 
   fireEvent.click(button);
-  expect(document.querySelector('.column-summary-popover')).not.toBeNull();
+  expect(document.querySelector('.column-summary-overlay')).not.toBeNull();
 
   fireEvent.click(button);
-  expect(document.querySelector('.column-summary-popover')).toBeNull();
+  expect(document.querySelector('.column-summary-overlay')).toBeNull();
 });
 
 test('the edit affordance saves a human override through saveColumnSummary', () => {
   mountColumn();
-  fireEvent.click(document.querySelector('.column-summary-btn'));
+  openSummary();
   fireEvent.click(document.querySelector('.column-summary-edit'));
 
   const textarea = document.querySelector('.column-summary-edit-area');

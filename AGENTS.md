@@ -58,7 +58,7 @@ CHANGELOG.md        Keep updated under [Unreleased] as you work
 All commands run from `client/`:
 
 ```bash
-npm run dev          # Vite dev server → http://localhost:3000
+npm run dev          # Vite dev server → http://localhost:5173
 npm run build        # Production build → client/dist/
 npm run preview      # Serve the production build locally
 npm test             # Full suite: unit + DOM + E2E

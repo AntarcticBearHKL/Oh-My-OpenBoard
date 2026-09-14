@@ -8,7 +8,7 @@
     width: 100%;
     max-width: 100%;
     min-height: 44px;
-    font-size: 16px; /* avoids iOS zoom + improves readability */
+    font-size: var(--text-lg); /* avoids iOS zoom + improves readability */
     padding: 10px 12px;
   }
 
@@ -47,7 +47,7 @@
     margin-right: 0;
     min-width: 0;
     gap: 8px;
-    font-size: 14px;
+    font-size: var(--text-base);
     overflow: hidden;
   }
 
@@ -59,7 +59,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 13px;
+    font-size: var(--text-md);
     line-height: 1.15;
   }
 
@@ -80,7 +80,7 @@
     pointer-events: none;
     transform: translateY(-8px);
     transition: opacity var(--transition-fast), transform var(--transition-fast);
-    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.18);
+    box-shadow: var(--shadow-lg);
   }
 
   .session-status {
@@ -123,7 +123,7 @@
 
   .session-status #login-btn {
     padding: 6px 8px;
-    font-size: 12px;
+    font-size: var(--text-sm);
     gap: 4px;
     white-space: nowrap;
   }
@@ -138,7 +138,7 @@
 
   .session-status .user-name {
     max-width: 72px;
-    font-size: 12px;
+    font-size: var(--text-sm);
   }
 
   .session-status #logout-btn {
@@ -147,7 +147,7 @@
 
   .session-status .sync-indicator {
     padding: 4px 8px;
-    font-size: 11px;
+    font-size: var(--text-xs);
   }
 
   .controls-actions {
@@ -162,8 +162,8 @@
     border-radius: 0;
     box-shadow: none;
     background:
-      radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 36%),
-      linear-gradient(180deg, color-mix(in srgb, var(--surface) 94%, #0f172a 6%) 0%, var(--surface) 100%);
+      radial-gradient(circle at top left, var(--primary-soft), transparent 36%),
+      linear-gradient(180deg, var(--surface-muted) 0%, var(--surface) 100%);
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior: contain;
@@ -186,7 +186,7 @@
   }
 
   .controls-menu-mobile-title {
-    font-size: 18px;
+    font-size: var(--text-lg);
     font-weight: 700;
     color: var(--text);
     letter-spacing: 0.01em;
@@ -213,7 +213,7 @@
   }
 
   .controls-actions .control-btn {
-    font-size: 15px;
+    font-size: var(--text-base);
   }
 
   .controls-actions .legal-menu-link {
@@ -358,7 +358,7 @@
   }
 
   .brand {
-    font-size: 14px;
+    font-size: var(--text-base);
   }
 
   .board-sidebar {
@@ -368,7 +368,7 @@
   /* Compact footer */
   .footer {
     padding: 6px 16px;
-    font-size: 11px;
+    font-size: var(--text-xs);
     line-height: 1;
   }
 

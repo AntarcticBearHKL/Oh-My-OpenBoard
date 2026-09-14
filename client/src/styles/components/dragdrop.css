@@ -10,7 +10,7 @@
 
 /* Task that was picked up */
 .task-chosen {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-md);
 }
 
 /* Task while dragging */
@@ -21,30 +21,15 @@
 /* Fallback clone for touch dragging */
 .task-fallback {
   opacity: 0.9;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-lg);
   transform: rotate(2deg);
   cursor: grabbing;
-}
-
-/* Column being dragged (ghost) */
-.column-ghost {
-  opacity: 0.4;
-}
-
-/* Column that was picked up */
-.column-chosen {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-}
-
-/* Column while dragging */
-.column-drag {
-  opacity: 1;
 }
 
 /* Body state while dragging tasks */
 body.dragging .task-column {
   /* Subtle highlight to show drop zones */
-  background-color: rgba(59, 130, 246, 0.04);
+  background-color: var(--row-hover);
   overflow: visible;
 }
 
@@ -68,11 +53,11 @@ body.dragging .task-column.is-collapsed .tasks .show-more-btn {
 .task-column.is-collapsed.is-drop-hover {
   border-width: 3px;
   border-style: dashed;
-  border-color: color-mix(in srgb, var(--column-accent) 80%, var(--border) 20%);
-  background-color: color-mix(in srgb, var(--surface) 90%, var(--column-accent) 10%);
+  border-color: color-mix(in srgb, var(--column-accent-muted) 80%, var(--border) 20%);
+  background-color: color-mix(in srgb, var(--surface) 90%, var(--column-accent-muted) 10%);
   box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--column-accent) 25%, transparent),
-    0 12px 26px rgba(0, 0, 0, 0.18);
+    0 0 0 3px color-mix(in srgb, var(--column-accent-muted) 25%, transparent),
+    var(--shadow-md);
   transform: translateY(-1px);
   transition:
     border-color 120ms ease-out,
@@ -102,19 +87,12 @@ body.dragging .swimlane-cell.is-column-collapsed .swimlane-tasks .task {
 }
 
 .swimlane-cell.is-column-collapsed.is-drop-hover {
-  outline: 2px dashed color-mix(in srgb, var(--column-accent) 80%, var(--border) 20%);
+  outline: 2px dashed color-mix(in srgb, var(--column-accent-muted) 80%, var(--border) 20%);
   outline-offset: -2px;
-  background-color: color-mix(in srgb, var(--surface) 88%, var(--column-accent) 12%);
+  background-color: color-mix(in srgb, var(--surface) 88%, var(--column-accent-muted) 12%);
   transition:
     outline-color 120ms ease-out,
     background-color 120ms ease-out;
-}
-
-/* Body state while dragging columns */
-body.dragging-column #board-container {
-  /* Visual feedback during column drag */
-  cursor: grabbing;
-  user-select: none;
 }
 
 /* Legacy dragging states (kept for compatibility) */
@@ -137,9 +115,9 @@ body.dragging-column #board-container {
   min-height: 10px;
   margin: 4px 0;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background-color: var(--border);
-  background-color: color-mix(in srgb, var(--column-accent) 35%, var(--border) 65%);
+  background-color: color-mix(in srgb, var(--column-accent-muted) 35%, var(--border) 65%);
   opacity: 0.95;
 }
 
@@ -151,7 +129,7 @@ body.dragging-column #board-container {
   align-self: stretch;
   margin: 10px 6px;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background-color: color-mix(in srgb, var(--color-primary) 35%, var(--border) 65%);
   opacity: 0.95;
   pointer-events: none;
