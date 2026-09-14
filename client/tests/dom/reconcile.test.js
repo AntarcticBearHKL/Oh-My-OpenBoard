@@ -95,7 +95,7 @@ test('reconcileBoard updates each column task counter to match state', async () 
   expect(document.querySelector('.task-counter[data-column-id="done"]').textContent).toBe('1');
 });
 
-test('reconcileBoard updates a collapsed column title count', async () => {
+test('reconcileBoard leaves a legacy collapsed column title untouched and updates its counter', async () => {
   mocks.tasks = [{ id: 't1', column: 'done', order: 1, title: 'Ship it' }];
   mountToBody(`
     <div id="board-container" data-view-mode="columns">
@@ -115,7 +115,9 @@ test('reconcileBoard updates a collapsed column title count', async () => {
   const { reconcileBoard } = await import('../../src/modules/render.js');
   reconcileBoard();
 
-  expect(document.querySelector('#column-title-done').textContent).toBe('Done (1)');
+  // Column titles are static now; the counter badge carries the count.
+  expect(document.querySelector('#column-title-done').textContent).toBe('Done (0)');
+  expect(document.querySelector('.task-counter[data-column-id="done"]').textContent).toBe('1');
 });
 
 test('a data change inside a drag-reconcile window patches in place instead of rebuilding', async () => {

@@ -1,61 +1,37 @@
 import { test, expect, beforeEach } from 'vitest';
 import { resetLocalStorage } from './setup.js';
-import { createBoard, getActiveBoardId, loadColumns, loadDeletedColumnsForBoard, loadDeletedTasksForBoard, saveColumns, loadTasks, saveTasks } from '../../src/modules/storage.js';
-import { addColumn, toggleColumnCollapsed, updateColumn, deleteColumn, updateColumnPositions } from '../../src/modules/columns.js';
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+import { createBoard, loadColumns, loadTasks, saveTasks } from '../../src/modules/storage.js';
+import { addColumn, toggleColumnCollapsed, updateColumn, deleteColumn } from '../../src/modules/columns.js';
 
 beforeEach(() => {
   resetLocalStorage();
   createBoard('Test');
 });
 
-// ── addColumn ───────────────────────────────────────────────────────
+test('columns are locked to the four fixed columns', () => {
+  const names = loadColumns().map((c) => c.name);
+  expect(names).toEqual(['Backlog', 'In Progress', 'Blocked', 'Archived']);
+});
 
-test('addColumn creates a new column', () => {
+test('addColumn does nothing because columns are fixed', () => {
   const before = loadColumns().length;
   addColumn('Review', '#ff0000');
-  const after = loadColumns();
-  expect(after.length).toBe(before + 1);
-  const review = after.find(c => c.name === 'Review');
-  expect(review).toBeTruthy();
-  expect(review.id).toMatch(UUID_RE);
-});
-
-test('addColumn does nothing for empty name', () => {
-  const before = loadColumns().length;
-  addColumn('', '#ff0000');
   expect(loadColumns().length).toBe(before);
+  expect(loadColumns().some((c) => c.name === 'Review')).toBe(false);
 });
-
-test('addColumn normalizes color', () => {
-  addColumn('Test Col', 'invalid-color');
-  const col = loadColumns().find(c => c.name === 'Test Col');
-  expect(col.color.startsWith('#')).toBe(true);
-});
-
-// ── toggleColumnCollapsed ───────────────────────────────────────────
 
 test('toggleColumnCollapsed toggles from false to true', () => {
-  const columns = loadColumns();
-  const col = columns[0];
+  const col = loadColumns()[0];
   expect(col.collapsed).toBe(false);
-
-  const result = toggleColumnCollapsed(col.id);
-  expect(result).toBe(true);
-
-  const updated = loadColumns().find(c => c.id === col.id);
-  expect(updated.collapsed).toBe(true);
+  expect(toggleColumnCollapsed(col.id)).toBe(true);
+  expect(loadColumns().find((c) => c.id === col.id).collapsed).toBe(true);
 });
 
 test('toggleColumnCollapsed toggles from true to false', () => {
-  const columns = loadColumns();
-  const col = columns[0];
+  const col = loadColumns()[0];
   toggleColumnCollapsed(col.id);
   toggleColumnCollapsed(col.id);
-
-  const updated = loadColumns().find(c => c.id === col.id);
-  expect(updated.collapsed).toBe(false);
+  expect(loadColumns().find((c) => c.id === col.id).collapsed).toBe(false);
 });
 
 test('toggleColumnCollapsed returns false for non-existent column', () => {
@@ -66,128 +42,53 @@ test('toggleColumnCollapsed returns false for empty ID', () => {
   expect(toggleColumnCollapsed('')).toBe(false);
 });
 
-// ── updateColumn ────────────────────────────────────────────────────
-
-test('updateColumn updates name and color', () => {
-  const columns = loadColumns();
-  const col = columns[0];
+test('updateColumn updates color while the fixed name is preserved', () => {
+  const col = loadColumns()[0];
   updateColumn(col.id, 'Updated Name', '#00ff00');
-
-  const updated = loadColumns().find(c => c.id === col.id);
-  expect(updated.name).toBe('Updated Name');
+  const updated = loadColumns().find((c) => c.id === col.id);
+  expect(updated.name).toBe(col.name);
   expect(updated.color).toBe('#00ff00');
 });
 
 test('updateColumn does nothing for empty name', () => {
-  const columns = loadColumns();
-  const col = columns[0];
+  const col = loadColumns()[0];
   const originalName = col.name;
   updateColumn(col.id, '', '#00ff00');
-
-  const updated = loadColumns().find(c => c.id === col.id);
-  expect(updated.name).toBe(originalName);
+  expect(loadColumns().find((c) => c.id === col.id).name).toBe(originalName);
 });
 
-// ── deleteColumn ────────────────────────────────────────────────────
-
-test('deleteColumn returns false for Done column', () => {
+test('deleteColumn always returns false because columns cannot be deleted', () => {
+  const col = loadColumns()[0];
+  expect(deleteColumn(col.id)).toBe(false);
   expect(deleteColumn('done')).toBe(false);
-});
-
-test('deleteColumn returns false for missing column', () => {
   expect(deleteColumn('missing-id')).toBe(false);
-});
-
-test('deleteColumn deletes column and its tasks', () => {
-  addColumn('Temp', '#ff0000');
-  const tempCol = loadColumns().find(c => c.name === 'Temp');
-  saveTasks([
-    { id: 't1', title: 'In temp', column: tempCol.id, priority: 'none' },
-    { id: 't2', title: 'In todo', column: 'todo', priority: 'none' }
-  ]);
-
-  const result = deleteColumn(tempCol.id);
-  expect(result).toBe(true);
-  expect(loadColumns().some(c => c.id === tempCol.id)).toBe(false);
-
-  const tasks = loadTasks();
-  expect(tasks.some(t => t.column === tempCol.id)).toBe(false);
-  expect(tasks.some(t => t.id === 't2')).toBe(true);
-});
-
-// ── updateColumnPositions ───────────────────────────────────────────
-
-// ── soft-delete columns ─────────────────────────────────────────────
-
-test('deleteColumn soft-deletes: column hidden from loadColumns but present in loadDeletedColumnsForBoard', () => {
-  addColumn('Sprint 1', '#fff');
-  const [col] = loadColumns().filter(c => c.id !== 'done');
-
-  deleteColumn(col.id);
-
-  expect(loadColumns().find(c => c.id === col.id)).toBeUndefined();
-  const deleted = loadDeletedColumnsForBoard(getActiveBoardId());
-  expect(deleted.some(c => c.id === col.id)).toBe(true);
-});
-
-test('deleteColumn deletes tasks in the column', () => {
-  addColumn('Sprint 1', '#fff');
-  const [col] = loadColumns().filter(c => c.id !== 'done');
-  saveTasks([{ id: 't1', title: 'Task', column: col.id, order: 1, priority: 'none', labels: [] }]);
-
-  deleteColumn(col.id);
-
-  expect(loadTasks().find(t => t.id === 't1')).toBeUndefined();
-  // Event-sourced delete (ADR-0005): task.deleted removes the task entirely;
-  // there is no read-model tombstone to retain.
-  const deletedTasks = loadDeletedTasksForBoard(getActiveBoardId());
-  expect(deletedTasks.some(t => t.id === 't1')).toBe(false);
-});
-
-// ── WIP limits ──────────────────────────────────────────────────────
-
-test('addColumn defaults to an unlimited WIP limit', () => {
-  addColumn('No Limit', '#ff0000');
-  const col = loadColumns().find(c => c.name === 'No Limit');
-  expect(col.wipLimit).toBe(0);
-});
-
-test('addColumn stores and normalizes a WIP limit', () => {
-  addColumn('Limited', '#ff0000', '5');
-  expect(loadColumns().find(c => c.name === 'Limited').wipLimit).toBe(5);
-
-  addColumn('Junk', '#ff0000', -4);
-  expect(loadColumns().find(c => c.name === 'Junk').wipLimit).toBe(0);
+  expect(loadColumns()).toHaveLength(4);
 });
 
 test('updateColumn persists a WIP limit change', () => {
-  addColumn('Doing', '#ff0000', 3);
-  const id = loadColumns().find(c => c.name === 'Doing').id;
-
-  updateColumn(id, 'Doing', '#ff0000', 8);
-  expect(loadColumns().find(c => c.id === id).wipLimit).toBe(8);
+  const id = loadColumns()[0].id;
+  updateColumn(id, 'Backlog', '#ff0000', 8);
+  expect(loadColumns().find((c) => c.id === id).wipLimit).toBe(8);
 });
 
 test('updateColumn accepts a limit below the current task count', () => {
-  addColumn('Doing', '#ff0000', 10);
-  const id = loadColumns().find(c => c.name === 'Doing').id;
+  const id = loadColumns()[0].id;
   saveTasks([
     { id: 'a', title: 'a', column: id, order: 1 },
     { id: 'b', title: 'b', column: id, order: 2 },
     { id: 'c', title: 'c', column: id, order: 3 }
   ]);
 
-  updateColumn(id, 'Doing', '#ff0000', 1);
-  expect(loadColumns().find(c => c.id === id).wipLimit).toBe(1);
-  expect(loadTasks().filter(t => t.column === id)).toHaveLength(3);
+  updateColumn(id, 'Backlog', '#ff0000', 1);
+  expect(loadColumns().find((c) => c.id === id).wipLimit).toBe(1);
+  expect(loadTasks().filter((t) => t.column === id)).toHaveLength(3);
 });
 
 test('omitting the WIP limit on updateColumn preserves the existing one', () => {
-  addColumn('Doing', '#ff0000', 3);
-  const id = loadColumns().find(c => c.name === 'Doing').id;
-
-  updateColumn(id, 'Doing', '#00ff00');
-  const col = loadColumns().find(c => c.id === id);
+  const id = loadColumns()[0].id;
+  updateColumn(id, 'Backlog', '#ff0000', 3);
+  updateColumn(id, 'Backlog', '#00ff00');
+  const col = loadColumns().find((c) => c.id === id);
   expect(col.wipLimit).toBe(3);
   expect(col.color).toBe('#00ff00');
 });

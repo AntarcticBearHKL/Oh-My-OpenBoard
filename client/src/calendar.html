@@ -22,7 +22,10 @@
 
     <div class="rpt-header-right" role="group" aria-label="Calendar actions">
       <div class="rpt-badge" id="calendar-board-badge" title="Active board">?</div>
-      <a class="rpt-link" href="./index.html">Back to Board</a>
+      <a class="rpt-link" href="./index.html">
+        <span data-lucide="kanban" aria-hidden="true"></span>
+        <span>Back to Board</span>
+      </a>
     </div>
   </header>
 
@@ -31,11 +34,17 @@
       <div class="rpt-card-header">
         <h2 class="rpt-card-title">Due dates</h2>
         <div class="rpt-controls" role="group" aria-label="Due date calendar controls">
-          <button id="calendar-prev" class="btn-small btn-secondary" type="button" aria-label="Previous month">Prev</button>
+          <button id="calendar-prev" class="control-btn" type="button" aria-label="Previous month">
+            <span data-lucide="chevron-left" aria-hidden="true"></span>
+            <span>Prev</span>
+          </button>
           <div class="rpt-control" aria-label="Current month">
             <span id="calendar-month-label" class="rpt-due-month">–</span>
           </div>
-          <button id="calendar-next" class="btn-small btn-secondary" type="button" aria-label="Next month">Next</button>
+          <button id="calendar-next" class="control-btn" type="button" aria-label="Next month">
+            <span>Next</span>
+            <span data-lucide="chevron-right" aria-hidden="true"></span>
+          </button>
         </div>
       </div>
 

@@ -162,13 +162,6 @@ export function initializeBoardsModalHandlers(setupModalCloseHandlers) {
     refreshBoardsModalList();
   });
 
-  // Event delegation: brand-text click survives DOM resets.
-  document.addEventListener('click', (e) => {
-    if (e.target?.id === 'brand-text' || e.target?.closest?.('#brand-text')) {
-      showBoardsModal();
-    }
-  });
-
   // Global boards shortcut — ignored when typing in form elements.
   document.addEventListener('keydown', (e) => {
     if (matchesKey(e, DEFAULT_APP_KEYBINDINGS.openBoardsModal)) {
@@ -248,10 +241,11 @@ export function initializeBoardsModalHandlers(setupModalCloseHandlers) {
     hideBoardRenameModal();
     renderBoardsSelect();
     renderBoardsList();
+    emit(DATA_CHANGED);
     renderIcons();
   });
 
   setupModalCloseHandlers('board-rename-modal', hideBoardRenameModal);
 }
 
-export { hideBoardsModal, hideBoardRenameModal };
+export { hideBoardsModal, hideBoardRenameModal, showBoardRenameModal };

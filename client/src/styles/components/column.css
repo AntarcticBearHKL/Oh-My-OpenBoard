@@ -17,15 +17,16 @@
   position: relative;
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  margin: 10px;
-  padding: 12px;
-  flex: 1;
-  min-width: 280px;
+  border-radius: 0;
+  margin: 0 0 0 -1px;
+  padding: 0;
+  flex: 0 0 var(--column-width, 300px);
+  width: var(--column-width, 300px);
+  min-width: var(--column-width, 300px);
   background-color: var(--surface);
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  min-height: 220px;
   transition:
     border-color var(--transition-normal),
     background-color var(--transition-normal),
@@ -33,21 +34,19 @@
     transform var(--transition-normal);
 }
 
-/* Accent stripe */
-.task-column::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  background: var(--column-accent);
-  opacity: 0.9;
+.task-column:first-child {
+  margin-left: 0;
+  border-top-left-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--radius-lg);
 }
 
-.task-column:hover {
-  border-color: color-mix(in srgb, var(--column-accent), var(--border) 35%);
-  background-color: color-mix(in srgb, var(--surface), var(--column-bg-tint) 100%);
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-1px);
+.task-column:last-child {
+  border-top-right-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+}
+
+.task-column::before {
+  display: none;
 }
 
 /* Fallback accent colors (nth-child) */
@@ -59,11 +58,12 @@
 .column-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border-subtle);
-  cursor: grab;
+  gap: var(--space-2);
+  margin-bottom: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-muted);
+  border-bottom: 1px solid var(--border);
+  cursor: default;
   user-select: none;
 }
 
@@ -91,29 +91,44 @@ body.dragging-column .column-header * {
 .column-header h2 {
   margin: 0;
   flex: 1;
-  font-size: 20px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-base);
   font-weight: 600;
-  text-align: center;
+  letter-spacing: 0.01em;
+  text-align: left;
+  min-width: 0;
+}
+
+.column-header h2::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--column-accent);
+  flex: 0 0 auto;
 }
 
 .task-counter {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--surface-muted);
+  background-color: var(--surface);
   color: var(--text-muted);
   /* Pill, not circle: min-width keeps an unlimited column's bare count a circle
      while "6/5" is free to grow. */
-  border-radius: 999px;
-  min-width: 26px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  min-width: 22px;
   width: auto;
-  padding: 0 7px;
-  height: 26px;
+  padding: 0 6px;
+  height: 22px;
   box-sizing: border-box;
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: 700;
   flex-shrink: 0;
-  transition: background-color var(--transition-fast), color var(--transition-fast);
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
 }
 
 /* The count is the number you act on; the limit is a denominator you read once. */
@@ -146,129 +161,11 @@ body.dragging-column .column-header * {
   100% { transform: scale(1); }
 }
 
-/* Column actions */
-.column-actions {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-
-/* Column overflow menu */
-.column-menu-wrapper {
-  position: relative;
-  display: inline-flex;
-}
-
-.column-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 6px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: var(--shadow-md);
-  z-index: 20;
-}
-
-.column-menu.hidden { display: none; }
-
-.column-menu-item {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 6px 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  border-radius: 6px;
-  font-size: 13px;
-  color: var(--text);
-  transition: background-color var(--transition-normal);
-}
-
-.column-menu-item:hover {
-  background-color: var(--surface-muted);
-}
-
-.column-menu-item svg {
-  width: 16px;
-  height: 16px;
-  stroke: var(--text);
-  stroke-width: 2;
-}
-
-.column-menu-item.danger { color: var(--color-danger); }
-.column-menu-item.danger svg { stroke: var(--color-danger); }
-
-/* Column menu submenu */
-.column-menu-submenu-wrapper {
-  position: relative;
-}
-
-.column-menu-item.has-submenu {
-  justify-content: flex-start;
-  flex-direction: row-reverse;
-}
-
-.submenu-chevron {
-  margin-right: 2px;
-  opacity: 0.6;
-}
-
-.submenu-chevron svg {
-  width: 14px;
-  height: 14px;
-}
-
-.column-submenu {
-  position: absolute;
-  top: 0;
-  right: 100%;
-  margin-right: 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 6px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: var(--shadow-md);
-  z-index: 100;
-  min-width: 120px;
-}
-
-.column-submenu.hidden {
-  display: none;
-}
-
-/* Mobile: submenu appears below instead of to the right */
-@media (max-width: 600px) {
-  .column-submenu {
-    position: static;
-    margin-left: 0;
-    margin-top: 4px;
-    box-shadow: none;
-    border: none;
-    background: var(--surface-muted);
-    border-radius: 6px;
-    padding: 4px;
-  }
-
-  .column-submenu .column-menu-item {
-    padding-left: 16px;
-    font-size: 12px;
-  }
-}
-
-/* Tasks list */
+/* Tasks list — one compact row per task, no card chrome */
 .tasks {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -279,6 +176,58 @@ body.dragging-column .column-header * {
 }
 
 .tasks.expanded { max-height: none; }
+
+.task-column > .tasks:empty::after {
+  content: "No tasks yet";
+  display: block;
+  padding: var(--space-4) var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-style: italic;
+}
+
+/* Add-task row pinned below the scrollable task list */
+.column-add-row {
+  flex: 0 0 auto;
+  padding: var(--space-1) var(--space-1) var(--space-2);
+  border-top: 1px solid var(--row-divider);
+}
+
+.add-task-row-btn {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 6px var(--space-2);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-md);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.add-task-row-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 2;
+  flex: 0 0 auto;
+}
+
+.add-task-row-btn:hover {
+  background-color: var(--row-hover);
+  color: var(--color-primary);
+}
+
+.add-task-row-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
 
 /* Custom scrollbar */
 .tasks::-webkit-scrollbar { width: 6px; }

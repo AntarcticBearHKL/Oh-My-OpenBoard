@@ -17,6 +17,9 @@ import {
 import { normalizeBoardModelIds } from './board-serializer.js';
 import { alertDialog } from './dialog.js';
 import { boardDisplayName } from './normalize.js';
+import { assignBoardToGroup } from './board-groups.js';
+
+let pendingGroupId = null;
 
 const builtInTemplateModules = import.meta.glob('../templates/*.json', {
   eager: true,
@@ -129,6 +132,12 @@ export function showBoardCreateModal() {
   const templateSelect = document.getElementById('board-create-template');
   if (!modal || !nameInput) return;
 
+  const titleEl = document.getElementById('board-create-modal-title');
+  const submitBtn = document.getElementById('board-create-submit-btn');
+  const isIteration = Boolean(pendingGroupId);
+  if (titleEl) titleEl.textContent = isIteration ? 'New Iteration' : 'Create New Board';
+  if (submitBtn) submitBtn.textContent = isIteration ? 'Create Iteration' : 'Create Board';
+
   nameInput.value = '';
   if (templateSelect) templateSelect.value = '';
   modal.classList.remove('hidden');
@@ -138,6 +147,7 @@ export function showBoardCreateModal() {
 function hideBoardCreateModal() {
   const modal = document.getElementById('board-create-modal');
   if (modal) modal.classList.add('hidden');
+  pendingGroupId = null;
 }
 
 export function initializeBoardsUI() {
@@ -154,13 +164,14 @@ export function initializeBoardsUI() {
   // emits DATA_CHANGED, but the dropdown was built once at startup. Rebuild it
   // when the board list changes so new boards appear without a reload.
   on(DATA_CHANGED, () => {
+    refreshBrandText();
     if (!boardSelectMatchesState(selectEl)) {
       refreshBoardSelect(selectEl);
-      refreshBrandText();
     }
   });
 
-  document.addEventListener('kanban:open-board-create', () => {
+  document.addEventListener('kanban:open-board-create', (event) => {
+    pendingGroupId = event?.detail?.groupId || null;
     showBoardCreateModal();
   });
 
@@ -223,6 +234,7 @@ export function initializeBoardsUI() {
       const board = createBoard(trimmed);
       setActiveBoardId(board.id);
 
+      if (pendingGroupId) assignBoardToGroup(board.id, pendingGroupId);
       if (template?.board) applyBoardTemplate(template.board);
 
       refreshBoardSelect(selectEl);

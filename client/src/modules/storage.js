@@ -1,6 +1,6 @@
 import { generateUUID } from './utils.js';
 import { normalizePriority as sharedNormalizePriority, isHexColor, defaultColumnColor, normalizeStringKeys, normalizeRelationships, normalizeSubTasks } from './normalize.js';
-import { DONE_COLUMN_ID, DONE_COLUMN_ROLE, isDoneColumn } from './constants.js';
+import { DONE_COLUMN_ID, DONE_COLUMN_ROLE, FIXED_COLUMNS, isDoneColumn } from './constants.js';
 import { openStore, KV_STORE, READ_MODEL_STORE, schedulePersist, scheduleDelete, scheduleReadModelPersist, scheduleReadModelDelete, keyFor, readModelKeyFor, _flushPersistsForTesting as _flushIdbPersistsForTesting, _resetIdbForTesting } from './idb-store.js';
 // Re-export IDB helpers that tests import from this module for backward compatibility.
 import { normalizeBoardModelIds } from './board-serializer.js';
@@ -145,19 +145,11 @@ function safeParseObject(value) {
 // ── Default data ───────────────────────────────────────────────────────────────
 
 function defaultColumns() {
-  return [
-    { id: generateUUID(), name: 'To Do', color: '#3583ff' },
-    { id: generateUUID(), name: 'In Progress', color: '#f59e0b' },
-    { id: generateUUID(), name: 'Done', color: '#505050', role: DONE_COLUMN_ROLE }
-  ];
+  return FIXED_COLUMNS.map((column) => ({ ...column }));
 }
 
 function legacyDefaultColumns() {
-  return [
-    { id: 'todo', name: 'To Do', color: '#3583ff' },
-    { id: 'inprogress', name: 'In Progress', color: '#f59e0b' },
-    { id: DONE_COLUMN_ID, name: 'Done', color: '#505050', role: DONE_COLUMN_ROLE }
-  ];
+  return FIXED_COLUMNS.map((column) => ({ ...column }));
 }
 
 function defaultLabels() {
@@ -290,11 +282,7 @@ function defaultBoardData(includeTasks = true) {
 // devices seeding their own default board emit identical column.created /
 // label.created events that dedup on merge (see STABLE_DEFAULT_BOARD_ID).
 function stableDefaultColumns() {
-  return [
-    { id: '00000000-0000-4000-8000-000000000010', name: 'To Do', color: '#3583ff' },
-    { id: '00000000-0000-4000-8000-000000000011', name: 'In Progress', color: '#f59e0b' },
-    { id: '00000000-0000-4000-8000-000000000012', name: 'Done', color: '#505050', role: DONE_COLUMN_ROLE }
-  ];
+  return FIXED_COLUMNS.map((column) => ({ ...column }));
 }
 
 function stableDefaultLabels() {
@@ -749,14 +737,22 @@ function normalizeColumn(c) {
   return { ...c, color, collapsed, ...(isDoneColumn(c) ? { role: DONE_COLUMN_ROLE } : {}) };
 }
 
-function ensureDoneColumn(columns) {
-  const list = Array.isArray(columns) ? columns.slice() : [];
-  if (list.some((c) => isDoneColumn(c))) {
-    return list.map((column) => (isDoneColumn(column) ? { ...column, role: DONE_COLUMN_ROLE } : column));
-  }
-  const maxOrder = list.reduce((max, c) => Math.max(max, Number.isFinite(c?.order) ? c.order : 0), 0);
-  list.push({ id: generateUUID(), name: 'Done', color: '#16a34a', order: maxOrder + 1, collapsed: false, role: DONE_COLUMN_ROLE });
-  return list;
+function ensureFixedColumns(columns) {
+  const stored = new Map(
+    (Array.isArray(columns) ? columns : [])
+      .filter((column) => column && typeof column.id === 'string')
+      .map((column) => [column.id, column])
+  );
+
+  return FIXED_COLUMNS.map((template) => {
+    const previous = stored.get(template.id) || {};
+    return {
+      ...template,
+      color: isHexColor(previous.color) ? previous.color : template.color,
+      collapsed: previous.collapsed === true,
+      wipLimit: Number.isFinite(previous.wipLimit) ? previous.wipLimit : 0
+    };
+  });
 }
 
 export function getDoneColumnId() {
@@ -777,7 +773,7 @@ export function loadColumns() {
   const parsed = safeParseArray(raw);
   if (parsed) {
     const live = parsed.filter(c => !c.deleted);
-    const normalized = ensureDoneColumn(live.map(normalizeColumn));
+    const normalized = ensureFixedColumns(live.map(normalizeColumn));
     // Persist back if done column was added (length check uses live count vs normalized).
     if (!raw || !Array.isArray(raw) || normalized.length !== live.length) {
       // Merge normalized live columns back with deleted records for persistence
@@ -788,7 +784,7 @@ export function loadColumns() {
     }
     return normalized;
   }
-  return ensureDoneColumn(defaultColumns().map(normalizeColumn));
+  return ensureFixedColumns(defaultColumns().map(normalizeColumn));
 }
 
 export function saveColumns(columns) {

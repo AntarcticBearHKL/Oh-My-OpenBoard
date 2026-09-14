@@ -64,16 +64,12 @@ test('updateTask emits one task.updated event with HLC entity id and minimal fie
   });
 });
 
-test('addColumn emits column.created with the created column payload', async () => {
+test('addColumn emits nothing because columns are fixed', async () => {
   const events = await collectEvents(() => {
     addColumn('Review', '#ff0000');
   });
 
-  expect(events).toHaveLength(1);
-  expect(events[0]).toMatchObject({
-    type: 'column.created',
-    payload: { column: { name: 'Review', color: '#ff0000' } }
-  });
+  expect(events).toHaveLength(0);
 });
 
 test('label mutations emit label entity and task membership events', async () => {

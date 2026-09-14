@@ -18,8 +18,7 @@
   <header>
     <nav class="controls" role="toolbar" aria-label="Board controls">
       <div class="brand">
-        <img src="./images/kanvana-logo-color-32x23.svg" alt="Kanvana" class="brand-icon brand-logo">
-        <span id="brand-text" class="brand-text" role="button" tabindex="0" title="Manage boards (Ctrl+B)">Kanvana Personal + AI-Agent Kanban</span>
+        <span id="brand-text" class="brand-text">Kanvana</span>
       </div>
 
       <div class="board-search" role="search" aria-label="Filter tasks">
@@ -49,10 +48,6 @@
           <span>Swim Lanes</span>
           <input id="swimlane-quick-toggle" type="checkbox" class="toggle-switch" aria-label="Toggle swim lanes">
         </label>
-        <button id="add-column-btn" class="control-btn" type="button" aria-haspopup="dialog">
-          <span data-lucide="columns-3" aria-hidden="true"></span>
-          <span style="color:green;">Add Column</span>
-        </button>
         <button id="manage-boards-btn" class="control-btn" type="button" aria-haspopup="dialog">
           <span data-lucide="settings" aria-hidden="true"></span>
           <span>Manage Boards</span>
@@ -97,7 +92,7 @@
         </a>
       </div>
       
-      <div class="session-status" aria-label="Session status">
+      <div class="session-status" aria-label="Session status" style="display: none;">
         <button id="login-btn" class="control-btn" type="button" aria-haspopup="dialog" aria-label="Sign in to sync">
           <span data-lucide="cloud" aria-hidden="true"></span>
           <span>Go Online</span>
@@ -139,9 +134,23 @@
     </div>
   </div>
 
-  <main id="board-container" class="board-container" aria-label="Kanban board">
-    <!-- Columns rendered dynamically by JavaScript -->
-  </main>
+  <div class="app-body">
+    <aside class="board-sidebar" aria-label="Groups">
+      <div class="sidebar-heading">
+        <span>Groups</span>
+        <button id="add-group-btn" class="icon-btn" type="button" aria-label="New group" title="New group">
+          <span data-lucide="plus" aria-hidden="true"></span>
+        </button>
+      </div>
+      <ul id="board-list" class="board-list"></ul>
+    </aside>
+
+    <div class="board-main">
+      <main id="board-container" class="board-container" aria-label="Kanban board">
+        <!-- Columns rendered dynamically by JavaScript -->
+      </main>
+    </div>
+  </div>
 
   <!-- Task Modal -->
   <div id="task-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="task-modal-title">
@@ -608,10 +617,21 @@
         </section>
 
         <section>
+          <h4>Groups &amp; Iterations</h4>
+          <ul>
+            <li><strong>Groups</strong> hold iterations; each iteration is a full board.</li>
+            <li><strong>New group:</strong> Click the plus next to <strong>Groups</strong>, then type a name.</li>
+            <li><strong>New iteration:</strong> Click the plus on a group header.</li>
+            <li><strong>Rename:</strong> Double-click a group or iteration name.</li>
+            <li><strong>Delete:</strong> Hover a group or iteration and click the ×.</li>
+          </ul>
+        </section>
+
+        <section>
           <h4>Tasks</h4>
           <ul>
-            <li><strong>Add:</strong> Click the plus icon in a column header.</li>
-            <li><strong>Edit:</strong> Click a task card to edit details (title, description, priority, due date, labels).</li>
+            <li><strong>Add:</strong> Use the <strong>Add task</strong> row at the bottom of a column.</li>
+            <li><strong>Edit:</strong> Click a task row to edit details (title, description, priority, due date, labels).</li>
             <li><strong>Move:</strong> Drag and drop between columns.</li>
           </ul>
         </section>
@@ -619,9 +639,8 @@
         <section>
           <h4>Columns</h4>
           <ul>
-            <li><strong>Add:</strong> Use <strong>Add Column</strong> to create a new workflow stage.</li>
-            <li><strong>Reorder:</strong> Drag the column grip handle.</li>
-            <li><strong>Edit/Delete:</strong> Use the column ellipsis menu.</li>
+            <li>The board has four fixed columns: Backlog, In Progress, Blocked, Archived.</li>
+            <li>Each column scrolls independently, so long task lists stay manageable.</li>
           </ul>
         </section>
 
@@ -671,13 +690,6 @@
     </article>
   </div>
 
-<footer class="footer">
-  <p>📌 Data stored in browser localStorage only!
-    <strong>Export your board to save to disk</strong>
-    <a href="https://github.com/mdiener21/kanvana/tree/main/docs" target="_blank" rel="noopener noreferrer"> Github Docs</a>
-    <span id="app-version" class="footer-version" aria-label="App version"></span>
-  </p>
-</footer>
 
 <!-- Login / Sign-in Modal -->
 <div id="login-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="login-modal-title">

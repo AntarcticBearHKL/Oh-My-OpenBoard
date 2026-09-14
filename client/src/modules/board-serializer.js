@@ -2,7 +2,7 @@
 // Changes when: import format changes, new fields need cross-entity id remapping.
 
 import { generateUUID } from './utils.js';
-import { DONE_COLUMN_ID, DONE_COLUMN_ROLE, isDoneColumn } from './constants.js';
+import { DONE_COLUMN_ID, DONE_COLUMN_ROLE, LEGACY_COLUMN_ALIASES, isDoneColumn } from './constants.js';
 import {
   isHexColor,
   defaultColumnColor,
@@ -23,9 +23,10 @@ function isUuid(value) {
 
 function remapId(value, map) {
   const raw = typeof value === 'string' ? value.trim() : String(value ?? '').trim();
+  if (map.has(raw)) return map.get(raw);
   if (isUuid(raw)) return raw;
   if (!raw) return generateUUID();
-  if (!map.has(raw)) map.set(raw, generateUUID());
+  map.set(raw, generateUUID());
   return map.get(raw);
 }
 
@@ -56,7 +57,7 @@ function remapCellCollapseKeys(keys, labelIdMap, columnIdMap) {
  */
 export function normalizeBoardModelIds({ board = null, columns = [], tasks = [], labels = [], settings = null } = {}) {
   const boardIdMap = new Map();
-  const columnIdMap = new Map();
+  const columnIdMap = new Map(LEGACY_COLUMN_ALIASES);
   const labelIdMap = new Map();
   const taskIdMap = new Map();
 

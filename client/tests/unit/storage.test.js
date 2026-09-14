@@ -143,16 +143,14 @@ test('loadColumns ensures Done column exists', () => {
   expect(doneColumn?.id).toMatch(UUID_RE);
 });
 
-test('saveColumns + loadColumns roundtrip', () => {
+test('saveColumns + loadColumns roundtrip locks to the four fixed columns', () => {
   createBoard('Roundtrip');
-  const cols = [
+  saveColumns([
     { id: 'a', name: 'A', color: '#111111', order: 1, collapsed: false },
     { id: 'done', name: 'Done', color: '#222222', order: 2, collapsed: false }
-  ];
-  saveColumns(cols);
+  ]);
   const loaded = loadColumns();
-  expect(loaded.length).toBe(2);
-  expect(loaded[0].id).toBe('a');
+  expect(loaded.map((c) => c.name)).toEqual(['Backlog', 'In Progress', 'Blocked', 'Archived']);
 });
 
 test('loadTasks normalizes priority on load', () => {

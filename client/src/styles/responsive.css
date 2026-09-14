@@ -12,6 +12,11 @@
     padding: 10px 12px;
   }
 
+  .board-sidebar {
+    flex-basis: 180px;
+    width: 180px;
+  }
+
 }
 
 @media (max-width: 600px) {
@@ -47,10 +52,13 @@
   }
 
   .brand-text {
+    width: auto;
+    max-width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: none;
     font-size: 13px;
     line-height: 1.15;
   }
@@ -213,6 +221,37 @@
     border-radius: 12px;
   }
 
+  /* Group tree stacks above the board on narrow screens */
+  .app-body {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .board-sidebar {
+    flex: 0 0 auto;
+    width: 100%;
+    max-height: 40vh;
+    padding: var(--space-2);
+    border-right: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .board-list {
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .board-list-item {
+    flex: 1 1 auto;
+    max-width: none;
+    padding: 6px var(--space-2);
+    font-size: var(--text-md);
+  }
+
+
+
   /* Scrollable columns horizontally with snap */
   .container,
   .board-container {
@@ -258,12 +297,10 @@
     max-width: 85vw;
     margin: 0 8px; /* Use horizontal margin for spacing */
     scroll-snap-align: center;
-    /* Ensure column fits on screen vertically so internal scroll works */
-    height: calc(100dvh - 180px);
     display: flex;
     flex-direction: column;
     flex: 0 0 auto;
-    min-height: 0;
+    min-height: 180px;
   }
 
   /* Ensure tasks list scrolls inside the fixed height column */
@@ -324,9 +361,8 @@
     font-size: 14px;
   }
 
-  /* Columns fill the reduced viewport height */
-  .task-column {
-    height: calc(100dvh - 100px);
+  .board-sidebar {
+    max-height: 30vh;
   }
 
   /* Compact footer */

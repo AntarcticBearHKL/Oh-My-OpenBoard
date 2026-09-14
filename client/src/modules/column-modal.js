@@ -150,7 +150,7 @@ export function initializeColumnModalHandlers(setupModalCloseHandlers) {
   });
 
   // Add column button
-  $id('add-column-btn').addEventListener('click', showColumnModal);
+  $id('add-column-btn')?.addEventListener('click', showColumnModal);
 }
 
 export { hideColumnModal };

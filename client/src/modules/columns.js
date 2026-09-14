@@ -4,21 +4,8 @@ import { normalizeHexColor } from './normalize.js';
 import { normalizeWipLimit } from './wip-limit.js';
 import { scheduleDomainEvent } from './event-sourcing/emitter.js';
 
-// Add a new column
-export function addColumn(name, color, wipLimit = 0) {
-  if (!name || name.trim() === '') return;
-  
-  const columns = loadColumns();
-  const maxOrder = columns.reduce((max, c) => Math.max(max, c.order ?? 0), 0);
-  const id = generateUUID();
-  const newColumn = { id, name: name.trim(), color: normalizeHexColor(color), order: maxOrder - 1, collapsed: false, wipLimit: normalizeWipLimit(wipLimit) };
-  columns.push(newColumn);
-  scheduleDomainEvent({
-    type: 'column.created',
-    boardId: getActiveBoardId(),
-    entityId: newColumn.id,
-    payload: { column: newColumn }
-  });
+export function addColumn() {
+  return false;
 }
 
 export function toggleColumnCollapsed(columnId) {
@@ -69,43 +56,8 @@ export function updateColumn(columnId, name, color, wipLimit) {
   return Promise.resolve();
 }
 
-// Delete a column
-export function deleteColumn(columnId) {
-  if (isDoneColumnId(columnId)) {
-    return false;
-  }
-
-  const boardId = getActiveBoardId();
-  const columns = loadColumns();
-  if (columns.length <= 1) {
-    return false;
-  }
-  const column = columns.find(c => c.id === columnId);
-  if (!column) {
-    return false;
-  }
-
-  const liveTasks = loadTasks();
-  const tasksInColumn = liveTasks.filter(t => t.column === columnId);
-
-  // task.deleted removes each task and column.deleted soft-deletes the column;
-  // the projection is the sole writer of the read model (ADR-0005).
-  tasksInColumn.forEach((task) => {
-    scheduleDomainEvent({
-      type: 'task.deleted',
-      boardId,
-      entityId: task.id,
-      payload: { column: task.column }
-    });
-  });
-
-  scheduleDomainEvent({
-    type: 'column.deleted',
-    boardId,
-    entityId: columnId,
-    payload: { tasksDestroyed: tasksInColumn.length }
-  });
-  return true;
+export function deleteColumn() {
+  return false;
 }
 
 // Update column positions after drag

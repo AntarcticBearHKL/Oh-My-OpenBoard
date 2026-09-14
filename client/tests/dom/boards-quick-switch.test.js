@@ -88,23 +88,23 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-// ── Cycle 1: click brand-text opens boards modal ──────────────────────────────
+// ── Cycle 1: brand-text is a static board-name label ─────────────────────────
 
 describe('click brand-text', () => {
-  it('opens the boards modal', () => {
+  it('does not open the boards modal', () => {
     const brandText = document.getElementById('brand-text');
     const modal = document.getElementById('boards-modal');
 
     expect(modal.classList.contains('hidden')).toBe(true);
     fireEvent.click(brandText);
-    expect(modal.classList.contains('hidden')).toBe(false);
+    expect(modal.classList.contains('hidden')).toBe(true);
   });
 });
 
 describe('delete board', () => {
   it('deletes the PocketBase board before removing the local board', async () => {
     confirmDialog.mockResolvedValueOnce(true);
-    fireEvent.click(document.getElementById('brand-text'));
+    fireEvent.keyDown(document, { key: 'B', ctrlKey: true });
 
     fireEvent.click(document.querySelector('[title="Delete board"]'));
 
@@ -150,7 +150,7 @@ describe('Ctrl+B shortcut', () => {
 describe('keyboard navigation in open boards modal', () => {
   it('ArrowDown adds keyboard-focused to the first item on first press', () => {
     // Open modal first (resets keyboardNavIndex to -1)
-    fireEvent.click(document.getElementById('brand-text'));
+    fireEvent.keyDown(document, { key: 'B', ctrlKey: true });
 
     const items = document.querySelectorAll('#boards-list .label-item');
     expect(items.length).toBe(2);
@@ -162,7 +162,7 @@ describe('keyboard navigation in open boards modal', () => {
   });
 
   it('ArrowDown then ArrowDown moves focus to second item', () => {
-    fireEvent.click(document.getElementById('brand-text'));
+    fireEvent.keyDown(document, { key: 'B', ctrlKey: true });
 
     const items = document.querySelectorAll('#boards-list .label-item');
     fireEvent.keyDown(document, { key: 'ArrowDown' });
@@ -173,7 +173,7 @@ describe('keyboard navigation in open boards modal', () => {
   });
 
   it('ArrowUp does not go below index 0', () => {
-    fireEvent.click(document.getElementById('brand-text'));
+    fireEvent.keyDown(document, { key: 'B', ctrlKey: true });
 
     const items = document.querySelectorAll('#boards-list .label-item');
     // Start at -1; ArrowUp should stay at 0 (clamps to 0)
@@ -199,7 +199,7 @@ describe('keyboard navigation in open boards modal', () => {
   // ── Cycle 5: Enter activates the highlighted board ───────────────────────
 
   it('Enter on highlighted board activates it and closes the modal', () => {
-    fireEvent.click(document.getElementById('brand-text'));
+    fireEvent.keyDown(document, { key: 'B', ctrlKey: true });
 
     fireEvent.keyDown(document, { key: 'ArrowDown' }); // index 0 = board-1
 
@@ -211,7 +211,7 @@ describe('keyboard navigation in open boards modal', () => {
   });
 
   it('Enter does nothing when no item is highlighted', () => {
-    fireEvent.click(document.getElementById('brand-text'));
+    fireEvent.keyDown(document, { key: 'B', ctrlKey: true });
     // navIndex = -1, no ArrowDown pressed
     fireEvent.keyDown(document, { key: 'Enter' });
 

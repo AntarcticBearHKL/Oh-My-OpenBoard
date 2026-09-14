@@ -8,9 +8,9 @@ import { calculateDaysUntilDue, formatCountdown, getCountdownClassName } from '.
 import { syncSwimLaneControls } from './swimlanes.js';
 import { on, DATA_CHANGED, DRAG_RECONCILE_BEGIN, DRAG_RECONCILE_END } from './events.js';
 import { createTaskElement, formatDisplayDate } from './task-card.js';
-import { createColumnElement, closeAllColumnMenus, initColumnMenuCloseHandler } from './column-element.js';
+import { createColumnElement } from './column-element.js';
 import { renderSwimlaneBoard } from './swimlane-renderer.js';
-import { formatWipCount, syncColumnWip } from './wip-limit.js';
+import { syncColumnWip } from './wip-limit.js';
 
 // Depth of the current drag-reconcile window. While open (> 0), a projected
 // DATA_CHANGED patches the board in place via reconcileBoard() instead of the
@@ -36,8 +36,6 @@ on(DATA_CHANGED, () => {
   if (dragReconcileDepth > 0 && reconcileBoard()) return;
   renderBoard();
 });
-
-let columnMenuCloseHandlerAttached = false;
 
 let boardFilterQuery = '';
 
@@ -141,24 +139,6 @@ function updateColumnSelect() {
     option.value = col.id;
     option.textContent = col.name;
     select.appendChild(option);
-  });
-}
-
-/**
- * Sync collapsed column titles without full re-render
- */
-export function syncCollapsedTitles(tasksCache) {
-  const tasks = tasksCache || loadTasks();
-  const columns = loadColumns();
-  document.querySelectorAll('.task-column.is-collapsed').forEach(columnEl => {
-    const columnId = columnEl.dataset.column;
-    const h2 = columnEl.querySelector('h2');
-    if (!columnId || !h2) return;
-
-    const column = columns.find((c) => c.id === columnId);
-    const taskCount = tasks.filter(t => t.column === columnId).length;
-    const columnName = h2.textContent.replace(/\s*\(\d+(?:\/\d+)?\)$/, '');
-    h2.textContent = `${columnName} (${formatWipCount(taskCount, column)})`;
   });
 }
 
@@ -296,7 +276,6 @@ export function reconcileBoard() {
     if (!usedIds.has(id)) el.remove();
   });
 
-  syncCollapsedTitles(tasks);
   refreshNotifications();
   performance.mark('kanvana:board-render:reconcile');
 
@@ -336,9 +315,5 @@ export function renderBoard() {
   renderIcons();
   refreshNotifications();
 
-  if (!columnMenuCloseHandlerAttached) {
-    columnMenuCloseHandlerAttached = true;
-    initColumnMenuCloseHandler();
-  }
   performance.mark('kanvana:board-render:full');
 }

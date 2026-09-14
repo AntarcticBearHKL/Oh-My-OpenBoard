@@ -120,7 +120,7 @@ test('two devices seeding the default board converge to one board with no duplic
   const merged = applyEvents(createProjectionState({}), [...capA.events, ...capB.events]);
 
   expect(merged.boards.length).toBe(1);
-  expect(merged.columns.length).toBe(3);
+  expect(merged.columns.length).toBe(4);
   expect(merged.labels.length).toBe(5);
 });
 
@@ -134,7 +134,7 @@ test('createBoard does not double-apply its own scaffold events onto the local r
   // it already wrote directly (matching entity ids), not append duplicates.
   await _flushPersistsForTesting();
 
-  expect(loadColumns().length).toBe(3);
+  expect(loadColumns().length).toBe(4);
   expect(loadLabels().length).toBe(5);
   expect(board.id).toBeTruthy();
 });

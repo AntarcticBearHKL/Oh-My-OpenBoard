@@ -7,6 +7,7 @@ import { showEditModal } from './modules/modals.js';
 import { importTasks } from './modules/importexport.js';
 import { initializeThemeToggle } from './modules/theme.js';
 import { initializeBoardsUI } from './modules/boards.js';
+import { initializeBoardSidebar } from './modules/board-sidebar.js';
 import { initializeSettingsUI } from './modules/settings.js';
 import { initializeNotifications } from './modules/notifications.js';
 import { initStorage, ensureBoardsInitialized, setActiveBoardId } from './modules/storage.js';
@@ -17,11 +18,14 @@ import { initSyncQueue } from './modules/event-sourcing/sync-queue.js';
 import { initSnapshotSync } from './modules/event-sourcing/snapshot-sync.js';
 import { initRealtime } from './modules/event-sourcing/realtime.js';
 import { initSyncIndicator } from './modules/event-sourcing/sync-indicator.js';
+import { initLocalServer } from './modules/local-server.js';
 
 // Add task button listeners
 document.addEventListener('DOMContentLoaded', async () => {
   // Load all board data from IDB into memory before any rendering.
   await initStorage();
+
+  initLocalServer();
 
   // Deep-link support (e.g., from calendar.html): open a task modal by ID.
   const urlParams = new URLSearchParams(window.location.search);
@@ -56,6 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Boards (create/select + restore last active)
   initializeBoardsUI();
+  initializeBoardSidebar();
 
   // Auth/sync UI and auto-sync listener
   initializeAuthSyncUI();

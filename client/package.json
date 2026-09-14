@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:watch": "vite build --watch",
     "preview": "vite preview",
     "release:prepare": "node scripts/prepare-release.mjs",
     "release:generate": "gh workflow run release.yml",

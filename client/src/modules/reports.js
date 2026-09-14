@@ -40,13 +40,21 @@ function cssVar(name, fallback) {
   return value || fallback;
 }
 
+function cssVarPx(name, fallback) {
+  const parsed = Number.parseFloat(cssVar(name, `${fallback}px`));
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
 function getChartTheme() {
   return {
     text: cssVar('--text', '#111827'),
     muted: cssVar('--text-muted', '#6b7280'),
     border: cssVar('--border', '#d1d5db'),
     borderSubtle: cssVar('--border-subtle', '#e5e7eb'),
-    surface: cssVar('--surface', '#ffffff')
+    surface: cssVar('--surface', '#ffffff'),
+    fontXs: cssVarPx('--text-xs', 11),
+    fontSm: cssVarPx('--text-sm', 12),
+    fontMd: cssVarPx('--text-md', 13)
   };
 }
 
@@ -168,19 +176,19 @@ function buildBarChartOption({ labels, seriesList, granularity, legend }) {
   const theme = getChartTheme();
   const showBarLabels = granularity !== 'daily';
   const barLabel = showBarLabels
-    ? { show: true, position: 'top', fontSize: 10, color: theme.text, formatter: (p) => p.value > 0 ? String(p.value) : '' }
+    ? { show: true, position: 'top', fontSize: theme.fontXs, color: theme.text, formatter: (p) => p.value > 0 ? String(p.value) : '' }
     : { show: false };
 
   return {
     backgroundColor: 'transparent',
     grid: { left: 40, right: 40, top: legend ? 30 : 8, bottom: 32 },
     legend: legend
-      ? { top: 0, textStyle: { color: theme.muted, fontSize: 10 } }
+      ? { top: 0, textStyle: { color: theme.muted, fontSize: theme.fontSm } }
       : undefined,
     xAxis: {
       type: 'category',
       data: labels,
-      axisLabel: { show: true, fontSize: 9, color: theme.muted, rotate: 30, hideOverlap: true },
+      axisLabel: { show: true, fontSize: theme.fontXs, color: theme.muted, rotate: 30, hideOverlap: true },
       axisLine: { show: false },
       axisTick: { show: false }
     },
@@ -188,8 +196,8 @@ function buildBarChartOption({ labels, seriesList, granularity, legend }) {
       type: 'value',
       name: 'Tasks',
       min: 0,
-      nameTextStyle: { color: theme.muted },
-      axisLabel: { color: theme.muted },
+      nameTextStyle: { color: theme.muted, fontSize: theme.fontXs },
+      axisLabel: { color: theme.muted, fontSize: theme.fontXs },
       axisLine: { lineStyle: { color: theme.borderSubtle } },
       axisTick: { lineStyle: { color: theme.borderSubtle } },
       splitLine: { lineStyle: { color: theme.borderSubtle } }
@@ -248,7 +256,7 @@ function buildDailyUpdatesOption({ rangeStart, rangeEnd, data, maxValue, boardNa
       top: 20,
       left: 'center',
       text: `Daily updates — ${boardName}`,
-      textStyle: { color: theme.text }
+      textStyle: { color: theme.text, fontSize: theme.fontMd, fontWeight: 600 }
     },
     tooltip: {
       backgroundColor: theme.surface,
@@ -267,7 +275,7 @@ function buildDailyUpdatesOption({ rangeStart, rangeEnd, data, maxValue, boardNa
       orient: 'horizontal',
       left: 'center',
       top: 55,
-      textStyle: { color: theme.muted }
+      textStyle: { color: theme.muted, fontSize: theme.fontXs }
     },
     calendar: {
       top: 110,
@@ -279,8 +287,8 @@ function buildDailyUpdatesOption({ rangeStart, rangeEnd, data, maxValue, boardNa
         borderWidth: 0.5,
         borderColor: theme.borderSubtle
       },
-      dayLabel: { color: theme.muted },
-      monthLabel: { color: theme.text },
+      dayLabel: { color: theme.muted, fontSize: theme.fontXs },
+      monthLabel: { color: theme.text, fontSize: theme.fontXs },
       yearLabel: { show: false }
     },
     series: {
@@ -434,13 +442,13 @@ function buildLeadTimeOption({ labels, avgLeadDays, trendLeadDays, completedCoun
     },
     legend: {
       top: 8,
-      textStyle: { color: theme.muted }
+      textStyle: { color: theme.muted, fontSize: theme.fontSm }
     },
     grid: { left: 40, right: 40, top: 50, bottom: 40 },
     xAxis: {
       type: 'category',
       data: labels,
-      axisLabel: { interval: 1, rotate: 20, color: theme.muted },
+      axisLabel: { interval: 1, rotate: 20, color: theme.muted, fontSize: theme.fontXs },
       axisLine: { lineStyle: { color: theme.borderSubtle } },
       axisTick: { lineStyle: { color: theme.borderSubtle } }
     },
@@ -450,8 +458,8 @@ function buildLeadTimeOption({ labels, avgLeadDays, trendLeadDays, completedCoun
         name: 'Days',
         min: 0,
         max: Math.ceil(maxLead),
-        nameTextStyle: { color: theme.muted },
-        axisLabel: { color: theme.muted },
+        nameTextStyle: { color: theme.muted, fontSize: theme.fontXs },
+        axisLabel: { color: theme.muted, fontSize: theme.fontXs },
         axisLine: { lineStyle: { color: theme.borderSubtle } },
         axisTick: { lineStyle: { color: theme.borderSubtle } },
         splitLine: { lineStyle: { color: theme.borderSubtle } }
@@ -460,8 +468,8 @@ function buildLeadTimeOption({ labels, avgLeadDays, trendLeadDays, completedCoun
         type: 'value',
         name: 'Completed',
         min: 0,
-        nameTextStyle: { color: theme.muted },
-        axisLabel: { formatter: '{value}', color: theme.muted },
+        nameTextStyle: { color: theme.muted, fontSize: theme.fontXs },
+        axisLabel: { formatter: '{value}', color: theme.muted, fontSize: theme.fontXs },
         axisLine: { lineStyle: { color: theme.borderSubtle } },
         axisTick: { lineStyle: { color: theme.borderSubtle } },
         splitLine: { show: false }
@@ -634,7 +642,7 @@ function buildCfdOption({ labels, seriesDefs, boardName }) {
       top: 12,
       left: 'center',
       text: `Cumulative flow — ${boardName}`,
-      textStyle: { color: theme.text }
+      textStyle: { color: theme.text, fontSize: theme.fontMd, fontWeight: 600 }
     },
     tooltip: {
       trigger: 'axis',
@@ -659,14 +667,14 @@ function buildCfdOption({ labels, seriesDefs, boardName }) {
     legend: {
       top: 40,
       type: 'scroll',
-      textStyle: { color: theme.muted }
+      textStyle: { color: theme.muted, fontSize: theme.fontSm }
     },
     grid: { left: 40, right: 20, top: 80, bottom: 45 },
     xAxis: {
       type: 'category',
       data: labels,
       boundaryGap: false,
-      axisLabel: { hideOverlap: true, color: theme.muted },
+      axisLabel: { hideOverlap: true, color: theme.muted, fontSize: theme.fontXs },
       axisLine: { lineStyle: { color: theme.borderSubtle } },
       axisTick: { lineStyle: { color: theme.borderSubtle } }
     },
@@ -675,8 +683,8 @@ function buildCfdOption({ labels, seriesDefs, boardName }) {
       name: 'Tasks',
       min: 0,
       max: Math.ceil(maxY),
-      nameTextStyle: { color: theme.muted },
-      axisLabel: { color: theme.muted },
+      nameTextStyle: { color: theme.muted, fontSize: theme.fontXs },
+      axisLabel: { color: theme.muted, fontSize: theme.fontXs },
       axisLine: { lineStyle: { color: theme.borderSubtle } },
       axisTick: { lineStyle: { color: theme.borderSubtle } },
       splitLine: { lineStyle: { color: theme.borderSubtle } }

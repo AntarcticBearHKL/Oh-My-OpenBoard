@@ -1,28 +1,6 @@
 /* ==========================================================================
-   Task Card Components
+   Task Row Components
    ========================================================================== */
-
-.task {
-  position: relative;
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 100%;
-  overflow: hidden;
-  background-color: color-mix(in srgb, var(--surface-muted), var(--task-bg-tint) 100%);
-  border: 1px solid color-mix(in srgb, var(--border-subtle), var(--task-border-tint) 100%);
-  padding: 12px;
-  padding-left: 16px; /* space for accent stripe */
-  cursor: grab;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 0 0 auto;
-  min-height: 84px;
-  transition:
-    transform var(--transition-normal),
-    box-shadow var(--transition-normal),
-    border-color var(--transition-normal);
-}
 
 @media (min-width: 601px) {
   /* Desktop/tablet: keep the app within the viewport so columns scroll internally */
@@ -32,51 +10,65 @@
   }
 }
 
-/* Accent stripe */
+/* One task = one dense row */
+.task {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid var(--row-divider);
+  padding: 0;
+  cursor: grab;
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  transition: background-color var(--transition-fast);
+}
+
+/* Accent stripe revealed on hover/focus — the only chrome a row gets */
 .task::before {
   content: "";
   position: absolute;
   inset: 0 auto 0 0;
   width: 2px;
   background: var(--column-accent);
-  opacity: 0.9;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
 }
 
-.task:hover {
-  transform: translateY(-2px);
-  border-color: var(--task-hover-border-tint);
-  box-shadow: 0 8px 16px var(--task-hover-shadow);
+.task:hover,
+.task:focus-within {
+  background-color: var(--row-hover);
+}
+
+.task:hover::before,
+.task:focus-within::before {
+  opacity: 1;
 }
 
 .task:active { cursor: grabbing; }
 
-/* Task header */
-.task-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-
-.task-actions {
+.task-row {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.task-priority-header {
-  cursor: pointer;
-  user-select: none;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+  padding: 6px var(--space-2) 6px var(--space-3);
 }
 
 /* Task title */
 .task-title {
-  flex: 1;
+  flex: 1 1 0%;
   min-width: 0;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--text-md);
+  font-weight: 500;
   line-height: 1.4;
+  color: var(--text);
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -88,81 +80,61 @@
   color: var(--column-accent);
 }
 
-/* Task description */
-.task-description {
-  font-size: 13px;
-  color: var(--text-muted);
-  line-height: 1.45;
-  cursor: pointer;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-
-  /* Prevent very long descriptions from making cards huge. */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  max-height: 2.9em; /* 2 lines x 1.45 line-height */
-}
-
-.task-description:hover {
-  color: var(--text-subtle);
-}
-
-.task-description a {
-  color: var(--accent, #4f8ef7);
-  text-decoration: underline;
-  word-break: break-all;
-}
-
-.task-description a:hover {
-  opacity: 0.8;
-}
-
-/* Relationship indicator row on task card */
-.task-relationships-row {
+/* Right-aligned meta cluster */
+.task-meta {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-  font-size: 12px;
+  gap: var(--space-1);
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: var(--text-sm);
   color: var(--text-muted);
-  margin-top: 4px;
+  white-space: nowrap;
 }
 
-.task-relationships-row [data-lucide] {
+.task-meta > * {
+  flex: 0 0 auto;
+}
+
+/* Compact label chips inside a row — the only meta that may shrink */
+.task-meta .task-labels {
+  display: inline-flex;
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
+  gap: 3px;
+  overflow: hidden;
+  max-width: 160px;
+}
+
+.task-meta .task-label {
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Relationship indicator */
+.task-relationships-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.task-relationships-row [data-lucide],
+.task-relationships-row svg {
   width: 12px;
   height: 12px;
   flex-shrink: 0;
 }
 
-/* Task footer (changeDate + bottom row) */
-.task-footer {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-/* Bottom row: due date + age */
-.task-footer-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-}
-
-.task-change-date,
-.task-age {
-  white-space: nowrap;
-}
-
+/* Due date countdown styling */
 .task-date { white-space: nowrap; }
 
-/* Due date countdown styling */
 .task-date.countdown-urgent {
   color: var(--color-danger);
   font-weight: 600;
@@ -181,11 +153,35 @@
   color: var(--text-muted);
 }
 
-/* Priority badge – shared base for cards, notifications, and banners */
+/* Task actions — delete stays hidden until the row is hovered/focused */
+.task-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: 0 0 auto;
+}
+
+.task .delete-task-btn {
+  opacity: 0;
+}
+
+.task:hover .delete-task-btn,
+.task:focus-within .delete-task-btn,
+.task .delete-task-btn:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .task .delete-task-btn {
+    opacity: 0.6;
+  }
+}
+
+/* Priority badge – shared base for rows, notifications, and banners */
 .task-priority,
 .notification-banner-item .priority-badge,
 .notification-item-priority {
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-weight: 700;
   text-transform: uppercase;
   font-size: 10px;
@@ -194,7 +190,12 @@
 }
 
 .task-priority {
-  padding: 3px 8px;
+  padding: 2px 6px;
+}
+
+/* A "none" chip carries no information — keep dense rows quiet */
+.task-row .task-priority.priority-none {
+  display: none;
 }
 
 /* Compact badge for notification items */
@@ -228,22 +229,7 @@
   color: var(--priority-none-fg);
 }
 
-/* Legacy task-text support */
-.task-text {
-  flex: 1;
-  min-width: 0;
-  cursor: pointer;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  line-height: 1.4;
-}
-
-.task-text:hover {
-  color: var(--column-accent);
-}
-
-/* Sub-tasks donut progress — inline in footer row */
+/* Sub-tasks donut progress — inline in the meta cluster */
 .task-subtasks-row {
   display: inline-flex;
   align-items: center;
@@ -257,14 +243,14 @@
 
 .subtasks-donut-bg {
   fill: none;
-  stroke: var(--color-border);
-  stroke-width: 2.5;
+  stroke: var(--border);
+  stroke-width: 2;
 }
 
 .subtasks-donut-fill {
   fill: none;
   stroke: var(--color-primary, #3b82f6);
-  stroke-width: 2.5;
+  stroke-width: 2;
   stroke-linecap: round;
   transform: rotate(-90deg);
   transform-origin: center;

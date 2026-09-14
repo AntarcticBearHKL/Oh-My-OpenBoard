@@ -128,8 +128,7 @@ test('saveColumns persists to IDB and survives a session reset', async () => {
   await initStorage();
   setActiveBoardId(boardId);
   const columns = loadColumns();
-  const reviewColumn = columns.find(c => c.name === 'Review');
-  expect(reviewColumn?.id).toMatch(UUID_RE);
+  expect(columns.map((c) => c.name)).toEqual(['Backlog', 'In Progress', 'Blocked', 'Archived']);
 });
 
 test('saveLabels persists to IDB and survives a session reset', async () => {
@@ -302,11 +301,11 @@ test('migrates multi-board localStorage data on first initStorage', async () => 
   expect(listBoards()[0].name).toBe('Alpha');
   expect(getActiveBoardId()).toMatch(UUID_RE);
   const columns = loadColumns();
-  const todoColumn = columns.find((column) => column.name === 'To Do');
+  const backlogColumn = columns.find((column) => column.name === 'Backlog');
   const doneColumn = columns.find((column) => column.role === 'done');
-  expect(todoColumn?.id).toMatch(UUID_RE);
+  expect(backlogColumn?.id).toMatch(UUID_RE);
   expect(doneColumn?.id).toMatch(UUID_RE);
-  expect(loadTasks().some(t => t.title === 'Migrated' && t.column === todoColumn.id)).toBe(true);
+  expect(loadTasks().some(t => t.title === 'Migrated' && t.column === backlogColumn.id)).toBe(true);
 });
 
 test('migrates legacy done id to a UUID done role and rewrites task references', async () => {
@@ -398,7 +397,7 @@ test('migrates legacy single-board tasks without columns using UUID default colu
 
   const columns = loadColumns();
   const doneColumn = columns.find((column) => column.role === 'done');
-  const todoColumn = columns.find((column) => column.name === 'To Do');
+  const todoColumn = columns.find((column) => column.name === 'Backlog');
   const tasks = loadTasks();
   const doneTask = tasks.find((task) => task.title === 'Legacy done task');
   const todoTask = tasks.find((task) => task.title === 'Legacy todo task');

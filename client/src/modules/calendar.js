@@ -195,6 +195,7 @@ function renderDueDateCalendar({ tasks, monthDate, boardId }) {
       btn.className = 'rpt-due-day';
       if (outside) btn.classList.add('is-outside');
       if (isToday) btn.classList.add('is-today');
+      if (overdueCount > 0) btn.classList.add('is-overdue');
       btn.dataset.date = iso;
       btn.setAttribute('aria-pressed', iso === selectedIso ? 'true' : 'false');
       btn.title = overdueCount > 0
