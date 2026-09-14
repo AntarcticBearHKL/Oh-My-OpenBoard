@@ -6,10 +6,7 @@ function getPreferredTheme() {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored === 'light' || stored === 'dark') return stored;
 
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    return 'dark';
-  }
-
+  // Light is the product default; the OS preference is deliberately ignored.
   return 'light';
 }
 
