@@ -41,6 +41,8 @@ let events = [];
 let groups = [];
 let boardGroups = {};
 let noBoards = false;
+let skills = [];
+let skillsSeeded = false;
 const seenIds = new Set();
 const appliedIds = new Set();
 
@@ -143,7 +145,7 @@ export function emit(type, {
 // ── Persistence ───────────────────────────────────────────────────────────────
 
 function persistNow() {
-  const payload = JSON.stringify({ nodeId: meta.nodeId, seq: meta.seq, events, groups, boardGroups, noBoards });
+  const payload = JSON.stringify({ nodeId: meta.nodeId, seq: meta.seq, events, groups, boardGroups, noBoards, skills, skillsSeeded });
   const tmp = `${STATE_FILE}.tmp`;
   writeFileSync(tmp, payload);
   renameSync(tmp, STATE_FILE);
@@ -207,12 +209,16 @@ export function initStore() {
       if (Array.isArray(loaded?.groups)) groups = loaded.groups;
       if (loaded?.boardGroups && typeof loaded.boardGroups === 'object') boardGroups = loaded.boardGroups;
       if (loaded?.noBoards === true) noBoards = true;
+      if (Array.isArray(loaded?.skills)) skills = loaded.skills;
+      if (loaded?.skillsSeeded === true) skillsSeeded = true;
     } catch (err) {
       console.error('[harness] state file unreadable, starting fresh', err?.message);
       meta = { nodeId: null, seq: 0 };
       groups = [];
       boardGroups = {};
       noBoards = false;
+      skills = [];
+      skillsSeeded = false;
     }
   }
   if (!meta.nodeId) meta.nodeId = randomUUID();
@@ -229,6 +235,7 @@ export function initStore() {
   }
 
   seedDefaultBoardIfEmpty();
+  seedDefaultSkillsIfEmpty();
   schedulePersist();
 
   return { boardId: DEFAULT_BOARD_ID, seq: meta.seq, events: events.length };
@@ -347,6 +354,111 @@ export function deleteBoard(boardId) {
   if (getBoards().length === 0) noBoards = true;
   schedulePersist();
   return { deleted: boardId };
+}
+
+const DEFAULT_SKILLS = [
+  {
+    name: 'How to run this board with an AI agent',
+    description: 'The intended division of labour between you and the agent.',
+    content: [
+      'This board is the shared state between the human and the AI agent.',
+      '',
+      'Human owns: what the work is, priority, acceptance criteria, and the final call on "done".',
+      'Agent owns: reading the board via MCP before acting, keeping tasks and sub-tasks current,',
+      'recording why something is blocked, and reporting progress with evidence.',
+      '',
+      'Rules of engagement:',
+      '- Never invent work that is not on the board; add it first (create_task) then do it.',
+      '- Move a task only when it truly moved: In Progress when you start, Blocked with a reason',
+      '  when you cannot continue, Archived only when the acceptance criteria are met.',
+      '- Prefer small tasks with story points over one large task.',
+      '- Comment on the task for anything a reviewer would need to know.',
+    ].join('\n')
+  },
+  {
+    name: 'Task breakdown and acceptance criteria',
+    description: 'How to slice work so it can be finished in one sitting.',
+    content: [
+      'A task is ready when it has, at minimum: a title, a type, an estimate, and acceptance criteria.',
+      '',
+      'Acceptance criteria: a short checklist of verifiable statements ("X returns 200 for Y").',
+      'If you cannot write a test or a check for it, it is not a criterion yet.',
+      '',
+      'Slicing rules:',
+      '- One task = one outcome, deliverable within a day.',
+      '- Use sub-tasks for the steps of a task; use parentId for the epic it belongs to.',
+      '- Estimate in points (1,2,3,5,8). Anything above 8 must be split.',
+      '- Bugs get a type of bug and a repro in the description; spikes are timeboxed investigation.',
+    ].join('\n')
+  },
+  {
+    name: 'Iteration planning and estimation',
+    description: 'How to fill a group/iteration and how velocity is read.',
+    content: [
+      'A group is a container; an iteration is one board inside it.',
+      '',
+      'Planning flow:',
+      '- Set the iteration dates (startDate/endDate) and a one-line goal before starting.',
+      '- Pull only what fits the recent velocity into the iteration; leave the rest unassigned.',
+      '- Keep the four columns honest: Backlog, In Progress, Blocked, Archived.',
+      '',
+      'Reading the numbers:',
+      '- Velocity = completed story points per iteration (Reports).',
+      '- Burndown compares remaining points against the ideal line for the iteration window.',
+      '- Cycle time distribution tells you where work waits; attack the p90, not the average.',
+    ].join('\n')
+  },
+  {
+    name: 'Blocked work and daily sync',
+    description: 'What to do when work stalls, and what a daily update looks like.',
+    content: [
+      'Blocked means: it cannot progress without something outside your control.',
+      '',
+      '- Always set a blocked reason (set_blocked_reason); "blocked" without a reason is useless.',
+      '- Blocked tasks keep their points; they are still burnable work, not done work.',
+      '- Escalate when a task stays blocked across two daily updates.',
+      '',
+      'Daily update (agent writes it as a comment on the iteration task):',
+      '- Moved: what changed column today.',
+      '- Next: what will move next.',
+      '- Blocked: what is stuck and what we need.',
+    ].join('\n')
+  }
+];
+
+function seedDefaultSkillsIfEmpty() {
+  if (skillsSeeded || skills.length > 0) return;
+  skills = DEFAULT_SKILLS.map((skill, index) => ({
+    id: randomUUID(),
+    name: skill.name,
+    description: skill.description,
+    content: skill.content,
+    order: index + 1
+  }));
+  skillsSeeded = true;
+}
+
+export function getSkills() {
+  return skills.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+}
+
+export function setSkills(list) {
+  skills = Array.isArray(list)
+    ? list.map((skill, index) => ({
+        id: typeof skill?.id === 'string' && skill.id ? skill.id : randomUUID(),
+        name: typeof skill?.name === 'string' ? skill.name : 'Untitled skill',
+        description: typeof skill?.description === 'string' ? skill.description : '',
+        content: typeof skill?.content === 'string' ? skill.content : '',
+        order: Number.isFinite(skill?.order) ? skill.order : index + 1
+      }))
+    : [];
+  skillsSeeded = true;
+  schedulePersist();
+  return getSkills();
+}
+
+export function getSkillsState() {
+  return { skills: getSkills() };
 }
 
 export function getGroups() {

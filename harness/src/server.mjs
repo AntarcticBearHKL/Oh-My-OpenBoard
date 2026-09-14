@@ -16,7 +16,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 
-import { DEFAULT_BOARD_ID, appendEvents, getEventsSince, getGroupsState, getSeq, getSnapshot, getStats, initStore, flushStore, setBoardGroupMap, setGroups } from './store.mjs';
+import { DEFAULT_BOARD_ID, appendEvents, getBoards, getEventsSince, getGroupsState, getSeq, getSkillsState, getSnapshot, getStats, initStore, flushStore, setBoardGroupMap, setGroups, setSkills } from './store.mjs';
 import { registerTools } from './mcp-tools.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -110,6 +110,13 @@ function broadcastGroups() {
   const payload = JSON.stringify(getGroupsState());
   for (const client of sseClients) {
     try { client.res.write(`event: groups\ndata: ${payload}\n\n`); } catch { /* client gone */ }
+  }
+}
+
+function broadcastSkills() {
+  const payload = JSON.stringify(getSkillsState());
+  for (const client of sseClients) {
+    try { client.res.write(`event: skills\ndata: ${payload}\n\n`); } catch { /* client gone */ }
   }
 }
 
@@ -236,10 +243,24 @@ async function handleRequest(req, res) {
       return;
     }
 
+    if (path === '/api/skills' && req.method === 'GET') {
+      sendJson(res, 200, getSkillsState());
+      return;
+    }
+
+    if (path === '/api/skills' && req.method === 'POST') {
+      const body = (await readJsonBody(req)) || {};
+      setSkills(body.skills);
+      broadcastSkills();
+      sendJson(res, 200, getSkillsState());
+      return;
+    }
+
     if (path === '/api/stream' && req.method === 'GET') { setupSse(req, res, url); return; }
 
     if (path === '/api/snapshot' && req.method === 'GET') {
-      sendJson(res, 200, getSnapshot(url.searchParams.get('boardId') || DEFAULT_BOARD_ID));
+      const requested = url.searchParams.get('boardId') || getBoards()[0]?.id || DEFAULT_BOARD_ID;
+      sendJson(res, 200, getSnapshot(requested));
       return;
     }
 

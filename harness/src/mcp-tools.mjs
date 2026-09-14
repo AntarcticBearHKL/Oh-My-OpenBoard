@@ -18,11 +18,13 @@ import {
   getLabels,
   getRecentEvents,
   getSettings,
+  getSkills,
   getSnapshot,
   getTasks,
   renameBoard,
   setBoardGroupMap,
-  setGroups
+  setGroups,
+  setSkills
 } from './store.mjs';
 
 const AGENT_ID = process.env.OPENAGILE_AGENT_NAME || 'openagile-harness';
@@ -732,6 +734,189 @@ export function registerTools(server) {
       donePoints: doneTasks.reduce((sum, task) => sum + points(task), 0)
     };
   })));
+
+  server.registerTool('add_relationship', {
+    title: 'Link tasks',
+    description: 'Create a relationship between two tasks: prerequisite, dependent or related. The inverse is created on the other task.',
+    inputSchema: {
+      taskId: z.string(),
+      targetTaskId: z.string(),
+      type: z.enum(['prerequisite', 'dependent', 'related'])
+    }
+  }, async ({ taskId, targetTaskId, type }) => {
+    const source = findTaskOrThrow(taskId);
+    const target = findTaskOrThrow(targetTaskId);
+    if (source.boardId !== target.boardId) throw new Error('Tasks must be on the same board');
+    const inverse = type === 'related' ? 'related' : (type === 'prerequisite' ? 'dependent' : 'prerequisite');
+    emit('relationship.added', { boardId: source.boardId, entityId: taskId, payload: { relationship: { type, targetTaskId } }, actor: AGENT });
+    emit('relationship.added', { boardId: target.boardId, entityId: targetTaskId, payload: { relationship: { type: inverse, targetTaskId: taskId } }, actor: AGENT });
+    return ok({ taskId, targetTaskId, type, inverse });
+  });
+
+  server.registerTool('remove_relationship', {
+    title: 'Unlink tasks',
+    description: 'Remove a relationship between two tasks and its inverse.',
+    inputSchema: {
+      taskId: z.string(),
+      targetTaskId: z.string(),
+      type: z.enum(['prerequisite', 'dependent', 'related'])
+    }
+  }, async ({ taskId, targetTaskId, type }) => {
+    const source = findTaskOrThrow(taskId);
+    findTaskOrThrow(targetTaskId);
+    const inverse = type === 'related' ? 'related' : (type === 'prerequisite' ? 'dependent' : 'prerequisite');
+    emit('relationship.removed', { boardId: source.boardId, entityId: taskId, payload: { targetTaskId, relationship_type: type }, actor: AGENT });
+    emit('relationship.removed', { boardId: source.boardId, entityId: targetTaskId, payload: { targetTaskId: taskId, relationship_type: inverse }, actor: AGENT });
+    return ok({ removed: true, taskId, targetTaskId, type });
+  });
+
+  server.registerTool('update_label', {
+    title: 'Update label',
+    description: 'Rename or recolour a label, or move it to another group.',
+    inputSchema: {
+      labelId: z.string(),
+      name: z.string().optional(),
+      color: z.string().optional(),
+      group: z.string().optional(),
+      boardId: z.string().optional()
+    }
+  }, async ({ labelId, name, color, group, boardId }) => {
+    const bid = resolveBoard(boardId);
+    if (!getLabels(bid).some((label) => label.id === labelId)) throw new Error(`Label not found: ${labelId}`);
+    const fields = {};
+    if (name !== undefined) fields.name = name;
+    if (color !== undefined) fields.color = color;
+    if (group !== undefined) fields.group = group;
+    if (Object.keys(fields).length === 0) throw new Error('No fields to update');
+    emit('label.updated', { boardId: bid, entityId: labelId, payload: { fields }, actor: AGENT });
+    return ok({ labelId, fields });
+  });
+
+  server.registerTool('delete_label', {
+    title: 'Delete label',
+    description: 'Delete a label from a board.',
+    inputSchema: { labelId: z.string(), boardId: z.string().optional() }
+  }, async ({ labelId, boardId }) => {
+    const bid = resolveBoard(boardId);
+    if (!getLabels(bid).some((label) => label.id === labelId)) throw new Error(`Label not found: ${labelId}`);
+    emit('label.deleted', { boardId: bid, entityId: labelId, payload: {}, actor: AGENT });
+    return ok({ deleted: labelId });
+  });
+
+  server.registerTool('set_acceptance_criteria', {
+    title: 'Set acceptance criteria',
+    description: 'Replace a task acceptance criteria with the given list of texts.',
+    inputSchema: { taskId: z.string(), criteria: z.array(z.string()) }
+  }, async ({ taskId, criteria }) => {
+    const { boardId } = findTaskOrThrow(taskId);
+    const list = (Array.isArray(criteria) ? criteria : []).map((text) => ({ id: randomUUID(), text: String(text), done: false }));
+    emit('task.updated', {
+      boardId,
+      entityId: taskId,
+      payload: { fields: { acceptanceCriteria: list, changeDate: new Date().toISOString() } },
+      actor: AGENT
+    });
+    return ok(list);
+  });
+
+  server.registerTool('toggle_acceptance_criterion', {
+    title: 'Toggle acceptance criterion',
+    description: 'Mark one acceptance criterion of a task as done or not done.',
+    inputSchema: { taskId: z.string(), criterionId: z.string(), done: z.boolean() }
+  }, async ({ taskId, criterionId, done }) => {
+    const { task, boardId } = findTaskOrThrow(taskId);
+    const list = (Array.isArray(task.acceptanceCriteria) ? task.acceptanceCriteria : [])
+      .map((entry) => (entry.id === criterionId ? { ...entry, done: done === true } : entry));
+    emit('task.updated', {
+      boardId,
+      entityId: taskId,
+      payload: { fields: { acceptanceCriteria: list, changeDate: new Date().toISOString() } },
+      actor: AGENT
+    });
+    return ok(list);
+  });
+
+  server.registerTool('reorder_subtasks', {
+    title: 'Reorder subtasks',
+    description: 'Reorder a task subtasks. Pass the full array of subtask ids in the new order.',
+    inputSchema: { taskId: z.string(), order: z.array(z.string()) }
+  }, async ({ taskId, order }) => {
+    const { task, boardId } = findTaskOrThrow(taskId);
+    const existing = Array.isArray(task.subTasks) ? task.subTasks : [];
+    const byId = new Map(existing.map((entry) => [entry.id, entry]));
+    const next = [];
+    for (const id of (Array.isArray(order) ? order : [])) {
+      if (byId.has(id)) { next.push(byId.get(id)); byId.delete(id); }
+    }
+    for (const entry of existing) if (byId.has(entry.id)) next.push(entry);
+    emit('task.updated', {
+      boardId,
+      entityId: taskId,
+      payload: { fields: { subTasks: next, changeDate: new Date().toISOString() } },
+      actor: AGENT
+    });
+    return ok(next.map((entry) => entry.id));
+  });
+
+  server.registerTool('list_skills', {
+    title: 'List skills',
+    description: 'List the collaboration skills / usage guides the human wants the agent to follow on this board.',
+    inputSchema: {}
+  }, async () => ok(getSkills().map((skill) => ({ id: skill.id, name: skill.name, description: skill.description }))));
+
+  server.registerTool('get_skill', {
+    title: 'Get skill',
+    description: 'Return the full text of one skill, by id or by name.',
+    inputSchema: { skill: z.string() }
+  }, async ({ skill }) => {
+    const skills = getSkills();
+    const needle = String(skill).toLowerCase();
+    const found = skills.find((entry) => entry.id === skill)
+      || skills.find((entry) => entry.name.toLowerCase() === needle);
+    if (!found) throw new Error(`Skill not found: ${skill}`);
+    return ok(found);
+  });
+
+  server.registerTool('create_skill', {
+    title: 'Create skill',
+    description: 'Create a collaboration skill: a usage guide the agent should follow.',
+    inputSchema: { name: z.string(), description: z.string().optional(), content: z.string().optional() }
+  }, async ({ name, description = '', content = '' }) => {
+    const skills = getSkills();
+    const skill = { id: randomUUID(), name: String(name), description, content, order: skills.length + 1 };
+    setSkills([...skills, skill]);
+    return ok(skill);
+  });
+
+  server.registerTool('update_skill', {
+    title: 'Update skill',
+    description: 'Update a skill name, description or content.',
+    inputSchema: { skillId: z.string(), name: z.string().optional(), description: z.string().optional(), content: z.string().optional() }
+  }, async ({ skillId, name, description, content }) => {
+    const skills = getSkills();
+    if (!skills.some((skill) => skill.id === skillId)) throw new Error(`Skill not found: ${skillId}`);
+    const next = skills.map((skill) => (skill.id === skillId
+      ? {
+          ...skill,
+          name: name ?? skill.name,
+          description: description ?? skill.description,
+          content: content ?? skill.content
+        }
+      : skill));
+    setSkills(next);
+    return ok(next.find((skill) => skill.id === skillId));
+  });
+
+  server.registerTool('delete_skill', {
+    title: 'Delete skill',
+    description: 'Delete a skill by id.',
+    inputSchema: { skillId: z.string() }
+  }, async ({ skillId }) => {
+    const skills = getSkills();
+    if (!skills.some((skill) => skill.id === skillId)) throw new Error(`Skill not found: ${skillId}`);
+    setSkills(skills.filter((skill) => skill.id !== skillId));
+    return ok({ deleted: skillId });
+  });
 
   server.registerTool('get_board_snapshot', {
     title: 'Get raw board snapshot',
