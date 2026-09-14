@@ -73,20 +73,6 @@
     margin-left: auto;
   }
 
-  .board-search {
-    position: fixed;
-    top: calc(env(safe-area-inset-top) + 78px);
-    left: 16px;
-    right: 16px;
-    z-index: 361;
-    flex: none;
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(-8px);
-    transition: opacity var(--transition-fast), transform var(--transition-fast);
-    box-shadow: var(--shadow-lg);
-  }
-
   .session-status {
     position: fixed;
     top: calc(env(safe-area-inset-top) + 130px);
@@ -106,9 +92,7 @@
     transition: opacity var(--transition-fast), transform var(--transition-fast);
   }
 
-  .controls.mobile-menu-open .board-search,
-  .controls.mobile-menu-open .session-status,
-  .board-search:focus-within {
+  .controls.mobile-menu-open .session-status {
     opacity: 1;
     pointer-events: auto;
     transform: translateY(0);
@@ -261,7 +245,6 @@
 
 
   /* Scrollable columns horizontally with snap */
-  .container,
   .board-container {
     flex: 1 1 auto;
     flex-direction: row;
@@ -285,13 +268,8 @@
     padding: 10px;
   }
 
-  .footer{
-    padding-bottom: calc(16px + env(safe-area-inset-bottom));
-  }
-
   /* Disable snap during drag so tasks can move between columns */
-  body.dragging .board-container,
-  body.dragging .container {
+  body.dragging .board-container {
     scroll-snap-type: none;
   }
 
@@ -360,24 +338,12 @@
     gap: 6px;
   }
 
-  /* Keep the mobile overlay search compact in landscape */
-  .board-search {
-    max-width: none;
-  }
-
   .brand {
     font-size: var(--text-base);
   }
 
   .board-sidebar {
     max-height: 30vh;
-  }
-
-  /* Compact footer */
-  .footer {
-    padding: 6px 16px;
-    font-size: var(--text-xs);
-    line-height: 1;
   }
 
   /* Notification banner: compact in landscape */

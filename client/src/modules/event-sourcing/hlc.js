@@ -32,24 +32,6 @@ export async function initHlc() {
   await ensureNodeId();
 }
 
-export async function emitLocal() {
-  const nodeId = await ensureNodeId();
-  const now = Date.now();
-
-  if (now - current.wallTime > MAX_DRIFT_MS && current.wallTime > 0) {
-    console.warn('[OpenAgile] HLC drift exceeded 60000ms; accepting local wall time.');
-  }
-
-  if (now > current.wallTime) {
-    current.wallTime = now;
-    current.counter = 0;
-  } else {
-    current.counter += 1;
-  }
-
-  return { wallTime: current.wallTime, counter: current.counter, nodeId };
-}
-
 // Synchronous local stamp. Requires the node id to already be in memory, which
 // initHlc() guarantees at startup; if it is missing (e.g. a unit test that never
 // ran initStorage) a transient id is generated so local projection still works.

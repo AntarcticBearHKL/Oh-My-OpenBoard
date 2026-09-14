@@ -173,16 +173,6 @@ test('initStorage loads global settings from IDB', async () => {
   expect(loadGlobalSettings()).toEqual({});
 });
 
-test('saveGlobalSettings persists to IDB and survives a session reset', async () => {
-  await initStorage();
-  saveGlobalSettings({ softDeleteEnabled: true });
-
-  await _flushPersistsForTesting();
-  _resetStorageForTesting();
-
-  await initStorage();
-  expect(loadGlobalSettings()).toEqual({});
-});
 
 test('createBoard persists board list and per-board defaults across sessions', async () => {
   await initStorage();

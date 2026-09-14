@@ -54,8 +54,4 @@ export function h(tag, attrs = {}, ...children) {
 
 export const $id = (id) => document.getElementById(id);
 export const $ = (sel, ctx = document) => ctx.querySelector(sel);
-export const $$ = (sel, ctx = document) => ctx.querySelectorAll(sel);
-export const addClass = (el, ...n) => el?.classList.add(...n);
-export const removeClass = (el, ...n) => el?.classList.remove(...n);
-export const toggleClass = (el, name, force) => el?.classList.toggle(name, force);
 export const cx = (...parts) => parts.filter(Boolean).join(' ');

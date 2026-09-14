@@ -17,10 +17,6 @@ export const FIXED_COLUMNS = [
 
 export const FIXED_COLUMN_IDS = FIXED_COLUMNS.map((column) => column.id);
 
-export function isFixedColumn(columnId) {
-  return typeof columnId === 'string' && FIXED_COLUMN_IDS.includes(columnId);
-}
-
 export const APP_NAME = 'OpenAgile';
 
 export const NO_BOARDS_KEY = 'openagile:noBoards';

@@ -147,7 +147,3 @@ export function initLocalServer() {
     console.warn('[openagile] local server bridge unavailable:', err?.message || err);
   });
 }
-
-export function isLocalServerActive() {
-  return active;
-}

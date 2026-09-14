@@ -25,31 +25,8 @@ const columns = [
   { id: 'done', name: 'Done', order: 3 }
 ];
 
-test('getSwimLaneValue returns fallback lane names for label mode', () => {
-  const labeledTask = { id: 't1', column: 'todo', labels: ['label-b'] };
-  const unlabeledTask = { id: 't2', column: 'todo', labels: [] };
-  const explicitNoGroupTask = { id: 't3', column: 'todo', labels: ['label-a'], swimlaneLabelId: '' };
 
-  expect(getSwimLaneValue(labeledTask, SWIMLANE_GROUP_BY_LABEL, labels)).toBe('Project B');
-  expect(getSwimLaneValue(unlabeledTask, SWIMLANE_GROUP_BY_LABEL, labels)).toBe(NO_GROUP_LANE_LABEL);
-  expect(getSwimLaneValue(explicitNoGroupTask, SWIMLANE_GROUP_BY_LABEL, labels)).toBe(NO_GROUP_LANE_LABEL);
-});
 
-test('getSwimLaneValue returns normalized priority lane names for priority mode', () => {
-  const urgentTask = { id: 't1', column: 'todo', priority: 'urgent' };
-  const invalidPriorityTask = { id: 't2', column: 'todo', priority: 'invalid' };
-
-  expect(getSwimLaneValue(urgentTask, SWIMLANE_GROUP_BY_PRIORITY, labels)).toBe('Urgent');
-  expect(getSwimLaneValue(invalidPriorityTask, SWIMLANE_GROUP_BY_PRIORITY, labels)).toBe('None');
-});
-
-test('getSwimLaneValue returns label values from the selected label group', () => {
-  const task = { id: 't1', column: 'todo', labels: ['label-b', 'label-c'] };
-  const noGroupTask = { id: 't2', column: 'todo', labels: ['label-c'] };
-
-  expect(getSwimLaneValue(task, SWIMLANE_GROUP_BY_LABEL_GROUP, labels, 'Projects')).toBe('Project B');
-  expect(getSwimLaneValue(noGroupTask, SWIMLANE_GROUP_BY_LABEL_GROUP, labels, 'Projects')).toBe(NO_GROUP_LANE_LABEL);
-});
 
 test('groupTasksBySwimLane groups tasks into distinct lanes plus No Group', () => {
   const tasks = [
@@ -114,50 +91,5 @@ test('getVisibleTasksForLane hides done-column tasks but keeps active columns vi
   expect(getVisibleTasksForLane(doneTasks, SWIMLANE_HIDDEN_DONE_COLUMN_ID)).toEqual([]);
 });
 
-test('moveTask updates both column and explicit label lane assignment', () => {
-  const tasks = [
-    { id: 't1', column: 'todo', order: 1, labels: ['label-a'] },
-    { id: 't2', column: 'done', order: 1, labels: [] }
-  ];
 
-  const moved = moveTask(tasks, 't1', 'done', 'label-b', SWIMLANE_GROUP_BY_LABEL, labels);
-  const task = moved.find((entry) => entry.id === 't1');
 
-  expect(task?.column).toBe('done');
-  expect(task?.swimlaneLabelId).toBe('label-b');
-  expect(task?.labels).toEqual(['label-b', 'label-a']);
-});
-
-test('moveTask supports selected label-group lanes and explicit No Group assignment', () => {
-  const tasks = [
-    { id: 't1', column: 'todo', order: 1, labels: ['label-c'] }
-  ];
-
-  const movedToGroup = moveTask(tasks, 't1', 'inprogress', 'label-b', SWIMLANE_GROUP_BY_LABEL_GROUP, labels, 'Projects');
-  const groupedTask = movedToGroup[0];
-  expect(groupedTask.column).toBe('inprogress');
-  expect(groupedTask.swimlaneLabelGroup).toBe('Projects');
-  expect(groupedTask.swimlaneLabelId).toBe('label-b');
-  expect(groupedTask.labels).toEqual(['label-b', 'label-c']);
-
-  const movedToNoGroup = moveTask(movedToGroup, 't1', 'done', NO_GROUP_LANE_KEY, SWIMLANE_GROUP_BY_LABEL_GROUP, labels, 'Projects');
-  const noGroupTask = movedToNoGroup[0];
-  expect(noGroupTask.column).toBe('done');
-  expect(noGroupTask.swimlaneLabelGroup).toBe('');
-  expect(noGroupTask.swimlaneLabelId).toBe('');
-  expect(noGroupTask.labels).toEqual(['label-c']);
-  expect(getSwimLaneValue(noGroupTask, SWIMLANE_GROUP_BY_LABEL_GROUP, labels, 'Projects')).toBe(NO_GROUP_LANE_LABEL);
-});
-
-test('moveTask updates priority when grouping by priority lane', () => {
-  const tasks = [
-    { id: 't1', column: 'todo', order: 1, priority: 'medium', labels: ['label-c'] }
-  ];
-
-  const moved = moveTask(tasks, 't1', 'inprogress', 'urgent', SWIMLANE_GROUP_BY_PRIORITY, labels);
-  const task = moved[0];
-
-  expect(task.column).toBe('inprogress');
-  expect(task.priority).toBe('urgent');
-  expect(getSwimLaneValue(task, SWIMLANE_GROUP_BY_PRIORITY, labels)).toBe('Urgent');
-});

@@ -74,17 +74,6 @@ describe('getWipState', () => {
   });
 });
 
-describe('formatWipCount', () => {
-  test('shows the bare count when unlimited', () => {
-    expect(formatWipCount(3, unlimited)).toBe('3');
-    expect(formatWipCount(3, done)).toBe('3');
-  });
-
-  test('shows count/limit when limited', () => {
-    expect(formatWipCount(3, todo)).toBe('3/5');
-    expect(formatWipCount(6, todo)).toBe('6/5');
-  });
-});
 
 describe('wipCounterLabel', () => {
   test('carries the state without relying on colour', () => {

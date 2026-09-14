@@ -135,10 +135,6 @@ export function readModelKeyFor(boardId, kind) {
   return `${boardId}:${kind}`;
 }
 
-export function getBoardEventsKey(boardId) {
-  return `events:${boardId}`;
-}
-
 /**
  * Open (or return the cached) IDB connection. Called by storage.js during initStorage.
  * Returns the raw idb DB object so callers can run transactions directly.

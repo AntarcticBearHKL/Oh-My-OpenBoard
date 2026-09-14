@@ -95,7 +95,6 @@ function syncRelationshipInverses(tasks, taskId, oldRelationships, newRelationsh
     const target = tasks.find((t) => t.id === targetId);
     if (!target) continue;
     if (!Array.isArray(target.relationships)) target.relationships = [];
-    const oldType = oldMap.get(targetId);
     // Remove any existing entry pointing back at taskId, then add the correct inverse.
     const inverseType = RELATIONSHIP_INVERSE[newType];
     const targetIndex = tasks.findIndex((t) => t.id === targetId);
@@ -107,10 +106,6 @@ function syncRelationshipInverses(tasks, taskId, oldRelationships, newRelationsh
       ]
     };
 
-    if (oldType && oldType !== newType) {
-    }
-    if (!oldType || oldType !== newType) {
-    }
     tasks[targetIndex] = nextTarget;
   }
 
@@ -303,8 +298,6 @@ export function updateTask(taskId, title, description, priority, dueDate, column
         changedFields.customFields = agileFields.customFields;
       }
     }
-    if (prevColumn !== nextColumn) {
-    }
     const previousLabels = Array.isArray(previousTask.labels) ? previousTask.labels : [];
     const nextLabels = Array.isArray(labels) ? labels : [];
     const labelRecords = loadLabels();
@@ -431,21 +424,6 @@ export function deleteTask(taskId) {
     payload: { column: task.column }
   });
   return true;
-}
-
-// Get current task positions from DOM
-export function getCurrentTaskOrder() {
-  const tasks = [];
-  document.querySelectorAll('.task').forEach(taskEl => {
-    const columnContainer = taskEl.closest('[data-column]');
-    const columnName = columnContainer?.dataset?.column;
-    if (!columnName) return;
-    tasks.push({
-      id: taskEl.dataset.taskId,
-      column: columnName
-    });
-  });
-  return tasks;
 }
 
 function getColumnContainer(node) {
@@ -752,18 +730,6 @@ export function removeAnnotation(taskId, annotationId) {
   const annotations = (Array.isArray(task.annotations) ? task.annotations : [])
     .filter((entry) => entry.id !== annotationId);
   return emitTaskFields(taskId, { annotations });
-}
-
-export function claimTask(taskId, agent) {
-  const task = loadTasks().find((entry) => entry.id === taskId);
-  if (!task) return false;
-  const fields = { claimedBy: String(agent || ''), claimedAt: new Date().toISOString() };
-  if (!task.assignee) fields.assignee = String(agent || '');
-  return emitTaskFields(taskId, fields);
-}
-
-export function releaseTask(taskId) {
-  return emitTaskFields(taskId, { claimedBy: '', claimedAt: null });
 }
 
 export function isTaskLocked(task) {

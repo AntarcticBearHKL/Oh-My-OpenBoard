@@ -19,7 +19,7 @@ import {
   _resetStorageForTesting,
 } from '../../../src/modules/storage.js';
 import {
-  emitLocal,
+  emitLocalSync,
   _setHlcForTesting,
   _resetHlcForTesting,
 } from '../../../src/modules/event-sourcing/hlc.js';
@@ -124,7 +124,7 @@ describe('applyRemoteEvent', () => {
     // stored as already-synced (never re-pushed)
     expect(await getUnsyncedEvents()).toHaveLength(0);
     // HLC observed the future remote wall time
-    expect((await emitLocal()).wallTime).toBe(future);
+    expect(emitLocalSync().wallTime).toBe(future);
   });
 
   it('AC-004: an echo of an already-applied event is a no-op in the projection', async () => {

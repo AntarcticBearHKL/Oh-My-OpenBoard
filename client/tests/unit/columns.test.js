@@ -13,12 +13,6 @@ test('columns are locked to the four fixed columns', () => {
   expect(names).toEqual(['Backlog', 'In Progress', 'Blocked', 'Archived']);
 });
 
-test('addColumn does nothing because columns are fixed', () => {
-  const before = loadColumns().length;
-  addColumn('Review', '#ff0000');
-  expect(loadColumns().length).toBe(before);
-  expect(loadColumns().some((c) => c.name === 'Review')).toBe(false);
-});
 
 test('toggleColumnCollapsed toggles from false to true', () => {
   const col = loadColumns()[0];
@@ -57,13 +51,6 @@ test('updateColumn does nothing for empty name', () => {
   expect(loadColumns().find((c) => c.id === col.id).name).toBe(originalName);
 });
 
-test('deleteColumn always returns false because columns cannot be deleted', () => {
-  const col = loadColumns()[0];
-  expect(deleteColumn(col.id)).toBe(false);
-  expect(deleteColumn('done')).toBe(false);
-  expect(deleteColumn('missing-id')).toBe(false);
-  expect(loadColumns()).toHaveLength(4);
-});
 
 test('updateColumn persists a WIP limit change', () => {
   const id = loadColumns()[0].id;

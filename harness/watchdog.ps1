@@ -42,10 +42,10 @@ $logDir = Split-Path -Parent $LogPath
 if (-not (Test-Path -LiteralPath $logDir)) { New-Item -ItemType Directory -Force -Path $logDir | Out-Null }
 
 # Ports that always belong to a real, wanted server. 4321 is the documented
-# sandbox port agents may serve a build on for visual checks.
+# sandbox port agents may serve a build on for visual checks. A wanted server
+# always listens on one of these, so exemption is decided by port alone --
+# matching on project paths used to let any stray port inside those trees live.
 $WhitelistPorts = @(8787, 3000, 4173, 5173, 8011, 8969, 4321)
-# Project paths that always belong to a real, wanted server.
-$WhitelistPaths = @('infinite-canvas\web', 'LLMWorld\dashboard\web', 'kanvana\harness')
 # Agent/MCP infrastructure: never a stray, never touched.
 $InfraPatterns = @('codegraph', 'lsp-daemon', 'blender-mcp', 'figma-developer-mcp', '@playwright/mcp', 'oh-my-openagent', 'opencode\.exe', 'watchdog\.ps1')
 # Command lines that mean "this process is a server launcher".
@@ -97,10 +97,12 @@ function Invoke-Sweep {
     # A process is exempt if an ancestor or descendant owns a whitelisted port.
     $roots = @($exempt)
     foreach ($root in $roots) {
+        $walked = New-Object 'System.Collections.Generic.HashSet[int]'
+        [void]$walked.Add($root)
         $cur = $byId[$root]
         while ($cur -and $cur.ParentProcessId) {
             $ppid = [int]$cur.ParentProcessId
-            if ($ppid -le 0) { break }
+            if ($ppid -le 0 -or -not $walked.Add($ppid)) { break }
             [void]$exempt.Add($ppid)
             $cur = $byId[$ppid]
         }
@@ -132,10 +134,8 @@ function Invoke-Sweep {
         if (-not $isServer) { continue }
 
         $isExempt = $exempt.Contains([int]$p.ProcessId)
-        $isWhitelistedPath = $false
-        foreach ($wp in $WhitelistPaths) { if ($cmd -like "*$wp*") { $isWhitelistedPath = $true; break } }
 
-        if ($isExempt -or $isWhitelistedPath) {
+        if ($isExempt) {
             $kept++
             Write-Log ('KEEP   [{0,6:N1} min] PID {1} :: {2}' -f $age, $p.ProcessId, (Format-Cmd $cmd))
             continue
@@ -149,10 +149,12 @@ function Invoke-Sweep {
 
         # Children first so wrappers do not respawn the server.
         $victims = New-Object 'System.Collections.Generic.List[int]'
+        $seen = New-Object 'System.Collections.Generic.HashSet[int]'
         $dq = New-Object 'System.Collections.Generic.Queue[int]'
         $dq.Enqueue([int]$p.ProcessId)
         while ($dq.Count -gt 0) {
             $id = $dq.Dequeue()
+            if (-not $seen.Add($id)) { continue }
             $victims.Add($id)
             if ($childrenOf.ContainsKey($id)) { foreach ($c in $childrenOf[$id]) { $dq.Enqueue($c) } }
         }
@@ -173,13 +175,11 @@ if ($Uninstall) {
 }
 
 if ($Install) {
-    $action = 'powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "{0}" -Once -ThresholdMinutes {1}' -f $script:ScriptPath, $ThresholdMinutes
-    schtasks /Create /TN $script:TaskName /SC MINUTE /MO $IntervalMinutes /TR $action /F | Out-Null
-    if ($LASTEXITCODE -eq 0) {
-        Write-Log "scheduled task '$($script:TaskName)' installed (every $IntervalMinutes min, threshold ${ThresholdMinutes}min)"
-    } else {
-        Write-Log "FAILED to install scheduled task (schtasks exit $LASTEXITCODE)"
-    }
+    $action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument ('-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "{0}" -Once -ThresholdMinutes {1}' -f $script:ScriptPath, $ThresholdMinutes)
+    $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes $IntervalMinutes) -RepetitionDuration (New-TimeSpan -Days 3650)
+    $settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Seconds 90) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+    Register-ScheduledTask -TaskName $script:TaskName -Action $action -Trigger $trigger -Settings $settings -Force | Out-Null
+    Write-Log "scheduled task '$($script:TaskName)' installed (every $IntervalMinutes min, threshold ${ThresholdMinutes}min, 90s execution limit, overlap ignored, runs on battery)"
     exit 0
 }
 

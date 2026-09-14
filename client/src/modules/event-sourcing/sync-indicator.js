@@ -32,7 +32,7 @@ async function deriveState() {
 let _el = null;
 let _handlers = null;
 
-export async function renderSyncIndicator() {
+async function renderSyncIndicator() {
   if (!_el) return;
   const { text, cls } = await deriveState();
   _el.textContent = text;

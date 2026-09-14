@@ -164,7 +164,7 @@
   <!-- Task Modal -->
   <div id="task-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="task-modal-title">
     <div class="modal-backdrop" data-close-modal></div>
-    <article class="modal-content task-modal-content">
+    <article class="modal-content">
       <header class="modal-header-row">
         <div class="task-modal-heading">
           <span id="task-modal-key" class="task-modal-key hidden"></span>
@@ -198,7 +198,7 @@
       <div id="task-lock-notice" class="task-lock-notice hidden" role="status"></div>
 
       <section id="task-annotations-fieldset" class="task-annotations hidden" aria-labelledby="task-annotations-title">
-        <div class="task-annotations-header">
+        <div>
           <h4 id="task-annotations-title" class="task-annotations-title">
             <span data-lucide="message-square" aria-hidden="true"></span>
             Annotations
@@ -283,7 +283,7 @@
                   <span data-lucide="plus" aria-hidden="true"></span>
                 </button>
               </div>
-              <div id="task-labels-selection" class="labels-selection" role="listbox" aria-label="Available labels">
+              <div id="task-labels-selection" role="listbox" aria-label="Available labels">
                 <!-- Labels populated dynamically -->
               </div>
             </fieldset>
@@ -439,7 +439,7 @@
       <div class="form-group task-label-search-row">
         <input type="text" id="labels-search" placeholder="Search labels…" autocomplete="off" aria-label="Filter labels">
       </div>
-      <div id="labels-list" class="labels-list" role="list" aria-label="Available labels">
+      <div id="labels-list" role="list" aria-label="Available labels">
         <!-- Labels populated dynamically -->
       </div>
       <div class="form-actions">
@@ -459,7 +459,7 @@
           <span data-lucide="x" aria-hidden="true"></span>
         </button>
       </header>
-      <div id="boards-list" class="labels-list" aria-label="Boards list"></div>
+      <div id="boards-list" aria-label="Boards list"></div>
       <div class="form-actions">
         <button id="add-board-btn" type="button" class="btn btn-primary">
           <span data-lucide="kanban" aria-hidden="true"></span>
@@ -533,7 +533,7 @@
         </button>
       </header>
       <form id="settings-form" novalidate>
-        <section class="settings-section settings-section-board" aria-labelledby="settings-board-title">
+        <section class="settings-section" aria-labelledby="settings-board-title">
           <div class="settings-section-header">
             <h4 id="settings-board-title">Board settings</h4>
             <p class="form-help">These settings apply only to the current board.</p>
@@ -617,7 +617,7 @@
             </select>
           </div>
         </section>
-        <section class="settings-section settings-section-board" aria-labelledby="settings-swimlanes-title">
+        <section class="settings-section" aria-labelledby="settings-swimlanes-title">
           <div class="settings-section-header">
             <h4 id="settings-swimlanes-title">Swim Lanes</h4>
             <p class="form-help">Done-column cards stay hidden in swim lane rows to keep the board compact, but you can still drag tasks into Done.</p>

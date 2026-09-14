@@ -64,13 +64,6 @@ test('updateTask emits one task.updated event with HLC entity id and minimal fie
   });
 });
 
-test('addColumn emits nothing because columns are fixed', async () => {
-  const events = await collectEvents(() => {
-    addColumn('Review', '#ff0000');
-  });
-
-  expect(events).toHaveLength(0);
-});
 
 test('label mutations emit label entity and task membership events', async () => {
   saveTasks([{ id: 'task-a', title: 'Task', column: 'todo', labels: [] }]);

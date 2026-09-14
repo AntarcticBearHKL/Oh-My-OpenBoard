@@ -95,18 +95,7 @@ body.dragging .swimlane-cell.is-column-collapsed .swimlane-tasks .task {
     background-color 120ms ease-out;
 }
 
-/* Legacy dragging states (kept for compatibility) */
-[data-dragging="true"],
-#dragged-task {
-  opacity: 0.3;
-}
-
-#dragged-column {
-  opacity: 0.4;
-}
-
-/* Placeholders - SortableJS creates these automatically but we style them */
-.placeholder,
+/* SortableJS drop placeholder (default ghostClass on the subtask list) */
 .sortable-ghost {
   /* Task reordering placeholder: a thin insertion line (not a full box). */
   list-style: none;
@@ -119,18 +108,4 @@ body.dragging .swimlane-cell.is-column-collapsed .swimlane-tasks .task {
   background-color: var(--border);
   background-color: color-mix(in srgb, var(--column-accent-muted) 35%, var(--border) 65%);
   opacity: 0.95;
-}
-
-.column-placeholder {
-  /* Column reordering placeholder: a thin vertical insertion line. */
-  width: 10px;
-  min-width: 10px;
-  flex: 0 0 10px;
-  align-self: stretch;
-  margin: 10px 6px;
-  border: none;
-  border-radius: var(--radius-pill);
-  background-color: color-mix(in srgb, var(--color-primary) 35%, var(--border) 65%);
-  opacity: 0.95;
-  pointer-events: none;
 }

@@ -39,9 +39,6 @@ test('emit with no subscribers does not throw', () => {
   expect(() => emit('test:no-sub', { data: 1 })).not.toThrow();
 });
 
-test('BOARD_CHANGED constant has expected value', () => {
-  expect(BOARD_CHANGED).toBe('board:changed');
-});
 
 test('DATA_CHANGED constant has expected value', () => {
   expect(DATA_CHANGED).toBe('data:changed');

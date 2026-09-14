@@ -272,24 +272,7 @@ test('loadGlobalSettings returns defaults on first run', () => {
   expect(loadGlobalSettings()).toEqual({});
 });
 
-test('saveGlobalSettings drops removed settings', () => {
-  saveGlobalSettings({ softDeleteEnabled: true });
-  expect(loadGlobalSettings()).toEqual({});
-});
 
-test('global settings and board settings are isolated', () => {
-  createBoard('Settings Isolation');
-
-  saveGlobalSettings({ softDeleteEnabled: true });
-  saveSettings({ swimLanesEnabled: true, swimLaneGroupBy: 'priority' });
-
-  expect(loadGlobalSettings()).toEqual({});
-  expect(loadSettings()).toMatchObject({
-    swimLanesEnabled: true,
-    swimLaneGroupBy: 'priority'
-  });
-  expect(loadSettings().softDeleteEnabled).toBeUndefined();
-});
 
 // ── kanban-local-change events ──────────────────────────────────────
 

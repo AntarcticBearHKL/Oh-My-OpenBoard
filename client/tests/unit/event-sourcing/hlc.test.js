@@ -13,37 +13,8 @@ beforeEach(async () => {
   await deleteDB(DB_NAME);
 });
 
-test('emitLocal creates a stable HLC node id that persists across sessions', async () => {
-  const first = await emitLocal();
-  expect(first.nodeId).toMatch(UUID_RE);
 
-  _resetHlcForTesting();
 
-  const second = await emitLocal();
-  expect(second.nodeId).toBe(first.nodeId);
-});
-
-test('emitLocal advances wallTime and resets counter when physical time moves forward', async () => {
-  _setHlcForTesting({ wallTime: 1000, counter: 7, nodeId: 'node-a' });
-  vi.spyOn(Date, 'now').mockReturnValue(1001);
-
-  await expect(emitLocal()).resolves.toEqual({
-    wallTime: 1001,
-    counter: 0,
-    nodeId: 'node-a'
-  });
-});
-
-test('emitLocal increments counter when physical time does not advance', async () => {
-  _setHlcForTesting({ wallTime: 1000, counter: 7, nodeId: 'node-a' });
-  vi.spyOn(Date, 'now').mockReturnValue(999);
-
-  await expect(emitLocal()).resolves.toEqual({
-    wallTime: 1000,
-    counter: 8,
-    nodeId: 'node-a'
-  });
-});
 
 test('compareHlc orders equal wallTime and counter by nodeId', () => {
   const left = { wallTime: 1000, counter: 0, nodeId: 'node-a' };
@@ -67,15 +38,6 @@ test('compareHlc remains transitive across wallTime counter and nodeId', () => {
   expect([...ordered].sort(compareHlc)).toEqual(ordered);
 });
 
-test('emitLocal warns when local wall clock drift exceeds the bound', async () => {
-  _setHlcForTesting({ wallTime: 1000, counter: 0, nodeId: 'node-a' });
-  vi.spyOn(Date, 'now').mockReturnValue(61_001);
-  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-  await emitLocal();
-
-  expect(warn).toHaveBeenCalledWith('[OpenAgile] HLC drift exceeded 60000ms; accepting local wall time.');
-});
 
 test('observeRemote advances counter from the remote HLC when remote wallTime wins', async () => {
   _setHlcForTesting({ wallTime: 1000, counter: 2, nodeId: 'node-a' });

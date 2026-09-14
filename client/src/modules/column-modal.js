@@ -1,7 +1,7 @@
 // Column add/edit modal — extracted from modals.js
 
 import { loadColumns } from './storage.js';
-import { addColumn, updateColumn } from './columns.js';
+import { updateColumn } from './columns.js';
 import { isDoneColumn } from './constants.js';
 import { normalizeWipLimit } from './wip-limit.js';
 import { alertDialog } from './dialog.js';
@@ -123,8 +123,6 @@ export function initializeColumnModalHandlers(setupModalCloseHandlers) {
 
     if (editingColumnId) {
       await updateColumn(editingColumnId, name, color, wipLimit);
-    } else {
-      addColumn(name, color, wipLimit);
     }
     hideColumnModal();
     emit(DATA_CHANGED);

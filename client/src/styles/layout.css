@@ -32,67 +32,6 @@
   margin-right: auto;
 }
 
-/* Board-level task search (toolbar) */
-.board-search {
-  flex: 1 1 320px;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  background-color: var(--selection-fill);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
-}
-
-.board-search:hover {
-  background-color: var(--item-hover);
-}
-
-.board-search svg {
-  width: 16px;
-  height: 16px;
-  stroke: var(--text-muted);
-  stroke-width: 2;
-}
-
-.board-search input {
-  flex: 1 1 auto;
-  min-width: 0;
-  border: none;
-  background: transparent;
-  color: var(--text);
-  font-size: var(--text-base);
-  font-family: inherit;
-}
-
-.board-search input::placeholder {
-  color: var(--text-placeholder);
-}
-
-.board-search input:focus {
-  outline: none;
-}
-
-.board-search:focus-within {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--input-focus-ring);
-}
-
-.brand-icon {
-  width: 24px;
-  height: 24px;
-  color: var(--color-primary);
-  stroke-width: 2.5;
-}
-
-.brand-logo {
-  display: block;
-  width: 32px;
-  height: auto;
-  flex: 0 0 auto;
-}
-
 .brand-favicon {
   display: inline-flex;
   align-items: center;
@@ -304,17 +243,6 @@
 /* Menu Button */
 #desktop-menu-btn {
   display: flex;
-}
-
-/* Board toolbar (below header) */
-.board-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 10px;
-  margin-bottom: 10px;
-  border-bottom: 1px solid var(--border);
 }
 
 /* App body: group sidebar + board */
@@ -575,8 +503,7 @@
 }
 
 /* Board container */
-.board-container,
-.container {
+.board-container {
   display: flex;
   gap: 0.5rem;
   flex: 1 1 auto;
@@ -619,29 +546,4 @@
 .board-empty-hint {
   margin: 0;
   font-size: var(--text-sm);
-}
-
-/* Footer */
-.footer {
-  margin-top: auto;
-  padding: 16px;
-  background-color: var(--glass-bg);
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
-  border-top: 1px solid var(--glass-border);
-  text-align: center;
-  font-size: var(--text-md);
-  color: var(--text-muted);
-  line-height: 0.9;
-}
-
-.footer p {
-  margin: 0;
-}
-
-.footer-version {
-  margin-left: 10px;
-  opacity: 0.85;
-  font-size: var(--text-sm);
-  white-space: nowrap;
 }

@@ -12,7 +12,7 @@ import { showColumnModal, showEditColumnModal, hideColumnModal,
   initializeColumnModalHandlers } from './column-modal.js';
 import { showLabelsModal, hideLabelModal, hideLabelsModal,
   initializeLabelsModalHandlers, setTaskModalState } from './labels-modal.js';
-import { refreshBoardsModalList, hideBoardsModal, hideBoardRenameModal,
+import { hideBoardsModal, hideBoardRenameModal,
   initializeBoardsModalHandlers, showBoardsModal } from './boards-modal.js';
 import { $id } from './dom.js';
 
@@ -112,8 +112,5 @@ export {
   showColumnModal,
   showEditColumnModal,
   showLabelsModal,
-  showHelpModal,
-  showBoardsModal,
-  updateTaskLabelsSelection,
-  refreshBoardsModalList
+  showBoardsModal
 };

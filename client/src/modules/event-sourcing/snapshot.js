@@ -1,5 +1,5 @@
 import { openStore, EVENTS_STORE, SNAPSHOTS_STORE } from '../idb-store.js';
-import { createProjectionState, applyEvents } from '../reducer.js';
+import { createProjectionState } from '../reducer.js';
 import { compareHlc } from './hlc.js';
 
 export const SNAPSHOT_EVENT_THRESHOLD = 500;
@@ -60,15 +60,6 @@ export async function gcEvents(key, snapshotHlc) {
     if (eventMatchesSnapshotScope(key, event) && compareHlc(event.hlc, snapshotHlc) <= 0) tx.store.delete(event.id);
   }
   await tx.done;
-}
-
-export async function hydrateFromSnapshot(key, events) {
-  const snapshot = await loadSnapshot(key);
-  const baseState = snapshot ? snapshot.state : createProjectionState();
-  const toReplay = snapshot
-    ? events.filter(e => compareHlc(e.hlc, snapshot.hlc) > 0)
-    : events;
-  return applyEvents(baseState, toReplay);
 }
 
 async function shouldTakeSnapshot(key) {

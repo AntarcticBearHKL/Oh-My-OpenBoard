@@ -167,8 +167,6 @@
   overflow-x: hidden;
 }
 
-.tasks.expanded { max-height: none; }
-
 .task-column > .tasks:empty::after {
   content: "No tasks yet";
   display: block;

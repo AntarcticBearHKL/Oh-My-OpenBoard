@@ -26,7 +26,7 @@ function syncNotificationBannerVisibilityToggle() {
  * Excludes tasks in the 'done' column.
  * @returns {Array} Array of task objects with additional `daysUntilDue` property
  */
-export function getNotificationTasks() {
+function getNotificationTasks() {
   const tasks = loadTasks();
   const settings = loadSettings();
   const thresholdDays = Number.isFinite(settings.notificationDays) ? settings.notificationDays : 3;
@@ -98,7 +98,7 @@ function formatDueStatus(daysUntilDue, dueDate, locale) {
 /**
  * Render the notification banner.
  */
-export function renderNotificationBanner() {
+function renderNotificationBanner() {
   const banner = $id('notification-banner');
   const list = $id('notification-banner-list');
   if (!banner || !list) return;
@@ -263,7 +263,7 @@ function renderNotificationsModalContent() {
 /**
  * Update the notification badge count on the bell button.
  */
-export function updateNotificationBadge() {
+function updateNotificationBadge() {
   const badges = ['notification-badge', 'notification-quick-badge'].map($id).filter(Boolean);
   const buttons = ['notifications-btn', 'notifications-quick-btn'].map($id).filter(Boolean);
 
@@ -298,7 +298,7 @@ export function updateNotificationBadge() {
 /**
  * Show the notifications modal.
  */
-export function showNotificationsModal() {
+function showNotificationsModal() {
   syncNotificationBannerVisibilityToggle();
   renderNotificationsModalContent();
   const modal = $id('notifications-modal');
@@ -308,7 +308,7 @@ export function showNotificationsModal() {
 /**
  * Hide the notifications modal.
  */
-export function hideNotificationsModal() {
+function hideNotificationsModal() {
   const modal = $id('notifications-modal');
   modal?.classList.add('hidden');
 }
@@ -316,7 +316,7 @@ export function hideNotificationsModal() {
 /**
  * Check if the notifications modal is open.
  */
-export function isNotificationsModalOpen() {
+function isNotificationsModalOpen() {
   const modal = $id('notifications-modal');
   return modal && !modal.classList.contains('hidden');
 }

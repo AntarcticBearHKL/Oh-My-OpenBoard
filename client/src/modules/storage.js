@@ -181,102 +181,6 @@ function labelIdByName(labels, name) {
   return labels.find((label) => label.name === name)?.id || '';
 }
 
-function defaultTasks(columns = defaultColumns(), labels = defaultLabels()) {
-  const created = nowIso();
-  const todoColumnId = columnIdByName(columns, 'To Do');
-  const inProgressColumnId = columnIdByName(columns, 'In Progress');
-  const doneColumnId = columns.find((column) => column.role === DONE_COLUMN_ROLE)?.id || columnIdByName(columns, 'Done');
-  const taskLabelId = labelIdByName(labels, 'Task');
-  const ideaLabelId = labelIdByName(labels, 'Idea');
-  return [
-    {
-      id: generateUUID(),
-      title: 'Find out where the Soul Stone is',
-      description: 'Identify current location and access requirements.',
-      priority: 'high',
-      dueDate: '',
-      column: todoColumnId,
-      labels: [],
-      creationDate: created,
-      changeDate: created,
-      columnHistory: [{ column: todoColumnId, at: created }]
-    },
-    {
-      id: generateUUID(),
-      title: 'Steal the Time Stone',
-      description: 'Coordinate with Dr. Strange and plan retrieval.',
-      priority: 'urgent',
-      dueDate: '',
-      column: inProgressColumnId,
-      labels: [],
-      creationDate: created,
-      changeDate: created,
-      columnHistory: [{ column: inProgressColumnId, at: created }]
-    },
-    {
-      id: generateUUID(),
-      title: 'Collect the Mind Stone',
-      description: 'Determine safe extraction approach.',
-      priority: 'medium',
-      dueDate: '',
-      column: inProgressColumnId,
-      labels: [],
-      creationDate: created,
-      changeDate: created,
-      columnHistory: [{ column: inProgressColumnId, at: created }]
-    },
-    {
-      id: generateUUID(),
-      title: 'Hide the Reality Stone',
-      description: 'Dig a deep hole to hide the stone from the Collector, avoid escalation.',
-      priority: 'low',
-      dueDate: '',
-      column: inProgressColumnId,
-      labels: taskLabelId ? [taskLabelId] : [],
-      creationDate: created,
-      changeDate: created,
-      columnHistory: [{ column: inProgressColumnId, at: created }]
-    },
-    {
-      id: generateUUID(),
-      title: 'Find a bag for stones',
-      description: 'A bag with good durability and space is needed to hold all the stones securely.',
-      priority: 'none',
-      dueDate: '',
-      column: inProgressColumnId,
-      labels: taskLabelId ? [taskLabelId] : [],
-      creationDate: created,
-      changeDate: created,
-      columnHistory: [{ column: inProgressColumnId, at: created }]
-    },
-    {
-      id: generateUUID(),
-      title: 'Collect the Power Stone',
-      description: 'Verify secure containment after retrieval.',
-      priority: 'high',
-      dueDate: '',
-      column: doneColumnId,
-      labels: ideaLabelId ? [ideaLabelId] : [],
-      creationDate: created,
-      changeDate: created,
-      doneDate: created,
-      columnHistory: [{ column: doneColumnId, at: created }]
-    },
-    {
-      id: generateUUID(),
-      title: 'Collect the Space Stone',
-      description: '',
-      priority: 'low',
-      dueDate: '',
-      column: doneColumnId,
-      labels: [],
-      creationDate: created,
-      changeDate: created,
-      doneDate: created,
-      columnHistory: [{ column: doneColumnId, at: created }]
-    }
-  ];
-}
 
 function defaultBoardData(includeTasks = true) {
   const columns = defaultColumns();
@@ -284,7 +188,7 @@ function defaultBoardData(includeTasks = true) {
   return {
     columns,
     labels,
-    tasks: includeTasks ? defaultTasks(columns, labels) : [],
+    tasks: [],
     settings: defaultSettings()
   };
 }
@@ -315,7 +219,7 @@ function stableDefaultBoardData() {
   return {
     columns,
     labels,
-    tasks: defaultTasks(columns, labels),
+    tasks: [],
     settings: defaultSettings()
   };
 }
@@ -370,7 +274,7 @@ async function migrateFromLocalStorage(db) {
     await store.put(boards, BOARDS_KEY);
     await store.put(DEFAULT_BOARD_ID, ACTIVE_BOARD_KEY);
     await readModel.put(legacyColumns || legacyDefaultColumns(), readModelKeyFor(DEFAULT_BOARD_ID, 'columns'));
-    await readModel.put(legacyTasks || defaultTasks(), readModelKeyFor(DEFAULT_BOARD_ID, 'tasks'));
+    await readModel.put(legacyTasks || [], readModelKeyFor(DEFAULT_BOARD_ID, 'tasks'));
     await readModel.put(legacyLabels || defaultLabels(), readModelKeyFor(DEFAULT_BOARD_ID, 'labels'));
     await store.put(defaultSettings(), keyFor(DEFAULT_BOARD_ID, 'settings'));
     await tx.done;
@@ -951,7 +855,7 @@ export function loadTasks() {
   const cached = taskCacheByBoard.get(boardId);
   if (Array.isArray(cached)) return cached.filter(t => !t.deleted);
 
-  const defaults = defaultTasks(loadColumns(), loadLabels());
+  const defaults = [];
   taskCacheByBoard.set(boardId, defaults);
   return defaults;
 }
@@ -971,15 +875,6 @@ export function saveTasks(tasks) {
   taskCacheByBoard.set(boardId, normalized);
   scheduleReadModelPersist(boardId, 'tasks', normalized);
   emitLocalChange(boardId, 'task');
-}
-
-// Persist a live-task set without destroying the board's task tombstones.
-// loadTasks() returns live tasks only, so callers that mutate the live set
-// must route through here to preserve deleted records until sync cleanup.
-export function saveLiveTasks(liveTasks) {
-  const boardId = getActiveBoardId() || DEFAULT_BOARD_ID;
-  const live = Array.isArray(liveTasks) ? liveTasks : [];
-  saveTasks([...live, ...loadDeletedTasksForBoard(boardId)]);
 }
 
 // ── Labels ─────────────────────────────────────────────────────────────────────
@@ -1122,12 +1017,6 @@ export function saveSettings(settings) {
 export function loadGlobalSettings() {
   const parsed = safeParseObject(state.globalSettings);
   return parsed ? normalizeGlobalSettings(parsed) : defaultGlobalSettings();
-}
-
-export function saveGlobalSettings(settings) {
-  const normalized = normalizeGlobalSettings(settings);
-  state.globalSettings = normalized;
-  schedulePersist(GLOBAL_SETTINGS_KEY, normalized);
 }
 
 // ── Cross-board read helpers

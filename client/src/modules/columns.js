@@ -4,10 +4,6 @@ import { normalizeHexColor } from './normalize.js';
 import { normalizeWipLimit } from './wip-limit.js';
 import { scheduleDomainEvent } from './event-sourcing/emitter.js';
 
-export function addColumn() {
-  return false;
-}
-
 export function toggleColumnCollapsed(columnId) {
   const id = typeof columnId === 'string' ? columnId.trim() : '';
   if (!id) return false;
@@ -54,10 +50,6 @@ export function updateColumn(columnId, name, color, wipLimit) {
   }
 
   return Promise.resolve();
-}
-
-export function deleteColumn() {
-  return false;
 }
 
 // Update column positions after drag

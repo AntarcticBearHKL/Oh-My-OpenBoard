@@ -181,11 +181,6 @@ function getFallbackLaneDescriptor(task, groupBy, labels) {
   };
 }
 
-export function getAvailableSwimLaneLabelGroups(labelsInput = loadLabels()) {
-  const labels = normalizeLabelCollection(labelsInput);
-  return getAvailableLabelGroupsFromCollection(labels);
-}
-
 export function getSwimLaneDescriptor(task, groupBy, labelsInput, selectedLabelGroup = '') {
   const normalizedGroupBy = normalizeGroupBy(groupBy);
   const labels = normalizeLabelCollection(labelsInput);
@@ -240,10 +235,6 @@ export function getSwimLaneDescriptor(task, groupBy, labelsInput, selectedLabelG
   }
 
   return getFallbackLaneDescriptor(task, normalizedGroupBy, labels);
-}
-
-export function getSwimLaneValue(task, groupBy, labelsInput, selectedLabelGroup = '') {
-  return getSwimLaneDescriptor(task, groupBy, labelsInput, selectedLabelGroup).value;
 }
 
 export function groupTasksBySwimLane(tasks, groupBy, labelsInput, selectedLabelGroup = '', swimLaneOrder = []) {
@@ -467,22 +458,6 @@ export function applySwimLaneAssignment(task, groupBy, laneKey, labelsInput, sel
 
   nextTask.swimlaneLabelGroup = nextLaneKey;
   return nextTask;
-}
-
-export function moveTask(tasks, taskId, targetColumnId, targetLaneKey, groupBy, labelsInput, selectedLabelGroup = '') {
-  const labels = normalizeLabelCollection(labelsInput);
-  const normalizedTasks = Array.isArray(tasks) ? tasks : [];
-  const nextTasks = normalizedTasks.map((task) => {
-    if (task.id !== taskId) return task;
-
-    const movedTask = applySwimLaneAssignment(task, groupBy, targetLaneKey, labels, selectedLabelGroup);
-    return {
-      ...movedTask,
-      column: targetColumnId
-    };
-  });
-
-  return nextTasks;
 }
 
 let laneOrderSortable = null;

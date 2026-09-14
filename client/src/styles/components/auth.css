@@ -96,15 +96,6 @@
   background: var(--item-hover);
 }
 
-#sync-btn.spinning svg {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
 .btn-text {
   background: none;
   border: none;

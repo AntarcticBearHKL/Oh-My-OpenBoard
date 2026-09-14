@@ -39,14 +39,14 @@ on(DATA_CHANGED, () => {
 
 let boardFilterQuery = '';
 
+export function setBoardFilterQuery(query) {
+  boardFilterQuery = typeof query === 'string' ? query : '';
+}
+
 // Done column virtualization state
 const DONE_INITIAL_BATCH_SIZE = 50;
 const DONE_LOAD_MORE_SIZE = 50;
 let doneVisibleCount = DONE_INITIAL_BATCH_SIZE;
-
-export function setBoardFilterQuery(query) {
-  boardFilterQuery = (query || '').toString();
-}
 
 function taskMatchesFilter(task, queryLower, labelsById) {
   if (!queryLower) return true;
@@ -145,7 +145,7 @@ function updateColumnSelect() {
 /**
  * Update the due-date element on a moved task card.
  */
-export function syncMovedTaskDueDate(taskId, toColumn, tasksCache) {
+function syncMovedTaskDueDate(taskId, toColumn, tasksCache) {
   if (!taskId) return;
 
   const taskEl = document.querySelector(`.task[data-task-id="${taskId}"]`);

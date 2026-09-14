@@ -166,12 +166,6 @@
   color: var(--color-warning);
 }
 
-.notification-banner-item .priority-badge {
-  flex-shrink: 0;
-}
-
-/* Priority colors inherited from global .priority-* classes (card.css) */
-
 .notification-banner-item.notification-more {
   font-style: italic;
   color: var(--text-muted);

@@ -22,11 +22,6 @@ export function getWipState(count, column) {
   return 'under';
 }
 
-export function formatWipCount(count, column) {
-  const limit = getWipLimit(column);
-  return limit ? `${count}/${limit}` : String(count);
-}
-
 export function wipCounterLabel(count, column) {
   const limit = getWipLimit(column);
   if (!limit) return `${count} tasks`;
