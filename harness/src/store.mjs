@@ -8,14 +8,16 @@
 // order must equal commit order).
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, renameSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { applyEvent, createProjectionState } from '../../client/src/modules/reducer.js';
 import { emitLocalSync, initHlc, observeRemote } from './hlc.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = join(HERE, '..', 'data');
+const DATA_DIR = process.env.OPENAGILE_DATA_DIR
+  ? resolve(process.env.OPENAGILE_DATA_DIR)
+  : join(HERE, '..', 'data');
 const STATE_FILE = join(DATA_DIR, 'state.json');
 
 // Same stable ids the browser seeds on first run, so both sides converge by id.
@@ -85,12 +87,12 @@ function project(event) {
   settingsByBoard.set(boardId, projected.settings);
 }
 
-function entityExists(type, entityId) {
+function entityExists(type, entityId, boardId) {
   if (!entityId) return false;
   if (type === 'board.created') return boards.some((b) => b.id === entityId);
-  if (type === 'column.created') return [...columnsByBoard.values()].some((list) => (list || []).some((c) => c.id === entityId));
-  if (type === 'label.created') return [...labelsByBoard.values()].some((list) => (list || []).some((l) => l.id === entityId));
-  if (type === 'task.created') return [...tasksByBoard.values()].some((list) => (list || []).some((t) => t.id === entityId));
+  if (type === 'column.created') return (columnsByBoard.get(boardId) || []).some((c) => c.id === entityId);
+  if (type === 'label.created') return (labelsByBoard.get(boardId) || []).some((l) => l.id === entityId);
+  if (type === 'task.created') return (tasksByBoard.get(boardId) || []).some((t) => t.id === entityId);
   return false;
 }
 
@@ -99,7 +101,7 @@ function entityExists(type, entityId) {
 function appendEvent(raw) {
   if (!raw || typeof raw !== 'object' || !raw.id || !raw.type) return null;
   if (seenIds.has(raw.id)) return null;
-  if (raw.type.endsWith('.created') && entityExists(raw.type, raw.entity_id)) return null;
+  if (raw.type.endsWith('.created') && entityExists(raw.type, raw.entity_id, raw.board_id)) return null;
 
   if (raw.hlc) observeRemote(raw.hlc);
 
