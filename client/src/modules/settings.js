@@ -2,24 +2,14 @@ import { getActiveBoardId, loadSettings, saveSettings } from './storage.js';
 import { setupModalCloseHandlers } from './modal-utils.js';
 import { $id, h } from './dom.js';
 import { scheduleDomainEvent } from './event-sourcing/emitter.js';
-
-function uniq(values) {
-  const out = [];
-  for (const v of values) {
-    if (typeof v !== 'string') continue;
-    const trimmed = v.trim();
-    if (!trimmed) continue;
-    if (!out.includes(trimmed)) out.push(trimmed);
-  }
-  return out;
-}
+import { normalizeStringKeys } from './normalize.js';
 
 function buildLocaleOptions(currentLocale) {
   const browserLocale = (typeof navigator !== 'undefined' && typeof navigator.language === 'string')
     ? navigator.language
     : 'en-US';
 
-  return uniq([
+  return normalizeStringKeys([
     currentLocale,
     browserLocale,
     'en-US',
