@@ -16,7 +16,7 @@ import {
   LEGACY_TASKS_KEY,
   LEGACY_LABELS_KEY,
 } from './storage-state.js';
-import { legacyDefaultColumns, defaultLabels, defaultSettings } from './storage-defaults.js';
+import { defaultColumns, defaultLabels, defaultSettings } from './storage-defaults.js';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -37,7 +37,7 @@ export async function normalizeIdbState(db) {
     const normalized = normalizeBoardModelIds({
       board: rawBoard,
       tasks: safeParseArray(await readModel.get(readModelKeyFor(oldBoardId, 'tasks')) ?? await store.get(keyFor(oldBoardId, 'tasks'))) || [],
-      columns: safeParseArray(await readModel.get(readModelKeyFor(oldBoardId, 'columns')) ?? await store.get(keyFor(oldBoardId, 'columns'))) || legacyDefaultColumns(),
+      columns: safeParseArray(await readModel.get(readModelKeyFor(oldBoardId, 'columns')) ?? await store.get(keyFor(oldBoardId, 'columns'))) || defaultColumns(),
       labels: safeParseArray(await readModel.get(readModelKeyFor(oldBoardId, 'labels')) ?? await store.get(keyFor(oldBoardId, 'labels'))) || [],
       settings: safeParseObject(await store.get(keyFor(oldBoardId, 'settings'))) || defaultSettings()
     });
@@ -90,7 +90,7 @@ export async function migrateFromLocalStorage(db) {
     const readModel = tx.objectStore(READ_MODEL_STORE);
     await store.put(boards, BOARDS_KEY);
     await store.put(DEFAULT_BOARD_ID, ACTIVE_BOARD_KEY);
-    await readModel.put(legacyColumns || legacyDefaultColumns(), readModelKeyFor(DEFAULT_BOARD_ID, 'columns'));
+    await readModel.put(legacyColumns || defaultColumns(), readModelKeyFor(DEFAULT_BOARD_ID, 'columns'));
     await readModel.put(legacyTasks || [], readModelKeyFor(DEFAULT_BOARD_ID, 'tasks'));
     await readModel.put(legacyLabels || defaultLabels(), readModelKeyFor(DEFAULT_BOARD_ID, 'labels'));
     await store.put(defaultSettings(), keyFor(DEFAULT_BOARD_ID, 'settings'));

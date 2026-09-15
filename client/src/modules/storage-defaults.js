@@ -7,10 +7,6 @@ export function defaultColumns() {
   return FIXED_COLUMNS.map((column) => ({ ...column }));
 }
 
-export function legacyDefaultColumns() {
-  return FIXED_COLUMNS.map((column) => ({ ...column }));
-}
-
 export function defaultLabels() {
   return [
     { id: generateUUID(), name: 'Task', color: '#f59e0b', group: 'Activity' },
@@ -44,10 +40,6 @@ export function defaultBoardData(includeTasks = true) {
 // Deterministic column/label ids for the well-known default board, so two
 // devices seeding their own default board emit identical column.created /
 // label.created events that dedup on merge (see STABLE_DEFAULT_BOARD_ID).
-function stableDefaultColumns() {
-  return FIXED_COLUMNS.map((column) => ({ ...column }));
-}
-
 function stableDefaultLabels() {
   return [
     { id: '00000000-0000-4000-8000-000000000020', name: 'Task', color: '#f59e0b', group: 'Activity' },
@@ -62,7 +54,7 @@ function stableDefaultLabels() {
 // intentionally local-only (not event-sourced): they are first-run flavour and
 // random ids would duplicate on merge across devices.
 export function stableDefaultBoardData() {
-  const columns = stableDefaultColumns();
+  const columns = defaultColumns();
   const labels = stableDefaultLabels();
   return {
     columns,
