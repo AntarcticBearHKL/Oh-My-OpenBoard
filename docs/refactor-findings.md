@@ -646,3 +646,26 @@ The scripting rule that follows: after a structural edit, assert the postconditi
 (the import is present, no old identifier remains) and **exit non-zero** when it
 fails - a helper that prints a fixed success string regardless of the outcome is
 worse than no helper, because it hides the breakage until the test run.
+
+### UUID generation: two generators, on purpose - plus one latent risk
+
+The audit listed `utils.generateUUID` against the `crypto.randomUUID()` calls in
+`hlc.js` and `local-server.js`. They were left as they are, because they are not
+duplicates:
+
+- `utils.generateUUID` (used by 11 modules for entity and event ids) is a pure-JS
+  v4-shaped generator built on `Math.random()`. It works in any context, including
+  a page served over plain HTTP, where the Web Crypto API is not exposed.
+- `hlc.js` (node id) and `local-server.js` (client id) use `crypto.randomUUID()`.
+  These identify a device on the sync network, so a stronger source is the right
+  call, and both run in contexts that already require the modern API.
+
+**Latent risk worth a decision, not a refactor:** `hlc.js` calls
+`crypto.randomUUID()` unconditionally in two places (`ensureNodeId`, and the
+fallback inside `emitLocalSync`). `crypto.randomUUID` is only defined in a secure
+context, so opening the client over plain HTTP on a LAN address - which is exactly
+how the harness is meant to be reached from another device - would throw
+`TypeError: crypto.randomUUID is not a function` the first time a node id is
+needed. Either guard it with a `utils.generateUUID` fallback, or document that the
+client must be reached over https or localhost. This is a behaviour decision, so it
+was not changed here.
