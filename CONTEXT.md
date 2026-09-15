@@ -13,7 +13,7 @@ constructed through those factories so all fields are always present.
 ### Glossary
 
 **WIP limit** — the maximum number of Tasks a Column is *intended* to hold, stored as `wipLimit` on
-the Column. `0` means unlimited (the default; built-in templates ship unlimited). A WIP limit is
+the Column. `0` means unlimited (the default). A WIP limit is
 **advisory, never enforced**: nothing blocks adding, dragging, importing, or syncing a Task into a
 Column that is at or over its limit. It is a pull-system signal — reaching the limit means *stop
 starting, start finishing* — surfaced only as a visual state on the board.
@@ -168,7 +168,7 @@ all subscribe.
 | Module | Responsibility |
 |---|---|
 | `kanban.js` | Entry point — initialises storage, renders board |
-| `boards.js` | Board lifecycle: create, rename, switch, template apply |
+| `boards.js` | Board lifecycle: create, rename, switch |
 | `boards-modal.js` | Board selector / management modal |
 | `columns.js` | Column CRUD |
 | `column-element.js` | Column DOM element factory |

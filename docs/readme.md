@@ -128,7 +128,7 @@ Add a second dimension to your board by grouping tasks into horizontal swim lane
 - Configure in **Settings** — choose grouping mode and start organizing
 
 ### Boards
-Multiple boards with independent columns, tasks, labels, and settings. Switch between contexts instantly. Create boards from built-in templates or start blank.
+Multiple boards with independent columns, tasks, labels, and settings. Switch between contexts instantly. New boards start blank.
 
 ### Tasks
 Create tasks with titles, descriptions, priorities (urgent/high/medium/low/none), due dates, labels, and sub-tasks. Drag and drop to move between columns. Click anywhere on a task card (except the delete button) to open the edit modal. Break work down further with inline sub-task checklists — each task card shows sub-task progress as a donut circle at a glance. Due dates include a countdown timer with configurable color-coded urgency indicators. Optimized drag-and-drop performance handles 300+ tasks.

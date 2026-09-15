@@ -76,7 +76,7 @@ After migration, localStorage is cleared of all OpenAgile keys.
 ### Schema changes
 
 - Persisted-shape changes must keep import/export round-trippable and preserve legacy normalization
-- Legacy model ids from localStorage, IDB, templates, or imports are normalized to UUIDs, and references are rewritten during load/import
+- Legacy model ids from localStorage, IDB, or imports are normalized to UUIDs, and references are rewritten during load/import
 - All code must go through storage helpers (`loadTasks`, `saveTasks`, etc.) — never read IDB directly
 
 ## Settings Persistence

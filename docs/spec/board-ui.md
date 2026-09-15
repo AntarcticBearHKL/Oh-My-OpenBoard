@@ -22,8 +22,7 @@
 - Board selection persists and restores on page load
 - Manage Boards supports create, open, export, import, rename, and delete actions
 - Clicking the brand text or pressing `Ctrl+B` opens the Manage Boards modal; the shortcut is ignored while focus is in an input, textarea, or select
-- New boards can be blank or created from a template
-- Built-in templates may preload workflow-specific starter columns, grouped labels, and labeled tasks so a new board is immediately usable
+- New boards start blank
 - The last remaining board cannot be deleted
 - On mobile, the board selector has a larger touch target and the controls menu stays open while the selector is used
 

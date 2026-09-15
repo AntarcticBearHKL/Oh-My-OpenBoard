@@ -5,7 +5,6 @@ import {
   createBoard,
   setActiveBoardId
 } from './storage.js';
-import { applyBoardTemplate, getBuiltInBoardTemplates, populateTemplateSelect } from './board-templates.js';
 import { alertDialog } from './dialog.js';
 import { assignBoardToGroup } from './board-groups.js';
 import { refreshBoardSelect, boardSelectMatchesState, refreshBrandText } from './board-select.js';
@@ -16,7 +15,6 @@ let pendingGroupId = null;
 export function showBoardCreateModal() {
   const modal = document.getElementById('board-create-modal');
   const nameInput = document.getElementById('board-create-name');
-  const templateSelect = document.getElementById('board-create-template');
   if (!modal || !nameInput) return;
 
   const titleEl = document.getElementById('board-create-modal-title');
@@ -26,7 +24,6 @@ export function showBoardCreateModal() {
   if (submitBtn) submitBtn.textContent = isIteration ? 'Create Iteration' : 'Create Board';
 
   nameInput.value = '';
-  if (templateSelect) templateSelect.value = '';
   modal.classList.remove('hidden');
   nameInput.focus();
 }
@@ -80,9 +77,6 @@ export function initializeBoardsUI() {
   const createModal = document.getElementById('board-create-modal');
   const createForm = document.getElementById('board-create-form');
   const cancelCreateBtn = document.getElementById('cancel-board-create-btn');
-  const templateSelect = document.getElementById('board-create-template');
-
-  populateTemplateSelect(templateSelect);
 
   if (createModal) {
     // Backdrop click closes modal
@@ -114,15 +108,10 @@ export function initializeBoardsUI() {
         return;
       }
 
-      const selectedTemplateId = (templateSelect?.value || '').trim();
-      const templates = selectedTemplateId ? getBuiltInBoardTemplates() : [];
-      const template = selectedTemplateId ? templates.find((t) => t.id === selectedTemplateId) : null;
-
       const board = createBoard(trimmed);
       setActiveBoardId(board.id);
 
       if (pendingGroupId) assignBoardToGroup(board.id, pendingGroupId);
-      if (template?.board) applyBoardTemplate(template.board);
 
       refreshBoardSelect(selectEl);
       refreshBrandText();

@@ -89,7 +89,7 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 - `src/modules/storage.js` - in-memory state, all CRUD helpers (`load*`/`save*`), `initStorage()`, migration, default data
 - `src/modules/tasks.js` - task CRUD and drop-position updates
 - `src/modules/columns.js` - column CRUD, collapse, ordering, sorting
-- `src/modules/boards.js` - board management and templates
+- `src/modules/boards.js` - board management
 - `src/modules/dragdrop.js` - SortableJS-based task/column drag and drop
 - `src/modules/modals.js` - modal open/close wiring and Escape/backdrop behavior
 - `src/modules/dialog.js` - confirm and alert dialog helpers

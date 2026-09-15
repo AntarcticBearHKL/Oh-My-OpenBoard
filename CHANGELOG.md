@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Deleting a board group now deletes the iterations inside it, instead of ungrouping them at the root. The group's delete button says how many iterations it will take with it.
 
+### Removed
+
+- The Template picker in the New Iteration / Create New Board dialog and the built-in board templates it offered. New boards and iterations are always created blank now.
+
 ### Fixed
 
 - The buttons at the bottom of every dialog sat on a white bar. The footer was applying the modal's own translucent glass colour on top of the modal, which composited to almost opaque white; it is now transparent, so the footer matches the dialog and the sticky blur still frosts content scrolling behind it.

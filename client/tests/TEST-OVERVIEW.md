@@ -26,7 +26,6 @@ These lists compare source/spec filenames against test file names and test title
 - `src/modules/armed-delete-button.js`
 - `src/modules/board-rename-modal.js`
 - `src/modules/board-serializer.js`
-- `src/modules/board-templates.js`
 - `src/modules/calendar-utils.js`
 - `src/modules/calendar.js`
 - `src/modules/column-element.js`
