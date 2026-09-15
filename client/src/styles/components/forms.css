@@ -40,7 +40,7 @@ fieldset.form-group legend {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: var(--text-base);
   font-family: inherit;
   box-sizing: border-box;
@@ -104,13 +104,13 @@ fieldset.form-group legend {
 
 .color-hex-display {
   font-family: monospace;
-  font-size: 0.85rem;
+  font-size: var(--text-rem-085);
   color: var(--text-secondary);
   width: 6em;
   flex: 0 0 6em;
   padding: 0 6px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background-color: var(--input-bg);
   text-align: center;
 }
@@ -132,7 +132,7 @@ fieldset.form-group legend {
   height: 40px;
   padding: 4px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   background-color: var(--input-bg);
 }

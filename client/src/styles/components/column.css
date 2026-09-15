@@ -7,7 +7,7 @@
 .task-column {
   /* Column accent (can be overridden via inline style). Decorative use stays
      low-chroma via --text-faint; hover text mixes with --text to keep contrast. */
-  --column-accent: #8a9bb5;
+  --column-accent: var(--column-accent-default);
   --column-accent-muted: color-mix(in srgb, var(--column-accent) 32%, var(--text-faint));
   --column-accent-hover: color-mix(in srgb, var(--column-accent) 60%, var(--text));
   --column-bg-tint: color-mix(in srgb, var(--column-accent-muted) 6%, transparent);
@@ -22,15 +22,15 @@
   border-radius: 0;
   margin: 0 0 0 -1px;
   padding: 0;
-  flex: 0 0 var(--column-width, 300px);
-  width: var(--column-width, 300px);
-  min-width: var(--column-width, 300px);
+  flex: 0 0 var(--column-width, var(--column-default-width));
+  width: var(--column-width, var(--column-default-width));
+  min-width: var(--column-width, var(--column-default-width));
   background-color: var(--glass-bg);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
   display: flex;
   flex-direction: column;
-  min-height: 220px;
+  min-height: var(--column-min-height);
   transition:
     border-color var(--transition-normal),
     background-color var(--transition-normal),
@@ -54,7 +54,7 @@
 }
 
 /* Fallback accent colors (nth-child) — warm, low-chroma, cocoa-compatible */
-#board-container > .task-column:nth-child(3n + 1) { --column-accent: #8a9bb5; }
+#board-container > .task-column:nth-child(3n + 1) { --column-accent: var(--column-accent-default); }
 #board-container > .task-column:nth-child(3n + 2) { --column-accent: #bd9a63; }
 #board-container > .task-column:nth-child(3n + 3) { --column-accent: #8fa88f; }
 
@@ -221,8 +221,8 @@
 
 /* Custom scrollbar */
 .tasks::-webkit-scrollbar { width: 6px; }
-.tasks::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: 3px; }
-.tasks::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+.tasks::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: var(--radius-2xs); }
+.tasks::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: var(--radius-2xs); }
 .tasks::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
 
 .board-container-swimlanes {
@@ -265,14 +265,14 @@
   inline-size: 100%;
   min-width: 0;
   border: 1px solid var(--glass-border);
-  border-radius: 5px;
+  border-radius: var(--radius-xs);
   background: var(--glass-bg);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
 }
 
 .swimlane-column-header {
-  --column-accent: #8a9bb5;
+  --column-accent: var(--column-accent-default);
   --column-accent-muted: color-mix(in srgb, var(--column-accent) 32%, var(--text-faint));
   position: relative;
   z-index: 6;
@@ -289,7 +289,7 @@
   justify-content: center;
   width: 34px;
   height: 34px;
-  border-radius: 5px;
+  border-radius: var(--radius-xs);
   border: 1px solid transparent;
   background: transparent;
   color: var(--text);
@@ -335,7 +335,7 @@
   position: absolute;
   inset: 0 auto 0 0;
   width: 4px;
-  border-radius: 5px 0 0 5px;
+  border-radius: var(--radius-xs) 0 0 var(--radius-xs);
   background: var(--column-accent-muted);
 }
 
@@ -374,7 +374,7 @@
   align-items: center;
   min-height: 26px;
   padding: 0 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--surface-raised) 55%, transparent);
   color: var(--text);
   font-size: var(--text-sm);
@@ -392,7 +392,7 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: 5px;
+  border-radius: var(--radius-xs);
   border: 1px solid transparent;
   background: transparent;
   color: var(--text);
@@ -417,7 +417,7 @@
 }
 
 .swimlane-cell {
-  --column-accent: #8a9bb5;
+  --column-accent: var(--column-accent-default);
   --column-accent-muted: color-mix(in srgb, var(--column-accent) 32%, var(--text-faint));
   --column-accent-hover: color-mix(in srgb, var(--column-accent) 60%, var(--text));
   --column-bg-tint: color-mix(in srgb, var(--column-accent-muted) 6%, transparent);
@@ -462,7 +462,7 @@
   grid-auto-rows: max-content;
   align-content: start;
   gap: 16px;
-  min-height: 116px;
+  min-height: var(--swimlane-min-height);
   width: 100%;
   padding: 4px 2px;
   border: none;
@@ -505,7 +505,7 @@
   width: 24px;
   height: 24px;
   padding: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: 1px solid transparent;
   background: transparent;
   color: var(--text-muted);
@@ -545,7 +545,7 @@
   width: 24px;
   height: 24px;
   padding: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: 1px solid transparent;
   background: transparent;
   color: var(--text-muted);

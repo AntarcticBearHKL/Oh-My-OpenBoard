@@ -279,8 +279,8 @@
 
   /* Columns take full width (minus margins) and snap */
   .task-column {
-    min-width: 85vw;
-    max-width: 85vw;
+    min-width: var(--compact-panel-width);
+    max-width: var(--compact-panel-width);
     margin: 0 8px; /* Use horizontal margin for spacing */
     scroll-snap-align: center;
     display: flex;

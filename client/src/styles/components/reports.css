@@ -147,7 +147,7 @@ body.reports-page .reports-kpis {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: 520px;
+  min-height: var(--reports-kpis-min-height);
 }
 
 body.reports-page .rpt-card-header {
@@ -293,8 +293,8 @@ body.reports-page .rpt-chart {
   }
 
   body.reports-page .reports-kpis {
-    min-width: 85vw;
-    max-width: 85vw;
+    min-width: var(--compact-panel-width);
+    max-width: var(--compact-panel-width);
     height: 100%;
     margin: 0 var(--space-2);
     scroll-snap-align: center;

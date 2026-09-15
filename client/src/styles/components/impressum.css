@@ -25,7 +25,7 @@ body.impressum-page .legal-hero {
 body.impressum-page .page-eyebrow {
     margin: 0 0 10px;
     color: var(--color-primary);
-    font-size: 0.78rem;
+    font-size: var(--text-rem-078);
     font-weight: 700;
     letter-spacing: 0.16em;
     text-transform: uppercase;
@@ -53,7 +53,7 @@ body.impressum-page .page-card h2 {
 
 body.impressum-page .page-card h3 {
     margin: 24px 0 8px;
-    font-size: 0.95rem;
+    font-size: var(--text-rem-095);
     font-weight: 600;
 }
 
@@ -85,12 +85,12 @@ body.impressum-page .label {
 body.impressum-page .email-reveal-button {
     appearance: none;
     border: 1px solid var(--border);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     padding: 5px 10px;
     background: var(--surface-muted);
     color: var(--text);
     font: inherit;
-    font-size: 0.85rem;
+    font-size: var(--text-rem-085);
     font-weight: 600;
     cursor: pointer;
     transition: background var(--transition-fast);
@@ -111,7 +111,7 @@ body.impressum-page .email-reveal-value {
     padding: 5px 10px;
     background: var(--surface-muted);
     font-family: "SFMono-Regular", "Cascadia Code", "Fira Code", "Consolas", monospace;
-    font-size: 0.82rem;
+    font-size: var(--text-rem-082);
     line-height: 1.5;
     white-space: pre-wrap;
     word-break: break-word;
@@ -120,7 +120,7 @@ body.impressum-page .email-reveal-value {
 body.impressum-page .legal-footer {
     margin-top: 20px;
     color: var(--text-muted);
-    font-size: 0.88rem;
+    font-size: var(--text-rem-088);
 }
 
 /* Legal link in the main board control menu */
@@ -130,7 +130,7 @@ body.impressum-page .legal-footer {
     padding-top: 14px !important;
     text-decoration: none;
     color: var(--text-muted) !important;
-    font-size: 0.85rem;
+    font-size: var(--text-rem-085);
 }
 
 .legal-menu-link:hover {

@@ -1993,6 +1993,31 @@ badge/pill shapes 14 times, ten empty states, three modal shells, and hardcoded 
 sizes that bypass tokens. Those are taste decisions with a five-page blast radius; they want the
 user's direction, not an agent's.
 
+### P3, the part that was not taste: the hardcoded values are token-ised
+
+65 hardcoded declarations across 11 stylesheets now come from tokens. The user asked only for this
+half ("只做硬编码值 token 化"), and the constraint was that not one rendered value may change - so
+the proof is mechanical: a checker resolves every added `var(...)` back to its literal value
+(following theme-scoped definitions and nested `var()` fallbacks, normalising function-argument
+whitespace) and asserts that every removed literal is reproduced character for character. 65/65.
+
+Two of the 65 are worth recording because they are not plain replacements:
+
+- labels.css had `background: rgba(255,255,255,0.2)` immediately overridden by `...0.1` inside the
+  same block. The 0.2 was dead, so it was deleted rather than token-ised.
+- `--relationship-remove-bg` / `-hover` are theme-scoped (light `rgba(0,0,0,.08)`/`.18`, dark
+  `rgba(255,255,255,.1)`/`.2`). The dark-block declarations were replaced by those tokens, so the
+  literal only matches the token's *other-theme* definition - correct, and adjudicated against the
+  diff rather than waved through.
+
+29 tokens were added (panel/modal/sidebar widths, radii, rem sizes, scrollbar colours, three
+theme-scoped rgba pairs); the rest reuse existing scale tokens. The orphan `--column-width`
+fallback - referenced but never defined - becomes `var(--column-default-width)`, still 300px.
+
+The checker lived in the temp dir, not the repo: it compares HEAD against the working tree and has
+nothing to check once committed. If this is ever repeated, the proof to reproduce is "resolve the
+new value, compare to the old literal, fail on any difference" - not a screenshot.
+
 ## P4 - the open decisions, now taken
 
 **E2E suite: deleted (user decision).** Playwright was the third test layer and had been out of

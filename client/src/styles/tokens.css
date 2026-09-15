@@ -68,6 +68,12 @@
   --item-selected: rgba(23, 23, 23, 0.10);
   --selection-fill: rgba(28, 25, 23, 0.06);
 
+  /* Chip remove buttons — translucent overlays on coloured chips */
+  --label-remove-bg: rgba(255, 255, 255, 0.25);
+  --label-remove-bg-hover: rgba(255, 255, 255, 0.4);
+  --relationship-remove-bg: rgba(0, 0, 0, 0.08);
+  --relationship-remove-bg-hover: rgba(0, 0, 0, 0.18);
+
   /* Toggle switch */
   --switch-track: rgba(28, 25, 23, 0.18);
   --switch-knob: #ffffff;
@@ -131,6 +137,8 @@
   --space-6: 24px;
 
   /* Radius scale — base 0.625rem */
+  --radius-2xs: 3px;
+  --radius-xs: 5px;
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 10px;
@@ -147,12 +155,42 @@
   --text-xl: 23px;
   --text-2xl: 28px;
 
+  /* Verbatim rem sizes from pre-token component styles — kept in rem (not
+     converted to the px scale) so a changed root font size renders as before */
+  --text-rem-075: 0.75rem;
+  --text-rem-0775: 0.775rem;
+  --text-rem-078: 0.78rem;
+  --text-rem-082: 0.82rem;
+  --text-rem-085: 0.85rem;
+  --text-rem-0875: 0.875rem;
+  --text-rem-088: 0.88rem;
+  --text-rem-095: 0.95rem;
+
+  /* Fixed component dimensions — literal values preserved from pre-token CSS */
+  --sidebar-width: 240px;
+  --control-width: 220px;
+  --modal-width-sm: 480px;
+  --modal-width-md: 600px;
+  --modal-width-lg: 850px;
+  --modal-aside-width: 320px;
+  --skills-modal-width: 920px;
+  --skills-layout-height: 420px;
+  --skills-pane-width: 280px;
+  --column-default-width: 300px;
+  --column-min-height: 220px;
+  --swimlane-min-height: 116px;
+  --reports-kpis-min-height: 520px;
+  --compact-panel-width: 85vw;
+
   /* Board chrome surfaces */
   --sidebar-hover: rgba(23, 23, 23, 0.06);
   --row-hover: rgba(23, 23, 23, 0.06);
   --row-divider: rgba(28, 25, 23, 0.08);
   --focus-ring: rgba(28, 25, 23, 0.12);
   --primary-soft: rgba(23, 23, 23, 0.06);
+
+  /* Column accent — the fallback when a column carries no inline accent */
+  --column-accent-default: #8a9bb5;
 
   /* Canvas — cocoa paper with a low-emphasis dot grid */
   --canvas-bg: #f4f2ed;
@@ -218,6 +256,10 @@
   --item-hover: rgba(250, 250, 249, 0.08);
   --item-selected: rgba(250, 250, 249, 0.12);
   --selection-fill: rgba(250, 250, 249, 0.10);
+
+  /* Chip remove buttons — dark-mode overlay values */
+  --relationship-remove-bg: rgba(255, 255, 255, 0.1);
+  --relationship-remove-bg-hover: rgba(255, 255, 255, 0.2);
 
   /* Toggle switch */
   --switch-track: rgba(255, 255, 255, 0.18);

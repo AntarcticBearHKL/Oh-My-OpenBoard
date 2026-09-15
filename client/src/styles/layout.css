@@ -98,7 +98,7 @@
   box-shadow: var(--shadow-md);
   border-radius: var(--radius-popover);
   z-index: 200;
-  min-width: 220px;
+  min-width: var(--control-width);
   gap: 4px;
   animation: menu-appear 0.15s ease-out;
 }
@@ -145,7 +145,7 @@ a.control-btn {
   width: 36px;
   height: 20px;
   background: var(--switch-track);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   position: relative;
   margin-left: auto;
   cursor: pointer;
@@ -231,7 +231,7 @@ a.control-btn {
   font-size: var(--text-md);
   font-family: inherit;
   cursor: pointer;
-  max-width: 220px;
+  max-width: var(--control-width);
 }
 
 .control-select:hover {
@@ -259,8 +259,8 @@ a.control-btn {
 }
 
 .board-sidebar {
-  flex: 0 0 240px;
-  width: 240px;
+  flex: 0 0 var(--sidebar-width);
+  width: var(--sidebar-width);
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;

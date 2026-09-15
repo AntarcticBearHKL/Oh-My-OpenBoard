@@ -34,7 +34,7 @@
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-popover);
   width: 90%;
-  max-width: 480px;
+  max-width: var(--modal-width-sm);
   max-height: 90vh;
   overflow-y: auto;
   overflow-x: hidden;
@@ -109,13 +109,13 @@
 
 /* Large modal variant */
 .modal-large .modal-content {
-  max-width: 600px;
+  max-width: var(--modal-width-md);
 }
 
 /* Task modal: wider for 2-column layout on desktop */
 @media (min-width: 768px) {
   #task-modal .modal-content {
-    max-width: 850px;
+    max-width: var(--modal-width-lg);
   }
 }
 
@@ -139,8 +139,8 @@
   }
 
   .task-form-column-right {
-    flex: 0 0 320px;
-    min-width: 320px;
+    flex: 0 0 var(--modal-aside-width);
+    min-width: var(--modal-aside-width);
   }
 }
 
