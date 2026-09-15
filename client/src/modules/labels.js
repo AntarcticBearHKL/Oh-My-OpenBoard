@@ -1,8 +1,8 @@
 import { generateUUID } from './utils.js';
+import { MAX_LABEL_NAME_LENGTH } from './constants.js';
 import { getActiveBoardId, loadLabels, loadTasks } from './storage.js';
 import { scheduleDomainEvent } from './event-sourcing/emitter.js';
 
-const MAX_LABEL_NAME_LENGTH = 40;
 
 /**
  * Normalize a label name for comparison.
