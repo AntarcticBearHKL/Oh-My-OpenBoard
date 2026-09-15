@@ -86,7 +86,6 @@ function createLabelListItem(label) {
           if (ok) {
             deleteLabel(label.id);
             renderLabelsList();
-            emit(DATA_CHANGED);
           }
         }
       }, h('span', { 'data-lucide': 'trash-2' }))
