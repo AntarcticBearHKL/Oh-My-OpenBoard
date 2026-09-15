@@ -800,3 +800,25 @@ against CONTEXT.md before moving anything:
 **Do not start this without a clean checkpoint and the full suite green.** These files
 sit on the event-sourcing read model; a split that changes module evaluation order can
 turn a static import into a cycle and break projection in ways the build will not catch.
+
+### Batch 10 progress, and why the next files are not as cheap as they look
+
+**Done: boards.js (251 to 176 lines).** Its built-in template group (the
+`import.meta.glob` of `../templates/*.json`, the template lookup, the select
+population and the apply path) was genuinely self-contained - nothing else in the file
+referenced it - so it moved to `board-templates.js`. Note the extraction also shrank
+`boards.js`'s imports: five storage functions and `normalizeBoardModelIds` were used
+only by the moved code and are now imported by the new module instead.
+
+**`board-sidebar.js` (267 lines) looked like the next cheap win on line count alone,
+but is not.** Its first two functions total nine lines; everything else is a single
+`initializeBoardSidebar()` spanning roughly 233 lines, and the work inside it is done
+by nested functions that close over the outer scope. Pulling a piece out of a closure
+like that is a refactor of the module's state sharing, not a file split, and it cannot
+be checked by line count or by the build.
+
+**Lesson for the rest of Batch 10:** line count predicts the cost of a split only when
+the file is already organised as separate top-level functions. For every remaining file,
+check the shape first - list the top-level definitions and look at the largest one. A
+file that is one long function is a different, larger job than a file that is many small
+ones, even at identical line counts.
