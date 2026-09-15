@@ -40,3 +40,7 @@ export function writeLocalJson(key, value) {
     return;
   }
 }
+
+export function nowIso() {
+  return new Date().toISOString();
+}

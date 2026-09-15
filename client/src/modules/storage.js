@@ -1,4 +1,4 @@
-import { generateUUID } from './utils.js';
+import { generateUUID, nowIso } from './utils.js';
 import { normalizePriority as sharedNormalizePriority, isHexColor, defaultColumnColor, normalizeStringKeys, normalizeRelationships, normalizeSubTasks } from './normalize.js';
 import { DONE_COLUMN_ID, DONE_COLUMN_ROLE, FIXED_COLUMNS, NO_BOARDS_KEY, isDoneColumn } from './constants.js';
 import { openStore, KV_STORE, READ_MODEL_STORE, schedulePersist, scheduleDelete, scheduleReadModelPersist, scheduleReadModelDelete, keyFor, readModelKeyFor, _flushPersistsForTesting as _flushIdbPersistsForTesting, _resetIdbForTesting } from './idb-store.js';
@@ -74,10 +74,6 @@ const readModelProjector = createReadModelProjector({
 });
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-
-function nowIso() {
-  return new Date().toISOString();
-}
 
 async function normalizeIdbState(db) {
   const rawBoards = safeParseArray(await db.get(KV_STORE, BOARDS_KEY));

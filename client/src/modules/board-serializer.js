@@ -1,7 +1,7 @@
 // Board import normalizer — remaps non-UUID ids and coerces field values on import.
 // Changes when: import format changes, new fields need cross-entity id remapping.
 
-import { generateUUID } from './utils.js';
+import { generateUUID, nowIso } from './utils.js';
 import { DONE_COLUMN_ID, DONE_COLUMN_ROLE, LEGACY_COLUMN_ALIASES, isDoneColumn } from './constants.js';
 import {
   isHexColor,
@@ -12,10 +12,6 @@ import {
 import { normalizeWipLimit } from './wip-limit.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-function nowIso() {
-  return new Date().toISOString();
-}
 
 function isUuid(value) {
   return typeof value === 'string' && UUID_RE.test(value.trim());
