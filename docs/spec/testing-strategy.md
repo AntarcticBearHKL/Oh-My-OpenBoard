@@ -1,18 +1,19 @@
 # Testing Strategy
 
-This project uses a lean four-layer test stack designed for a pure JavaScript Vite app:
+This project uses a lean three-layer test stack designed for a pure JavaScript Vite app:
 
 - `Vitest` for fast unit tests
-- `Vitest` + `@testing-library/dom` for DOM integration tests
-- `MSW` for mocked API behavior in Vitest suites
-- `Playwright` for end-to-end, visual, and accessibility smoke coverage
+- `Vitest` + `jsdom` + `@testing-library/dom` for DOM integration tests
+- `node harness/test.mjs` for harness tests
+
+DOM integration tests mock network behavior with `MSW` from `tests/mocks/`.
 
 ## Goals
 
 - Keep pure logic tests fast and isolated.
 - Verify DOM behavior without requiring a real browser for every change.
 - Mock network behavior consistently even as the app adds more API-backed features.
-- Reserve Playwright for high-value user journeys and browser-level assertions.
+- Check high-value user journeys and page-level behavior manually in a browser.
 
 ## Folder Layout
 
@@ -20,8 +21,6 @@ This project uses a lean four-layer test stack designed for a pure JavaScript Vi
 tests/
   unit/
   dom/
-  e2e/
-  performance/
   mocks/
 ```
 
@@ -29,7 +28,6 @@ Supporting folders remain valid:
 
 - `tests/fixtures/` for JSON data and large sample boards
 - `tests/helpers/` for shared test-only utilities
-- `tests/test-plans/` for manual or generated Playwright planning artifacts
 
 ## Naming Convention
 
@@ -70,26 +68,12 @@ Examples:
 - `tests/mocks/handlers.js`
 - `tests/mocks/import-export.handlers.js`
 
-### End-to-end tests
-
-- Location: `tests/e2e/`
-- File name: `<journey>.spec.ts`
-- Scope: full user journeys, cross-module regressions, stable screenshots, and accessibility smoke checks on critical flows
-
-Examples:
-
-- `tests/e2e/create-task.spec.ts`
-- `tests/e2e/validation-missing-title.spec.ts`
-
 ## Scripts
 
-- `npm test` — run unit, DOM, and E2E suites in sequence
+- `npm test` — run unit and DOM suites in sequence
 - `npm run test:unit` — run only unit tests
 - `npm run test:dom` — run only DOM integration tests
-- `npm run test:e2e` — run only Playwright E2E tests
-- `npm run test:perf` — run real-Chromium large-board performance and memory budgets
-- `npm run test:ui` — open Playwright UI mode
-- `npm run test:debug` — run Playwright in debug mode
+- `node harness/test.mjs` — run the harness tests
 - `npm run test:overview` — regenerate `tests/TEST-OVERVIEW.md` from the test source
 
 ## What Goes Where
@@ -111,24 +95,12 @@ Examples:
 - A Vitest suite needs consistent success, empty, error, or timeout responses.
 - You want to reuse the same network behavior across multiple DOM or integration tests.
 
-### Put a test in `tests/e2e/` when:
-
-- The behavior spans multiple modules or requires a real browser.
-- Drag-drop, routing, import/export flows, or persistent browser storage must be exercised together.
-- You need screenshots or accessibility smoke checks on stable views.
-
-### Put a test in `tests/performance/` when:
-
-- It needs real Chromium timing, heap, retained-DOM, garbage-collection, or crash measurements.
-- It uses deterministic synthetic data and enforces a documented repeated-run baseline.
-- It is too expensive or environment-sensitive for the functional E2E suite.
-
 ## Recommended Growth Pattern
 
 1. Start with `tests/unit/` for new pure helpers.
 2. Add `tests/dom/` coverage when a feature has meaningful UI behavior.
 3. Add or extend `tests/mocks/` once the feature depends on network responses.
-4. Add `tests/e2e/` only for critical journeys and regressions that require a real browser.
+4. Exercise critical cross-module journeys and regressions manually in a browser before release.
 
 ## Current Scaffold
 

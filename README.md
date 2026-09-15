@@ -220,12 +220,13 @@ git push origin main --tags
 
 ### Run Tests
 
-This project uses a four-layer test stack:
+This project uses a three-layer test stack:
 
 - `Vitest` for pure unit tests in `tests/unit/`
-- `Vitest` + `@testing-library/dom` for DOM integration tests in `tests/dom/`
-- `MSW` for mocked API behavior shared by Vitest suites from `tests/mocks/`
-- `Playwright` for end-to-end and visual/accessibility smoke coverage in `tests/e2e/`
+- `Vitest` + `jsdom` + `@testing-library/dom` for DOM integration tests in `tests/dom/`, with `MSW` mocking API behavior from `tests/mocks/`
+- `node harness/test.mjs` for harness tests
+
+For page-level behavior, use a browser as the manual check — the harness serves the build on port `8787`.
 
 Run the full automated test stack:
 
@@ -245,16 +246,10 @@ Run only the DOM integration tests:
 npm run test:dom
 ```
 
-Run only the Playwright E2E tests:
+Run the harness tests (from the repository root):
 
 ```bash
-npm run test:e2e
-```
-
-Run only the create-task E2E tests ([tests/e2e/create-task.spec.ts](tests/e2e/create-task.spec.ts)):
-
-```bash
-npm run test:e2e -- tests/e2e/create-task.spec.ts
+node harness/test.mjs
 ```
 
 The detailed strategy, folder layout, and naming convention live in [docs/testing-strategy.md](docs/testing-strategy.md).
