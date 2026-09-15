@@ -2197,3 +2197,46 @@ re-measured after the deletions). `client/dist` was rewritten by the mandated bu
 The two checkers were temp-dir scripts and are not in the repo; the reproducible assertions are
 "strip the import and count the name" (imports) and "no literal producer anywhere in HTML/JS"
 (selectors).
+
+## Whole-codebase review, after the cleanup
+
+Measured now, nothing excluded:
+
+| | |
+|---|---|
+| `client/src` | 110 `.js` files, 13,964 lines |
+| largest files | `task-position.js` 239, `reports-main.js` 239, `swimlanes.js` 233, `reducer.js` 233, `board-sidebar.js` 232, `task-card-meta.js` 227 - **all under the 250 ceiling** |
+| layout | 100 modules in `modules/`, 9 in `modules/event-sourcing/`, 23 stylesheets |
+| acceptance | build 0 · unit 307 (29 files) · dom 178 (25) · harness 7 pass / 0 fail |
+
+**Structure.** The shape this work produced is flat and leaf-ward: shared state lives in sinks that
+import nothing (`storage-state.js`, `task-modal-state.js`, `drag-session.js`), UI primitives sit
+underneath them, and no module imports the module it was cut from. The fourteen splits raised the
+module count on purpose - one concern per file, every file under the ceiling, modules named for what
+they own rather than for the file they came out of. The cost is real (more files to open) and the
+benefit is that the largest module is now 239 lines instead of 1365.
+
+**Logic.** The event-sourced read model still has exactly one writer
+(`event-sourcing/read-model-projector.js`, ADR-0005) and domain events are still the only producers.
+The dormant legacy LWW path is gone (`autosync.js` no longer exists); `sync.js` survives only as the
+PocketBase client/auth plus `deleteBoardRemote`, which is what the audit asked for. Both P0s fixed
+today were "a name used but no longer bound" - the class of mistake neither the build nor the suite
+can see, which is why each was found by opening the page rather than by running tests.
+
+**Conciseness.** Dead content has now been swept twice - the audit's inventory, then today's pass
+with a binding checker - and every deletion was proven unreferenced first (the greps are in the entry
+above). What remains genuinely redundant is concentrated in the design system: the audit's §2.4
+lists button variants repeated across five stylesheets, the icon-button shape in five places, the
+glass shell on ~15 surfaces, fourteen badge/pill shapes, ten empty states and three modal shells.
+That is a taste decision with a five-page blast radius and the user has scoped it out for now. The
+rest of the duplication list (§2.1-2.3) is converged.
+
+**Open, and deliberately not decided here:** `globalSettings` (keep it and add a `scope:'global'`
+emitter, or delete the inert path) and whether `GET /api/health` should keep doubling as the
+PocketBase probe. Both are user decisions, listed in §4.
+
+**A note on what this review is not.** It is not a licence for a second blanket rewrite. The
+codebase just went through fourteen splits, six convergences, two P0 fixes, an E2E removal, a
+harness feature and a token-isation pass, with the suite green after each. Rewriting further would
+trade a known-good state for unverifiable churn, especially in the areas with no automated coverage
+(all of `styles/**`, and the page-level interactions that only a browser exercises).
