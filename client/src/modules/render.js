@@ -44,7 +44,6 @@ function renderStandardBoard(container, sortedColumns, visibleTasks, settings, l
     container.appendChild(columnEl);
 
     const tasksList = columnEl.querySelector('.tasks');
-    const taskCounter = columnEl.querySelector('.task-counter');
 
     const { columnTasks, tasksToRender, remaining } = selectColumnRenderPlan(column.id, visibleTasks);
 

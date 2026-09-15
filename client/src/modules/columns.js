@@ -1,5 +1,4 @@
-import { generateUUID } from './utils.js';
-import { getActiveBoardId, isDoneColumnId, loadColumns, loadTasks } from './storage.js';
+import { getActiveBoardId, loadColumns } from './storage.js';
 import { scheduleDomainEvent } from './event-sourcing/emitter.js';
 
 export function toggleColumnCollapsed(columnId) {

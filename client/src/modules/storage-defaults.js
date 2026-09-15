@@ -17,15 +17,6 @@ export function defaultLabels() {
   ];
 }
 
-function columnIdByName(columns, name) {
-  return columns.find((column) => column.name === name)?.id || columns[0]?.id || '';
-}
-
-function labelIdByName(labels, name) {
-  return labels.find((label) => label.name === name)?.id || '';
-}
-
-
 export function defaultBoardData(includeTasks = true) {
   const columns = defaultColumns();
   const labels = defaultLabels();

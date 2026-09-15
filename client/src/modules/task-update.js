@@ -1,4 +1,4 @@
-import { getActiveBoardId, isDoneColumnId, loadColumns, loadLabels, loadTasks } from './storage.js';
+import { getActiveBoardId, isDoneColumnId, loadColumns, loadTasks } from './storage.js';
 import { normalizePriority, normalizeRelationships, normalizeSubTasks } from './normalize.js';
 import {
   isBlockedColumnId,
@@ -109,7 +109,6 @@ export function updateTask(taskId, title, description, priority, dueDate, column
     }
     const previousLabels = Array.isArray(previousTask.labels) ? previousTask.labels : [];
     const nextLabels = Array.isArray(labels) ? labels : [];
-    const labelRecords = loadLabels();
     const previousRelationshipKeys = new Set(oldRelationships.map(relationshipKey));
     const nextRelationshipKeys = new Set(newRelationships.map(relationshipKey));
 

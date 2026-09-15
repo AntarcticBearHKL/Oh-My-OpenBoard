@@ -1,4 +1,3 @@
-import { loadColumns } from './storage.js';
 import {
   normalizeAcceptanceCriteria,
   normalizeAttachments,
@@ -59,18 +58,6 @@ export function normalizeDueDate(value) {
   return date;
 }
 
-function getColumnName(columnId) {
-  return loadColumns().find((column) => column.id === columnId)?.name || '';
-}
-
-function getLabelName(labels, labelId) {
-  return labels.find((label) => label.id === labelId)?.name || '';
-}
-
-function getTaskTitle(tasks, taskId) {
-  return tasks.find((task) => task.id === taskId)?.title || '';
-}
-
 export function relationshipKey(relationship) {
   return `${relationship.targetTaskId}:${relationship.type}`;
 }
@@ -83,7 +70,6 @@ export function relationshipKey(relationship) {
 export function syncRelationshipInverses(tasks, taskId, oldRelationships, newRelationships, at) {
   const oldMap = new Map(oldRelationships.map((r) => [r.targetTaskId, r.type]));
   const newMap = new Map(newRelationships.map((r) => [r.targetTaskId, r.type]));
-  const sourceTask = tasks.find((t) => t.id === taskId);
 
   for (const [targetId, newType] of newMap) {
     const target = tasks.find((t) => t.id === targetId);

@@ -7,10 +7,9 @@ import { handleTaskDrop } from './task-drop.js';
 let taskSortables = [];
 
 function shouldForceFallbackForTasks() {
-  // Sortable's JS fallback is required on most mobile/touch environments
-  // (native HTML5 drag/drop is unreliable or unavailable), but it also
-  // makes Playwright's locator.dragTo() ineffective. Prefer native DnD
-  // on fine pointers (mouse/trackpad).
+  // Native HTML5 drag/drop is unreliable or unavailable on most mobile/touch
+  // environments, so the JS fallback is what makes touch drag work. Prefer
+  // native DnD on fine pointers (mouse/trackpad), where it is dependable.
   const hasTouchPoints =
     typeof navigator !== 'undefined' &&
     (navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0);

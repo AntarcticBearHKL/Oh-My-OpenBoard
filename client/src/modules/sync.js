@@ -3,19 +3,9 @@ import {
   loadColumnsForBoard,
   loadTasksForBoard,
   loadLabelsForBoard,
-  loadSettingsForBoard,
   loadDeletedColumnsForBoard,
   loadDeletedTasksForBoard,
   loadDeletedLabelsForBoard,
-  purgeDeleted,
-  saveColumnsForBoard,
-  saveTasksForBoard,
-  saveLabelsForBoard,
-  saveSettingsForBoard,
-  mergeBoardsFromRemote,
-  getBoardById,
-  setActiveBoardId,
-  getActiveBoardId,
 } from './storage.js';
 import { readLocalJson } from './utils.js';
 
@@ -94,32 +84,12 @@ function getPbId(syncMap, entityType, localId) {
   return syncMap[entityType]?.[localId] || null;
 }
 
-function setPbId(syncMap, entityType, localId, pbId) {
-  if (!syncMap[entityType]) syncMap[entityType] = {};
-  syncMap[entityType][localId] = pbId;
-}
-
 async function deleteMappedRecord(collection, syncMap, entityType, localId) {
   const pbId = getPbId(syncMap, entityType, localId);
   if (!pbId) return;
   try { await pb.collection(collection).delete(pbId); } catch { /* 404 ok */ }
   delete syncMap[entityType][localId];
 }
-
-async function upsertRecord(collection, syncMap, entityType, localId, data) {
-  const pbId = getPbId(syncMap, entityType, localId);
-  if (pbId) {
-    try {
-      return await pb.collection(collection).update(pbId, data);
-    } catch (err) {
-      if (err?.status !== 404) throw err;
-    }
-  }
-  const record = await pb.collection(collection).create(data);
-  setPbId(syncMap, entityType, localId, record.id);
-  return record;
-}
-
 
 export async function deleteBoardRemote(boardId) {
   if (!(await ensureAuthenticated())) throw new Error('Not authenticated');

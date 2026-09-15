@@ -1,11 +1,9 @@
-import { generateUUID } from './utils.js';
 import { setupModalCloseHandlers } from './modal-utils.js';
 import { emit, on, DATA_CHANGED } from './events.js';
 import {
   ensureBoardsInitialized,
   createBoard,
-  setActiveBoardId,
-  getActiveBoardName
+  setActiveBoardId
 } from './storage.js';
 import { applyBoardTemplate, getBuiltInBoardTemplates, populateTemplateSelect } from './board-templates.js';
 import { alertDialog } from './dialog.js';

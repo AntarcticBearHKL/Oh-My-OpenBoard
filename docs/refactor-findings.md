@@ -2085,3 +2085,115 @@ here). The log shows a *successful* start - banner, `events: 52` - immediately b
 `String.prototype.replace` treats `$'` in the *replacement* as "everything after the match", which
 silently spliced a whole `after(...)` block into the middle of a generated test file - use
 `split(...).join(...)` for scripted edits, not `replace`.
+
+## P5 - the dead E2E/Playwright residue and the unused bindings are gone
+
+The P4 "reported, not deleted" list plus the batch-10 leftovers, now deleted. Every deletion was
+preceded by a zero-reference grep; nothing was re-deleted that an earlier batch already took
+(`schema.js`, `.board-search`, `.footer`, `#sync-btn`, `.priority-badge`, `.placeholder`,
+`[data-dragging]` are all long gone - re-derived, not assumed).
+
+**Deleted**
+
+- `client/tests/test-plans/swimlane-coverage-gap-assessment.plan.md` (264 lines) and
+  `task-creation-with-labels.plan.md` (326 lines) - E2E plans for the suite deleted in P4; every named
+  spec (`seed.spec.ts`, `search-filter.spec.ts`, ...) lived under `tests/e2e/`, which no longer exists.
+- `.github/agents/playwright-test-generator.agent.md`, `playwright-test-healer.agent.md`,
+  `playwright-test-planner.agent.md` - Playwright agent configs.
+- `temporarilyHideTaskModalForLabelsManager` (`task-modal-labels.js:53-57`).
+- the unused `taskCounter = columnEl.querySelector('.task-counter')` in `render.js`'s
+  `renderStandardBoard`.
+- 15 unused imports and 8 unused local declarations (lists below).
+- five design tokens defined twice and referenced nowhere (list below).
+
+**Evidence greps**
+
+- plans:
+  `git grep -n -i -E "swimlane-coverage-gap-assessment|task-creation-with-labels" -- . ':(exclude)graphify-out' ':(exclude)client/tests/test-plans'`
+  -> only `docs/codebase/codebase.txt:160-161` (a generated file inventory) and
+  `docs/refactor-findings.md:2044-2045` (this record).
+  `git grep -n "test-plans" -- . ':(exclude)graphify-out' ':(exclude)client/tests/test-plans'`
+  -> adds `docs/spec/testing-strategy.md:32` (prose).
+- agents:
+  `git grep -n -i -E "playwright-test-generator|playwright-test-healer|playwright-test-planner" -- . ':(exclude)graphify-out' ':(exclude).github/agents'`
+  -> exit 1, no hits.
+- dead function: `git grep -n "temporarilyHide" -- client/src client/tests harness` -> only the
+  definition at `task-modal-labels.js:53`.
+- taskCounter: `git grep -n "taskCounter"` -> `column-element.js:171,176,195` (a different, used
+  local) and `render.js:47` (the unused one).
+- unused imports/locals: a Node checker in the temp dir (`node find-unused.mjs client/src`) that
+  strips each `import` statement, then counts occurrences of every binding with a `[A-Za-z0-9_$]`
+  identifier regex (so `$id` is matched whole, not by a `\b` boundary), plus every non-exported
+  `const`/`let`/`var`/`function`/`class` name. It reported 15/8, then after the first pass reported
+  `(0)`/`(0)` on the second run (cascades are listed below).
+- CSS/tokens: a second temp-dir Node checker (`node css-audit.mjs client/src`) that extracts every
+  class selector from `client/src/styles/**` and looks for a literal producer across all
+  `client/src` HTML/JS, and every `--token` definition against all CSS/JS/HTML. It found 11 of 395
+  class selectors without a literal producer (all dynamic, see kept) and 5 of 148 tokens with no
+  reference beyond their own definitions; after the deletion it reports `(0 of 143)`.
+- dynamic producers (kept classes): `git grep -n "priority-" client/src/modules` ->
+  `priority-${priority}` at `task-card-meta.js:77`, `task-modal-summary.js:39`,
+  `notifications.js:49`; `git grep -n "task-type--" client/src/modules client/src/*.html` ->
+  `task-type--${type}` at `task-card-meta.js:67`, `task-modal-summary.js:25`, `index.html:185`;
+  `git grep -n "relationship-badge--" client/src/modules` ->
+  `relationship-badge--${rel.type}` at `task-modal-relationships.js:19`.
+- `.sortable-ghost`: `task-modal-subtasks.js:112` builds a `new Sortable(listEl, {...})` with no
+  `ghostClass`, so Sortable's default `sortable-ghost` applies; `git grep -n ghostClass
+  client/src/modules` shows only `dragdrop.js:62` (`task-ghost`) and `swimlane-order.js:110`
+  (`swimlane-order-ghost`) - which is why the rule looked orphaned.
+- runtime tokens: `git grep -n -E -- "--swimlane-column-count|--swimlane-grid-template"
+  client/src/modules` -> `swimlane-renderer.js:168-169`; `git grep -n -- "--column-width"
+  client/src` -> `column.css:25-27` only (referenced with a live fallback, never defined).
+
+**Unused imports removed** (each name appeared only in its own `import` statement)
+
+- `boards.js`: `generateUUID`; `getActiveBoardName`
+- `columns.js`: the whole `./utils.js` import plus `isDoneColumnId`, `loadTasks`
+- `sync.js`: `loadSettingsForBoard`, `purgeDeleted`, `saveColumnsForBoard`, `saveTasksForBoard`,
+  `saveLabelsForBoard`, `saveSettingsForBoard`, `mergeBoardsFromRemote`, `getBoardById`,
+  `setActiveBoardId`, `getActiveBoardId`
+- `task-helpers.js`: `loadColumns` (orphaned by deleting `getColumnName`)
+- `task-update.js`: `loadLabels` (orphaned by deleting `labelRecords`)
+
+**Unused locals removed**
+
+- `storage-defaults.js`: `columnIdByName`, `labelIdByName`
+- `sync.js`: `upsertRecord`; `setPbId` (orphaned by deleting `upsertRecord`)
+- `task-helpers.js`: `getColumnName`, `getLabelName`, `getTaskTitle`, `sourceTask`
+- `task-update.js`: `labelRecords`
+
+**Dead tokens removed**
+
+`--column-bg-tint`, `--task-bg-tint`, `--task-border-tint`, `--task-hover-border-tint`,
+`--task-hover-shadow` - each defined in `.task-column` (`column.css:13-17`) and again in
+`.swimlane-cell` (`column.css:423-427`) and referenced nowhere else. The rule's live tint now comes
+from `--column-accent-muted`, which stays.
+
+**Kept (still referenced)**
+
+- `.priority-high/-urgent/-medium/-low` (`card.css:203-218`) - dynamic producers listed above.
+- `.task-type--story/-bug/-spike` (`card.css:285-300`) - dynamic producers listed above.
+- `.relationship-badge--prerequisite/-dependent/-related` (`labels.css:278-290`) - dynamic producer
+  listed above.
+- `.sortable-ghost` (`dragdrop.css:97`) - Sortable's default on the subtask list (evidence above).
+- `--column-width` (`column.css:25-27`) - referenced three times; orphan, not dead.
+- `--swimlane-column-count` / `--swimlane-grid-template` - set at runtime (evidence above).
+- `docs/codebase/codebase.txt` and `docs/spec/testing-strategy.md:32` still name `tests/test-plans/`;
+  left alone - generated/prose docs, and this document is the handover record itself. `graphify-out/`
+  is a generated index and is likewise untouched.
+
+**Verification after the deletions**
+
+```
+cd client; npm run build        # exit 0 (rebuilt client/dist; tracked, left unstaged)
+cd client; npm run test:unit    # Test Files 29 passed, Tests 307 passed
+cd client; npm run test:dom     # Test Files 25 passed, Tests 178 passed
+node harness/test.mjs           # tests 7, pass 7, fail 0
+```
+
+Every `client/src` JS module stays under the 250-line ceiling (largest is `task-position.js` at 209;
+re-measured after the deletions). `client/dist` was rewritten by the mandated build and was not staged.
+
+The two checkers were temp-dir scripts and are not in the repo; the reproducible assertions are
+"strip the import and count the name" (imports) and "no literal producer anywhere in HTML/JS"
+(selectors).

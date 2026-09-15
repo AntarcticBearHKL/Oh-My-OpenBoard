@@ -50,11 +50,6 @@ function renderActiveTaskLabels() {
     ));
   });
 }
-function temporarilyHideTaskModalForLabelsManager() {
-  const taskModal = $id('task-modal');
-  if (!taskModal) return;
-  taskModal.classList.add('hidden');
-}
 export function restoreTaskModalAfterLabelsManager() {
   const taskModal = $id('task-modal');
   if (!taskModal) return;

@@ -10,11 +10,6 @@
   --column-accent: var(--column-accent-default);
   --column-accent-muted: color-mix(in srgb, var(--column-accent) 32%, var(--text-faint));
   --column-accent-hover: color-mix(in srgb, var(--column-accent) 60%, var(--text));
-  --column-bg-tint: color-mix(in srgb, var(--column-accent-muted) 6%, transparent);
-  --task-bg-tint: color-mix(in srgb, var(--column-accent-muted) 5%, transparent);
-  --task-border-tint: color-mix(in srgb, var(--column-accent-muted) 18%, transparent);
-  --task-hover-border-tint: color-mix(in srgb, var(--column-accent-muted) 38%, transparent);
-  --task-hover-shadow: color-mix(in srgb, var(--column-accent-muted) 14%, transparent);
 
   position: relative;
   overflow: hidden;
@@ -420,11 +415,6 @@
   --column-accent: var(--column-accent-default);
   --column-accent-muted: color-mix(in srgb, var(--column-accent) 32%, var(--text-faint));
   --column-accent-hover: color-mix(in srgb, var(--column-accent) 60%, var(--text));
-  --column-bg-tint: color-mix(in srgb, var(--column-accent-muted) 6%, transparent);
-  --task-bg-tint: color-mix(in srgb, var(--column-accent-muted) 5%, transparent);
-  --task-border-tint: color-mix(in srgb, var(--column-accent-muted) 18%, transparent);
-  --task-hover-border-tint: color-mix(in srgb, var(--column-accent-muted) 38%, transparent);
-  --task-hover-shadow: color-mix(in srgb, var(--column-accent-muted) 14%, transparent);
 
   display: flex;
   flex-direction: column;
