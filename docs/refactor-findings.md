@@ -1030,3 +1030,24 @@ Sortable config plus `shouldForceFallbackForTasks`.
 
 Verification: build 0, unit 307/307, dom 180/180 (the DOM suite drives the collapsed-drop
 flow through the `wasHidden` dataset), and the board loads with a clean console.
+
+### Batch 10: notifications.js split (380 to 179)
+
+Three layers were stacked in one file. `notification-tasks.js` takes the due-task selection
+and formatting (`getNotificationTasks`, `formatDueStatus`), which both the banner and the
+modal consume. `notifications-banner.js` takes the banner: its localStorage-backed hidden
+preference, the toggle sync and the whole `renderNotificationBanner`.
+
+The banner is the only thing that opens the notifications modal, and the modal stays in
+notifications.js, so instead of importing back the banner's render takes that one action as a
+parameter - `renderNotificationBanner(onShowMore)` - and notifications.js passes
+`showNotificationsModal` at both call sites (the refresh and the debounced resize).
+
+`notifications.js` has no Vitest coverage (audit §7.1), so it was checked in the browser: the
+bell opens the modal, the due-task empty state renders, and toggling "Show notification
+banner" runs `setNotificationBannerHidden` + `refreshNotifications` with a clean console.
+
+**Known gap:** the banner's *item* rendering path (the width-fitting loop and
+`formatDueStatus` with a real task) is still unverified by anything. Exercising it needs a
+task with a due date, which would write two events into the harness log, so it was not done
+here. That path is the one now in `notifications-banner.js`.

@@ -1,213 +1,12 @@
-import { isDoneColumnId, loadTasks, loadSettings } from './storage.js';
+import { loadSettings } from './storage.js';
 import { showEditModal } from './modals.js';
 import { setupModalCloseHandlers } from './modal-utils.js';
 import { renderIcons } from './icons.js';
-import { calculateDaysUntilDue } from './dateutils.js';
 import { $id, h } from './dom.js';
+import { getNotificationTasks, formatDueStatus } from './notification-tasks.js';
+import { setNotificationBannerHidden, syncNotificationBannerVisibilityToggle, renderNotificationBanner } from './notifications-banner.js';
 
-const NOTIFICATION_BANNER_HIDDEN_KEY = 'kanbanNotificationBannerHidden';
 let bannerResizeTimeout;
-
-function isNotificationBannerHidden() {
-  return localStorage.getItem(NOTIFICATION_BANNER_HIDDEN_KEY) === 'true';
-}
-
-function setNotificationBannerHidden(hidden) {
-  localStorage.setItem(NOTIFICATION_BANNER_HIDDEN_KEY, hidden ? 'true' : 'false');
-}
-
-function syncNotificationBannerVisibilityToggle() {
-  const toggle = $id('notification-banner-visibility-toggle');
-  if (!toggle) return;
-  toggle.checked = !isNotificationBannerHidden();
-}
-
-/**
- * Get all tasks that are due within the threshold or overdue.
- * Excludes tasks in the 'done' column.
- * @returns {Array} Array of task objects with additional `daysUntilDue` property
- */
-function getNotificationTasks() {
-  const tasks = loadTasks();
-  const settings = loadSettings();
-  const thresholdDays = Number.isFinite(settings.notificationDays) ? settings.notificationDays : 3;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  return tasks
-    .filter((task) => {
-      // Exclude tasks in the permanent Done column.
-      if (isDoneColumnId(task.column)) return false;
-
-      // Must have a due date
-      const dueDate = (task.dueDate || '').toString().trim();
-      if (!dueDate) return false;
-
-      // Calculate days until due using shared utility
-      const daysUntilDue = calculateDaysUntilDue(dueDate, today);
-      if (daysUntilDue === null) return false;
-
-      // Include if overdue or within threshold
-      return daysUntilDue <= thresholdDays;
-    })
-    .map((task) => {
-      const daysUntilDue = calculateDaysUntilDue(task.dueDate, today);
-
-      return {
-        ...task,
-        daysUntilDue
-      };
-    })
-    .sort((a, b) => a.daysUntilDue - b.daysUntilDue); // Most urgent first
-}
-
-/**
- * Format the due date display text based on days until due.
- * @param {number} daysUntilDue
- * @param {string} dueDate - The original due date string
- * @param {string} locale - Locale for formatting
- * @returns {Object} { text: string, className: string }
- */
-function formatDueStatus(daysUntilDue, dueDate, locale) {
-  const dueDateParsed = new Date(dueDate + 'T00:00:00');
-  const formattedDate = dueDateParsed.toLocaleDateString(locale || undefined);
-
-  if (daysUntilDue < 0) {
-    const overdueDays = Math.abs(daysUntilDue);
-    return {
-      text: `Overdue by ${overdueDays} day${overdueDays === 1 ? '' : 's'} (${formattedDate})`,
-      className: 'overdue'
-    };
-  } else if (daysUntilDue === 0) {
-    return {
-      text: `Due today (${formattedDate})`,
-      className: 'overdue'
-    };
-  } else if (daysUntilDue === 1) {
-    return {
-      text: `Due tomorrow (${formattedDate})`,
-      className: 'due-soon'
-    };
-  } else {
-    return {
-      text: `Due in ${daysUntilDue} days (${formattedDate})`,
-      className: 'due-soon'
-    };
-  }
-}
-
-/**
- * Render the notification banner.
- */
-function renderNotificationBanner() {
-  const banner = $id('notification-banner');
-  const list = $id('notification-banner-list');
-  if (!banner || !list) return;
-
-  const tasks = getNotificationTasks();
-  const settings = loadSettings();
-
-  if (tasks.length === 0) {
-    banner.classList.add('hidden');
-    return;
-  }
-
-  // Respect user preference to hide the banner.
-  if (isNotificationBannerHidden()) {
-    banner.classList.add('hidden');
-    return;
-  }
-
-  list.innerHTML = '';
-
-  const isDesktop = window.matchMedia('(min-width: 601px)').matches;
-  const createBannerItem = (task) => {
-    const legacyTitle = typeof task.text === 'string' ? task.text : '';
-    const titleText = typeof task.title === 'string' && task.title.trim() ? task.title : legacyTitle;
-    const dueStatus = formatDueStatus(task.daysUntilDue, task.dueDate, settings.locale);
-    const openTask = () => showEditModal(task.id);
-
-    const item = h('div', {
-      class: 'notification-banner-item',
-      role: 'button',
-      tabindex: '0',
-      'aria-label': `Open task: ${task.title}`,
-      onClick: openTask,
-    },
-      h('span', { class: 'task-title' }, titleText),
-      h('span', { class: `due-date ${dueStatus.className}` }, dueStatus.text)
-    );
-    item.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openTask(); }
-    });
-    return item;
-  };
-
-  if (isDesktop) {
-    const availableWidth = list.clientWidth || list.getBoundingClientRect().width;
-    let shown = 0;
-
-    for (const task of tasks) {
-      const item = createBannerItem(task);
-      list.appendChild(item);
-      shown += 1;
-
-      // If we overflow and already have at least one item, back out the last addition.
-      if (list.scrollWidth > availableWidth && shown > 1) {
-        list.removeChild(item);
-        shown -= 1;
-        break;
-      }
-    }
-
-    const remaining = tasks.length - shown;
-    if (remaining > 0) {
-      const more = h('div', {
-        class: 'notification-banner-item notification-more',
-        role: 'button',
-        tabindex: '0',
-        onClick: showNotificationsModal,
-      }, `+${remaining} `);
-      more.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showNotificationsModal(); }
-      });
-
-      list.appendChild(more);
-
-      // If adding the indicator overflows, reclaim one more slot for it.
-      if (list.scrollWidth > availableWidth && shown > 0) {
-        list.removeChild(list.children[shown - 1]);
-        shown -= 1;
-        const updatedRemaining = tasks.length - shown;
-        more.textContent = `+${updatedRemaining} `;
-        list.appendChild(more);
-      }
-    }
-  } else {
-    const displayTasks = tasks.slice(0, 5);
-
-    displayTasks.forEach((task) => {
-      const item = createBannerItem(task);
-      list.appendChild(item);
-    });
-
-    if (tasks.length > 5) {
-      const more = h('div', {
-        class: 'notification-banner-item notification-more',
-        role: 'button',
-        tabindex: '0',
-        onClick: showNotificationsModal,
-      }, `+${tasks.length - 5} `);
-      more.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showNotificationsModal(); }
-      });
-      list.appendChild(more);
-    }
-  }
-
-  banner.classList.remove('hidden');
-  renderIcons();
-}
 
 /**
  * Render the notifications modal content.
@@ -360,7 +159,7 @@ export function initializeNotifications() {
   // Reflow banner items on viewport resize (debounced)
   window.addEventListener('resize', () => {
     clearTimeout(bannerResizeTimeout);
-    bannerResizeTimeout = setTimeout(renderNotificationBanner, 120);
+    bannerResizeTimeout = setTimeout(() => renderNotificationBanner(showNotificationsModal), 120);
   });
 
   // Initial render
@@ -375,6 +174,6 @@ export function initializeNotifications() {
  * Call this after renderBoard() or any task update.
  */
 export function refreshNotifications() {
-  renderNotificationBanner();
+  renderNotificationBanner(showNotificationsModal);
   updateNotificationBadge();
 }
