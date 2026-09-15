@@ -572,3 +572,31 @@ Totals after these: unit 306, dom 180, `node harness/test.mjs` 5/5.
 
 Remaining: Batch 8's seq-epoch item, Batch 5, Batch 6, Batch 10, and the UI/UX
 redesign pass.
+
+### Progress log update 2
+
+Completed after the previous update:
+
+| Work | Commit | Notes |
+|---|---|---|
+| Batch 6 - redundant render after a settings change | `c20df54` | scheduleDomainEvent already triggers DATA_CHANGED |
+| Batch 6 - three more redundant renders | `a0c8e75` | task-card, task-modal, swimlane-renderer; also corrected the task-card delete test, which asserted the component's own emit |
+| Batch 6 - redundant render after a label delete | `e886aaa` | deleteLabel emits the label events |
+| Batch 5 - MAX_LABEL_NAME_LENGTH | `4b95dfe` | labels.js imports the constant instead of copying it |
+| Batch 5 - TASK_TYPE_LABELS and URL_RE | `ca40d47` | moved to agile.js (next to TASK_TYPES) and utils.js |
+| Batch 5 - readLocalJson / writeLocalJson | `a50d58d` | board-groups and skills had identical copies |
+| Batch 5 - nowIso | `7d9b574` | board-serializer and storage share the utils helper |
+
+Deliberately kept when removing the emits: the swimlane lane and cell toggles (they
+write through saveSettings and emit no domain event) and the drag-drop reconcile
+fallback, whose comment explains it needs a full rebuild.
+
+Still open:
+
+- Batch 6 remainder: the cached-task mutation in tasks.js and the direct writers in
+  swimlanes.js, boards.js and importexport.js
+- Batch 5 remainder: the storage keys and the hardcoded event names
+- Batch 10 (split files over 250 LOC) and the UI/UX redesign pass
+- New: the harness exited once with `Failed running 'src/server.mjs'` immediately
+  after an "HLC drift exceeded 60000ms" warning. It was restarted and the data was
+  intact (seq 30, six skills, one board), but the crash itself is unexplained.
