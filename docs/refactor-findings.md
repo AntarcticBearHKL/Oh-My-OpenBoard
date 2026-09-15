@@ -670,38 +670,50 @@ needed. Either guard it with a `utils.generateUUID` fallback, or document that t
 client must be reached over https or localhost. This is a behaviour decision, so it
 was not changed here.
 
-### The harness exit: leading hypothesis is the watchdog, not an internal crash
+### The harness exit: a startup ReferenceError, logged nowhere (resolved)
 
-Observed once: `Failed running 'src/server.mjs'. Waiting for file changes before
-restarting...` printed immediately after `[harness] HLC drift exceeded 60000ms`.
+**Correction:** an earlier entry here proposed the watchdog as the likely killer. That
+was wrong, and the harness logs settle it. The watchdog log records `sweep complete:
+0 killed, 3 kept` on every two-minute run and only ever sees the infinite-canvas dev
+server; the OpenAgile harness never appears in it at all, so it was not the watchdog.
 
-Reading the two together is a trap, because they are not cause and effect. What the
-code actually says:
+What actually happened, from `harness/logs/harness.err.log`:
 
-- `server.mjs` installs `uncaughtException` and `unhandledRejection` handlers that
-  only `console.error` - they **do not exit**. An unhandled error inside the harness
-  therefore leaves the process alive; it cannot be what produced the exit.
-- The only paths that end the process are the two lines in the shutdown handler
-  (`httpServer.close(...)` plus an unref'd `setTimeout(..., 1500)` fallback), both of
-  which call `process.exit(0)`.
-- `Failed running ...` is `node --watch` reporting a **non-zero** child exit.
+```
+file:///...harness/src/store.mjs:238
+  seedDefaultSkillsIfEmpty();
+  ^
+ReferenceError: seedDefaultSkillsIfEmpty is not defined
+    at initStore (store.mjs:238)
+    at file:///...harness/src/server.mjs:265
+Node.js v24.19.0
+```
 
-So something killed the process from outside, and the prime suspect is the watchdog,
-whose job is to kill server launchers older than five minutes. The HLC warning does
-not contradict that - it fires on the first event after more than 60s of idle, which
-means it fires on *exactly the processes that are old enough for the watchdog*. The
-two lines co-occurring is a consequence of both depending on process age, not of one
-causing the other.
+A real `ReferenceError` in the startup path, thrown while the module was still
+evaluating, so the process died before the HTTP server ever listened; `node --watch`
+then reported `Failed running 'src/server.mjs'`. The function is defined at
+`store.mjs:495` today and the file syntax-checks and boots clean, so this was a
+transient intermediate state during the refactor rather than a live defect.
 
-**How to confirm or kill this hypothesis** (cheapest first):
+**Why no error appeared in the log stream where you would expect it:** `server.mjs`
+registered `uncaughtException` and `unhandledRejection` at the very end of the file,
+*after* the top-level `initStore()` call. A throw from `initStore()` therefore had no
+handler installed yet, and the process died silently - note the absence of any
+`[harness] uncaught` line right where the traceback is.
 
-1. Check the scheduled-task history and the watchdog log around the timestamp of the
-   exit for a kill event; a kill record in the same minute confirms it.
-2. Re-check the port whitelist logic: the exemption reads the listening port, so a
-   check that lands while the process is between states (listener bound, or already
-   unbound during a restart) can miss the exemption and fall through to the age rule.
-3. If it reproduces without any watchdog run in the window, treat it as a real crash
-   and capture the exit code plus the last lines of `harness/logs`.
+**The HLC warning is a red herring.** It fires on the first event after more than 60s
+of idle, so it prints on any long-lived process; it is a `console.warn` on an
+intentional path and was never the cause. Note also the trailing `^C` in
+`harness.out.log`: the server was also stopped by hand at some point, which is why it
+was found down and no longer started on its own.
 
-Until then, do not "fix" the HLC drift warning - it is a `console.warn` on an
-intentional path, and it is not the thing that stopped the server.
+**Fix applied:** the two process-level handlers were moved to the top of
+`server.mjs` (lines 22-23), immediately after the imports and ahead of the
+`initStore()` call, so a startup failure is now logged instead of vanishing. Verified:
+handlers at 22-23, `initStore()` at 313, `node --check` clean, harness tests 5/5,
+`/api/health` 200, and the store reloaded with events: 30, seq: 30 (no data loss).
+
+**Operational note:** a stray harness was left listening because it had been started
+with `Start-Process` directly instead of `harness/start-bg.ps1`. The wrapper is what
+provides `--watch` and the `logs/harness.out.log` trail; starting the server any other
+way loses both. Use the wrapper.

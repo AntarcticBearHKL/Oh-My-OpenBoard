@@ -19,6 +19,9 @@ import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { DEFAULT_BOARD_ID, appendEvents, getBoards, getEventsSince, getGroupsState, getSeq, getSkillsState, getSnapshot, getStats, initStore, flushStore, setBoardGroupMap, setGroups, setSkills } from './store.mjs';
 import { registerTools } from './mcp-tools.mjs';
 
+process.on('uncaughtException', (err) => console.error('[harness] uncaught', err));
+process.on('unhandledRejection', (err) => console.error('[harness] unhandled rejection', err));
+
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DIST_DIR = resolve(HERE, '..', '..', 'client', 'dist');
 const HOST = process.env.OPENAGILE_HOST || '127.0.0.1';
@@ -329,5 +332,3 @@ function shutdown(signal) {
 
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('uncaughtException', (err) => console.error('[harness] uncaught', err));
-process.on('unhandledRejection', (err) => console.error('[harness] unhandled rejection', err));
