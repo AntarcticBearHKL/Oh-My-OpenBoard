@@ -157,7 +157,7 @@ describe('sidebar group tree', () => {
     expect(document.querySelector('.board-group-rename-input')).not.toBeNull();
   });
 
-  test('deleting a group needs two clicks and leaves its boards at the root', () => {
+  test('deleting a group takes its iterations with it', () => {
     const group = createGroup('Sprint 1');
     assignBoardToGroup('board-2', group.id);
     mountToBody(FIXTURE);
@@ -172,7 +172,8 @@ describe('sidebar group tree', () => {
     fireEvent.click(deleteBtn);
     expect(listGroups()).toEqual([]);
     expect(readBoardGroupMap()).toEqual({});
-    expect(rootItems()).toHaveLength(2);
+    expect(mocks.boards.map((board) => board.id)).toEqual(['board-1']);
+    expect(rootItems()).toHaveLength(1);
   });
 
   test('deleting an iteration needs two clicks', () => {

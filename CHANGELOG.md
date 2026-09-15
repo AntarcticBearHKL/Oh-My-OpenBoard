@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Deleting a board group now deletes the iterations inside it, instead of ungrouping them at the root. The group's delete button says how many iterations it will take with it.
+
 ## [3.1.2] - 2026-09-03
 
 ### Fixed

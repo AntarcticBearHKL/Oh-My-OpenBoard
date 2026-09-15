@@ -164,7 +164,13 @@ export function initializeBoardSidebar() {
       );
     });
 
-    const deleteBtn = createArmedDeleteButton('board-group-delete', `Delete group ${group.name}`, () => {
+    const iterationCount = boards.length;
+    const deleteLabel = iterationCount > 0
+      ? `Delete group ${group.name} and its ${iterationCount} iteration${iterationCount === 1 ? '' : 's'}`
+      : `Delete group ${group.name}`;
+    const deleteBtn = createArmedDeleteButton('board-group-delete', deleteLabel, () => {
+      // Iterations first: deleteGroup on its own only unassigns them.
+      for (const board of boards) deleteBoardById(board.id);
       deleteGroup(group.id);
       render();
     });
