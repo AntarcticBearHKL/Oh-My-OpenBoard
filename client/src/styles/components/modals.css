@@ -47,7 +47,8 @@
   position: sticky;
   bottom: 0;
   z-index: 1;
-  background: var(--glass-bg);
+  /* transparent on purpose: a second glass layer over the modal's own reads as a white band */
+  background: transparent;
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
   border-top: 1px solid var(--glass-border);
