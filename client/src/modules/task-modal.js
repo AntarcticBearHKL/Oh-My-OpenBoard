@@ -4,6 +4,7 @@ import { isDoneColumnId, loadLabels, loadColumns, loadSettings, loadTasks } from
 import { formatTimestamp } from './dateutils.js';
 import { addAnnotation, addTask, isTaskLocked, removeAnnotation, setTaskBlockedReason } from './tasks.js';
 import { updateTask } from './task-update.js';
+import { groupLabels } from './labels.js';
 import { renderIcons } from './icons.js';
 import { validateAndShowTaskTitleError, clearFieldError } from './validation.js';
 import { createAccordionSection } from './accordion.js';

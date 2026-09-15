@@ -1646,3 +1646,25 @@ graph `render.js` pulls in grew by ten modules but `tests/dom/reconcile.test.js`
 module-scope warm `await import('../../src/modules/render.js')` from the `tasks.js` split, so the
 transform is paid at collection time and no test file needed the fix. No test file needed editing at
 all. The export set was compared programmatically before and after: both are the same 40 names.
+
+### Found while verifying: the task modal threw on open (`groupLabels`)
+
+Opening the task modal in the browser during the `storage.js` verification surfaced
+`Uncaught ReferenceError: groupLabels is not defined`. `task-modal.js:305` calls
+`groupLabels(...)` when it renders the label picker, but nothing imports it. 1d3501d ("Share
+one groupLabels helper between the two label pickers") moved the local copy into `labels.js`
+and added the import to `labels-modal.js`, but not to `task-modal.js`.
+
+Pre-existing, not a Batch 10 regression: `git show HEAD:client/src/modules/task-modal.js` has
+the same call with no import. The build cannot see it (a runtime ReferenceError, not a syntax
+error) and no test drives `updateTaskLabelsSelection`, so the suite never caught it. Opening
+the modal threw part-way through, and the whole label section was missing.
+
+Fixed by importing `groupLabels` from `./labels.js`. Verified in the browser: the modal opens
+with the full label picker (Idea, Goal, ACTIVITY, Task, Meeting, Email) and a clean console.
+
+This is the second bug of the same shape found in this batch; the first was the boot-time
+`initializeColumnModalHandlers` call. Both are "identifier used, binding missing", both came
+from an earlier refactor of this same codebase, and both were invisible to the build.
+**Anything that removes or relocates a binding needs its call sites checked by grep, not by
+the build.**
