@@ -17,6 +17,7 @@ import {
   setActiveBoardId,
   getActiveBoardId,
 } from './storage.js';
+import { readLocalJson } from './utils.js';
 
 const PB_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_PB_URL) || '/';
 const pb = new PocketBase(PB_URL);
@@ -80,15 +81,9 @@ function emptySyncMap() {
 }
 
 function loadSyncMap() {
-  try {
-    const raw = localStorage.getItem(SYNC_MAP_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      // Ensure new entity-type buckets exist in stored maps from older versions.
-      return { ...emptySyncMap(), ...parsed };
-    }
-  } catch { /* ignore */ }
-  return emptySyncMap();
+  const parsed = readLocalJson(SYNC_MAP_KEY, null);
+  // Ensure new entity-type buckets exist in stored maps from older versions.
+  return { ...emptySyncMap(), ...(parsed ?? {}) };
 }
 
 function saveSyncMap(map) {

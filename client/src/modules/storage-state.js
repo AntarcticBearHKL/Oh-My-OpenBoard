@@ -1,3 +1,5 @@
+import { parseJsonSafely } from './utils.js';
+
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 export const BOARDS_KEY = 'kanbanBoards';
@@ -39,10 +41,8 @@ export function safeParseArray(value) {
   if (!value) return null;
   if (Array.isArray(value)) return value;
   if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value);
-      return Array.isArray(parsed) ? parsed : null;
-    } catch { return null; }
+    const parsed = parseJsonSafely(value);
+    return Array.isArray(parsed) ? parsed : null;
   }
   return null;
 }
@@ -51,10 +51,8 @@ export function safeParseObject(value) {
   if (!value) return null;
   if (typeof value === 'object' && !Array.isArray(value)) return value;
   if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value);
-      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
-    } catch { return null; }
+    const parsed = parseJsonSafely(value);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
   }
   return null;
 }

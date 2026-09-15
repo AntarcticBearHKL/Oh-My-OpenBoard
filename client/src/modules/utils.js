@@ -22,11 +22,18 @@ export function generateUUID() {
 }
 export const URL_RE = /https?:\/\/[^\s<>"']+/g;
 
+export function parseJsonSafely(raw) {
+  if (typeof raw !== 'string' || raw === '') return undefined;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return undefined;
+  }
+}
+
 export function readLocalJson(key, fallback) {
   try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return fallback;
-    const parsed = JSON.parse(raw);
+    const parsed = parseJsonSafely(localStorage.getItem(key));
     return parsed === null || parsed === undefined ? fallback : parsed;
   } catch {
     return fallback;

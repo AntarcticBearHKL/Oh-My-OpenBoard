@@ -14,6 +14,7 @@ import { emit, on, EVENT_EMITTED } from './events.js';
 import { NO_BOARDS_KEY } from './constants.js';
 import { observeRemote } from './event-sourcing/hlc.js';
 import { getActiveBoardId, hydrateFromSnapshotState } from './storage.js';
+import { parseJsonSafely } from './utils.js';
 
 const SEQ_KEY = 'openagile:harness:seq';
 const CLIENT_KEY = 'openagile:harness:clientId';
@@ -150,20 +151,20 @@ function openStream() {
   } catch { return; }
 
   source.addEventListener('groups', (e) => {
-    let payload;
-    try { payload = JSON.parse(e.data); } catch { return; }
+    const payload = parseJsonSafely(e.data);
+    if (payload === undefined) return;
     window.dispatchEvent(new CustomEvent('openagile:groups-changed', { detail: payload }));
   });
 
   source.addEventListener('skills', (e) => {
-    let payload;
-    try { payload = JSON.parse(e.data); } catch { return; }
+    const payload = parseJsonSafely(e.data);
+    if (payload === undefined) return;
     window.dispatchEvent(new CustomEvent('openagile:skills-changed', { detail: payload }));
   });
 
   source.onmessage = (e) => {
-    let event;
-    try { event = JSON.parse(e.data); } catch { return; }
+    const event = parseJsonSafely(e.data);
+    if (event === undefined) return;
     if (!event?.id) return;
     if (e.lastEventId) setSeq(Number(e.lastEventId));
     // Serialize application: observeRemote() is async, so concurrent handlers
