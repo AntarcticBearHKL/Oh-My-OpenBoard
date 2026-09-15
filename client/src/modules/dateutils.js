@@ -73,3 +73,8 @@ export function getCountdownClassName(daysUntilDue, urgentThreshold = 3, warning
 
   return 'countdown-normal';
 }
+
+export function formatTimestamp(at, fallback = '') {
+  const parsed = new Date(at);
+  return Number.isNaN(parsed.getTime()) ? fallback : parsed.toLocaleString();
+}

@@ -1,6 +1,7 @@
 // Column element DOM construction — extracted from render.js
 
 import { loadTasks, loadColumnSummaries, saveColumnSummary } from './storage.js';
+import { formatTimestamp } from './dateutils.js';
 import { showModal } from './modals.js';
 import { getWipState, wipCounterLabel, applyWipCounter } from './wip-limit.js';
 import { h } from './dom.js';
@@ -32,11 +33,6 @@ function closeColumnSummary({ restoreFocus = true } = {}) {
   syncSummaryButton(trigger);
 }
 
-function formatSummaryTimestamp(at) {
-  const parsed = new Date(at);
-  return Number.isNaN(parsed.getTime()) ? '' : parsed.toLocaleString();
-}
-
 function syncSummaryButton(button) {
   if (!button || !button.dataset) return;
   const columnId = button.dataset.columnId;
@@ -56,7 +52,7 @@ function buildSummaryBody(column) {
     if (summary && typeof summary.text === 'string' && summary.text.trim()) {
       body.appendChild(h('p', { class: 'column-summary-text' }, summary.text));
       body.appendChild(h('p', { class: 'column-summary-meta' },
-        `Updated ${formatSummaryTimestamp(summary.at)} · ${summary.by || 'agent'}`
+        `Updated ${formatTimestamp(summary.at, '')} · ${summary.by || 'agent'}`
       ));
     } else {
       body.appendChild(h('p', { class: 'column-summary-empty' }, 'No summary yet'));

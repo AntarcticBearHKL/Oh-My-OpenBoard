@@ -1,6 +1,7 @@
 // Task add/edit modal — extracted from modals.js
 
 import { isDoneColumnId, loadLabels, loadColumns, loadSettings, loadTasks } from './storage.js';
+import { formatTimestamp } from './dateutils.js';
 import { addAnnotation, addTask, isTaskLocked, removeAnnotation, setTaskBlockedReason, updateTask } from './tasks.js';
 import { renderIcons } from './icons.js';
 import { validateAndShowTaskTitleError, clearFieldError } from './validation.js';
@@ -461,12 +462,6 @@ function saveCommentAuthor(author) {
   }
 }
 
-function formatCommentTimestamp(at) {
-  const parsed = new Date(at);
-  return Number.isNaN(parsed.getTime()) ? (at || '') : parsed.toLocaleString();
-}
-
-
 function formatRelativeTime(value) {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return '';
@@ -592,7 +587,7 @@ function renderAnnotationsList() {
         h('div', { class: 'annotation-meta' },
           h('span', { class: 'annotation-author' }, author),
           h('span', { class: 'annotation-sep', 'aria-hidden': 'true' }, '·'),
-          h('span', { class: 'annotation-at' }, formatCommentTimestamp(annotation.at))
+          h('span', { class: 'annotation-at' }, formatTimestamp(annotation.at, annotation.at || ''))
         ),
         h('button', {
           type: 'button',
@@ -754,7 +749,7 @@ function renderCommentsList() {
       h('div', { class: 'comment-body' },
         h('div', { class: 'comment-meta' },
           h('span', { class: 'comment-author' }, comment.author),
-          h('span', { class: 'comment-at' }, formatCommentTimestamp(comment.at))
+          h('span', { class: 'comment-at' }, formatTimestamp(comment.at, comment.at || ''))
         ),
         h('div', { class: 'comment-text' }, comment.text)
       ),
