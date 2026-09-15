@@ -669,3 +669,39 @@ how the harness is meant to be reached from another device - would throw
 needed. Either guard it with a `utils.generateUUID` fallback, or document that the
 client must be reached over https or localhost. This is a behaviour decision, so it
 was not changed here.
+
+### The harness exit: leading hypothesis is the watchdog, not an internal crash
+
+Observed once: `Failed running 'src/server.mjs'. Waiting for file changes before
+restarting...` printed immediately after `[harness] HLC drift exceeded 60000ms`.
+
+Reading the two together is a trap, because they are not cause and effect. What the
+code actually says:
+
+- `server.mjs` installs `uncaughtException` and `unhandledRejection` handlers that
+  only `console.error` - they **do not exit**. An unhandled error inside the harness
+  therefore leaves the process alive; it cannot be what produced the exit.
+- The only paths that end the process are the two lines in the shutdown handler
+  (`httpServer.close(...)` plus an unref'd `setTimeout(..., 1500)` fallback), both of
+  which call `process.exit(0)`.
+- `Failed running ...` is `node --watch` reporting a **non-zero** child exit.
+
+So something killed the process from outside, and the prime suspect is the watchdog,
+whose job is to kill server launchers older than five minutes. The HLC warning does
+not contradict that - it fires on the first event after more than 60s of idle, which
+means it fires on *exactly the processes that are old enough for the watchdog*. The
+two lines co-occurring is a consequence of both depending on process age, not of one
+causing the other.
+
+**How to confirm or kill this hypothesis** (cheapest first):
+
+1. Check the scheduled-task history and the watchdog log around the timestamp of the
+   exit for a kill event; a kill record in the same minute confirms it.
+2. Re-check the port whitelist logic: the exemption reads the listening port, so a
+   check that lands while the process is between states (listener bound, or already
+   unbound during a restart) can miss the exemption and fall through to the age rule.
+3. If it reproduces without any watchdog run in the window, treat it as a real crash
+   and capture the exit code plus the last lines of `harness/logs`.
+
+Until then, do not "fix" the HLC drift warning - it is a `console.warn` on an
+intentional path, and it is not the thing that stopped the server.
