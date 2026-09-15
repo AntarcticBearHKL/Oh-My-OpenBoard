@@ -717,3 +717,42 @@ handlers at 22-23, `initStore()` at 313, `node --check` clean, harness tests 5/5
 with `Start-Process` directly instead of `harness/start-bg.ps1`. The wrapper is what
 provides `--watch` and the `logs/harness.out.log` trail; starting the server any other
 way loses both. Use the wrapper.
+
+### Storage keys and event names: what was done, and what was deliberately not
+
+The audit asked for the storage keys and the event names to be gathered into
+registries. Re-checking the tree changed the answer for each.
+
+**Storage keys - no change needed.** Every storage key is already a named constant
+defined exactly once, in the module that owns it: `GROUPS_KEY`, `BOARD_GROUP_KEY`
+and `GROUPS_MIGRATED_KEY` in board-groups.js, `NO_BOARDS_KEY` in constants.js (imported
+by the three modules that need it), `SKILLS_KEY`, `SEQ_KEY` and `CLIENT_KEY`,
+`HLC_NODE_KEY`, `BACKFILL_FLAG_KEY`, `GLOBAL_SETTINGS_KEY`, `BOARDS_KEY`,
+`ACTIVE_BOARD_KEY`, the three `LEGACY_*` keys, `STORAGE_KEY` in theme.js, and so on.
+A scan for `'openagile:...'` literals returns **only the definitions themselves** -
+there is no duplicated raw key anywhere. Moving these into one shared registry would
+relocate fifteen constants and couple fourteen modules for no functional gain, while
+introducing exactly the failure the item was meant to prevent: one mistyped key
+silently breaking persistence. Left as is.
+
+**Event names - a guard rather than a registry.** The 21 event types are genuinely
+written as raw literals at both ends (emit sites in tasks.js, storage.js, labels.js,
+columns.js, settings.js and backfill.js; comparison sites in read-model-projector.js),
+so a typo on either side produced an event that nothing projects, with no error.
+
+A registry of the names was **not** the fix, because in plain JavaScript it does not
+buy the safety that motivated it: `EVENTS.BOARD_CREATED` mistyped as
+`EVENTS.BOARD_CREATD` evaluates to `undefined` and fails just as quietly. What actually
+makes a typo loud is validation where the value is consumed.
+
+`emitter.js buildDomainEvent` is the single place any domain event type is set, so the
+canonical list (`DOMAIN_EVENT_TYPES`, 21 entries) and the guard live there, and the
+emitter throws on an unknown type. Verified three ways: the full suite passes with the
+guard in place (which is what shows the list is exhaustive rather than merely plausible),
+an added unit test asserts an unknown type throws, and the message asserted is one that
+only the guard produces, so the test cannot pass vacuously.
+
+**Worth doing later, if the event model grows:** migrate the comparison site in
+read-model-projector.js to the exported set so both ends read from one list. It was not
+done here because one comparison against a two-name disjunction does not justify the
+churn on its own.
