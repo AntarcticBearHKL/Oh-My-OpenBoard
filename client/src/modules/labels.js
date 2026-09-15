@@ -128,3 +128,16 @@ export function deleteLabel(labelId) {
     payload: {}
   });
 }
+
+export function groupLabels(labels) {
+  const ungrouped = labels.filter(l => !(l.group || '').trim());
+  const groupMap = new Map();
+  labels.forEach(label => {
+    const group = (label.group || '').trim();
+    if (!group) return;
+    if (!groupMap.has(group)) groupMap.set(group, []);
+    groupMap.get(group).push(label);
+  });
+  const sortedGroups = [...groupMap.keys()].sort((a, b) => a.localeCompare(b));
+  return { ungrouped, groupMap, sortedGroups };
+}

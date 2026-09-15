@@ -1,7 +1,7 @@
 // Labels manager + individual label modal — extracted from modals.js
 
 import { loadLabels } from './storage.js';
-import { addLabel, updateLabel, deleteLabel } from './labels.js';
+import { addLabel, updateLabel, deleteLabel, groupLabels } from './labels.js';
 import { confirmDialog, alertDialog } from './dialog.js';
 import { renderIcons } from './icons.js';
 import { createAccordionSection } from './accordion.js';
@@ -47,19 +47,6 @@ function populateLabelGroupSuggestions() {
     labels.map(l => (l.group || '').trim()).filter(g => g.length > 0)
   )].sort((a, b) => a.localeCompare(b));
   groups.forEach(g => datalist.appendChild(h('option', { value: g })));
-}
-
-function groupLabels(labels) {
-  const ungrouped = labels.filter(l => !(l.group || '').trim());
-  const groupMap = new Map();
-  labels.forEach(label => {
-    const group = (label.group || '').trim();
-    if (!group) return;
-    if (!groupMap.has(group)) groupMap.set(group, []);
-    groupMap.get(group).push(label);
-  });
-  const sortedGroups = [...groupMap.keys()].sort((a, b) => a.localeCompare(b));
-  return { ungrouped, groupMap, sortedGroups };
 }
 
 function createLabelListItem(label) {
