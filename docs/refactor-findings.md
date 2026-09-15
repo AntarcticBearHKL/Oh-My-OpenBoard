@@ -600,3 +600,27 @@ Still open:
 - New: the harness exited once with `Failed running 'src/server.mjs'` immediately
   after an "HLC drift exceeded 60000ms" warning. It was restarted and the data was
   intact (seq 30, six skills, one board), but the crash itself is unexplained.
+
+### Batch 6 audit items that were re-checked and need no change
+
+These were re-verified against the current tree rather than taken on trust:
+
+- **Cached-task mutation in `tasks.js`** - already guarded. `loadTasks` shallow
+  copies every task and deep copies the mutable nested fields (`columnHistory`,
+  `subTasks`, `labels`, `relationships`) before handing them out, with a comment
+  explaining that a feature module's in-place edit must not leak into the read
+  model and double-apply with events (ADR-0005). The only path that returns a
+  cached reference is the empty-cache branch, where the cached value is an empty
+  array, so nothing can leak.
+- **Direct writes in `swimlanes.js`** - those calls are `saveSettings`, used for
+  swim-lane and cell collapse state. Like `columnSummaries`, that is out-of-band
+  UI state rather than event-sourced board data, so writing it directly is by
+  design.
+- **Direct writes in `boards.js` (apply template) and `importexport.js` (import
+  board)** - these are deliberate bulk paths: emitting one event per imported task
+  would create hundreds of `task.created` events for a single user action. Making
+  them event-sourced is an architecture decision (see the open questions) rather
+  than a cleanup, so it was left alone.
+
+Net effect: the only Batch 6 changes needed were the redundant renders, which are
+done (`c20df54`, `a0c8e75`, `e886aaa`).
