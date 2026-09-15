@@ -871,3 +871,30 @@ so it needs the full suite green after each group, not after all of them.
 
 Contrast with board-sidebar.js (three definitions, one of them 233 lines of closures),
 where the same line count represents a much larger and riskier job.
+
+### Batch 10: task-card.js split (293 to 100)
+
+`task-card.js` is five small helpers plus one 188-line `createTaskElement`, so the
+"largest block: 43" in the survey above understates it - the row builder, not the helpers,
+was the bulk, and the helpers alone would not have brought the file under the ceiling.
+
+The cohesive group was the **meta chip row**: the 126 lines that build the type badge,
+priority, due date, estimate, assignee, labels, subtask donut, relationships, blocked
+marker, age chip and stale dot. Nothing else in the file touched them, so they move to
+`task-card-meta.js` as `buildTaskMeta(task, settings, labelsMap, today)`.
+
+Two things needed care:
+
+- The block used to run `if (staleTask) li.classList.add('task-stale')` in the middle,
+  mutating the row rather than the meta div. `buildTaskMeta` therefore returns
+  `{ meta, staleTask }` and the caller applies the class. A first cut that moved that line
+  with the block leaked `li` into the new module; the postcondition check caught it, which
+  is the argument for asserting on leaked identifiers, not just on line counts.
+- `formatDisplayDate` had to leave the file (the meta row is its only caller there and
+  importing it back would have closed a `task-card.js -> task-card-meta.js -> task-card.js`
+  cycle), but it was homed in `dateutils.js` rather than in the new module, because
+  `render.js` also uses it for the swimlane due date and a date formatter reached through a
+  task-card module points the dependency the wrong way.
+
+`task-card.js` drops from 293 to 100 lines and its imports from ten to five; only the meta
+row used them. Verification: build 0, unit 307/307, dom 180/180.

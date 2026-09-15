@@ -78,3 +78,12 @@ export function formatTimestamp(at, fallback = '') {
   const parsed = new Date(at);
   return Number.isNaN(parsed.getTime()) ? fallback : parsed.toLocaleString();
 }
+
+export function formatDisplayDate(value, locale) {
+  const raw = (value || '').toString().trim();
+  if (!raw) return '';
+
+  const dateForParse = raw.includes('T') ? raw : `${raw}T00:00:00`;
+  const parsed = new Date(dateForParse);
+  return Number.isNaN(parsed.getTime()) ? raw : parsed.toLocaleDateString(locale || undefined);
+}

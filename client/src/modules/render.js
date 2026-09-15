@@ -4,10 +4,10 @@ import { isDoneColumnId, listBoards, loadColumns, loadTasks, loadLabels, loadSet
 import { initDragDrop } from './dragdrop.js';
 import { renderIcons } from './icons.js';
 import { refreshNotifications } from './notifications.js';
-import { calculateDaysUntilDue, formatCountdown, getCountdownClassName } from './dateutils.js';
+import { calculateDaysUntilDue, formatCountdown, getCountdownClassName, formatDisplayDate } from './dateutils.js';
 import { syncSwimLaneControls } from './swimlanes.js';
 import { on, DATA_CHANGED, DRAG_RECONCILE_BEGIN, DRAG_RECONCILE_END } from './events.js';
-import { createTaskElement, formatDisplayDate } from './task-card.js';
+import { createTaskElement } from './task-card.js';
 import { createColumnElement } from './column-element.js';
 import { renderSwimlaneBoard } from './swimlane-renderer.js';
 import { syncColumnWip } from './wip-limit.js';
