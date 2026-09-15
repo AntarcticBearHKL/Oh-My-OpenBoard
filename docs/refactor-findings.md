@@ -1251,7 +1251,7 @@ starts timing out.
 
 Verification: build 0, unit 307/307, dom 180/180.
 
-### Batch 11: swimlanes.js split (698 to 233)
+### Batch 10: swimlanes.js split (698 to 233)
 
 `swimlanes.js` was one flat file of small top-level declarations, so it looked like a cheap
 split, but the line count hid two hazards: every "pure" helper was private to the file, and the
@@ -1380,7 +1380,7 @@ counts: `swimlanes.js` 698 -> 233, plus the new `swimlane-lane-model.js` 180,
 deltas: `swimlane-renderer.js` 204 -> 206 and `tests/unit/swimlanes-utils.test.js` 95 -> 97;
 `render.js` (226), `kanban.js` (157) and `task-position.js` (239) are unchanged in length.
 
-### Batch 11: reports.js split (1070 to 33)
+### Batch 10: reports.js split (1070 to 33)
 
 `reports.js` is a page entry - only `reports.html` loads it (the `<script type="module" src="./modules/reports.js">` tag at line 220) and nothing imports from it - so there is no consumer churn to manage and no `vi.mock` to re-point. Two survey claims did not hold and are worth recording:
 
