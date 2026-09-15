@@ -1,24 +1,9 @@
-import { generateUUID } from './utils.js';
+import { generateUUID, readLocalJson as readJson, writeLocalJson as writeJson } from './utils.js';
 import { emit, DATA_CHANGED } from './events.js';
 
 export const SKILLS_KEY = 'openagile:skills';
 
 const SKILLS_API = '/api/skills';
-
-function readJson(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return fallback;
-    const parsed = JSON.parse(raw);
-    return parsed === null || parsed === undefined ? fallback : parsed;
-  } catch {
-    return fallback;
-  }
-}
-
-function writeJson(key, value) {
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* ignore */ }
-}
 
 function normalizeSkill(raw, index) {
   if (!raw || typeof raw.id !== 'string' || !raw.id.trim()) return null;

@@ -21,3 +21,22 @@ export function generateUUID() {
   });
 }
 export const URL_RE = /https?:\/\/[^\s<>"']+/g;
+
+export function readLocalJson(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    return parsed === null || parsed === undefined ? fallback : parsed;
+  } catch {
+    return fallback;
+  }
+}
+
+export function writeLocalJson(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    return;
+  }
+}
