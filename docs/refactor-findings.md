@@ -1992,3 +1992,38 @@ stylesheets, the icon-button shape in five places, the glass shell repeated acro
 badge/pill shapes 14 times, ten empty states, three modal shells, and hardcoded colors/radii/font
 sizes that bypass tokens. Those are taste decisions with a five-page blast radius; they want the
 user's direction, not an agent's.
+
+## P4 - the open decisions, now taken
+
+**E2E suite: deleted (user decision).** Playwright was the third test layer and had been out of
+service since the columns became fixed: about ten of twelve specs drove UI that no longer exists (a
+column menu, a configurable-width column, `To Do`/`Done` column names) and two still read the old
+database name `kanvana-db`. `client/tests/e2e/` (13 files), `playwright.config.js`,
+`playwright.live.config.js`, the five Playwright scripts (`test:e2e`, `test:perf`, `test:e2e:live`,
+`test:ui`, `test:debug`) and the `@playwright/test` devDependency are gone; `npm test` is now
+`test:unit && test:dom`.
+
+**MSW's example test: deleted (user decision).** `tests/dom/msw-example.test.js` exercised no
+production module, and `tests/mocks/handlers.js` existed only to serve it - its single handler and
+`exampleApiUrl` export were used by nothing else. `tests/mocks/server.js` is now `setupServer()` with
+no default handlers; the six tests that do use MSW register their own per test. The DOM suite goes
+180 -> 178 because two notional tests left with that file.
+
+**The docs followed the code.** `AGENTS.md` (the source of truth for `CLAUDE.md` and `GEMINI.md`) and
+`CONTEXT.md` both described the E2E layer in their tech-stack, directory, dev-command and test-layer
+tables; all of those references are gone, and `tests/TEST-OVERVIEW.md` was regenerated ("E2E files:
+0").
+
+**Reported, not deleted** - each of these describes the suite that is now gone, but deleting authored
+material is the user's call rather than a side effect of removing tests:
+- `client/tests/test-plans/swimlane-coverage-gap-assessment.plan.md` and
+  `task-creation-with-labels.plan.md` - E2E plans, most of which name spec files that never existed
+  (`seed.spec.ts`, `search-filter.spec.ts`, ...);
+- `.github/agents/playwright-test-{generator,healer,planner}.agent.md` - agent configs for Playwright
+  work;
+- the pointer-policy comment at `src/modules/dragdrop.js:12`, which explains itself by Playwright's
+  `locator.dragTo()` - only relevant if Playwright ever comes back.
+
+**Still open from §4:** the user chose "keep groups/skills as out-of-band state" and nothing else, so
+`globalSettings` (keep and add a `scope:'global'` emitter, or delete the inert path) and whether
+`GET /api/health` keeps doubling as the PocketBase probe fallback remain undecided.

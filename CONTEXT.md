@@ -336,9 +336,7 @@ event stream.
 | Unit | Vitest | `client/tests/unit/*.test.js` |
 | DOM integration | Vitest + @testing-library/dom | `client/tests/dom/*.test.js` |
 | API mocking | MSW | `client/tests/mocks/*.js` |
-| E2E | Playwright | `client/tests/e2e/*.spec.ts` |
 
 Key coverage areas: storage CRUD, UUID migration, swimlane utilities, import/export preflight,
 due-date countdown, validation, normalization, subtasks, and the event-sourcing layer (HLC, reducer,
-outbound queue, realtime/catch-up, snapshots, sync indicator). Live multi-device convergence is covered
-by `tests/e2e/event-sourcing/` against a real PocketBase (`npm run test:e2e:live`; needs Docker up).
+outbound queue, realtime/catch-up, snapshots, sync indicator).

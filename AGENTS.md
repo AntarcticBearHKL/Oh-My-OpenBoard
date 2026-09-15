@@ -16,7 +16,7 @@ provides auth and cloud sync when deployed.
 | Frontend | Vanilla JS (ES modules), HTML, CSS |
 | Optional Backend | Vanilla Pocketbase Golang behind Nginx (Docker Compose) |
 | Build | Vite 7 |
-| Tests | Vitest (unit + DOM), Playwright (E2E), MSW (API mocks) |
+| Tests | Vitest (unit + DOM), MSW (API mocks) |
 | Runtime storage | IndexedDB via `idb` library |
 | UI libs | Lucide icons, SortableJS, ECharts (reports) |
 
@@ -37,7 +37,6 @@ client/             Frontend app (the main product)
     unit/           Vitest pure-unit tests
     dom/            Vitest + @testing-library/dom integration tests
     mocks/          MSW API mocks shared by Vitest suites
-    e2e/            Playwright end-to-end tests
 backend/            PocketBase Dockerfile + migrations (optional cloud sync)
 cli/                Go CLI tooling (TODO)
 agents/             AI-agent configuration (issue tracker, labels, domain)
@@ -61,10 +60,9 @@ All commands run from `client/`:
 npm run dev          # Vite dev server → http://localhost:5173
 npm run build        # Production build → client/dist/
 npm run preview      # Serve the production build locally
-npm test             # Full suite: unit + DOM + E2E
+npm test             # Full suite: unit + DOM
 npm run test:unit    # Vitest unit tests only
 npm run test:dom     # Vitest DOM integration tests only
-npm run test:e2e     # Playwright E2E tests only
 ```
 
 Run the full test suite before opening a PR.
@@ -76,10 +74,6 @@ Run the full test suite before opening a PR.
 Never start a long-lived server from a tool call. The call waits for the process to exit, so the
 agent stalls and a stray server keeps the port busy for hours. Launch detached instead
 (`harness/start-bg.ps1` / `harness/dev-bg.ps1`) or use a command that terminates on its own.
-
-`harness/watchdog.ps1` runs as the Scheduled Task `OpenAgile-Watchdog` every 2 minutes and kills any
-server launcher older than five minutes that is not whitelisted. Whitelisted ports:
-`8787` (harness), `3000`, `4173`, `5173`, `8011`, `8969`, and `4321`.
 
 For a visual check, serve the build on the sandbox port and shut it down when done:
 
@@ -125,7 +119,6 @@ Check `docs/adr/` for recorded architectural decisions before making structural 
 | Unit | Vitest | `client/tests/unit/` |
 | DOM integration | Vitest + @testing-library/dom | `client/tests/dom/` |
 | API mocking | MSW | `client/tests/mocks/` |
-| E2E | Playwright | `client/tests/e2e/` |
 
 Key coverage areas: storage CRUD, UUID migration, swimlane utilities, import/export preflight,
 due-date countdown, validation, normalization, subtasks.
