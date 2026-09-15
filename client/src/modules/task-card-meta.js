@@ -1,9 +1,10 @@
 import { isDoneColumnId, loadLabels, loadTasks, loadSettings } from './storage.js';
 import { PRIORITIES } from './constants.js';
-import { calculateDaysUntilDue, formatCountdown, getCountdownClassName, formatDisplayDate } from './dateutils.js';
+import { calculateDaysUntilDue, formatCountdown, getCountdownClassName, formatDisplayDate, formatElapsedDuration } from './dateutils.js';
 import { labelTextColor } from './utils.js';
 import { h, cx } from './dom.js';
 import { STALE_AFTER_DAYS, TASK_TYPES, isTaskStale, normalizeEstimate, taskAgeDays, TASK_TYPE_LABELS } from './agile.js';
+import { claimTiming } from './claim-timer.js';
 
 const TYPE_ABBREVIATIONS = { story: 'S', bug: 'B', task: 'T', spike: 'SP' };
 
@@ -108,7 +109,29 @@ export function buildTaskMeta(task, settings, labelsMap = null, today = null) {
   }
 
   const assignee = typeof task.assignee === 'string' ? task.assignee.trim() : '';
-  if (assignee) {
+  const claimedBy = typeof task.claimedBy === 'string' ? task.claimedBy.trim() : '';
+  const claimant = claimedBy || assignee;
+  const timing = claimTiming(task, new Date(), isDoneColumnId);
+
+  if (timing) {
+    const claimAttrs = {
+      class: 'task-claim-timer',
+      'data-claim-start': String(timing.startMs)
+    };
+    if (claimant) {
+      const claimTitle = claimedBy ? `Claimed by: ${claimedBy}` : `Assignee: ${assignee}`;
+      claimAttrs.title = claimTitle;
+      claimAttrs['aria-label'] = claimTitle;
+    }
+    const claimChip = h('span', claimAttrs);
+    if (!timing.live) claimChip.setAttribute('data-claim-end', String(timing.endMs));
+    if (claimant) {
+      claimChip.appendChild(h('span', { class: 'task-assignee' }, assigneeInitials(claimant)));
+      claimChip.appendChild(h('span', { class: 'task-claim-name' }, claimant));
+    }
+    claimChip.appendChild(h('span', { class: 'task-claim-elapsed' }, formatElapsedDuration(timing.endMs - timing.startMs)));
+    meta.appendChild(claimChip);
+  } else if (assignee) {
     meta.appendChild(h('span', {
       class: 'task-assignee',
       title: `Assignee: ${assignee}`,

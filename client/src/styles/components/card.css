@@ -329,6 +329,27 @@
   text-transform: uppercase;
 }
 
+.task-claim-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 160px;
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.task-claim-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.task-claim-elapsed {
+  font-weight: 700;
+  color: var(--text-subtle);
+}
+
 .task-blocked {
   display: inline-flex;
   align-items: center;

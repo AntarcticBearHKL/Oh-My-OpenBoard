@@ -875,7 +875,7 @@ export function registerTools(server) {
 
   server.registerTool('release_task', {
     title: 'Release task',
-    description: 'Release a claimed task (clears claimedBy/claimedAt).',
+    description: 'Release a claimed task: clears claimedBy and keeps claimedAt so the claim duration stays derivable.',
     inputSchema: { taskId: z.string() }
   }, async ({ taskId }) => {
     const { boardId } = findTaskOrThrow(taskId);
@@ -883,7 +883,7 @@ export function registerTools(server) {
     emit('task.updated', {
       boardId,
       entityId: taskId,
-      payload: { fields: { claimedBy: '', claimedAt: null, changeDate: now } },
+      payload: { fields: { claimedBy: '', changeDate: now } },
       actor: AGENT
     });
     return ok({ taskId, claimedBy: '' });

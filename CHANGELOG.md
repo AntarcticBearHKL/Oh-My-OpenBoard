@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Task cards show who claimed the task and how long it has been running, counted from the claim rather than from the card being created.
+
 ### Changed
 
 - Deleting a board group now deletes the iterations inside it, instead of ungrouping them at the root. The group's delete button says how many iterations it will take with it.
@@ -14,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Iteration rows in the sidebar are indented consistently under their group, so the parent/child hierarchy reads clearly.
 - The fourth board column is now called Finished instead of Archived. Its id and its done-column role are unchanged, so existing boards rename themselves on load.
 - The In-Progress read-only lock and the Blocked-column detection now key off the fixed column ids instead of the column name, which is what makes the rename safe.
+- The skills the board ships are now written in Chinese, and they document the claim-timing contract: a claim starts the clock, any task update restarts the five-minute window, and the agent is expected to move the card to Finished or Blocked itself.
 
 ### Removed
 
