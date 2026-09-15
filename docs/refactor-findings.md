@@ -919,3 +919,25 @@ mock left on `boards-modal.js` would have gone inert and silently let the real m
 
 `boards-modal.js` also carried a genuinely unused import (`getActiveBoardName`), dropped
 while the import block was trimmed. Verification: build 0, unit 307/307, dom 180/180.
+
+### Batch 10: calendar.js split (285 to 187)
+
+`calendar.js` is a page entry - only `calendar.html` loads it and nothing imports from it -
+with one large renderer, so the safe group was the thirteen pure helpers above it: the
+ISO/month formatters, the month and weekday arithmetic, and the due-date/task predicates
+(`extractTaskDueDateIso`, `isTaskOverdue`, `groupTasksByDueDateForMonth`). They move to
+`calendar-utils.js`; `renderDueDateCalendar` and the page bootstrap stay.
+
+Only the ten helpers the page actually calls are exported. `extractTaskDueDateIso` reads
+like a public helper but has no caller left in the page - both of its users moved with it -
+so it stayed internal rather than being exported for nothing, as did `isoDateOnly` and
+`isTaskDone`.
+
+The page also carried a duplicate `./storage.js` import (two statements, the second just
+`isDoneColumnId`, `loadTasks`); they collapse into one while the import block is rewritten,
+and `isDoneColumnId` travels with `isTaskDone`.
+
+**`calendar.js` has no Vitest coverage**, so this one was checked in the browser as well as
+by the suite: the harness serves the build on 8787, and `calendar.html` renders the correct
+Monday-start September 2026 grid with today marked `is-today`, and clicking a day moves the
+selected-list title. Verification: build 0, unit 307/307, dom 180/180.
