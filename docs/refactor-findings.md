@@ -822,3 +822,52 @@ the file is already organised as separate top-level functions. For every remaini
 check the shape first - list the top-level definitions and look at the largest one. A
 file that is one long function is a different, larger job than a file that is many small
 ones, even at identical line counts.
+
+### Batch 10: shape survey of the next candidates, and the recommended next file
+
+Measured top-level definition counts and the size of the largest single block, because
+line count alone does not predict the cost:
+
+| File | Lines | Top-level defs | Largest block |
+|---|---:|---:|---:|
+| reducer.js | 302 | 26 | 39 |
+| task-card.js | 293 | 5 | 43 |
+| boards-modal.js | 265 | 9 | 66 |
+| calendar.js | 285 | 15 | 138 |
+| board-sidebar.js | 267 | 3 | ~233 |
+
+**reducer.js is the recommended next split.** It is already organised as 22 handlers of
+identical shape, `applyXxx(state, event)`, sitting between the state factory and the
+handler map, so a domain group can be lifted out with almost no interpretation:
+
+```
+  3  createProjectionState (exported)
+ 16  cloneState
+ 36  applyTaskCreated
+ 44  applyTaskUpdated
+ 55  applyTaskMoved
+ 95  applyTaskDeleted
+105  updateTaskById
+113  applySubtaskAdded
+122  applySubtaskRemoved
+130  applySubtaskToggled
+141  applySubtaskTextChanged
+152  applyRelationshipAdded
+162  applyRelationshipRemoved
+172  applyLabelAddedToTask
+181  applyLabelRemovedFromTask
+189  applyLabelCreated / 197 Updated / 205 Deleted
+212  applyColumnCreated / 220 Updated
+228  applyBoardCreated / 236 Updated / 244 Deleted
+251  applySettingsUpdated
+258  handlers
+282  applyEvent (exported) / 296 applyEvents (exported)
+```
+
+The task group (36-111) is the natural first lift. Two cautions: the handlers share
+`cloneState` and `updateTaskById`, so those must move with them or stay importable, and
+this is the **projection core** - the single place the read model is written (ADR-0005) -
+so it needs the full suite green after each group, not after all of them.
+
+Contrast with board-sidebar.js (three definitions, one of them 233 lines of closures),
+where the same line count represents a much larger and riskier job.
