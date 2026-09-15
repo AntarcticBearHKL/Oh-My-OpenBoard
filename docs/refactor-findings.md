@@ -1008,3 +1008,25 @@ The dom suite covers `reconcileBoard` directly, filter and virtualization includ
 `renderBoard()` still has no Vitest coverage, so the board was loaded in the browser too: all
 four fixed columns render with a clean console. Verification: build 0, unit 307/307, dom
 180/180.
+
+### Batch 10: dragdrop.js split (343 to 86)
+
+This file was one long `initTaskSortables` wrapped around drag-session state it shared with
+its helpers, so the split follows the gesture instead of the function list.
+
+`drag-session.js` owns the session flags (`isDraggingTask`, `activeTaskList`), the pointer
+tracking, the auto-scroll timer and the collapsed-column drop affordances, and exports the
+three Sortable callbacks - `startDragSession`, `moveDragSession`, `cleanupTaskDragState`.
+`task-drop.js` owns what a finished drop does: `handleTaskDrop` (the old `onEnd` body), the
+blocked-reason prompt and the container lookup.
+
+The useful finding is that this did **not** need a closure-breaking rewrite: none of the
+three handlers referenced `initTaskSortables`'s scope, so their bodies lifted out verbatim and
+only the config's `onStart`/`onMove` entries changed from inline functions to those names.
+The moved bodies were de-indented from the config object's 8-space base to 2, and the script
+asserts each body's minimum indentation is 2. Six stateful drag variables and
+`isDoneColumnId` no longer appear in dragdrop.js at all, which is what reduces it to the
+Sortable config plus `shouldForceFallbackForTasks`.
+
+Verification: build 0, unit 307/307, dom 180/180 (the DOM suite drives the collapsed-drop
+flow through the `wasHidden` dataset), and the board loads with a clean console.

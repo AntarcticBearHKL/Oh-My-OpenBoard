@@ -1,25 +1,10 @@
 import Sortable from 'sortablejs';
-import { moveTaskToTopInColumn, setTaskBlockedReason, updateTaskPositionsFromDrop } from './tasks.js';
-import { emit, DATA_CHANGED, DRAG_RECONCILE_BEGIN, DRAG_RECONCILE_END } from './events.js';
 import { isDoneColumnId } from './storage.js';
-import { promptDialog } from './dialog.js';
+import { startDragSession, moveDragSession, cleanupTaskDragState } from './drag-session.js';
+import { handleTaskDrop } from './task-drop.js';
 
 // Store Sortable instances for cleanup
 let taskSortables = [];
-let autoScrollInterval = null;
-let lastTouchX = 0;
-let lastTouchY = 0;
-const COLLAPSED_DROP_HOVER_CLASS = 'is-drop-hover';
-let isDraggingTask = false;
-let activeTaskList = null;
-
-function isSwimlaneViewEnabled() {
-  return document.getElementById('board-container')?.dataset?.viewMode === 'swimlanes';
-}
-
-function getTaskContainerElement(node) {
-  return node?.closest?.('.task-column, .swimlane-cell, [data-column]') || null;
-}
 
 function shouldForceFallbackForTasks() {
   // Sortable's JS fallback is required on most mobile/touch environments
@@ -38,21 +23,6 @@ function shouldForceFallbackForTasks() {
   return hasTouchPoints || isCoarsePointer;
 }
 
-async function promptBlockedReason(taskId) {
-  const reason = await promptDialog({
-    title: 'Task blocked',
-    message: 'Why is this task blocked? Leave empty to skip.',
-    placeholder: 'e.g. Waiting on API keys',
-    confirmText: 'Save reason',
-    cancelText: 'Skip'
-  });
-  if (typeof reason === 'string' && reason.trim()) {
-    setTaskBlockedReason(taskId, reason);
-    return true;
-  }
-  return false;
-}
-
 // Initialize all drag and drop functionality
 export function initDragDrop() {
   destroySortables();
@@ -65,147 +35,6 @@ function destroySortables() {
   taskSortables = [];
 
   cleanupTaskDragState({ restoreCollapsedDropZones: true });
-}
-
-function removePointerTracking() {
-  document.removeEventListener('touchmove', trackPointer);
-  document.removeEventListener('mousemove', trackPointer);
-  document.removeEventListener('dragover', trackPointer);
-}
-
-function cleanupTaskDragState({ restoreCollapsedDropZones = false } = {}) {
-  document.body.classList.remove('dragging');
-  isDraggingTask = false;
-  activeTaskList = null;
-  stopAutoScroll();
-  removePointerTracking();
-  clearCollapsedDropHover();
-  if (restoreCollapsedDropZones) {
-    hideCollapsedDropZones();
-  }
-}
-
-// Auto-scroll logic for board and task-list scrolling during drag
-function startAutoScroll() {
-  const boardContainer = document.getElementById('board-container');
-  if (!boardContainer || autoScrollInterval) return;
-  
-  autoScrollInterval = setInterval(() => {
-    if (!boardContainer) return;
-    
-    const rect = boardContainer.getBoundingClientRect();
-    const edgeSize = 80;
-    const scrollSpeed = 12;
-    
-    if (lastTouchX > 0) {
-      if (lastTouchX < rect.left + edgeSize && boardContainer.scrollLeft > 0) {
-        boardContainer.scrollLeft -= scrollSpeed;
-      } else if (lastTouchX > rect.right - edgeSize && 
-                 boardContainer.scrollLeft < boardContainer.scrollWidth - boardContainer.clientWidth) {
-        boardContainer.scrollLeft += scrollSpeed;
-      }
-    }
-
-    autoScrollActiveTaskList();
-  }, 16); // ~60fps
-}
-
-function stopAutoScroll() {
-  if (autoScrollInterval) {
-    clearInterval(autoScrollInterval);
-    autoScrollInterval = null;
-  }
-  lastTouchX = 0;
-  lastTouchY = 0;
-}
-
-function autoScrollActiveTaskList() {
-  if (!isDraggingTask || !activeTaskList) return;
-  const rect = activeTaskList.getBoundingClientRect();
-  const edgeSize = 80;
-  const maxSpeed = 20;
-  let delta = 0;
-
-  if (lastTouchY > 0) {
-    if (lastTouchY < rect.top + edgeSize) {
-      const dist = Math.max(0, lastTouchY - rect.top);
-      const intensity = (edgeSize - dist) / edgeSize;
-      delta = -Math.ceil(intensity * maxSpeed);
-    } else if (lastTouchY > rect.bottom - edgeSize) {
-      const dist = Math.max(0, rect.bottom - lastTouchY);
-      const intensity = (edgeSize - dist) / edgeSize;
-      delta = Math.ceil(intensity * maxSpeed);
-    }
-  }
-
-  if (delta !== 0) {
-    activeTaskList.scrollTop += delta;
-  }
-}
-
-function showCollapsedDropZones() {
-  document.querySelectorAll('.task-column.is-collapsed .tasks').forEach((tasksList) => {
-    if (tasksList.classList.contains('hidden')) {
-      tasksList.dataset.wasHidden = 'true';
-      tasksList.classList.remove('hidden');
-    }
-  });
-}
-
-function hideCollapsedDropZones() {
-  document.querySelectorAll('.task-column.is-collapsed .tasks').forEach((tasksList) => {
-    if (tasksList.dataset.wasHidden === 'true') {
-      tasksList.classList.add('hidden');
-      delete tasksList.dataset.wasHidden;
-    }
-  });
-}
-
-function clearCollapsedDropHover() {
-  document
-    .querySelectorAll(`.task-column.is-collapsed.${COLLAPSED_DROP_HOVER_CLASS}`)
-    .forEach((column) => column.classList.remove(COLLAPSED_DROP_HOVER_CLASS));
-  document
-    .querySelectorAll(`.swimlane-cell.is-column-collapsed.${COLLAPSED_DROP_HOVER_CLASS}`)
-    .forEach((cell) => cell.classList.remove(COLLAPSED_DROP_HOVER_CLASS));
-}
-
-function setCollapsedDropHover(el) {
-  clearCollapsedDropHover();
-  if (el) el.classList.add(COLLAPSED_DROP_HOVER_CLASS);
-}
-
-// Track touch/mouse position globally during drag
-function trackPointer(evt) {
-  if (evt.touches && evt.touches[0]) {
-    lastTouchX = evt.touches[0].clientX;
-    lastTouchY = evt.touches[0].clientY;
-  } else if (evt.clientX) {
-    lastTouchX = evt.clientX;
-    lastTouchY = evt.clientY;
-  }
-  updateCollapsedHoverFromPoint(lastTouchX, lastTouchY);
-  autoScrollActiveTaskList();
-}
-
-function updateCollapsedHoverFromPoint(x, y) {
-  if (!x && !y) return;
-  const target = document.elementFromPoint(x, y);
-  if (isSwimlaneViewEnabled()) {
-    const cell = target?.closest?.('.swimlane-cell');
-    if (cell && cell.classList.contains('is-column-collapsed')) {
-      setCollapsedDropHover(cell);
-    } else {
-      clearCollapsedDropHover();
-    }
-  } else {
-    const column = target?.closest?.('.task-column');
-    if (column && column.classList.contains('is-collapsed')) {
-      setCollapsedDropHover(column);
-    } else {
-      clearCollapsedDropHover();
-    }
-  }
 }
 
 // Initialize sortable for tasks within columns
@@ -246,96 +75,11 @@ function initTaskSortables() {
       scrollSensitivity: 120,
       scrollSpeed: 22,
       bubbleScroll: true,
-      
-      onStart: function(evt) {
-        document.body.classList.add('dragging');
-        isDraggingTask = true;
-        activeTaskList = evt.from || null;
-        if (!isSwimlaneViewEnabled()) {
-          showCollapsedDropZones();
-        }
-        startAutoScroll();
-        // Add global move listener to track pointer
-        document.addEventListener('touchmove', trackPointer, { passive: true });
-        document.addEventListener('mousemove', trackPointer, { passive: true });
-        document.addEventListener('dragover', trackPointer, { passive: true });
-        updateCollapsedHoverFromPoint(lastTouchX, lastTouchY);
-      },
+      onStart: startDragSession,
 
-      onMove: function(evt) {
-        activeTaskList = evt.to || activeTaskList;
-        if (isSwimlaneViewEnabled()) {
-          const targetCell = evt.to?.closest('.swimlane-cell');
-          if (targetCell && targetCell.classList.contains('is-column-collapsed')) {
-            setCollapsedDropHover(targetCell);
-          } else {
-            clearCollapsedDropHover();
-          }
-        } else {
-          const targetColumn = evt.to?.closest('.task-column');
-          if (targetColumn && targetColumn.classList.contains('is-collapsed')) {
-            setCollapsedDropHover(targetColumn);
-          } else {
-            clearCollapsedDropHover();
-          }
-        }
-      },
-      
-      onEnd: async function(evt) {
-        const restoreCollapsedDropZones = !isSwimlaneViewEnabled();
-        cleanupTaskDragState({ restoreCollapsedDropZones });
+      onMove: moveDragSession,
 
-        const isSwimlaneView = isSwimlaneViewEnabled();
-
-        // Swimlane drops need a full rebuild, so wait until the browser has
-        // finished finalising native drag state before touching their DOM. The
-        // standard board uses the in-place reconcile path immediately.
-        if (isSwimlaneView) {
-          await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
-        }
-
-        // Open a reconcile window for the whole mutation. Every DATA_CHANGED that
-        // updateTaskPositionsFromDrop()/moveTaskToTopInColumn() emit synchronously
-        // is routed through reconcileBoard() (patch in place) instead of
-        // renderBoard() (full teardown), so the just-dragged node is never
-        // detached. Counters, collapsed titles, due dates, and notifications are
-        // reconcile's responsibility now — no manual sync pass here.
-        const renderModule = isSwimlaneView ? await import('./render.js') : null;
-        if (renderModule) renderModule.beginDragReconcile();
-        else emit(DRAG_RECONCILE_BEGIN);
-        let dropResult = null;
-        try {
-          dropResult = updateTaskPositionsFromDrop(evt);
-          if (!dropResult) return;
-
-          const toColumnEl = getTaskContainerElement(evt.to);
-
-          if (!isSwimlaneView && toColumnEl?.classList.contains('is-collapsed')) {
-            // Keep collapsed drops state-only so Sortable's detached drag node is
-            // never re-parented here; reconcile repaints from state.
-            moveTaskToTopInColumn(dropResult.movedTaskId, dropResult.toColumn);
-          }
-
-          if (isSwimlaneView && (dropResult.didChangeColumn || dropResult.didChangeLane)) {
-            // Swimlane boards fall outside reconcile's scope; the emitted
-            // DATA_CHANGED falls back to a full renderBoard() rebuild.
-            emit(DATA_CHANGED);
-          }
-        } finally {
-          if (renderModule) renderModule.endDragReconcile();
-          else emit(DRAG_RECONCILE_END);
-        }
-
-        if (dropResult?.enteredBlocked) {
-          const reasonStored = await promptBlockedReason(dropResult.movedTaskId);
-          if (reasonStored) {
-            // Reconcile only patches due dates on reused cards, so a full repaint
-            // is what surfaces the new blocked indicator after the prompt closes.
-            const { renderBoard } = await import('./render.js');
-            renderBoard();
-          }
-        }
-      }
+      onEnd: handleTaskDrop
     });
     
     taskSortables.push(sortable);
