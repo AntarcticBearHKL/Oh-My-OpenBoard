@@ -756,3 +756,47 @@ only the guard produces, so the test cannot pass vacuously.
 read-model-projector.js to the exported set so both ends read from one list. It was not
 done here because one comparison against a two-name disjunction does not justify the
 churn on its own.
+
+### Batch 10 inventory, measured (not carried over from the audit)
+
+Line counts taken from the tree at the time of writing. The audit listed three files;
+there are in fact sixteen over the 250-line ceiling, so a plan based on the old list
+would have stopped early.
+
+| Lines | File |
+|---:|---|
+| 1363 | modules/task-modal.js |
+| 1098 | modules/storage.js |
+| 1070 | modules/reports.js |
+| 743 | modules/tasks.js |
+| 698 | modules/swimlanes.js |
+| 664 | modules/importexport.js |
+| 380 | modules/notifications.js |
+| 343 | modules/dragdrop.js |
+| 340 | modules/labels-modal.js |
+| 329 | modules/render.js |
+| 302 | modules/reducer.js |
+| 293 | modules/task-card.js |
+| 285 | modules/calendar.js |
+| 267 | modules/board-sidebar.js |
+| 265 | modules/boards-modal.js |
+| 251 | modules/boards.js |
+
+**Suggested order, cheapest first.** Splitting the three largest files is the risky part
+and should be done one at a time, each behind the full suite. The smaller files at the
+bottom of the table are close to the ceiling and can be brought under it by moving one
+cohesive group out, which is far less likely to disturb the read-model invariants.
+
+Candidate boundaries that look self-contained from a read of the code, to be confirmed
+against CONTEXT.md before moving anything:
+
+- **storage.js** - the legacy migration block (the `kanbanColumns`/`kanbanTasks`/
+  `kanbanLabels` to per-board-key move, roughly lines 254-300) runs once at init and
+  touches nothing else; the key helpers are already a small group.
+- **task-modal.js** - the subtask editor, the annotation list and the comment list are
+  three independent renderers sharing only helpers.
+- **reports.js** - each chart section appears to own its own data shaping.
+
+**Do not start this without a clean checkpoint and the full suite green.** These files
+sit on the event-sourcing read model; a split that changes module evaluation order can
+turn a static import into a cycle and break projection in ways the build will not catch.
