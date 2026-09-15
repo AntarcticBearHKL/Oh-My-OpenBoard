@@ -12,26 +12,12 @@ import { setupModalCloseHandlers } from './modal-utils.js';
 import { emit, on, DATA_CHANGED } from './events.js';
 import { renderIcons } from './icons.js';
 import { $id, h } from './dom.js';
-
-const DELETE_CONFIRM_MS = 3000;
+import { createArmedDeleteController } from './armed-delete-button.js';
 
 let initialized = false;
 let selectedSkillId = null;
 let forceEditorReload = false;
-let deleteTimer = null;
-
-function disarmDeleteButton() {
-  if (deleteTimer) {
-    clearTimeout(deleteTimer);
-    deleteTimer = null;
-  }
-  const btn = $id('skill-delete-btn');
-  if (!btn) return;
-  btn.classList.remove('is-armed');
-  btn.textContent = 'Delete';
-  btn.title = 'Delete skill';
-  btn.setAttribute('aria-label', 'Delete skill');
-}
+let deleteConfirm = null;
 
 function renderList(skills) {
   const listEl = $id('skills-list');
@@ -109,7 +95,7 @@ function render() {
 
 function selectSkill(skillId) {
   if (skillId === selectedSkillId) return;
-  disarmDeleteButton();
+  deleteConfirm?.reset();
   selectedSkillId = skillId;
   forceEditorReload = true;
   render();
@@ -127,12 +113,12 @@ function showSkillsModal() {
 }
 
 function hideSkillsModal() {
-  disarmDeleteButton();
+  deleteConfirm?.reset();
   $id('skills-modal')?.classList.add('hidden');
 }
 
 function handleAdd() {
-  disarmDeleteButton();
+  deleteConfirm?.reset();
   const skill = createSkill({ name: 'New skill' });
   selectedSkillId = skill.id;
   forceEditorReload = true;
@@ -161,25 +147,8 @@ function handleSave(event) {
 }
 
 function handleDeleteClick() {
-  const btn = $id('skill-delete-btn');
-  if (!btn || !selectedSkillId) return;
-
-  if (btn.classList.contains('is-armed')) {
-    const skillId = selectedSkillId;
-    disarmDeleteButton();
-    if (deleteSkill(skillId)) {
-      selectedSkillId = null;
-      forceEditorReload = true;
-      emit(DATA_CHANGED);
-    }
-    return;
-  }
-
-  btn.classList.add('is-armed');
-  btn.textContent = '!';
-  btn.title = 'Click again to confirm delete';
-  btn.setAttribute('aria-label', 'Click again to confirm delete');
-  deleteTimer = setTimeout(disarmDeleteButton, DELETE_CONFIRM_MS);
+  if (!selectedSkillId) return;
+  deleteConfirm?.handleClick();
 }
 
 export function initializeSkillsUI() {
@@ -193,8 +162,30 @@ export function initializeSkillsUI() {
 
   $id('skill-add-btn')?.addEventListener('click', handleAdd);
   $id('skill-form')?.addEventListener('submit', handleSave);
-  $id('skill-delete-btn')?.addEventListener('click', handleDeleteClick);
-  $id('skill-delete-btn')?.addEventListener('blur', disarmDeleteButton);
+  const deleteBtn = $id('skill-delete-btn');
+  if (deleteBtn) {
+    deleteConfirm = createArmedDeleteController({
+      button: deleteBtn,
+      armedContent: '!',
+      armedTitle: 'Click again to confirm delete',
+      armedAria: 'Click again to confirm delete',
+      onRestore: () => {
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.title = 'Delete skill';
+        deleteBtn.setAttribute('aria-label', 'Delete skill');
+      },
+      onConfirm: () => {
+        const skillId = selectedSkillId;
+        deleteConfirm?.reset();
+        if (deleteSkill(skillId)) {
+          selectedSkillId = null;
+          forceEditorReload = true;
+          emit(DATA_CHANGED);
+        }
+      }
+    });
+    deleteBtn.addEventListener('click', handleDeleteClick);
+  }
 
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
