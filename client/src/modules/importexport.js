@@ -40,10 +40,6 @@ function normalizeSettingsForExport(settings) {
     ? obj.locale.trim()
     : (typeof navigator !== 'undefined' && typeof navigator.language === 'string' ? navigator.language : 'en-US');
   const defaultPriority = normalizePriority(obj.defaultPriority);
-  const rawNotificationDays = Number.parseInt((obj.notificationDays ?? '').toString(), 10);
-  const notificationDays = Number.isFinite(rawNotificationDays)
-    ? Math.min(365, Math.max(0, rawNotificationDays))
-    : 3;
   const swimLanesEnabled = obj.swimLanesEnabled === true;
   const swimLaneGroupBy = ['label', 'label-group', 'priority'].includes(obj.swimLaneGroupBy)
     ? obj.swimLaneGroupBy
@@ -71,7 +67,6 @@ function normalizeSettingsForExport(settings) {
     showChangeDate,
     locale,
     defaultPriority,
-    notificationDays,
     swimLanesEnabled,
     swimLaneGroupBy,
     swimLaneLabelGroup,

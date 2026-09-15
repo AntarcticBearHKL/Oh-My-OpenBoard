@@ -127,7 +127,6 @@
     "showAge": true,
     "showChangeDate": true,
     "locale": "en",
-    "defaultPriority": "none",
-    "notificationDays": 2
+    "defaultPriority": "none"
   }
 }

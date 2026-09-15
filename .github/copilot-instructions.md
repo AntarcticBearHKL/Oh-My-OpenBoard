@@ -33,7 +33,6 @@
 - **modals.js** - Modal UX (close via Escape/backdrop). Uses DOM ids from index.html.
 - **dialog.js** - `confirmDialog()` / `alertDialog()` instead of `window.confirm`
 - **icons.js** - Lucide icons tree-shaking. To add an icon: import from `lucide`, add to `icons` object, call `renderIcons()` after dynamic DOM changes.
-- **notifications.js** - Due date notification banner and modal
 - **settings.js** - Per-board settings modal and persistence
 - **labels.js** - Label management modal UI
 - **dateutils.js** - Due date countdown calculations and formatting

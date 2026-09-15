@@ -3,7 +3,6 @@
 import { listBoards, loadColumns, loadTasks, loadLabels, loadSettings } from './storage.js';
 import { initDragDrop } from './dragdrop.js';
 import { renderIcons } from './icons.js';
-import { refreshNotifications } from './notifications.js';
 import { syncSwimLaneControls } from './swimlane-controls.js';
 import { on, DATA_CHANGED, DRAG_RECONCILE_BEGIN, DRAG_RECONCILE_END } from './events.js';
 import { createTaskElement } from './task-card.js';
@@ -163,7 +162,6 @@ export function reconcileBoard() {
     if (!usedIds.has(id)) el.remove();
   });
 
-  refreshNotifications();
   performance.mark('openagile:board-render:reconcile');
 
   return true;
@@ -209,7 +207,6 @@ export function renderBoard() {
   initDragDrop();
   updateColumnSelect();
   renderIcons();
-  refreshNotifications();
 
   performance.mark('openagile:board-render:full');
 }

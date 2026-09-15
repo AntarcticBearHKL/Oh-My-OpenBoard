@@ -189,7 +189,6 @@ all subscribe.
 | `event-sourcing/emitter.js` | `emitDomainEvent()` / `scheduleDomainEvent()` — stamp (UUID + HLC), persist, emit `EVENT_EMITTED` |
 | `event-sourcing/dispatcher.js` | `reduceEventAndNotify()` — runs the reducer and signals re-render |
 | `event-sourcing/{hlc,sync-queue,realtime,snapshot,snapshot-sync,sync-indicator}.js` | Sync layer — see §4 |
-| `notifications.js` | Due-date notification banner/modal |
 | `dateutils.js` | Date calculation utilities (`calculateDaysUntilDue`, `formatCountdown`) |
 | `modals.js` | Modal coordination and shared modal state |
 | `dialog.js` | `alertDialog` / `confirmDialog` helpers |
@@ -230,7 +229,7 @@ drop onEnd → beginDragReconcile() → updateTaskPositionsFromDrop() → …DAT
 ### Task Due Date Rendering
 ```
 calculateDaysUntilDue → formatCountdown → getCountdownClassName
-  → createTaskElement → getNotificationTasks
+  → createTaskElement
 ```
 
 ### Column Management

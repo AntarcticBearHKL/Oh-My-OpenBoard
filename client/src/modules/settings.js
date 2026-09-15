@@ -49,14 +49,13 @@ export function initializeSettingsUI() {
 
   const showPriorityEl = $id('settings-show-priority');
   const showDueDateEl = $id('settings-show-due-date');
-  const notificationDaysEl = $id('settings-notification-days');
   const countdownUrgentEl =$id('settings-countdown-urgent-threshold');
   const countdownWarningEl = $id('settings-countdown-warning-threshold');
   const showAgeEl = $id('settings-show-age');
   const showChangeDateEl = $id('settings-show-change-date');
   const localeEl = $id('settings-locale');
   const defaultPriorityEl = $id('settings-default-priority');
-  if (!openBtn || !closeBtn || !showPriorityEl || !showDueDateEl || !notificationDaysEl || !countdownUrgentEl || !countdownWarningEl || !showAgeEl || !showChangeDateEl || !localeEl || !defaultPriorityEl) return;
+  if (!openBtn || !closeBtn || !showPriorityEl || !showDueDateEl || !countdownUrgentEl || !countdownWarningEl || !showAgeEl || !showChangeDateEl || !localeEl || !defaultPriorityEl) return;
 
   function syncFormFromSettings() {
     const settings = loadSettings();
@@ -65,7 +64,6 @@ export function initializeSettingsUI() {
     showAgeEl.checked = settings.showAge !== false;
     showChangeDateEl.checked = settings.showChangeDate !== false;
 
-    notificationDaysEl.value = String(Number.isFinite(settings.notificationDays) ? settings.notificationDays : 3);
     countdownUrgentEl.value = String(Number.isFinite(settings.countdownUrgentThreshold) ? settings.countdownUrgentThreshold : 3);
     countdownWarningEl.value = String(Number.isFinite(settings.countdownWarningThreshold) ? settings.countdownWarningThreshold : 10);
 
@@ -111,13 +109,6 @@ export function initializeSettingsUI() {
   showDueDateEl.addEventListener('change', () => {
     const current = loadSettings();
     applyAndRerender({ ...current, showDueDate: Boolean(showDueDateEl.checked) });
-  });
-
-  notificationDaysEl.addEventListener('change', () => {
-    const current = loadSettings();
-    const raw = Number.parseInt(notificationDaysEl.value, 10);
-    const notificationDays = Number.isFinite(raw) ? raw : 3;
-    applyAndRerender({ ...current, notificationDays });
   });
 
   countdownUrgentEl.addEventListener('change', () => {

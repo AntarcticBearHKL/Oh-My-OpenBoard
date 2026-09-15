@@ -40,7 +40,7 @@ OpenAgile == "Kanban" + "Nirvana" is a Kanban Board, browser-based task manager 
 	- **Columns** = workflow state (To Do → In Progress → Done)
 	- **Priority** = urgency (urgent/high/medium/low/none)
 	- **Labels** = categories (type/area/context/activity)
-	- **Due dates** = deadlines (and notifications)
+	- **Due dates** = deadlines
 
 Tip: Everything is stored locally in your browser (IndexedDB). Export regularly if you care about keeping the data.
 
@@ -84,7 +84,7 @@ Want more templates? See [boards.md](boards.md).
 New to Kanban? Here's where to start:
 
 1. **[User Guide (In-App Help)](help-how-to.md)** — Learn the UI quickly: boards, tasks, columns, labels, import/export
-2. **[Keyboard Shortcuts](user/keybindings.md)** — Move faster with board, modal, task, and notification shortcuts
+2. **[Keyboard Shortcuts](user/keybindings.md)** — Move faster with board, modal, and task shortcuts
 3. **[Board Templates](boards.md)** — Pick a workflow and import a ready-to-use board
 4. **[Labels Guide](labels.md)** — Build a label system that helps you filter without turning labels into “status”
 
@@ -148,20 +148,6 @@ Customizable columns with colors, drag-to-reorder, collapse/expand, and sorting 
 
 ### Labels & Groups
 Color-coded labels organized into groups. Assign multiple labels per task. Search and filter across your board by label name, group, title, description, or priority. Create labels inline from the task editor search.
-
-### Notifications
-Banner and modal alerts for tasks approaching their due date. Configurable threshold for how far ahead to warn. Quick-access bell icon in the header with live badge count.
-
-- Per-board customization: Different boards can have different thresholds
-- Flexible workflows: Adjust to your team's or personal preferences
-- Better prioritization: Set thresholds that match your actual deadlines
-- Real-time updates: Changes apply immediately to all tasks
-
-For example, you could set:
-
-- Sprint planning board: urgent=2 days, warning=5 days (shorter cycles)
-- Long-term projects: urgent=7 days, warning=30 days (longer horizons)
-- Personal tasks: urgent=3 days, warning=10 days (default)
 
 ### Reports & Calendar
 Dedicated pages for productivity analytics and date-based planning:

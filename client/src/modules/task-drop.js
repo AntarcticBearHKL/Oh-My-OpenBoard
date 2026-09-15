@@ -40,7 +40,7 @@ export async function handleTaskDrop(evt) {
   // updateTaskPositionsFromDrop()/moveTaskToTopInColumn() emit synchronously
   // is routed through reconcileBoard() (patch in place) instead of
   // renderBoard() (full teardown), so the just-dragged node is never
-  // detached. Counters, collapsed titles, due dates, and notifications are
+  // detached. Counters, collapsed titles, and due dates are
   // reconcile's responsibility now — no manual sync pass here.
   const renderModule = isSwimlaneView ? await import('./render.js') : null;
   if (renderModule) renderModule.beginDragReconcile();

@@ -81,7 +81,6 @@ client/src/modules/labels-modal.js
 client/src/modules/labels.js
 client/src/modules/modals.js
 client/src/modules/normalize.js
-client/src/modules/notifications.js
 client/src/modules/render.js
 client/src/modules/reports.js
 client/src/modules/schema.js

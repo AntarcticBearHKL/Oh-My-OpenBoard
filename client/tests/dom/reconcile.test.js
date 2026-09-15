@@ -19,8 +19,6 @@ vi.mock('sortablejs', () => ({
 }));
 vi.mock('../../src/modules/icons.js', () => ({ renderIcons: vi.fn() }));
 
-const refreshNotifications = vi.fn();
-vi.mock('../../src/modules/notifications.js', () => ({ refreshNotifications }));
 vi.mock('../../src/modules/storage.js', () => ({
   listBoards: () => mocks.boards,
   loadColumns: () => mocks.columns,
@@ -40,7 +38,6 @@ beforeEach(() => {
   mocks.labels = [];
   mocks.settings = { swimLanesEnabled: false, showDueDate: true };
   mocks.isDoneColumnId.mockClear();
-  refreshNotifications.mockClear();
 });
 
 // Warm the render graph here: the first import of render.js transforms its whole
@@ -141,16 +138,6 @@ test('a data change inside a drag-reconcile window patches in place instead of r
   // The moved card is the same node — the board was reconciled, not torn down.
   expect(document.querySelector('[data-task-id="t1"]')).toBe(card);
   expect(card.parentElement).toBe(document.querySelector('[data-column="done"] .tasks'));
-});
-
-test('reconcileBoard refreshes notifications, matching a full render', async () => {
-  mocks.tasks = [{ id: 't1', column: 'done', order: 1, title: 'Ship it' }];
-  mountStandardBoard();
-
-  const { reconcileBoard } = await import('../../src/modules/render.js');
-  reconcileBoard();
-
-  expect(refreshNotifications).toHaveBeenCalled();
 });
 
 test('reconcileBoard respects the active board filter, like a full render', async () => {

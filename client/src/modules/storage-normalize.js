@@ -55,10 +55,6 @@ export function normalizeSettings(raw) {
   const showChangeDate = obj.showChangeDate !== false;
   const priority = (obj.defaultPriority || '').toString().trim().toLowerCase();
   const defaultPriority = normalizePriority(priority);
-  const rawNotificationDays = Number.parseInt((obj.notificationDays ?? '').toString(), 10);
-  const notificationDays = Number.isFinite(rawNotificationDays)
-    ? Math.min(365, Math.max(0, rawNotificationDays))
-    : 3;
 
   const rawUrgentThreshold = Number.parseInt((obj.countdownUrgentThreshold ?? '').toString(), 10);
   const countdownUrgentThreshold = Number.isFinite(rawUrgentThreshold)
@@ -87,7 +83,6 @@ export function normalizeSettings(raw) {
     showChangeDate,
     locale,
     defaultPriority,
-    notificationDays,
     countdownUrgentThreshold,
     countdownWarningThreshold,
     swimLanesEnabled,

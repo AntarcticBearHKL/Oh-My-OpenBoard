@@ -148,7 +148,7 @@ test('saveLabels persists to IDB and survives a session reset', async () => {
 test('saveSettings persists to IDB and survives a session reset', async () => {
   await initStorage();
   ensureBoardsInitialized();
-  saveSettings({ swimLanesEnabled: true, notificationDays: 7 });
+  saveSettings({ swimLanesEnabled: true, showAge: false });
 
   await _flushPersistsForTesting();
   const boardId = getActiveBoardId();
@@ -158,7 +158,7 @@ test('saveSettings persists to IDB and survives a session reset', async () => {
   setActiveBoardId(boardId);
   const settings = loadSettings();
   expect(settings.swimLanesEnabled).toBe(true);
-  expect(settings.notificationDays).toBe(7);
+  expect(settings.showAge).toBe(false);
 });
 
 test('createBoard persists board list and per-board defaults across sessions', async () => {

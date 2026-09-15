@@ -9,7 +9,6 @@
 
 - Show or hide task priority
 - Show or hide due dates
-- Set the notifications upcoming window in days
 - Set urgent and warning thresholds for due-date coloring
 - Show or hide task age
 - Show or hide task updated timestamp

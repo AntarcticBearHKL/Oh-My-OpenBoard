@@ -136,7 +136,6 @@ Key persisted fields include:
 - `showDueDate`
 - `showAge`
 - `showChangeDate`
-- `notificationsDaysAhead`
 - `dueDateUrgentThreshold`
 - `dueDateWarningThreshold`
 - `locale`

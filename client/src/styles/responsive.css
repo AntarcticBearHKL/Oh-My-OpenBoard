@@ -98,16 +98,11 @@
     transform: translateY(0);
   }
 
-  #notifications-quick-btn,
   #desktop-menu-btn {
     padding: 8px;
     min-width: 38px;
     min-height: 38px;
     justify-content: center;
-  }
-
-  #notifications-quick-btn {
-    margin-left: 0;
   }
 
   .session-status #login-btn {
@@ -342,13 +337,6 @@
 
   .board-sidebar {
     max-height: 30vh;
-  }
-
-  /* Notification banner: compact in landscape */
-  .notification-banner {
-    max-height: 80px;
-    padding: 6px 10px;
-    margin: 0 8px 4px 8px;
   }
 
   /* Modals: use full screen but allow scrolling */

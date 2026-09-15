@@ -29,7 +29,6 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 | `docs/spec/relationships.md` | Task relationship types, bidirectional sync rules |
 | `docs/spec/sub-tasks.md` | Sub-task model, checklist behavior, ordering |
 | `docs/spec/swimlanes.md` | Swim lane grouping modes, collapse state, lane-aware drag-drop |
-| `docs/spec/notifications.md` | Due-date notification banner and modal behavior |
 | `docs/spec/import-export.md` | Board JSON export/import format and ID-remapping rules |
 | `docs/spec/sync.md` | "Go Online" auth flow: backend health probe, login modal, session management (event-sourced sync itself lives in `backend-storage-pb.md`) |
 
@@ -94,7 +93,6 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 - `src/modules/modals.js` - modal open/close wiring and Escape/backdrop behavior
 - `src/modules/dialog.js` - confirm and alert dialog helpers
 - `src/modules/icons.js` - Lucide icon registration and `renderIcons()`
-- `src/modules/notifications.js` - due-date banner and modal
 - `src/modules/settings.js` - per-board settings modal and persistence
 - `src/modules/labels.js` - label management UI
 - `src/modules/dateutils.js` - countdown and date formatting helpers
@@ -167,7 +165,6 @@ Styles are organized under `src/styles/` with `src/styles/index.css` importing f
 - `components/modals.css`
 - `components/accordion.css`
 - `components/labels.css`
-- `components/notifications.css`
 - `components/dragdrop.css`
 - `components/reports.css`
 - `components/auth.css` - auth modal and sync button styles

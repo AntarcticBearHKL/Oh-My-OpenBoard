@@ -5,7 +5,7 @@ OpenAgile supports keyboard shortcuts for fast board management, modal handling,
 | Area | Key binding | Action | Notes |
 |---|---|---|---|
 | Global board navigation | `Ctrl+B` | Open the Manage Boards modal | Ignored while focus is in an input, textarea, or select |
-| Global modal handling | `Escape` | Close the active modal, dialog, or column menu | Applies to task, column, labels, board, help, login, settings, notifications, confirmation dialogs, and open column menus |
+| Global modal handling | `Escape` | Close the active modal, dialog, or column menu | Applies to task, column, labels, board, help, login, settings, confirmation dialogs, and open column menus |
 | Manage Boards modal | `ArrowDown` | Move focus to the next board | Works only while the Manage Boards modal is open |
 | Manage Boards modal | `ArrowUp` | Move focus to the previous board | Works only while the Manage Boards modal is open |
 | Manage Boards modal | `Enter` | Open the highlighted board | Closes the Manage Boards modal after switching |
@@ -15,7 +15,4 @@ OpenAgile supports keyboard shortcuts for fast board management, modal handling,
 | Sub-task quick add | `Enter` | Add the typed sub-task | Works in the task editor sub-task input |
 | Inline sub-task edit | `Enter` | Save the edited sub-task title | Works while editing a sub-task title inline |
 | Inline sub-task edit | `Escape` | Cancel the inline sub-task edit | Restores the previous title |
-| Notifications banner | `Enter` or `Space` | Open the focused notification task | Works on keyboard-focused notification items |
-| Notifications banner | `Enter` or `Space` | Open the notifications modal from the focused overflow item | Applies to the `+N` overflow item |
-| Notifications modal | `Enter` or `Space` | Open the focused task and close the notifications modal | Works on keyboard-focused notification rows |
 

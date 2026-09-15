@@ -13,7 +13,6 @@ This file is the entrypoint to the canonical application specification. Detailed
 - `docs/spec/labels.md` - label groups, management modal, validation, assignment
 - `docs/spec/swimlanes.md` - swim lane layout, grouping rules, collapse, mobile behavior
 - `docs/spec/settings.md` - per-board settings and swim lane controls
-- `docs/spec/notifications.md` - banner and modal notification behavior
 - `docs/spec/reports.md` - reports calculations and layout rules
 - `docs/spec/calendar.md` - due-date calendar behavior
 - `docs/spec/import-export.md` - board JSON import/export rules and compatibility expectations
@@ -45,7 +44,6 @@ Use this mapping to decide which spec files to update alongside code changes.
 - `src/modules/boards.js`, `src/modules/boards-modal.js` -> `docs/spec/board-ui.md`
 - `src/modules/swimlanes.js`, `src/modules/swimlane-renderer.js` -> `docs/spec/swimlanes.md`, `docs/spec/settings.md`, `docs/spec/data-models.md`
 - `src/modules/settings.js` -> `docs/spec/settings.md`
-- `src/modules/notifications.js` -> `docs/spec/notifications.md`, `docs/spec/tasks.md`
 - `src/modules/reports.js` -> `docs/spec/reports.md`
 - `src/modules/calendar.js` -> `docs/spec/calendar.md`
 - `src/modules/render.js`, `src/modules/dragdrop.js`, `src/index.html`, `src/activity.html`, `src/styles/**` -> `docs/spec/board-ui.md` and any affected feature spec files

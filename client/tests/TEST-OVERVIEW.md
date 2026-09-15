@@ -5,7 +5,7 @@ Generated from test source. Do not edit by hand; run `npm run test:overview` fro
 ## Fast Scan
 
 - Test files: 54
-- Test cases: 482
+- Test cases: 484
 - Unit files: 29
 - DOM integration files: 25
 - E2E files: 0
@@ -39,8 +39,6 @@ These lists compare source/spec filenames against test file names and test title
 - `src/modules/labels-modal.js`
 - `src/modules/local-server.js`
 - `src/modules/modal-utils.js`
-- `src/modules/notification-tasks.js`
-- `src/modules/notifications-banner.js`
 - `src/modules/projection-task-handlers.js`
 - `src/modules/reports-cfd.js`
 - `src/modules/reports-completions.js`
@@ -625,17 +623,20 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/dom/board-sidebar.test.js`
 - Type: DOM Integration
-- Test count: 9
+- Test count: 12
 
 - `tests/dom/board-sidebar.test.js:74` sidebar group tree > renders stored groups
 - `tests/dom/board-sidebar.test.js:86` sidebar group tree > nests each board under its group and renders unmapped boards at the root
 - `tests/dom/board-sidebar.test.js:102` sidebar group tree > marks the active iteration
 - `tests/dom/board-sidebar.test.js:111` sidebar group tree > clicking an iteration switches the active board and emits DATA_CHANGED
 - `tests/dom/board-sidebar.test.js:122` sidebar group tree > the chevron collapses a group and persists the state
-- `tests/dom/board-sidebar.test.js:137` sidebar group tree > #add-group-btn creates a group and starts inline rename
-- `tests/dom/board-sidebar.test.js:151` sidebar group tree > double-clicking a group name opens inline rename
-- `tests/dom/board-sidebar.test.js:160` sidebar group tree > deleting a group needs two clicks and leaves its boards at the root
-- `tests/dom/board-sidebar.test.js:178` sidebar group tree > deleting an iteration needs two clicks
+- `tests/dom/board-sidebar.test.js:137` sidebar group tree > clicking a group name toggles collapse and updates both aria-expanded states
+- `tests/dom/board-sidebar.test.js:162` sidebar group tree > Enter and Space on the focused group name toggle collapse immediately
+- `tests/dom/board-sidebar.test.js:179` sidebar group tree > #add-group-btn creates a group and starts inline rename
+- `tests/dom/board-sidebar.test.js:193` sidebar group tree > double-clicking a group name opens inline rename
+- `tests/dom/board-sidebar.test.js:202` sidebar group tree > double-clicking a group name renames it instead of toggling collapse
+- `tests/dom/board-sidebar.test.js:224` sidebar group tree > deleting a group takes its iterations with it
+- `tests/dom/board-sidebar.test.js:243` sidebar group tree > deleting an iteration needs two clicks
 
 ### Boards Quick Switch
 
@@ -807,18 +808,17 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/dom/reconcile.test.js`
 - Type: DOM Integration
-- Test count: 10
+- Test count: 9
 
-- `tests/dom/reconcile.test.js:73` reconcileBoard moves a dragged task card into its new column, preserving the node
-- `tests/dom/reconcile.test.js:93` reconcileBoard updates each column task counter to match state
-- `tests/dom/reconcile.test.js:104` reconcileBoard leaves a legacy collapsed column title untouched and updates its counter
-- `tests/dom/reconcile.test.js:129` a data change inside a drag-reconcile window patches in place instead of rebuilding
-- `tests/dom/reconcile.test.js:146` reconcileBoard refreshes notifications, matching a full render
-- `tests/dom/reconcile.test.js:156` reconcileBoard respects the active board filter, like a full render
-- `tests/dom/reconcile.test.js:179` reconcileBoard defers to a full rebuild when swimlane mode is on
-- `tests/dom/reconcile.test.js:192` reconcileBoard defers to a full rebuild when the column set changed
-- `tests/dom/reconcile.test.js:205` reconcileBoard virtualizes an overfull Done column instead of rendering every card
-- `tests/dom/reconcile.test.js:222` reconcileBoard patches a card due-date in place when it lands in Done
+- `tests/dom/reconcile.test.js:70` reconcileBoard moves a dragged task card into its new column, preserving the node
+- `tests/dom/reconcile.test.js:90` reconcileBoard updates each column task counter to match state
+- `tests/dom/reconcile.test.js:101` reconcileBoard leaves a legacy collapsed column title untouched and updates its counter
+- `tests/dom/reconcile.test.js:126` a data change inside a drag-reconcile window patches in place instead of rebuilding
+- `tests/dom/reconcile.test.js:143` reconcileBoard respects the active board filter, like a full render
+- `tests/dom/reconcile.test.js:166` reconcileBoard defers to a full rebuild when swimlane mode is on
+- `tests/dom/reconcile.test.js:179` reconcileBoard defers to a full rebuild when the column set changed
+- `tests/dom/reconcile.test.js:192` reconcileBoard virtualizes an overfull Done column instead of rendering every card
+- `tests/dom/reconcile.test.js:209` reconcileBoard patches a card due-date in place when it lands in Done
 
 ### Settings Ui
 
@@ -826,8 +826,8 @@ These lists compare source/spec filenames against test file names and test title
 - Type: DOM Integration
 - Test count: 2
 
-- `tests/dom/settings-ui.test.js:44` settings modal opens with board settings controls
-- `tests/dom/settings-ui.test.js:57` settings changes persist through board settings
+- `tests/dom/settings-ui.test.js:43` settings modal opens with board settings controls
+- `tests/dom/settings-ui.test.js:56` settings changes persist through board settings
 
 ### Skills Modal
 

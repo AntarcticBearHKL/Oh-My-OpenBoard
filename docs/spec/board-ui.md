@@ -12,9 +12,8 @@
 - Includes board-level task search beside the brand area
 - Search filters the rendered board in memory only
 - Search matches task title, description, priority, label name, and label group name
-- A menu button opens controls for boards, help, labels, settings, notifications, add column, and calendar
-- A quick-access bell button mirrors the notification modal and count badge shown in the menu
-- On mobile, the top bar stays on a single row: the brand remains left, while notifications and the menu stay right; task search plus auth and sync controls move into the mobile menu overlay instead of consuming their own header rows
+- A menu button opens controls for boards, help, labels, settings, add column, and calendar
+- On mobile, the top bar stays on a single row: the brand remains left, while the menu stays right; task search plus auth and sync controls move into the mobile menu overlay instead of consuming their own header rows
 - On mobile, opening the controls menu expands into a full-screen overlay with a dedicated close button, keeping search, session status, and the control list within easy thumb reach
 
 ## Boards UI
@@ -48,7 +47,7 @@
 - Dragging near the top or bottom of a long task list auto-scrolls the list
 - Collapsed columns accept drops and place the task at the top
 - Done column internal reordering is disabled and dropped tasks are inserted at the top
-- Task drops use incremental updates so counters, collapsed titles, due-date display, and notifications refresh without a full board rebuild
+- Task drops use incremental updates so counters, collapsed titles, and due-date display refresh without a full board rebuild
 
 ## Scrolling and Responsiveness
 

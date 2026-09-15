@@ -11,7 +11,6 @@ import { initializeBoardsUI } from './modules/boards.js';
 import { initializeBoardSidebar } from './modules/board-sidebar.js';
 import { initializeSkillsUI } from './modules/skills-modal.js';
 import { initializeSettingsUI } from './modules/settings.js';
-import { initializeNotifications } from './modules/notifications.js';
 import { initStorage, ensureBoardsInitialized, setActiveBoardId } from './modules/storage.js';
 import { initializeSwimLaneControls } from './modules/swimlane-controls.js';
 import { initializeAuthSyncUI } from './modules/authsync.js';
@@ -73,9 +72,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Initialize modal handlers
   initializeModalHandlers();
-
-  // Initialize notifications
-  initializeNotifications();
 
   document.getElementById('import-file').addEventListener('change', (e) => {
     const file = e.target.files[0];

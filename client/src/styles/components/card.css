@@ -177,9 +177,8 @@
   }
 }
 
-/* Priority badge – shared base for rows and notification items */
-.task-priority,
-.notification-item-priority {
+/* Priority badge – shared base for task rows */
+.task-priority {
   border-radius: var(--radius-sm);
   font-weight: 700;
   text-transform: uppercase;
@@ -195,11 +194,6 @@
 /* A "none" chip carries no information — keep dense rows quiet */
 .task-row .task-priority.priority-none {
   display: none;
-}
-
-/* Compact badge for notification items */
-.notification-item-priority {
-  padding: 2px 6px;
 }
 
 .priority-high {

@@ -20,7 +20,6 @@ function mountSettings() {
             <h4 id="settings-board-title">Board settings</h4>
             <label><input id="settings-show-priority" type="checkbox">Show task priority</label>
             <label><input id="settings-show-due-date" type="checkbox">Show task due date</label>
-            <input id="settings-notification-days" type="number">
             <input id="settings-countdown-urgent-threshold" type="number">
             <input id="settings-countdown-warning-threshold" type="number">
             <label><input id="settings-show-age" type="checkbox">Show task age</label>

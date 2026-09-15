@@ -67,7 +67,6 @@ export function defaultSettings() {
     showChangeDate: false,
     locale,
     defaultPriority: 'none',
-    notificationDays: 3,
     countdownUrgentThreshold: 3,
     countdownWarningThreshold: 10,
     swimLanesEnabled: false,
