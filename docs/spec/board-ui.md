@@ -25,6 +25,7 @@
 - New boards start blank
 - The last remaining board cannot be deleted
 - On mobile, the board selector has a larger touch target and the controls menu stays open while the selector is used
+- Clicking a sidebar group's name or its chevron collapses or expands that group; double-clicking the name renames the group inline
 
 ## Modals and Dialogs
 

@@ -130,6 +130,10 @@ export function initializeBoardSidebar() {
   const buildGroupElement = (group, boards, activeId) => {
     const isCollapsed = group.collapsed === true;
 
+    const toggle = () => {
+      if (toggleGroupCollapsed(group.id)) render();
+    };
+
     const toggleBtn = document.createElement('button');
     toggleBtn.type = 'button';
     toggleBtn.className = 'board-group-toggle';
@@ -139,16 +143,40 @@ export function initializeBoardSidebar() {
     toggleBtn.innerHTML = `<span data-lucide="${isCollapsed ? 'chevron-right' : 'chevron-down'}" aria-hidden="true"></span>`;
     toggleBtn.addEventListener('click', (event) => {
       event.stopPropagation();
-      if (toggleGroupCollapsed(group.id)) render();
+      toggle();
     });
 
     const nameEl = document.createElement('span');
     nameEl.className = 'board-group-name';
     nameEl.textContent = group.name;
-    nameEl.title = 'Double-click to rename';
+    nameEl.title = isCollapsed
+      ? 'Click to expand, double-click to rename'
+      : 'Click to collapse, double-click to rename';
+    nameEl.setAttribute('role', 'button');
+    nameEl.tabIndex = 0;
+    nameEl.setAttribute('aria-expanded', String(!isCollapsed));
+
+    let pendingToggle = null;
+    nameEl.addEventListener('click', (event) => {
+      event.stopPropagation();
+      clearTimeout(pendingToggle);
+      // Deferred so a double-click can cancel the toggle before rename replaces this node.
+      pendingToggle = setTimeout(() => {
+        pendingToggle = null;
+        if (nameEl.isConnected) toggle();
+      }, 200);
+    });
     nameEl.addEventListener('dblclick', (event) => {
       event.stopPropagation();
+      clearTimeout(pendingToggle);
+      pendingToggle = null;
       startGroupRename(group.id);
+    });
+    nameEl.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggle();
+      }
     });
 
     const addBtn = document.createElement('button');

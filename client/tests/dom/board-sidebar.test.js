@@ -134,6 +134,48 @@ describe('sidebar group tree', () => {
     expect(listGroups().find((entry) => entry.id === group.id).collapsed).toBe(true);
   });
 
+  test('clicking a group name toggles collapse and updates both aria-expanded states', () => {
+    createGroup('Sprint 1');
+    mountToBody(FIXTURE);
+    initializeBoardSidebar();
+
+    vi.useFakeTimers();
+    try {
+      const nameEl = groupByName('Sprint 1').querySelector('.board-group-name');
+      expect(nameEl.getAttribute('role')).toBe('button');
+      expect(nameEl.getAttribute('aria-expanded')).toBe('true');
+
+      fireEvent.click(nameEl);
+      expect(groupByName('Sprint 1').classList.contains('is-collapsed')).toBe(false);
+
+      vi.advanceTimersByTime(200);
+
+      const collapsed = groupByName('Sprint 1');
+      expect(collapsed.classList.contains('is-collapsed')).toBe(true);
+      expect(collapsed.querySelector('.board-group-name').getAttribute('aria-expanded')).toBe('false');
+      expect(collapsed.querySelector('.board-group-toggle').getAttribute('aria-expanded')).toBe('false');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('Enter and Space on the focused group name toggle collapse immediately', () => {
+    createGroup('Sprint 1');
+    mountToBody(FIXTURE);
+    initializeBoardSidebar();
+
+    const nameEl = groupByName('Sprint 1').querySelector('.board-group-name');
+    nameEl.focus();
+    expect(document.activeElement).toBe(nameEl);
+    expect(nameEl.tabIndex).toBe(0);
+
+    fireEvent.keyDown(nameEl, { key: 'Enter' });
+    expect(groupByName('Sprint 1').classList.contains('is-collapsed')).toBe(true);
+
+    fireEvent.keyDown(groupByName('Sprint 1').querySelector('.board-group-name'), { key: ' ' });
+    expect(groupByName('Sprint 1').classList.contains('is-collapsed')).toBe(false);
+  });
+
   test('#add-group-btn creates a group and starts inline rename', () => {
     fireEvent.click(document.getElementById('add-group-btn'));
 
@@ -155,6 +197,28 @@ describe('sidebar group tree', () => {
 
     fireEvent.dblClick(groupByName('Sprint 1').querySelector('.board-group-name'));
     expect(document.querySelector('.board-group-rename-input')).not.toBeNull();
+  });
+
+  test('double-clicking a group name renames it instead of toggling collapse', () => {
+    const group = createGroup('Sprint 1');
+    mountToBody(FIXTURE);
+    initializeBoardSidebar();
+
+    vi.useFakeTimers();
+    try {
+      const nameEl = groupByName('Sprint 1').querySelector('.board-group-name');
+      fireEvent.click(nameEl);
+      fireEvent.dblClick(nameEl);
+
+      expect(document.querySelector('.board-group-rename-input')).not.toBeNull();
+
+      vi.advanceTimersByTime(200);
+
+      expect(listGroups().find((entry) => entry.id === group.id).collapsed).toBe(false);
+      expect(document.querySelector('.board-group-rename-input')).not.toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test('deleting a group takes its iterations with it', () => {
