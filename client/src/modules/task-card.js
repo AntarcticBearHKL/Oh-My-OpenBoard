@@ -1,6 +1,7 @@
 // Task row DOM construction — extracted from render.js
 
 import { isDoneColumnId, loadLabels } from './storage.js';
+import { PRIORITIES } from './constants.js';
 import { deleteTask } from './tasks.js';
 import { showEditModal } from './modals.js';
 import { confirmDialog } from './dialog.js';
@@ -143,7 +144,7 @@ export function createTaskElement(task, settings, labelsMap = null, today = null
 
   if (settings?.showPriority !== false) {
     const rawPriority = typeof task.priority === 'string' ? task.priority.toLowerCase().trim() : '';
-    const priority = (['urgent', 'high', 'medium', 'low', 'none'].includes(rawPriority)) ? rawPriority : 'none';
+    const priority = (PRIORITIES.includes(rawPriority)) ? rawPriority : 'none';
     meta.appendChild(h('span', {
       class: cx('task-priority', `priority-${priority}`),
       'aria-label': `Priority: ${priority}`

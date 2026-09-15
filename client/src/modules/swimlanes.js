@@ -1,5 +1,6 @@
 import Sortable from 'sortablejs';
 import { isDoneColumnId, loadLabels, loadTasks, loadSettings, saveSettings } from './storage.js';
+import { PRIORITIES } from './constants.js';
 
 export const SWIMLANE_GROUP_BY_LABEL = 'label';
 export const SWIMLANE_GROUP_BY_LABEL_GROUP = 'label-group';
@@ -8,7 +9,6 @@ export const NO_GROUP_LANE_KEY = '__no-group__';
 export const NO_GROUP_LANE_LABEL = 'No Group';
 export const SWIMLANE_HIDDEN_DONE_COLUMN_ID = 'done';
 
-const PRIORITY_LANE_ORDER = ['urgent', 'high', 'medium', 'low', 'none'];
 const PRIORITY_LANE_LABELS = {
   urgent: 'Urgent',
   high: 'High',
@@ -47,7 +47,7 @@ function normalizeCollapsedLaneKeys(keys) {
 
 function normalizePriorityLaneKey(value) {
   const normalized = (value || '').toString().trim().toLowerCase();
-  return PRIORITY_LANE_ORDER.includes(normalized) ? normalized : 'none';
+  return PRIORITIES.includes(normalized) ? normalized : 'none';
 }
 
 function getPriorityLaneDescriptor(value) {
@@ -268,7 +268,7 @@ export function groupTasksBySwimLane(tasks, groupBy, labelsInput, selectedLabelG
 
   const defaultSort = (left, right) => {
     if (normalizedGroupBy === SWIMLANE_GROUP_BY_PRIORITY) {
-      return PRIORITY_LANE_ORDER.indexOf(left.key) - PRIORITY_LANE_ORDER.indexOf(right.key);
+      return PRIORITIES.indexOf(left.key) - PRIORITIES.indexOf(right.key);
     }
     if (left.isDefault && !right.isDefault) return 1;
     if (!left.isDefault && right.isDefault) return -1;
@@ -466,7 +466,7 @@ function getAvailableLanes(groupByMode, labels, selectedLabelGroup) {
   const normalizedGroupBy = normalizeGroupBy(groupByMode);
 
   if (normalizedGroupBy === SWIMLANE_GROUP_BY_PRIORITY) {
-    return PRIORITY_LANE_ORDER.map((key) => ({
+    return PRIORITIES.map((key) => ({
       key,
       name: PRIORITY_LANE_LABELS[key],
       color: null
