@@ -132,3 +132,4 @@ export function isTaskStale(task, now = new Date(), staleDays = STALE_AFTER_DAYS
   if (!Number.isFinite(stamp)) return false;
   return (now.getTime() - stamp) > staleDays * DAY_MS;
 }
+export const TASK_TYPE_LABELS = { story: 'Story', bug: 'Bug', task: 'Task', spike: 'Spike' };

@@ -5,11 +5,10 @@ import { deleteTask } from './tasks.js';
 import { showEditModal } from './modals.js';
 import { confirmDialog } from './dialog.js';
 import { calculateDaysUntilDue, formatCountdown, getCountdownClassName } from './dateutils.js';
-import { labelTextColor } from './utils.js';
+import { labelTextColor, URL_RE } from './utils.js';
 import { h, cx } from './dom.js';
-import { STALE_AFTER_DAYS, TASK_TYPES, isTaskStale, normalizeEstimate, taskAgeDays } from './agile.js';
+import { STALE_AFTER_DAYS, TASK_TYPES, isTaskStale, normalizeEstimate, taskAgeDays, TASK_TYPE_LABELS } from './agile.js';
 
-const TYPE_LABELS = { story: 'Story', bug: 'Bug', task: 'Task', spike: 'Spike' };
 const TYPE_ABBREVIATIONS = { story: 'S', bug: 'B', task: 'T', spike: 'SP' };
 
 function assigneeInitials(name) {
@@ -137,8 +136,8 @@ export function createTaskElement(task, settings, labelsMap = null, today = null
   if (TASK_TYPES.includes(taskType)) {
     meta.appendChild(h('span', {
       class: cx('task-type', `task-type--${taskType}`),
-      title: `Type: ${TYPE_LABELS[taskType]}`,
-      'aria-label': `Type: ${TYPE_LABELS[taskType]}`
+      title: `Type: ${TASK_TYPE_LABELS[taskType]}`,
+      'aria-label': `Type: ${TASK_TYPE_LABELS[taskType]}`
     }, TYPE_ABBREVIATIONS[taskType]));
   }
 

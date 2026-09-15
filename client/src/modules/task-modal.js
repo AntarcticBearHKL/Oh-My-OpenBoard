@@ -5,7 +5,7 @@ import { addAnnotation, addTask, isTaskLocked, removeAnnotation, setTaskBlockedR
 import { renderIcons } from './icons.js';
 import { validateAndShowTaskTitleError, clearFieldError } from './validation.js';
 import { createAccordionSection } from './accordion.js';
-import { generateUUID, labelTextColor } from './utils.js';
+import { generateUUID, labelTextColor, URL_RE } from './utils.js';
 import { promptDialog } from './dialog.js';
 import { normalizePriority } from './normalize.js';
 import {
@@ -15,8 +15,7 @@ import {
   normalizeComments,
   normalizeCustomFields,
   normalizeEstimate,
-  normalizeTaskType
-} from './agile.js';
+  normalizeTaskType, TASK_TYPE_LABELS } from './agile.js';
 import Sortable from 'sortablejs';
 import { $id, h, cx } from './dom.js';
 
@@ -480,7 +479,6 @@ function formatCommentTimestamp(at) {
   return Number.isNaN(parsed.getTime()) ? (at || '') : parsed.toLocaleString();
 }
 
-const TYPE_LABELS = { story: 'Story', bug: 'Bug', task: 'Task', spike: 'Spike' };
 
 function formatRelativeTime(value) {
   const parsed = new Date(value);
@@ -499,7 +497,7 @@ function setSummaryType(value) {
   const el = $id('task-summary-type');
   if (!el) return;
   const type = normalizeTaskType(value);
-  el.textContent = TYPE_LABELS[type];
+  el.textContent = TASK_TYPE_LABELS[type];
   el.className = `task-type task-type--${type}`;
 }
 
@@ -1111,7 +1109,6 @@ function scrollHighlightedLabelIntoView() {
   if (highlighted) highlighted.scrollIntoView({ block: 'nearest' });
 }
 
-const URL_RE = /https?:\/\/[^\s<>"']+/g;
 
 export function updateDescriptionLinks(text) {
   const container = $id('task-description-links');

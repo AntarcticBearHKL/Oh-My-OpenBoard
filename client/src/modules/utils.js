@@ -20,3 +20,4 @@ export function generateUUID() {
     return v.toString(16);
   });
 }
+export const URL_RE = /https?:\/\/[^\s<>"']+/g;
