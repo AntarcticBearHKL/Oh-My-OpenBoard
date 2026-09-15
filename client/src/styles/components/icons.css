@@ -4,7 +4,6 @@
 
 /* Base icon button pattern */
 .icon-btn,
-.add-task-btn-icon,
 .delete-task-btn {
   background: none;
   border: none;
@@ -19,26 +18,15 @@
 }
 
 .icon-btn:hover,
-.add-task-btn-icon:hover,
 .delete-task-btn:hover {
   opacity: 1;
 }
 
 .icon-btn svg,
-.add-task-btn-icon svg,
 .delete-task-btn svg {
   width: 16px;
   height: 16px;
   stroke-width: 2;
-}
-
-/* Add task button (swimlane headers) */
-.add-task-btn-icon:hover {
-  background-color: var(--primary-soft);
-}
-
-.add-task-btn-icon svg {
-  stroke: var(--color-primary);
 }
 
 /* Delete task button */

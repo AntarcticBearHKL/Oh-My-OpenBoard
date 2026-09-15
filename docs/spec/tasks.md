@@ -2,7 +2,7 @@
 
 ## Create and Edit
 
-- Tasks are created from a column header plus button or from a swim lane cell plus button
+- Tasks are created by agents through the API; the board UI has no manual add control
 - Task form fields: title, description, priority, due date, column, labels
 - Title is required and validates inline with red error styling
 - Edit mode opens with existing task values prefilled

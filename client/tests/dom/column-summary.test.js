@@ -133,10 +133,11 @@ test('the edit affordance saves a human override through saveColumnSummary', () 
   expect(document.querySelector('.column-summary-text').textContent).toBe('Human override text');
 });
 
-test('the column still renders its add-task row and task list', () => {
+test('the column still renders its task list without an add-task row', () => {
   const columnEl = mountColumn();
 
   expect(columnEl.querySelector('.tasks')).not.toBeNull();
-  expect(columnEl.querySelector('.add-task-row-btn')).not.toBeNull();
+  expect(columnEl.querySelector('.add-task-row-btn')).toBeNull();
+  expect(columnEl.querySelector('.column-add-row')).toBeNull();
   expect(columnEl.querySelector('.column-header h2').textContent).toBe('Backlog');
 });

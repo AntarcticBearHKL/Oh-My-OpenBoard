@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - The Template picker in the New Iteration / Create New Board dialog and the built-in board templates it offered. New boards and iterations are always created blank now.
+- Adding tasks by hand from a column. Tasks are created by agents through the API; column footers no longer offer an Add task row (board and swimlane view).
 
 ### Fixed
 

@@ -677,7 +677,7 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/dom/column-summary.test.js:101` summary dialog closes on a backdrop click but stays open on a panel click
 - `tests/dom/column-summary.test.js:112` clicking the summary button again closes the dialog
 - `tests/dom/column-summary.test.js:123` the edit affordance saves a human override through saveColumnSummary
-- `tests/dom/column-summary.test.js:136` the column still renders its add-task row and task list
+- `tests/dom/column-summary.test.js:136` the column still renders its task list without an add-task row
 
 ### Dragdrop
 

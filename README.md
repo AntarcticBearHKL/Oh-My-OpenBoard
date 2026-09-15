@@ -63,7 +63,7 @@ Organize your board into horizontal swim lanes for a powerful two-dimensional vi
 - **Flexible Grouping**: Group tasks by **label**, **label group**, or **priority** — each mode creates distinct swim lane rows
 - **Drag & Drop Across Lanes**: Move tasks between columns, lanes, or both in a single gesture — lane assignments update automatically
 - **Per-Cell Control**: Collapse/expand individual swim lane cells, entire rows, or workflow columns independently
-- **Quick Task Creation**: Add tasks directly to any swim lane cell with automatic label/priority assignment
+- **Agent-First Creation**: Tasks are created by agents through the API; the UI is for viewing, editing, and moving them
 - **Smart Done Column**: Done tasks are hidden in swim lanes to keep rows compact, while the Done column remains a drag-and-drop target
 - **Sticky Headers**: Lane headers stay pinned during horizontal scrolling; workflow headers stay visible during vertical scrolling
 - **Mobile Optimized**: Responsive flex layout with sticky lane headers and snap-scrolling columns on mobile

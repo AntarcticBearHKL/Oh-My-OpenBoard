@@ -21,7 +21,6 @@ import { initRealtime } from './modules/event-sourcing/realtime.js';
 import { initSyncIndicator } from './modules/event-sourcing/sync-indicator.js';
 import { initLocalServer } from './modules/local-server.js';
 
-// Add task button listeners
 document.addEventListener('DOMContentLoaded', async () => {
   // Load all board data from IDB into memory before any rendering.
   await initStorage();

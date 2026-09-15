@@ -54,12 +54,9 @@
 - Cell collapse state is persisted with composite keys in settings
 - Row collapse and column collapse take precedence over cell collapse
 
-## Add Task from Swim Lane Cells
+## Task Creation
 
-- Each non-Done, non-column-collapsed swim lane cell has a plus button
-- Adding from a swim lane cell preselects the target column
-- In label and label-group modes, the lane label is preselected
-- In priority mode, the lane priority is preselected
+- Swim lane cells offer no manual add control; tasks are created by agents through the API
 
 ## Mobile Behavior
 
