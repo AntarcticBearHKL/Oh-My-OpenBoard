@@ -16,6 +16,7 @@ import { initializeThemeToggle } from './theme.js';
 import { initStorage, ensureBoardsInitialized, getActiveBoardId, getActiveBoardName, getBoardById, listBoards, loadColumnsForBoard, loadTasksForBoard } from './storage.js';
 import { loadColumns, loadTasks } from './storage.js';
 import { isDoneColumn } from './constants.js';
+import { isHexColor } from './normalize.js';
 
 echarts.use([
   CalendarComponent,
@@ -511,10 +512,6 @@ function buildLeadTimeOption({ labels, avgLeadDays, trendLeadDays, completedCoun
 // ---------------------------------------------------------------------------
 // Data + chart: Cumulative Flow Diagram
 // ---------------------------------------------------------------------------
-
-function isHexColor(value) {
-  return typeof value === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value.trim());
-}
 
 function hexToRgba(hex, alpha) {
   const a = Math.max(0, Math.min(1, Number(alpha)));
