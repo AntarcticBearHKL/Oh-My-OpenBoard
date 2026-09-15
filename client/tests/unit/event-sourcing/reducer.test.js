@@ -177,22 +177,14 @@ test('column events create update delete and reorder columns', () => {
   expect(updated.columns).toEqual([{ id: 'column-a', name: 'Doing', color: '#000000', order: 2 }]);
 });
 
-test('settings.updated handles board and global settings', () => {
+test('settings.updated folds board settings', () => {
   const boardSettings = applyEvent(createProjectionState(), event({
     id: 'settings-board',
     type: 'settings.updated',
     payload: { fields: { showPriority: false } }
   }));
-  const globalSettings = applyEvent(boardSettings, event({
-    id: 'settings-global',
-    type: 'settings.updated',
-    scope: 'global',
-    board_id: null,
-    payload: { fields: { locale: 'de-DE' } }
-  }));
 
   expect(boardSettings.settings).toEqual({ showPriority: false });
-  expect(globalSettings.globalSettings).toEqual({ locale: 'de-DE' });
 });
 
 test('subtask and relationship events update embedded task collections', () => {

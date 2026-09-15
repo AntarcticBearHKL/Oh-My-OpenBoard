@@ -4,7 +4,6 @@ import { emit, EVENT_EMITTED } from '../../../src/modules/events.js';
 
 const BOARD_ID = 'board-a';
 const BOARDS_KEY = 'kanbanBoards';
-const GLOBAL_SETTINGS_KEY = 'openagile:settings:global';
 
 function safeParseArray(value) {
   return Array.isArray(value) ? value : null;
@@ -34,20 +33,17 @@ function makeHarness() {
     tasks: { [BOARD_ID]: [{ id: 'task-a', title: 'Before', column: 'todo', columnHistory: [] }] },
     columns: { [BOARD_ID]: [{ id: 'todo', name: 'To Do' }] },
     labels: { [BOARD_ID]: [] },
-    settings: { [BOARD_ID]: {} },
-    globalSettings: null
+    settings: { [BOARD_ID]: {} }
   };
   const ctx = {
     state,
     taskCacheByBoard: new Map(),
-    loadGlobalSettings: vi.fn(() => ({ theme: 'light' })),
     safeParseArray,
     safeParseObject,
     schedulePersist: vi.fn(),
     scheduleReadModelPersist: vi.fn(),
     checkAndScheduleSnapshot: vi.fn(),
-    boardsKey: BOARDS_KEY,
-    globalSettingsKey: GLOBAL_SETTINGS_KEY
+    boardsKey: BOARDS_KEY
   };
   return { state, ctx, projector: createReadModelProjector(ctx) };
 }
@@ -77,23 +73,6 @@ describe('createReadModelProjector', () => {
     h.projector.project(ev);
 
     expect(h.ctx.scheduleReadModelPersist).toHaveBeenCalledTimes(3); // tasks/columns/labels, once
-  });
-
-  test('global-scope event projects globalSettings and persists the global key only', () => {
-    h.projector.project({
-      id: 'g1',
-      type: 'settings.updated',
-      hlc: { wallTime: 1, counter: 0, nodeId: 'n' },
-      at: '2026-05-26T00:00:00.000Z',
-      actor: { type: 'human', id: null },
-      scope: 'global',
-      board_id: null,
-      entity_id: 'global',
-      payload: { fields: { theme: 'dark' } }
-    });
-
-    expect(h.ctx.schedulePersist).toHaveBeenCalledWith(GLOBAL_SETTINGS_KEY, h.state.globalSettings);
-    expect(h.ctx.scheduleReadModelPersist).not.toHaveBeenCalled();
   });
 
   test('register() is idempotent — a single emit projects once', () => {

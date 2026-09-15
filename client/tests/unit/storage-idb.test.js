@@ -32,8 +32,6 @@ import {
   saveLabels,
   loadSettings,
   saveSettings,
-  loadGlobalSettings,
-  saveGlobalSettings,
   loadTasksForBoard,
   loadColumnsForBoard,
   loadLabelsForBoard,
@@ -162,17 +160,6 @@ test('saveSettings persists to IDB and survives a session reset', async () => {
   expect(settings.swimLanesEnabled).toBe(true);
   expect(settings.notificationDays).toBe(7);
 });
-
-test('initStorage loads global settings from IDB', async () => {
-  const db = await openDB(DB_NAME, 1, { upgrade(d) { d.createObjectStore('kv'); } });
-  await db.put('kv', { softDeleteEnabled: true }, 'openagile:settings:global');
-  db.close();
-
-  await initStorage();
-
-  expect(loadGlobalSettings()).toEqual({});
-});
-
 
 test('createBoard persists board list and per-board defaults across sessions', async () => {
   await initStorage();

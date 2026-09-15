@@ -53,7 +53,6 @@ const tasksByBoard = new Map();
 const columnsByBoard = new Map();
 const labelsByBoard = new Map();
 const settingsByBoard = new Map();
-let globalSettings = {};
 
 let persistTimer = null;
 
@@ -62,12 +61,6 @@ let persistTimer = null;
 function project(event) {
   if (!event?.id || appliedIds.has(event.id)) return;
   appliedIds.add(event.id);
-
-  if (event.scope === 'global') {
-    const projected = applyEvent(createProjectionState({ globalSettings }), event);
-    globalSettings = projected.globalSettings;
-    return;
-  }
 
   const boardId = event.board_id;
   if (typeof boardId !== 'string' || !boardId) return;
@@ -168,8 +161,7 @@ function snapshotReadModel() {
     tasksByBoard: [...tasksByBoard.entries()],
     columnsByBoard: [...columnsByBoard.entries()],
     labelsByBoard: [...labelsByBoard.entries()],
-    settingsByBoard: [...settingsByBoard.entries()],
-    globalSettings
+    settingsByBoard: [...settingsByBoard.entries()]
   };
 }
 
@@ -184,7 +176,6 @@ function hydrateReadModel(snapshot) {
   restore(columnsByBoard, snapshot.columnsByBoard);
   restore(labelsByBoard, snapshot.labelsByBoard);
   restore(settingsByBoard, snapshot.settingsByBoard);
-  if (snapshot.globalSettings && typeof snapshot.globalSettings === "object") globalSettings = snapshot.globalSettings;
   return true;
 }
 
@@ -360,10 +351,6 @@ export function getSettings(boardId) {
   return settingsByBoard.get(boardId) || {};
 }
 
-export function getGlobalSettings() {
-  return globalSettings;
-}
-
 export function findTask(taskId) {
   for (const [boardId, list] of tasksByBoard) {
     const task = (list || []).find((t) => t.id === taskId && !t.deleted);
@@ -389,8 +376,7 @@ export function getSnapshot(boardId = DEFAULT_BOARD_ID) {
       tasks: tasksByBoard.get(boardId) || [],
       columns: getColumns(boardId),
       labels: labelsByBoard.get(boardId) || [],
-      settings: settingsByBoard.get(boardId) || {},
-      globalSettings
+      settings: settingsByBoard.get(boardId) || {}
     }
   };
 }

@@ -187,7 +187,7 @@ export function initGroupSync() {
       if (Array.isArray(state.groups) && state.groups.length > 0) {
         adoptGroupsState(state);
         markMigrated();
-        emit(DATA_CHANGED);
+        emit(DATA_CHANGED, { affectsBoard: false });
       } else if (!isMigrated() && listGroups().length > 0) {
         pushToServer();
         markMigrated();
@@ -197,6 +197,6 @@ export function initGroupSync() {
 
   window.addEventListener('openagile:groups-changed', (event) => {
     adoptGroupsState(event.detail);
-    emit(DATA_CHANGED);
+    emit(DATA_CHANGED, { affectsBoard: false });
   });
 }

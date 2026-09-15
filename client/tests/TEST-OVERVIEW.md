@@ -5,7 +5,7 @@ Generated from test source. Do not edit by hand; run `npm run test:overview` fro
 ## Fast Scan
 
 - Test files: 54
-- Test cases: 485
+- Test cases: 482
 - Unit files: 29
 - DOM integration files: 25
 - E2E files: 0
@@ -279,13 +279,12 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/unit/event-sourcing/read-model-projector.test.js`
 - Type: Unit
-- Test count: 5
+- Test count: 4
 
-- `tests/unit/event-sourcing/read-model-projector.test.js:61` createReadModelProjector > register() subscribes so an emitted board event projects into state and schedules read-model persist
-- `tests/unit/event-sourcing/read-model-projector.test.js:74` createReadModelProjector > project() is idempotent by event id (dedup)
-- `tests/unit/event-sourcing/read-model-projector.test.js:82` createReadModelProjector > global-scope event projects globalSettings and persists the global key only
-- `tests/unit/event-sourcing/read-model-projector.test.js:99` createReadModelProjector > register() is idempotent — a single emit projects once
-- `tests/unit/event-sourcing/read-model-projector.test.js:108` createReadModelProjector > reset() unsubscribes the handler and clears dedup state
+- `tests/unit/event-sourcing/read-model-projector.test.js:57` createReadModelProjector > register() subscribes so an emitted board event projects into state and schedules read-model persist
+- `tests/unit/event-sourcing/read-model-projector.test.js:70` createReadModelProjector > project() is idempotent by event id (dedup)
+- `tests/unit/event-sourcing/read-model-projector.test.js:78` createReadModelProjector > register() is idempotent — a single emit projects once
+- `tests/unit/event-sourcing/read-model-projector.test.js:87` createReadModelProjector > reset() unsubscribes the handler and clears dedup state
 
 ### Reducer
 
@@ -301,8 +300,8 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/unit/event-sourcing/reducer.test.js:118` label events create update and tombstone labels
 - `tests/unit/event-sourcing/reducer.test.js:142` label task membership events update task label refs
 - `tests/unit/event-sourcing/reducer.test.js:164` column events create update delete and reorder columns
-- `tests/unit/event-sourcing/reducer.test.js:180` settings.updated handles board and global settings
-- `tests/unit/event-sourcing/reducer.test.js:198` subtask and relationship events update embedded task collections
+- `tests/unit/event-sourcing/reducer.test.js:180` settings.updated folds board settings
+- `tests/unit/event-sourcing/reducer.test.js:190` subtask and relationship events update embedded task collections
 
 ### Snapshot
 
@@ -418,69 +417,67 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/unit/storage-idb.test.js`
 - Type: Unit
-- Test count: 27
+- Test count: 26
 
-- `tests/unit/storage-idb.test.js:57` initStorage on empty IDB leaves boards list empty
-- `tests/unit/storage-idb.test.js:62` initStorage creates a stable HLC node id on boot
-- `tests/unit/storage-idb.test.js:68` initStorage is safe to call twice in the same session
-- `tests/unit/storage-idb.test.js:79` saveTasks persists to IDB and survives a session reset
-- `tests/unit/storage-idb.test.js:96` emitted task.updated events project into task read model
-- `tests/unit/storage-idb.test.js:116` saveColumns persists to IDB and survives a session reset
-- `tests/unit/storage-idb.test.js:134` saveLabels persists to IDB and survives a session reset
-- `tests/unit/storage-idb.test.js:150` saveSettings persists to IDB and survives a session reset
-- `tests/unit/storage-idb.test.js:166` initStorage loads global settings from IDB
-- `tests/unit/storage-idb.test.js:177` createBoard persists board list and per-board defaults across sessions
-- `tests/unit/storage-idb.test.js:192` active board id persists across sessions
-- `tests/unit/storage-idb.test.js:207` deleteBoard removes per-board data from IDB
-- `tests/unit/storage-idb.test.js:229` v2 migration rehomes board read models and removes legacy kv keys
-- `tests/unit/storage-idb.test.js:251` v2 migration deletes legacy board event logs
-- `tests/unit/storage-idb.test.js:262` v2 schema creates event sourcing stores and event indexes
-- `tests/unit/storage-idb.test.js:274` migrates multi-board localStorage data on first initStorage
-- `tests/unit/storage-idb.test.js:301` migrates legacy done id to a UUID done role and rewrites task references
-- `tests/unit/storage-idb.test.js:338` migration cleans up localStorage after completing
-- `tests/unit/storage-idb.test.js:358` migrates legacy single-board localStorage keys (pre-multi-board format)
-- `tests/unit/storage-idb.test.js:380` migrates legacy single-board tasks without columns using UUID default column mappings
-- `tests/unit/storage-idb.test.js:402` migration does not run again on a subsequent initStorage call (same IDB)
-- `tests/unit/storage-idb.test.js:422` initStorage with corrupt kanbanBoards in IDB yields empty boards list
-- `tests/unit/storage-idb.test.js:436` loadTasksForBoard reads tasks for a non-active board without changing active board
-- `tests/unit/storage-idb.test.js:453` loadColumnsForBoard reads columns for a non-active board
-- `tests/unit/storage-idb.test.js:472` loadLabelsForBoard reads labels for a non-active board
-- `tests/unit/storage-idb.test.js:488` loadSettingsForBoard reads settings for a non-active board
-- `tests/unit/storage-idb.test.js:504` loadTasksForBoard returns empty array for unknown board id
+- `tests/unit/storage-idb.test.js:55` initStorage on empty IDB leaves boards list empty
+- `tests/unit/storage-idb.test.js:60` initStorage creates a stable HLC node id on boot
+- `tests/unit/storage-idb.test.js:66` initStorage is safe to call twice in the same session
+- `tests/unit/storage-idb.test.js:77` saveTasks persists to IDB and survives a session reset
+- `tests/unit/storage-idb.test.js:94` emitted task.updated events project into task read model
+- `tests/unit/storage-idb.test.js:114` saveColumns persists to IDB and survives a session reset
+- `tests/unit/storage-idb.test.js:132` saveLabels persists to IDB and survives a session reset
+- `tests/unit/storage-idb.test.js:148` saveSettings persists to IDB and survives a session reset
+- `tests/unit/storage-idb.test.js:164` createBoard persists board list and per-board defaults across sessions
+- `tests/unit/storage-idb.test.js:179` active board id persists across sessions
+- `tests/unit/storage-idb.test.js:194` deleteBoard removes per-board data from IDB
+- `tests/unit/storage-idb.test.js:216` v2 migration rehomes board read models and removes legacy kv keys
+- `tests/unit/storage-idb.test.js:238` v2 migration deletes legacy board event logs
+- `tests/unit/storage-idb.test.js:249` v2 schema creates event sourcing stores and event indexes
+- `tests/unit/storage-idb.test.js:261` migrates multi-board localStorage data on first initStorage
+- `tests/unit/storage-idb.test.js:288` migrates legacy done id to a UUID done role and rewrites task references
+- `tests/unit/storage-idb.test.js:325` migration cleans up localStorage after completing
+- `tests/unit/storage-idb.test.js:345` migrates legacy single-board localStorage keys (pre-multi-board format)
+- `tests/unit/storage-idb.test.js:367` migrates legacy single-board tasks without columns using UUID default column mappings
+- `tests/unit/storage-idb.test.js:389` migration does not run again on a subsequent initStorage call (same IDB)
+- `tests/unit/storage-idb.test.js:409` initStorage with corrupt kanbanBoards in IDB yields empty boards list
+- `tests/unit/storage-idb.test.js:423` loadTasksForBoard reads tasks for a non-active board without changing active board
+- `tests/unit/storage-idb.test.js:440` loadColumnsForBoard reads columns for a non-active board
+- `tests/unit/storage-idb.test.js:459` loadLabelsForBoard reads labels for a non-active board
+- `tests/unit/storage-idb.test.js:475` loadSettingsForBoard reads settings for a non-active board
+- `tests/unit/storage-idb.test.js:491` loadTasksForBoard returns empty array for unknown board id
 
 ### Storage
 
 - Path: `tests/unit/storage.test.js`
 - Type: Unit
-- Test count: 27
+- Test count: 26
 
-- `tests/unit/storage.test.js:32` ensureBoardsInitialized creates default board on empty storage
-- `tests/unit/storage.test.js:41` ensureBoardsInitialized is idempotent
-- `tests/unit/storage.test.js:50` listBoards returns empty array before any board is initialised
-- `tests/unit/storage.test.js:56` createBoard creates board with correct keys
-- `tests/unit/storage.test.js:67` createBoard uses Untitled board for empty name
-- `tests/unit/storage.test.js:73` renameBoard updates board name
-- `tests/unit/storage.test.js:84` renameBoard returns false for non-existent board
-- `tests/unit/storage.test.js:89` renameBoard returns false for empty name
-- `tests/unit/storage.test.js:95` updateBoardFields stores iteration fields on the board
-- `tests/unit/storage.test.js:112` renameBoard preserves iteration fields
-- `tests/unit/storage.test.js:124` updateBoardFields returns false without fields or board
-- `tests/unit/storage.test.js:132` deleteBoard removes board and its data
-- `tests/unit/storage.test.js:142` deleteBoard removes the last board and does not re-seed a default one
-- `tests/unit/storage.test.js:151` deleteBoard switches active board if deleted board was active
-- `tests/unit/storage.test.js:162` getActiveBoardName returns board name
-- `tests/unit/storage.test.js:170` loadColumns returns default columns on fresh board
-- `tests/unit/storage.test.js:179` loadColumns ensures Done column exists
-- `tests/unit/storage.test.js:187` saveColumns + loadColumns roundtrip locks to the four fixed columns
-- `tests/unit/storage.test.js:197` loadTasks normalizes priority on load
-- `tests/unit/storage.test.js:207` loadTasks adds doneDate to tasks in Done column that lack it
-- `tests/unit/storage.test.js:217` loadTasks removes doneDate from tasks not in Done column
-- `tests/unit/storage.test.js:227` saveTasks + loadTasks roundtrip
-- `tests/unit/storage.test.js:238` loadLabels adds empty group to labels missing it
-- `tests/unit/storage.test.js:248` loadSettings returns defaults on fresh board
-- `tests/unit/storage.test.js:257` loadSettings normalizes invalid swimLaneGroupBy
-- `tests/unit/storage.test.js:264` loadSettings clamps countdownWarningThreshold to be >= urgentThreshold
-- `tests/unit/storage.test.js:271` loadGlobalSettings returns defaults on first run
+- `tests/unit/storage.test.js:30` ensureBoardsInitialized creates default board on empty storage
+- `tests/unit/storage.test.js:39` ensureBoardsInitialized is idempotent
+- `tests/unit/storage.test.js:48` listBoards returns empty array before any board is initialised
+- `tests/unit/storage.test.js:54` createBoard creates board with correct keys
+- `tests/unit/storage.test.js:65` createBoard uses Untitled board for empty name
+- `tests/unit/storage.test.js:71` renameBoard updates board name
+- `tests/unit/storage.test.js:82` renameBoard returns false for non-existent board
+- `tests/unit/storage.test.js:87` renameBoard returns false for empty name
+- `tests/unit/storage.test.js:93` updateBoardFields stores iteration fields on the board
+- `tests/unit/storage.test.js:110` renameBoard preserves iteration fields
+- `tests/unit/storage.test.js:122` updateBoardFields returns false without fields or board
+- `tests/unit/storage.test.js:130` deleteBoard removes board and its data
+- `tests/unit/storage.test.js:140` deleteBoard removes the last board and does not re-seed a default one
+- `tests/unit/storage.test.js:149` deleteBoard switches active board if deleted board was active
+- `tests/unit/storage.test.js:160` getActiveBoardName returns board name
+- `tests/unit/storage.test.js:168` loadColumns returns default columns on fresh board
+- `tests/unit/storage.test.js:177` loadColumns ensures Done column exists
+- `tests/unit/storage.test.js:185` saveColumns + loadColumns roundtrip locks to the four fixed columns
+- `tests/unit/storage.test.js:195` loadTasks normalizes priority on load
+- `tests/unit/storage.test.js:205` loadTasks adds doneDate to tasks in Done column that lack it
+- `tests/unit/storage.test.js:215` loadTasks removes doneDate from tasks not in Done column
+- `tests/unit/storage.test.js:225` saveTasks + loadTasks roundtrip
+- `tests/unit/storage.test.js:236` loadLabels adds empty group to labels missing it
+- `tests/unit/storage.test.js:246` loadSettings returns defaults on fresh board
+- `tests/unit/storage.test.js:255` loadSettings normalizes invalid swimLaneGroupBy
+- `tests/unit/storage.test.js:262` loadSettings clamps countdownWarningThreshold to be >= urgentThreshold
 
 ### Swimlanes Utils
 

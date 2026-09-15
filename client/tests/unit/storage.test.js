@@ -16,9 +16,7 @@ import {
   loadLabels,
   saveLabels,
   loadSettings,
-  saveSettings,
-  loadGlobalSettings,
-  saveGlobalSettings
+  saveSettings
 } from '../../src/modules/storage.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -268,9 +266,6 @@ test('loadSettings clamps countdownWarningThreshold to be >= urgentThreshold', (
   expect(settings.countdownWarningThreshold >= settings.countdownUrgentThreshold).toBe(true);
 });
 
-test('loadGlobalSettings returns defaults on first run', () => {
-  expect(loadGlobalSettings()).toEqual({});
-});
 
 
 

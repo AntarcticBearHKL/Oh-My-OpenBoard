@@ -33,7 +33,12 @@ on(DRAG_RECONCILE_END, endDragReconcile);
 
 // Subscribe to the event bus so any module can trigger a re-render
 // without importing render.js directly (eliminates circular deps).
-on(DATA_CHANGED, () => {
+on(DATA_CHANGED, (event) => {
+  // A skills or board-group change (tagged affectsBoard:false) is out-of-band
+  // state: it refreshes its own UI — the skills modal and the board sidebar
+  // both listen on DATA_CHANGED — but never changes what the board shows, so
+  // it must not pay for a full rebuild. Every other DATA_CHANGED still renders.
+  if (event.detail?.affectsBoard === false) return;
   if (dragReconcileDepth > 0 && reconcileBoard()) return;
   renderBoard();
 });

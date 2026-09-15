@@ -16,12 +16,10 @@ import {
   taskCacheByBoard,
   BOARDS_KEY,
   ACTIVE_BOARD_KEY,
-  GLOBAL_SETTINGS_KEY,
   LEGACY_COLUMNS_KEY,
   LEGACY_TASKS_KEY,
   LEGACY_LABELS_KEY,
   safeParseArray,
-  normalizeGlobalSettings,
 } from './storage-state.js';
 import { normalizeIdbState, migrateFromLocalStorage } from './storage-migration.js';
 import { readModelProjector } from './storage-projector.js';
@@ -39,7 +37,6 @@ export { listBoards, getBoardById, getActiveBoardName, mergeBoardsFromRemote, ge
 export { createBoard, renameBoard, updateBoardFields, deleteBoard } from './storage-board-mutations.js';
 export { getDoneColumnId, isDoneColumnId, loadColumns, saveColumns, loadTasks, saveTasks, loadLabels, saveLabels } from './storage-entities.js';
 export { loadColumnSummaries, saveColumnSummary, loadSettings, saveSettings } from './storage-settings.js';
-export { loadGlobalSettings } from './storage-state.js';
 export { loadTasksForBoard, loadColumnsForBoard, loadLabelsForBoard, loadSettingsForBoard, loadDeletedTasksForBoard, loadDeletedColumnsForBoard, loadDeletedLabelsForBoard, purgeDeleted, saveColumnsForBoard, saveTasksForBoard, saveLabelsForBoard, saveSettingsForBoard } from './storage-cross-board.js';
 
 // ── Public initialisation ──────────────────────────────────────────────────────
@@ -71,7 +68,6 @@ export async function initStorage() {
   // Load everything into in-memory state.
   state.boards = safeParseArray(await db.get(KV_STORE, BOARDS_KEY)) || [];
   state.activeBoardId = (await db.get(KV_STORE, ACTIVE_BOARD_KEY)) || null;
-  state.globalSettings = normalizeGlobalSettings(await db.get(KV_STORE, GLOBAL_SETTINGS_KEY));
 
   for (const board of state.boards) {
     state.tasks[board.id] = (await db.get(READ_MODEL_STORE, readModelKeyFor(board.id, 'tasks'))) ?? null;
@@ -130,7 +126,6 @@ export function _resetStorageForTesting() {
   for (const k in state.columns) delete state.columns[k];
   for (const k in state.labels) delete state.labels[k];
   for (const k in state.settings) delete state.settings[k];
-  state.globalSettings = null;
   taskCacheByBoard.clear();
   readModelProjector.reset();
   _resetSnapshotSchedulerForTesting();

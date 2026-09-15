@@ -24,7 +24,6 @@ export function serializeState(state) {
     columns: Array.isArray(state.columns) ? state.columns : [],
     labels: Array.isArray(state.labels) ? state.labels : [],
     settings: state.settings && typeof state.settings === 'object' ? state.settings : {},
-    globalSettings: state.globalSettings && typeof state.globalSettings === 'object' ? state.globalSettings : {},
     appliedEventIds: [...(state.appliedEventIds instanceof Set ? state.appliedEventIds : [])],
     taskTombstones: [...(state.taskTombstones instanceof Set ? state.taskTombstones : [])]
   };

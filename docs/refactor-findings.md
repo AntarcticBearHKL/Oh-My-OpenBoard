@@ -485,8 +485,8 @@ No behaviour change in any batch. Ordered; each is reviewable in one sitting. "V
 1. **Legacy sync retirement**: delete the dormant LWW stack (§5) or keep it for users with `kanbanAutoSyncEnabled=true`? Deleting changes behaviour for those profiles; `deleteBoardRemote` stays either way.
 2. **Column contract**: MCP forbids rename/reorder/delete (`harness/src/mcp-tools.mjs:565-617`) while the client renames (`columns.js:42-53`) and emitted reorders that the server read model discards (`store.mjs:263-271`). Should the client lose column rename/reorder, should the server keep name/order, or should the UI redesign reintroduce column management (which would need a real `column.deleted`/`column.reordered` contract)?
 3. **Groups/skills**: keep as out-of-band non-event state (`store.mjs:330-357,497-542`) or event-source them? Affects the sync design and the wipe-risk POSTs (§4.4 #3).
-4. **`globalSettings`**: keep (and add a `scope:'global'` emitter) or delete the inert path (`reducer.js:269-274`, `emitter.js:9`)?
-5. **`GET /api/health`**: currently doubles as the PocketBase probe fallback when `VITE_PB_URL` is unset (`authsync.js:12-13,161`). Keep that contract or make the probe explicit?
+4. **`globalSettings`**: keep (and add a `scope:'global'` emitter) or delete the inert path (`reducer.js:269-274`, `emitter.js:9`)? **DECIDED - deleted:** the inert path is gone end to end; see "Three settled decisions, implemented" below.
+5. **`GET /api/health`**: currently doubles as the PocketBase probe fallback when `VITE_PB_URL` is unset (`authsync.js:12-13,161`). Keep that contract or make the probe explicit? **DECIDED - kept:** it stays the probe fallback by contract; recorded below.
 6. **E2E**: repair or delete? ~10/12 specs are stale; `test:perf` is broken (`client/package.json:16`).
 7. **Test hygiene**: delete `client/tests/dom/msw-example.test.js` (zero production coverage)?
 8. **`isTaskLocked`**: is "column name contains `in progress`" intended workflow (`tasks.js:769-772`), or should it use the column id/role?
@@ -2049,9 +2049,9 @@ material is the user's call rather than a side effect of removing tests:
 - the pointer-policy comment at `src/modules/dragdrop.js:12`, which explains itself by Playwright's
   `locator.dragTo()` - only relevant if Playwright ever comes back.
 
-**Still open from §4:** the user chose "keep groups/skills as out-of-band state" and nothing else, so
-`globalSettings` (keep and add a `scope:'global'` emitter, or delete the inert path) and whether
-`GET /api/health` keeps doubling as the PocketBase probe fallback remain undecided.
+**Both §4 questions are now decided.** Groups/skills remain out-of-band state; `globalSettings` was
+deleted (A) and `GET /api/health` stays the PocketBase probe fallback (B) - see "Three settled
+decisions, implemented" at the end of this record.
 
 ## P4: the harness log now compacts
 
@@ -2231,9 +2231,9 @@ glass shell on ~15 surfaces, fourteen badge/pill shapes, ten empty states and th
 That is a taste decision with a five-page blast radius and the user has scoped it out for now. The
 rest of the duplication list (§2.1-2.3) is converged.
 
-**Open, and deliberately not decided here:** `globalSettings` (keep it and add a `scope:'global'`
-emitter, or delete the inert path) and whether `GET /api/health` should keep doubling as the
-PocketBase probe. Both are user decisions, listed in §4.
+**Both items that were open here are now decided:** the inert `globalSettings` path is deleted, and
+`GET /api/health` keeps doubling as the PocketBase probe by contract. See "Three settled decisions,
+implemented" below.
 
 **A note on what this review is not.** It is not a licence for a second blanket rewrite. The
 codebase just went through fourteen splits, six convergences, two P0 fixes, an E2E removal, a
@@ -2275,3 +2275,113 @@ product decision rather than a cleanup:**
 The two that are worth doing first, when someone wants the render count down: the board-groups/skills
 filter (no behaviour change at all) and the settings double write (one line, but move
 `normalizeSettings` with it).
+
+## Three settled decisions, implemented
+
+The two §4 questions the user had left open (`globalSettings`, `GET /api/health`) are now decided, and
+the board-groups/skills render hazard from the re-verified table is fixed. Tests moved only where A's
+own tests went with the path: **unit 307 -> 304** (29 files, unchanged), **dom 178 -> 178**, build 0,
+harness 7 pass / 0 fail.
+
+### A. The inert `globalSettings` path is deleted
+
+Nothing produces a `scope:'global'` domain event, so the projection branch that would consume one can
+never run. The chain is gone end to end, and every piece was proven unreferenced before deletion.
+
+**Removed** (with the grep that proved each piece had no consumer outside the dead path):
+
+- `client/src/modules/storage-state.js` - `GLOBAL_SETTINGS_KEY`, the `state.globalSettings` slot,
+  `defaultGlobalSettings`, `normalizeGlobalSettings`, `loadGlobalSettings`.
+  `git grep -n "loadGlobalSettings\|normalizeGlobalSettings\|GLOBAL_SETTINGS_KEY" -- client/src harness/src`
+  -> only `storage-state.js` (definitions), `storage.js` (init/reset/re-export), `storage-projector.js`
+  (wiring) and `read-model-projector.js` (the branch) - i.e. the path itself.
+- `client/src/modules/storage.js` - the import, the `state.globalSettings = normalize...` boot line,
+  the `_resetStorageForTesting` line and the `export { loadGlobalSettings }` re-export.
+- `client/src/modules/storage-projector.js` - the `loadGlobalSettings` / `GLOBAL_SETTINGS_KEY` wiring.
+- `client/src/modules/event-sourcing/read-model-projector.js` - the `event.scope === 'global'` project
+  branch (was `read-model-projector.js:33-40`), the `GLOBAL_SNAPSHOT_KEY` hydrate branch, the
+  `loadGlobalSettings` / `globalSettingsKey` ctx fields and the `snapshot.js` import.
+- `client/src/modules/reducer.js` - `globalSettings` in `createProjectionState` / `cloneState`, and the
+  `scope === 'global'` half of `applySettingsUpdated` (was `reducer.js:182-187`).
+- `client/src/modules/event-sourcing/snapshot.js` - the `globalSettings` field in `serializeState`.
+- `harness/src/store.mjs` - the `let globalSettings = {}` slot, the `project()` global branch (was
+  `store.mjs:66-70`), the `snapshotReadModel` / `hydrateReadModel` fields, `getGlobalSettings()` and the
+  `getSnapshot()` field. `getStats()` never had a `globalSettings` field - the task's "getStats field"
+  does not exist. `getGlobalSettings()` was exported with **no caller**:
+  `git grep -n "getGlobalSettings" -- . ':(exclude)client/dist' ':(exclude)graphify-out'` -> definition only.
+
+**Tests that went with the path** (and only those; the mixed board/global test keeps its board half):
+
+- `client/tests/unit/event-sourcing/read-model-projector.test.js` - the "global-scope event projects
+  globalSettings ..." test plus its harness fixtures (`loadGlobalSettings`, `globalSettingsKey`, the
+  `GLOBAL_SETTINGS_KEY` const).
+- `client/tests/unit/storage.test.js` - "loadGlobalSettings returns defaults on first run" (and the dead
+  `loadGlobalSettings` / nonexistent `saveGlobalSettings` imports).
+- `client/tests/unit/storage-idb.test.js` - "initStorage loads global settings from IDB".
+- `client/tests/unit/event-sourcing/reducer.test.js` - "settings.updated handles board and global settings"
+  became "settings.updated folds board settings" (global half removed, board assertion kept).
+
+Three tests removed and one trimmed -> **unit 304** (29 files).
+
+**Kept, with the consumer that keeps it.** `GLOBAL_SNAPSHOT_KEY` is *not* part of this deletion: it is
+consumed by the live snapshot layer, not only by the dead read path -
+`git grep -n "GLOBAL_SNAPSHOT_KEY" -- client/src` -> `realtime.js:12,36` (per-scope catch-up keying),
+`snapshot-sync.js:10,14,22,137` (upload/download/GC keying) and `snapshot.js:8,16` (definition, scope
+matcher). Deleting the constant would mean rewriting three live sync modules and their tests, which is
+beyond "remove what nothing consumes". The `serializeState` `globalSettings` *field* is gone; the
+snapshot *key* mechanism stays, and the snapshot unit test plus the two DOM snapshot tests still pass.
+
+### B. `GET /api/health` is the PocketBase probe fallback, by contract
+
+**Decided: kept.** `authsync.js` probes `/api/health` when `VITE_PB_URL` is unset to decide whether a
+local PocketBase exists, and the harness answers with exactly PocketBase's health shape
+(`{"code":200,"message":"API is healthy.","data":{}}`). This is deliberate, not incidental: the harness's
+one port doubles as the local backend, so the same probe works with or without a real PB. Do not "tidy"
+the health route into a harness-only liveness check, and do not move the probe behind an explicitness
+flag - the fallback *is* the contract. This closes §9 question 5.
+
+### C. Skills / board-groups changes no longer re-render the board
+
+Skills and board-group changes now tag their `DATA_CHANGED` - the smaller correct change, because it
+keeps the existing subscribers (and the DOM tests) that assert on `DATA_CHANGED`:
+`emit(DATA_CHANGED, { affectsBoard: false })` in `skills.js` (2 sites), `skills-modal.js` (3 sites) and
+`board-groups.js` (2 sites), and `render.js`'s bus handler returns early for a tagged event, above the
+reconcile/full decision. Board groups and skills are out-of-band state: neither affects what the board
+shows.
+
+Why each required invariant holds:
+
+1. **Every other `DATA_CHANGED` still renders.** The guard is `event.detail?.affectsBoard === false`;
+   every projected / hydrated / board-affecting emit passes no detail or `{ event }` / `{ hydrated }`,
+   none of which satisfy the strict `=== false` test. `render.js` is otherwise unchanged.
+2. **The modal and sidebar still refresh.** Both subscribe with `on(DATA_CHANGED, render)` and the tagged
+   event *is* a `DATA_CHANGED`, so they receive it unchanged. `skills-modal.js`'s own
+   `on(DATA_CHANGED, render)` is untouched - which is also why the save test ("emits DATA_CHANGED") still
+   passes with no test edit.
+3. **The drag-reconcile path is untouched.** `DRAG_RECONCILE_BEGIN` / `END`, `dragReconcileDepth` and the
+   `reconcileBoard()` window are byte-identical; the new guard sits above the window check and never
+   sees a drag emit (drops emit untagged `DATA_CHANGED`).
+4. **No test edits for C; counts unchanged.** dom stayed 178/178 and unit 304/304.
+
+**Browser-verified** against the harness on `http://127.0.0.1:8787` (board text byte-identical across
+every step):
+
+- added a skill in the modal -> the list gained "New skill", the board unchanged;
+- deleted it -> the list returned to the original six, the board still unchanged;
+- a board-group rename propagated over the SSE `groups` event -> the sidebar re-rendered with the new
+  name while the board stayed identical; renamed back. (The sidebar's own dblclick inline rename could
+  not be driven by the browser tooling - programmatic clicks do not raise `dblclick`, and its rename
+  input `blur`-commits across tool calls - so the rename was exercised through the app's sync path,
+  which lands on the same `on(DATA_CHANGED, render)` subscription and the same `render()`. The collapse
+  toggle, a single click, was also driven and re-rendered the sidebar in place.)
+
+All created test state was removed: server skills back to 6, groups back to the original single group and
+`boardGroups` map, group collapse back to `false`.
+
+**Verified after the changes**
+```
+cd client; npm run build        # exit 0
+cd client; npm run test:unit    # Test Files 29 passed, Tests 304 passed
+cd client; npm run test:dom     # Test Files 25 passed, Tests 178 passed
+node harness/test.mjs           # tests 7, pass 7, fail 0
+```

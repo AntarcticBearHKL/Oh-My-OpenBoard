@@ -118,13 +118,13 @@ export function initSkillsSync() {
       if (!state) return;
       if (Array.isArray(state.skills) && state.skills.length > 0) {
         adoptSkillsState(state);
-        emit(DATA_CHANGED);
+        emit(DATA_CHANGED, { affectsBoard: false });
       }
     })
     .catch(() => {});
 
   window.addEventListener('openagile:skills-changed', (event) => {
     adoptSkillsState(event.detail);
-    emit(DATA_CHANGED);
+    emit(DATA_CHANGED, { affectsBoard: false });
   });
 }

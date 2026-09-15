@@ -1,7 +1,6 @@
 import { applyEvent, createProjectionState } from '../reducer.js';
 import { NO_BOARDS_KEY } from '../constants.js';
 import { keyFor } from '../idb-store.js';
-import { GLOBAL_SNAPSHOT_KEY } from './snapshot.js';
 import { DATA_CHANGED, EVENT_EMITTED, emit, off, on } from '../events.js';
 
 // Sole writer of the IDB read model (ADR-0005). Extracted from storage.js so the
@@ -12,14 +11,12 @@ export function createReadModelProjector(ctx) {
   const {
     state,
     taskCacheByBoard,
-    loadGlobalSettings,
     safeParseArray,
     safeParseObject,
     schedulePersist,
     scheduleReadModelPersist,
     checkAndScheduleSnapshot,
-    boardsKey,
-    globalSettingsKey
+    boardsKey
   } = ctx;
 
   const appliedDomainEventIds = new Set();
@@ -29,15 +26,6 @@ export function createReadModelProjector(ctx) {
   function project(event) {
     if (!event?.id || appliedDomainEventIds.has(event.id)) return;
     appliedDomainEventIds.add(event.id);
-
-    if (event.scope === 'global') {
-      const projected = applyEvent(createProjectionState({ globalSettings: loadGlobalSettings() }), event);
-      state.globalSettings = projected.globalSettings;
-      schedulePersist(globalSettingsKey, state.globalSettings);
-      checkAndScheduleSnapshot(GLOBAL_SNAPSHOT_KEY, projected, event.hlc);
-      emit(DATA_CHANGED, { event });
-      return;
-    }
 
     const boardId = event.board_id;
     if (typeof boardId !== 'string' || !boardId) return;
@@ -84,13 +72,6 @@ export function createReadModelProjector(ctx) {
   // merge by id: a board-scoped snapshot carries the whole board list as of the
   // snapshotting device, which must not clobber boards only this device knows.
   function hydrate(key, snapshotState) {
-    if (key === GLOBAL_SNAPSHOT_KEY) {
-      state.globalSettings = snapshotState.globalSettings || {};
-      schedulePersist(globalSettingsKey, state.globalSettings);
-      emit(DATA_CHANGED, { hydrated: key });
-      return;
-    }
-
     const known = new Map((state.boards || []).map((board) => [board.id, board]));
     for (const board of snapshotState.boards || []) {
       const existing = known.get(board.id);

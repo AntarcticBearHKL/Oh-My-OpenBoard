@@ -122,7 +122,7 @@ function handleAdd() {
   const skill = createSkill({ name: 'New skill' });
   selectedSkillId = skill.id;
   forceEditorReload = true;
-  emit(DATA_CHANGED);
+  emit(DATA_CHANGED, { affectsBoard: false });
 
   const nameInput = $id('skill-name');
   nameInput?.focus();
@@ -140,7 +140,7 @@ function handleSave(event) {
   });
   if (!saved) return;
 
-  emit(DATA_CHANGED);
+  emit(DATA_CHANGED, { affectsBoard: false });
 
   const skill = getSkill(selectedSkillId);
   if (skill) populateEditor(skill);
@@ -180,7 +180,7 @@ export function initializeSkillsUI() {
         if (deleteSkill(skillId)) {
           selectedSkillId = null;
           forceEditorReload = true;
-          emit(DATA_CHANGED);
+          emit(DATA_CHANGED, { affectsBoard: false });
         }
       }
     });

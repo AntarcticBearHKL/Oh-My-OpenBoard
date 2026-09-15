@@ -4,7 +4,6 @@ import { parseJsonSafely } from './utils.js';
 
 export const BOARDS_KEY = 'kanbanBoards';
 export const ACTIVE_BOARD_KEY = 'kanbanActiveBoardId';
-export const GLOBAL_SETTINGS_KEY = 'openagile:settings:global';
 
 export const LEGACY_COLUMNS_KEY = 'kanbanColumns';
 export const LEGACY_TASKS_KEY = 'kanbanTasks';
@@ -29,8 +28,7 @@ export const state = {
   tasks: {},    // { [boardId]: task[] | null }
   columns: {},  // { [boardId]: column[] | null }
   labels: {},   // { [boardId]: label[] | null }
-  settings: {},  // { [boardId]: object | null }
-  globalSettings: null
+  settings: {}  // { [boardId]: object | null }
 };
 
 // Per-board default-task cache (keeps defaults stable within a session).
@@ -61,16 +59,3 @@ export function emitLocalChange(boardId, entity) {
   if (typeof window === 'undefined') return;
 }
 
-function defaultGlobalSettings() {
-  return {};
-}
-
-export function normalizeGlobalSettings(raw) {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
-  return {};
-}
-
-export function loadGlobalSettings() {
-  const parsed = safeParseObject(state.globalSettings);
-  return parsed ? normalizeGlobalSettings(parsed) : defaultGlobalSettings();
-}

@@ -6,9 +6,7 @@ import {
   taskCacheByBoard,
   safeParseArray,
   safeParseObject,
-  loadGlobalSettings,
   BOARDS_KEY,
-  GLOBAL_SETTINGS_KEY,
 } from './storage-state.js';
 
 // Sole writer of the read model (ADR-0005), extracted from this module (#119).
@@ -16,12 +14,10 @@ import {
 export const readModelProjector = createReadModelProjector({
   state,
   taskCacheByBoard,
-  loadGlobalSettings,
   safeParseArray,
   safeParseObject,
   schedulePersist,
   scheduleReadModelPersist,
   checkAndScheduleSnapshot,
-  boardsKey: BOARDS_KEY,
-  globalSettingsKey: GLOBAL_SETTINGS_KEY
+  boardsKey: BOARDS_KEY
 });

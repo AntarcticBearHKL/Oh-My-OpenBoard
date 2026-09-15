@@ -7,7 +7,6 @@ export function createProjectionState(seed = {}) {
     columns: Array.isArray(seed.columns) ? seed.columns : [],
     labels: Array.isArray(seed.labels) ? seed.labels : [],
     settings: seed.settings && typeof seed.settings === 'object' ? seed.settings : {},
-    globalSettings: seed.globalSettings && typeof seed.globalSettings === 'object' ? seed.globalSettings : {},
     appliedEventIds: seed.appliedEventIds instanceof Set ? new Set(seed.appliedEventIds) : new Set(),
     taskTombstones: seed.taskTombstones instanceof Set ? new Set(seed.taskTombstones) : new Set()
   };
@@ -27,7 +26,6 @@ function cloneState(state) {
     columns: state.columns.map((column) => ({ ...column })),
     labels: state.labels.map((label) => ({ ...label })),
     settings: { ...state.settings },
-    globalSettings: { ...state.globalSettings },
     appliedEventIds: new Set(state.appliedEventIds),
     taskTombstones: new Set(state.taskTombstones)
   };
@@ -181,9 +179,7 @@ function applyBoardDeleted(state, event) {
 
 function applySettingsUpdated(state, event) {
   const fields = event.payload?.fields && typeof event.payload.fields === 'object' ? event.payload.fields : {};
-  return event.scope === 'global'
-    ? { ...state, globalSettings: { ...state.globalSettings, ...fields } }
-    : { ...state, settings: { ...state.settings, ...fields } };
+  return { ...state, settings: { ...state.settings, ...fields } };
 }
 
 const handlers = {
