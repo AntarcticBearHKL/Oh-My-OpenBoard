@@ -1051,3 +1051,27 @@ banner" runs `setNotificationBannerHidden` + `refreshNotifications` with a clean
 `formatDueStatus` with a real task) is still unverified by anything. Exercising it needs a
 task with a due date, which would write two events into the harness log, so it was not done
 here. That path is the one now in `notifications-banner.js`.
+
+### Batch 10: board-sidebar.js split (267 to 232) - and why it is not really split
+
+The survey warned this one was not cheap, and it was right. `initializeBoardSidebar()` is a
+single ~234-line closure of mutually-referencing nested functions (`render` ↔
+`buildGroupElement` ↔ `buildBoardItem` ↔ `startGroupRename`), all closed over `listEl`. Inside
+it there is exactly one piece that closes over nothing: `makeDeleteButton`, the "click twice
+to confirm" control, which needs only `renderIcons`.
+
+That moved to `armed-delete-button.js` as `createArmedDeleteButton`, and that is the whole of
+this split - it is what brings the file under the ceiling. **The file is still one large
+closure.** The remaining nested functions were left alone deliberately: lifting them means
+threading `listEl` and `render` through every call and re-deriving the mutual recursion, which
+is a state-sharing refactor, not a file split. If this file has to shrink again it should be
+done by extracting the whole sidebar renderer behind one explicit context object.
+
+`createArmedDeleteButton` is also the natural starting point for the §2.1 "click twice to
+confirm delete" convergence (the other copy is in `skills-modal.js`), which is why it went to
+its own module rather than into `utils.js`.
+
+The DOM suite covers this file's group-rename paths but not the armed delete, so that control
+was verified in the browser: the first click arms it (`!`, aria-label "Click again to confirm
+delete") and the 3-second timer disarms it back. Verification: build 0, unit 307/307, dom
+180/180.

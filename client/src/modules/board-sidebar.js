@@ -8,6 +8,7 @@ import {
   setActiveBoardId
 } from './storage.js';
 import { showBoardRenameModal } from './board-rename-modal.js';
+import { createArmedDeleteButton } from './armed-delete-button.js';
 import {
   createGroup,
   deleteGroup,
@@ -46,42 +47,6 @@ export function initializeBoardSidebar() {
     setActiveBoardId(boardId);
     syncSelect(boardId);
     emit(DATA_CHANGED);
-  };
-
-  const makeDeleteButton = (className, label, onConfirm) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = className;
-    btn.title = label;
-    btn.setAttribute('aria-label', label);
-    btn.innerHTML = '<span data-lucide="x" aria-hidden="true"></span>';
-
-    let timer = null;
-    const disarm = () => {
-      if (timer) { clearTimeout(timer); timer = null; }
-      btn.classList.remove('is-armed');
-      btn.innerHTML = '<span data-lucide="x" aria-hidden="true"></span>';
-      btn.title = label;
-      btn.setAttribute('aria-label', label);
-      renderIcons();
-    };
-
-    btn.addEventListener('click', (event) => {
-      event.stopPropagation();
-      if (btn.classList.contains('is-armed')) {
-        if (timer) { clearTimeout(timer); timer = null; }
-        onConfirm();
-        return;
-      }
-      btn.classList.add('is-armed');
-      btn.textContent = '!';
-      btn.title = 'Click again to confirm';
-      btn.setAttribute('aria-label', 'Click again to confirm delete');
-      timer = setTimeout(disarm, 3000);
-    });
-    btn.addEventListener('blur', disarm);
-
-    return btn;
   };
 
   const startGroupRename = (groupId) => {
@@ -128,7 +93,7 @@ export function initializeBoardSidebar() {
     nameEl.className = 'board-list-item-name';
     nameEl.textContent = label;
 
-    const deleteBtn = makeDeleteButton('board-list-delete', `Delete iteration ${label}`, () => {
+    const deleteBtn = createArmedDeleteButton('board-list-delete', `Delete iteration ${label}`, () => {
       if (deleteBoardById(board.id)) {
         emit(DATA_CHANGED);
       } else {
@@ -199,7 +164,7 @@ export function initializeBoardSidebar() {
       );
     });
 
-    const deleteBtn = makeDeleteButton('board-group-delete', `Delete group ${group.name}`, () => {
+    const deleteBtn = createArmedDeleteButton('board-group-delete', `Delete group ${group.name}`, () => {
       deleteGroup(group.id);
       render();
     });
