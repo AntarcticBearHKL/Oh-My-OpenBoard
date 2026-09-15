@@ -7,7 +7,7 @@ import {
   listBoards,
   setActiveBoardId
 } from './storage.js';
-import { showBoardRenameModal } from './boards-modal.js';
+import { showBoardRenameModal } from './board-rename-modal.js';
 import {
   createGroup,
   deleteGroup,

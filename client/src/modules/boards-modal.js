@@ -1,15 +1,6 @@
 // Boards manager, rename, and create modal — extracted from modals.js
 
-import {
-  ensureBoardsInitialized,
-  listBoards,
-  getActiveBoardId,
-  setActiveBoardId,
-  getActiveBoardName,
-  renameBoard,
-  updateBoardFields,
-  deleteBoard as deleteBoardById
-} from './storage.js';
+import { ensureBoardsInitialized, listBoards, getActiveBoardId, setActiveBoardId, deleteBoard as deleteBoardById } from './storage.js';
 import { confirmDialog, alertDialog } from './dialog.js';
 import { renderIcons } from './icons.js';
 import { exportBoard } from './importexport.js';
@@ -17,8 +8,8 @@ import { emit, DATA_CHANGED } from './events.js';
 import { deleteBoardRemote, isAuthenticated } from './sync.js';
 import { APP_NAME, DEFAULT_APP_KEYBINDINGS, matchesKey } from './constants.js';
 import { $id, $, h } from './dom.js';
+import { showBoardRenameModal, initializeBoardRenameModalHandlers } from './board-rename-modal.js';
 
-let editingBoardId = null;
 let keyboardNavIndex = -1;
 
 function renderBoardsSelect() {
@@ -133,38 +124,6 @@ export function refreshBoardsModalList() {
   renderBoardsList();
 }
 
-function showBoardRenameModal(boardId) {
-  ensureBoardsInitialized();
-  const board = listBoards().find((b) => b.id === boardId);
-  if (!board) return;
-
-  editingBoardId = boardId;
-  const modal = $id('board-rename-modal');
-  const input = $id('board-rename-name');
-  const title = $id('board-rename-modal-title');
-  const submitBtn = $id('board-rename-submit-btn');
-
-  if (title) title.textContent = 'Edit Board';
-  if (submitBtn) submitBtn.textContent = 'Save';
-  if (input) input.value = (board.name || '').toString();
-
-  const startDate = $id('board-start-date');
-  if (startDate) startDate.value = typeof board.startDate === 'string' ? board.startDate.slice(0, 10) : '';
-  const endDate = $id('board-end-date');
-  if (endDate) endDate.value = typeof board.endDate === 'string' ? board.endDate.slice(0, 10) : '';
-  const goal = $id('board-goal');
-  if (goal) goal.value = typeof board.goal === 'string' ? board.goal : '';
-
-  modal?.classList.remove('hidden');
-  input?.focus();
-}
-
-function hideBoardRenameModal() {
-  const modal = $id('board-rename-modal');
-  modal?.classList.add('hidden');
-  editingBoardId = null;
-}
-
 export function initializeBoardsModalHandlers(setupModalCloseHandlers) {
   document.addEventListener('kanban:boards-changed', () => {
     refreshBoardsModalList();
@@ -229,37 +188,10 @@ export function initializeBoardsModalHandlers(setupModalCloseHandlers) {
   });
   setupModalCloseHandlers('boards-modal', hideBoardsModal);
 
-  // Board rename modal
-  $id('board-rename-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!editingBoardId) return;
-
-    const input = $id('board-rename-name');
-    const name = (input?.value || '').trim();
-    if (!name) {
-      await alertDialog({ title: 'Error', message: 'Board name cannot be empty.' });
-      return;
-    }
-
-    if (!renameBoard(editingBoardId, name)) {
-      await alertDialog({ title: 'Error', message: 'Unable to rename board.' });
-      return;
-    }
-
-    updateBoardFields(editingBoardId, {
-      startDate: $id('board-start-date')?.value ?? '',
-      endDate: $id('board-end-date')?.value ?? '',
-      goal: $id('board-goal')?.value ?? ''
-    });
-
-    hideBoardRenameModal();
+  initializeBoardRenameModalHandlers(setupModalCloseHandlers, () => {
     renderBoardsSelect();
     renderBoardsList();
-    emit(DATA_CHANGED);
-    renderIcons();
   });
-
-  setupModalCloseHandlers('board-rename-modal', hideBoardRenameModal);
 }
 
-export { hideBoardsModal, hideBoardRenameModal, showBoardRenameModal };
+export { hideBoardsModal };

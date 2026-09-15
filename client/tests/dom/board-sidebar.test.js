@@ -18,7 +18,7 @@ vi.mock('../../src/modules/storage.js', () => ({
   })
 }));
 
-vi.mock('../../src/modules/boards-modal.js', () => ({
+vi.mock('../../src/modules/board-rename-modal.js', () => ({
   showBoardRenameModal: vi.fn()
 }));
 

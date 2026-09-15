@@ -898,3 +898,24 @@ Two things needed care:
 
 `task-card.js` drops from 293 to 100 lines and its imports from ten to five; only the meta
 row used them. Verification: build 0, unit 307/307, dom 180/180.
+
+### Batch 10: boards-modal.js split (265 to 197)
+
+Two groups shared this file: the boards list/select rendering with the modal's open/close
+primitives, and the board **rename** modal. The rename modal was the self-contained one -
+`editingBoardId`, the two show/hide functions and the `#board-rename-form` submit handler -
+and the list rendering never touched it.
+
+The one coupling needed care. The submit handler refreshes the nav board select and then
+the boards list, both of which live in `boards-modal.js`. Importing them from the new module
+would have closed a `boards-modal.js -> board-rename-modal.js -> boards-modal.js` cycle, so
+`initializeBoardRenameModalHandlers(setupModalCloseHandlers, refreshBoards)` takes a
+callback and the caller supplies the two render calls. Call ordering is unchanged.
+
+Moving `showBoardRenameModal`/`hideBoardRenameModal` out meant their two external importers
+had to follow - `modals.js` (Escape handling) and `board-sidebar.js` (the sidebar rename
+action) - and `board-sidebar.test.js`'s mock had to be re-pointed at the new module, since a
+mock left on `boards-modal.js` would have gone inert and silently let the real module load.
+
+`boards-modal.js` also carried a genuinely unused import (`getActiveBoardName`), dropped
+while the import block was trimmed. Verification: build 0, unit 307/307, dom 180/180.
