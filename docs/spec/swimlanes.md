@@ -56,7 +56,7 @@
 
 ## Task Creation
 
-- Swim lane cells offer no manual add control; tasks are created by agents through the API
+- Swim lane cells offer no manual add control except in the Backlog column, where a human can add a task by hand; the other columns are driven by agents
 
 ## Mobile Behavior
 

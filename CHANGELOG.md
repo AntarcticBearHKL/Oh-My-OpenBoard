@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Task cards show who claimed the task and how long it has been running, counted from the claim rather than from the card being created.
 - A server-side watchdog that moves a claimed task from In Progress to Blocked when the agent has not synced for five minutes, with the reason recorded on the card. Any update to the task restarts the window, and moving the card to Finished or Blocked yourself stops the clock before the watchdog ever sees it.
+- The Backlog column can add a task by hand again, in the board and swim lane views, so a human can capture work before an agent picks it up.
 
 ### Changed
 
@@ -24,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - The Template picker in the New Iteration / Create New Board dialog and the built-in board templates it offered. New boards and iterations are always created blank now.
-- Adding tasks by hand from a column. Tasks are created by agents through the API; column footers no longer offer an Add task row (board and swimlane view).
+- Adding tasks by hand from the In Progress, Blocked and Finished columns. Tasks are created by agents through the API; those columns no longer offer an Add task row (board and swimlane view); the Backlog column keeps one.
 - The notifications feature: the top-right notification control, its dialog and the supporting code, styles and storage.
 
 ### Fixed

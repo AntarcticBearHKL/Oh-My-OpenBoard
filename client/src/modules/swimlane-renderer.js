@@ -1,5 +1,6 @@
 // Swimlane board rendering — extracted from render.js
 
+import { showModal } from './modals.js';
 import { toggleColumnCollapsed } from './columns.js';
 import {
   buildBoardGrid,
@@ -15,7 +16,7 @@ import {
 } from './swimlane-collapse.js';
 import { createTaskElement } from './task-card.js';
 import { emit, DATA_CHANGED } from './events.js';
-import { isDoneColumn as isPermanentDoneColumn } from './constants.js';
+import { BACKLOG_COLUMN_ID, isDoneColumn as isPermanentDoneColumn } from './constants.js';
 import { h, cx } from './dom.js';
 import { applyWipCounter, getWipState } from './wip-limit.js';
 
@@ -46,7 +47,12 @@ export function createSwimlaneHeaderCell(column, taskCount) {
   },
     collapseBtn,
     !isCollapsed ? h('h2', {}, column.name) : null,
-    !isCollapsed ? buildSwimlaneCounter(column, taskCount) : null
+    !isCollapsed ? buildSwimlaneCounter(column, taskCount) : null,
+    !isCollapsed && column.id === BACKLOG_COLUMN_ID ? h('button', {
+      class: 'add-task-btn-icon', type: 'button',
+      'aria-label': `Add task to ${column.name}`, title: 'Add task',
+      onClick: () => showModal(column.id)
+    }, h('span', { 'data-lucide': 'plus', 'aria-hidden': 'true' })) : null
   );
 }
 
@@ -105,11 +111,20 @@ export function createSwimlaneCell(column, lane, tasksInCell, visibleTasks, sett
       onClick: () => { toggleSwimLaneCellCollapsed(lane.key, column.id); emit(DATA_CHANGED); }
     }, h('i', { 'data-lucide': isCollapsed ? 'chevron-right' : 'chevron-down' }));
 
+    const addBtn = column.id === BACKLOG_COLUMN_ID ? h('button', {
+      type: 'button',
+      class: 'swimlane-cell-add-btn',
+      'aria-label': `Add task to ${column.name}, ${lane.value}`,
+      title: 'Add task',
+      onClick: () => showModal(column.id, { groupBy: settings.swimLaneGroupBy, laneKey: lane.key })
+    }, h('i', { 'data-lucide': 'plus', 'aria-hidden': 'true' })) : null;
+
     cell.appendChild(h('div', { class: 'swimlane-cell-header' },
       toggleBtn,
       isCollapsed ? h('span', { class: 'swimlane-cell-summary' },
         taskCount > 0 ? `${taskCount} task${taskCount === 1 ? '' : 's'}` : 'Empty'
-      ) : null
+      ) : null,
+      addBtn
     ));
   }
 

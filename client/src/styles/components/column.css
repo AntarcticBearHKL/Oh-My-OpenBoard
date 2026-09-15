@@ -171,6 +171,49 @@
   font-style: italic;
 }
 
+/* Add-task row pinned below the scrollable task list */
+.column-add-row {
+  flex: 0 0 auto;
+  padding: var(--space-1) var(--space-1) var(--space-2);
+  border-top: 1px solid var(--row-divider);
+}
+
+.add-task-row-btn {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 6px var(--space-2);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-md);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.add-task-row-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 2;
+  flex: 0 0 auto;
+}
+
+.add-task-row-btn:hover {
+  background-color: var(--row-hover);
+  color: var(--text);
+}
+
+.add-task-row-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
 /* Custom scrollbar */
 .tasks::-webkit-scrollbar { width: 6px; }
 .tasks::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: var(--radius-2xs); }
@@ -272,6 +315,10 @@
   text-align: center;
   writing-mode: vertical-rl;
   transform: rotate(180deg);
+}
+
+.swimlane-column-header.is-collapsed .add-task-btn-icon {
+  display: none;
 }
 
 .swimlane-column-header.is-collapsed .task-counter {
@@ -479,6 +526,32 @@
   font-size: var(--text-sm);
   font-weight: 600;
   color: var(--text-muted);
+}
+
+.swimlane-cell-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.swimlane-cell-add-btn:hover {
+  background: var(--item-hover);
+  color: var(--text);
+}
+
+.swimlane-cell-add-btn svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* ── Column summary ─────────────────────────────────────────────────────── */

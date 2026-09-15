@@ -2,6 +2,8 @@
 
 import { loadTasks, loadColumnSummaries, saveColumnSummary } from './storage.js';
 import { formatTimestamp } from './dateutils.js';
+import { showModal } from './modals.js';
+import { BACKLOG_COLUMN_ID } from './constants.js';
 import { getWipState, wipCounterLabel, applyWipCounter } from './wip-limit.js';
 import { h } from './dom.js';
 
@@ -199,11 +201,26 @@ export function createColumnElement(column) {
     'aria-label': `Tasks in ${column.name}`
   });
 
+  const addRow = column.id === BACKLOG_COLUMN_ID
+    ? h('div', { class: 'column-add-row' },
+      h('button', {
+        class: 'add-task-row-btn',
+        type: 'button',
+        'aria-label': `Add task to ${column.name}`,
+        title: 'Add task',
+        onClick: () => showModal(column.id)
+      },
+        h('span', { 'data-lucide': 'plus', 'aria-hidden': 'true' }),
+        h('span', { class: 'add-task-row-label' }, 'Add task')
+      )
+    )
+    : null;
+
   return h('article', {
     class: 'task-column',
     'data-column': column.id,
     'data-wip': getWipState(taskCount, column),
     'aria-labelledby': `column-title-${column.id}`,
     style: column?.color ? { '--column-accent': column.color } : {}
-  }, headerDiv, ul);
+  }, headerDiv, ul, addRow);
 }

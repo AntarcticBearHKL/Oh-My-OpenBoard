@@ -18,12 +18,14 @@ vi.mock('../../src/modules/modals.js', () => ({ showModal: mocks.showModal }));
 vi.mock('../../src/modules/icons.js', () => ({ renderIcons: vi.fn() }));
 
 import { createColumnElement } from '../../src/modules/column-element.js';
+import { FIXED_COLUMNS } from '../../src/modules/constants.js';
 
-const COLUMN = { id: 'col-backlog', name: 'Backlog', color: '#3583ff', order: 1, wipLimit: 0 };
+const COLUMN = { ...FIXED_COLUMNS[0], wipLimit: 0 };
 
-function mountColumn() {
-  document.body.appendChild(createColumnElement(COLUMN));
-  return document.querySelector('.task-column');
+function mountColumn(column = COLUMN) {
+  const columnEl = createColumnElement(column);
+  document.body.appendChild(columnEl);
+  return columnEl;
 }
 
 function openSummary() {
@@ -35,6 +37,7 @@ beforeEach(() => {
   mocks.summaries = {};
   mocks.saveColumnSummary.mockClear();
   mocks.loadTasks.mockClear();
+  mocks.showModal.mockClear();
 });
 
 test('column header renders the summary button next to the task counter', () => {
@@ -49,7 +52,7 @@ test('column header renders the summary button next to the task counter', () => 
 
 test('summary button opens a full-screen dialog with the stored summary and metadata', () => {
   mocks.summaries = {
-    'col-backlog': {
+    [COLUMN.id]: {
       text: 'Two tasks left to triage.',
       at: '2026-01-02T10:00:00.000Z',
       by: 'claude-sonnet'
@@ -129,15 +132,34 @@ test('the edit affordance saves a human override through saveColumnSummary', () 
   textarea.value = 'Human override text';
   fireEvent.click(document.querySelector('.column-summary-save'));
 
-  expect(mocks.saveColumnSummary).toHaveBeenCalledWith('col-backlog', 'Human override text');
+  expect(mocks.saveColumnSummary).toHaveBeenCalledWith(COLUMN.id, 'Human override text');
   expect(document.querySelector('.column-summary-text').textContent).toBe('Human override text');
 });
 
-test('the column still renders its task list without an add-task row', () => {
+test('the column still renders its add-task row and task list', () => {
   const columnEl = mountColumn();
 
   expect(columnEl.querySelector('.tasks')).not.toBeNull();
-  expect(columnEl.querySelector('.add-task-row-btn')).toBeNull();
-  expect(columnEl.querySelector('.column-add-row')).toBeNull();
+  expect(columnEl.querySelector('.column-add-row')).not.toBeNull();
+  expect(columnEl.querySelector('.add-task-row-btn')).not.toBeNull();
   expect(columnEl.querySelector('.column-header h2').textContent).toBe('Backlog');
+});
+
+test('clicking the add-task row opens the create-task modal for the column', () => {
+  const columnEl = mountColumn();
+
+  fireEvent.click(columnEl.querySelector('.add-task-row-btn'));
+
+  expect(mocks.showModal).toHaveBeenCalledWith(COLUMN.id);
+});
+
+test.each([
+  FIXED_COLUMNS[1],
+  FIXED_COLUMNS[2],
+  FIXED_COLUMNS[3]
+])('$name renders no add-task affordance', (column) => {
+  const columnEl = mountColumn({ ...column, wipLimit: 0 });
+
+  expect(columnEl.querySelector('.column-add-row')).toBeNull();
+  expect(columnEl.querySelector('.add-task-row-btn')).toBeNull();
 });

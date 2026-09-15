@@ -2,7 +2,7 @@
 
 ## Create and Edit
 
-- Tasks are created by agents through the API; the board UI has no manual add control
+- Tasks are created by agents through the API. The Backlog column also offers an Add task row so a human can capture work by hand; the other three columns have no manual add control
 - Task form fields: title, description, priority, due date, column, labels
 - Title is required and validates inline with red error styling
 - Edit mode opens with existing task values prefilled

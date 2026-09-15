@@ -34,7 +34,7 @@ OpenAgile == "Kanban" + "Nirvana" is a Kanban Board, browser-based task manager 
 1. **Pick a starting point**
 	- **Import a template board** (recommended), or
 	- **Create a new board** and add 3–6 columns.
-2. **Task creation** — tasks are created by agents through the API; the board itself has no manual add button.
+2. **Task creation** — tasks are created by agents through the API, and the Backlog column also has an Add task row for capturing work by hand.
 3. **Move work forward** by drag-and-drop between columns.
 4. **Use the right tool for the job**
 	- **Columns** = workflow state (Backlog → In Progress → Blocked → Finished)
@@ -120,7 +120,7 @@ Add a second dimension to your board by grouping tasks into horizontal swim lane
 
 - Drag and drop tasks across columns, lanes, or both in a single gesture
 - Collapse/expand individual cells, entire rows, or workflow columns independently
-- Agents create tasks through the API; swim lane cells offer no manual add control
+- Agents create tasks through the API; the Backlog column, in the board and swim lane view, also accepts tasks added by hand
 - Finished tasks are hidden in lanes to keep rows compact while remaining a drop target
 - Sticky lane headers during horizontal scrolling and sticky workflow headers during vertical scrolling
 - Fully responsive on mobile with snap-scrolling columns and sticky lane headers
