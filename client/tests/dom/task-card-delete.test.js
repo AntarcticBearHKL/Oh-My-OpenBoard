@@ -73,7 +73,7 @@ test('cancelling delete leaves the task untouched', async () => {
   expect(emit).not.toHaveBeenCalled();
 });
 
-test('confirming permanent delete emits DATA_CHANGED after deletion succeeds', async () => {
+test('confirming permanent delete calls deleteTask for the task', async () => {
   confirmDialog.mockResolvedValue(true);
   deleteTask.mockReturnValue(true);
   const element = renderTask();
@@ -82,5 +82,4 @@ test('confirming permanent delete emits DATA_CHANGED after deletion succeeds', a
   await Promise.resolve();
 
   expect(deleteTask).toHaveBeenCalledWith('task-1');
-  expect(emit).toHaveBeenCalledWith('data:changed');
 });

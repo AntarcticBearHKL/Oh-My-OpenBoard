@@ -5,7 +5,6 @@ import { deleteTask } from './tasks.js';
 import { showEditModal } from './modals.js';
 import { confirmDialog } from './dialog.js';
 import { calculateDaysUntilDue, formatCountdown, getCountdownClassName } from './dateutils.js';
-import { emit, DATA_CHANGED } from './events.js';
 import { labelTextColor } from './utils.js';
 import { h, cx } from './dom.js';
 import { STALE_AFTER_DAYS, TASK_TYPES, isTaskStale, normalizeEstimate, taskAgeDays } from './agile.js';
@@ -277,7 +276,7 @@ export function createTaskElement(task, settings, labelsMap = null, today = null
       confirmText: 'Delete'
     });
     if (!ok) return;
-    if (deleteTask(task.id)) emit(DATA_CHANGED);
+    deleteTask(task.id);
   });
 
   actions.appendChild(deleteBtn);

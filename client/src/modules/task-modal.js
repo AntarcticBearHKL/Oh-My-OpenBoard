@@ -4,7 +4,6 @@ import { isDoneColumnId, loadLabels, loadColumns, loadSettings, loadTasks } from
 import { addAnnotation, addTask, isTaskLocked, removeAnnotation, setTaskBlockedReason, updateTask } from './tasks.js';
 import { renderIcons } from './icons.js';
 import { validateAndShowTaskTitleError, clearFieldError } from './validation.js';
-import { emit, DATA_CHANGED } from './events.js';
 import { createAccordionSection } from './accordion.js';
 import { generateUUID, labelTextColor } from './utils.js';
 import { promptDialog } from './dialog.js';
@@ -1377,7 +1376,6 @@ export function initializeTaskModalHandlers(setupModalCloseHandlers) {
       addTask(title, description, priority, dueDate, column, selectedTaskLabels, selectedTaskRelationships, selectedTaskSubTasks, extraFields);
     }
     hideModal();
-    emit(DATA_CHANGED);
   });
 
   setupModalCloseHandlers('task-modal', hideModal);

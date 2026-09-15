@@ -32,7 +32,7 @@ export function createSwimlaneHeaderCell(column, taskCount) {
     type: 'button',
     'aria-label': isCollapsed ? `Expand ${column.name} column` : `Collapse ${column.name} column`,
     title: isCollapsed ? 'Expand column' : 'Collapse column',
-    onClick: (event) => { event.stopPropagation(); if (toggleColumnCollapsed(column.id)) emit(DATA_CHANGED); }
+    onClick: (event) => { event.stopPropagation(); toggleColumnCollapsed(column.id); }
   },
     h('span', { 'data-lucide': isCollapsed ? 'chevron-right' : 'chevrons-right-left', 'aria-hidden': 'true' })
   );
