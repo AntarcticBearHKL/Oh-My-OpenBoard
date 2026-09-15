@@ -1,6 +1,6 @@
 // Thin orchestrator — delegates to task-card.js, column-element.js, swimlane-renderer.js
 
-import { isDoneColumnId, listBoards, loadColumns, loadTasks, loadLabels, loadSettings } from './storage.js';
+import { listBoards, loadColumns, loadTasks, loadLabels, loadSettings } from './storage.js';
 import { initDragDrop } from './dragdrop.js';
 import { renderIcons } from './icons.js';
 import { refreshNotifications } from './notifications.js';
@@ -10,7 +10,7 @@ import { createTaskElement } from './task-card.js';
 import { createColumnElement } from './column-element.js';
 import { renderSwimlaneBoard } from './swimlane-renderer.js';
 import { syncColumnWip } from './wip-limit.js';
-import { selectVisibleTasks, getDoneVisibleCount, buildShowMoreButton, DONE_INITIAL_BATCH_SIZE } from './board-filters.js';
+import { selectVisibleTasks, buildShowMoreButton, selectColumnRenderPlan } from './board-filters.js';
 import { syncMovedTaskDueDate } from './task-card-meta.js';
 
 // Depth of the current drag-reconcile window. While open (> 0), a projected
@@ -46,20 +46,14 @@ function renderStandardBoard(container, sortedColumns, visibleTasks, settings, l
     const tasksList = columnEl.querySelector('.tasks');
     const taskCounter = columnEl.querySelector('.task-counter');
 
-    const columnTasks = visibleTasks.filter(t => t.column === column.id)
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-
-    const isDoneColumn = isDoneColumnId(column.id);
-  const doneVisibleCount = getDoneVisibleCount();
-    const shouldVirtualize = isDoneColumn && columnTasks.length > DONE_INITIAL_BATCH_SIZE;
-    const tasksToRender = shouldVirtualize ? columnTasks.slice(0, doneVisibleCount) : columnTasks;
+    const { columnTasks, tasksToRender, remaining } = selectColumnRenderPlan(column.id, visibleTasks);
 
     tasksToRender.forEach(task => {
       tasksList.appendChild(createTaskElement(task, settings, labelsMap, today));
     });
 
-    if (shouldVirtualize && doneVisibleCount < columnTasks.length) {
-      tasksList.appendChild(buildShowMoreButton(columnTasks.length - doneVisibleCount, renderBoard));
+    if (remaining > 0) {
+      tasksList.appendChild(buildShowMoreButton(remaining, renderBoard));
     }
 
     syncColumnWip(columnEl, columnTasks.length, column);
@@ -135,16 +129,7 @@ export function reconcileBoard() {
     const tasksList = columnEl.querySelector('.tasks');
     if (!tasksList) return;
 
-    const columnTasks = visibleTasks
-      .filter((t) => t.column === column.id)
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-
-    // Mirror renderStandardBoard's Done virtualization so a reconcile of an
-    // overfull Done column renders only the visible batch, not every card.
-    const isDoneColumn = isDoneColumnId(column.id);
-    const doneVisibleCount = getDoneVisibleCount();
-    const shouldVirtualize = isDoneColumn && columnTasks.length > DONE_INITIAL_BATCH_SIZE;
-    const tasksToRender = shouldVirtualize ? columnTasks.slice(0, doneVisibleCount) : columnTasks;
+    const { columnTasks, tasksToRender, remaining } = selectColumnRenderPlan(column.id, visibleTasks);
 
     tasksList.querySelector('.show-more-btn')?.remove();
 
@@ -163,8 +148,8 @@ export function reconcileBoard() {
       usedIds.add(task.id);
     });
 
-    if (shouldVirtualize && doneVisibleCount < columnTasks.length) {
-      tasksList.appendChild(buildShowMoreButton(columnTasks.length - doneVisibleCount, renderBoard));
+    if (remaining > 0) {
+      tasksList.appendChild(buildShowMoreButton(remaining, renderBoard));
     }
 
     syncColumnWip(columnEl, columnTasks.length, column);

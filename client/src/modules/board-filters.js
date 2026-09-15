@@ -1,3 +1,5 @@
+import { isDoneColumnId } from './storage.js';
+
 let boardFilterQuery = '';
 
 export function setBoardFilterQuery(query) {
@@ -69,4 +71,19 @@ export function buildShowMoreButton(remaining, onShowMore) {
     onShowMore();
   });
   return showMoreBtn;
+}
+
+// One Done-column slicing path, shared by the full rebuild and the reconcile
+// adapter so both render - and paginate - exactly the same tasks.
+export function selectColumnRenderPlan(columnId, visibleTasks) {
+  const columnTasks = visibleTasks
+    .filter((t) => t.column === columnId)
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const doneVisibleCount = getDoneVisibleCount();
+  const shouldVirtualize = isDoneColumnId(columnId) && columnTasks.length > DONE_INITIAL_BATCH_SIZE;
+  return {
+    columnTasks,
+    tasksToRender: shouldVirtualize ? columnTasks.slice(0, doneVisibleCount) : columnTasks,
+    remaining: shouldVirtualize ? columnTasks.length - doneVisibleCount : 0
+  };
 }
