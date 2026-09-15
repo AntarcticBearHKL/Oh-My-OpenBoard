@@ -1960,3 +1960,35 @@ Two notes for whoever picks this up: the audit's line numbers for these items we
 was re-located in the split tree first; and two of the "duplicates" were not byte-identical (the
 select labels, and the armed-delete presentations) - exactly the case where a mechanical merge
 would have silently changed the UI, so each was diffed before it was merged.
+
+## P3 - the concrete half is done; the rest needs a designer
+
+**Impressum header: fixed.** Every `.rpt-header` rule in `reports.css` is scoped to
+`body.reports-page`, and impressum.html was the only one of the five pages using that shared header
+markup with a different body class (`impressum-page`) - so its header had no styling at all. The
+other three pages use `reports-page` (calendar adds a second class). Impressum now does too, rather
+than duplicating ~60 lines of header CSS into `impressum.css`. The class order is deliberate:
+`impressum.css` is linked after `index.css` on that page and both sheets set the page shell, so
+`body.impressum-page` keeps winning `height`/`overflow` - the page stays its own scroll container
+instead of adopting the reports shell (`100dvh` + `overflow: hidden`, which would clip the legal
+text with no inner scroll area). Verified in the browser both ways: `.rpt-header` now computes to
+`display:flex`, `space-between`, with the glass background/border/radius from `reports.css`, and the
+page still scrolls (`maxScrollY` 375).
+
+**Dead/unstyled HTML class hooks: already gone.** The audit listed five in `index.html`
+(`.task-modal-content`, `.task-annotations-header`, `.labels-selection`, `.labels-list`,
+`.settings-section-board`). Three were removed by the earlier dead-CSS batch, and the remaining two
+names only ever matched ids (`#task-labels-selection`, `#labels-list`) - there is no stray class
+attribute left to remove.
+
+**Structural outlier, decided rather than left open:** `styles/index.css` still does not
+`@import components/impressum.css`. That is now deliberate - the page needs the shared sheet
+(tokens, layout, header) plus its own component sheet, and importing the component sheet globally
+would put its `body.impressum-page`-scoped rules on all five pages for no benefit.
+
+**Still open, and not something an agent should guess at:** the rest of P3 is open-ended visual
+iteration. Concretely, `reports.css` §2.4 of the audit lists button variants duplicated in five
+stylesheets, the icon-button shape in five places, the glass shell repeated across ~15 surfaces,
+badge/pill shapes 14 times, ten empty states, three modal shells, and hardcoded colors/radii/font
+sizes that bypass tokens. Those are taste decisions with a five-page blast radius; they want the
+user's direction, not an agent's.
