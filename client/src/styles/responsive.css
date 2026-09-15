@@ -238,8 +238,6 @@
   .board-list-item {
     flex: 1 1 auto;
     max-width: none;
-    padding: 6px var(--space-2);
-    font-size: var(--text-md);
   }
 
 
