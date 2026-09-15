@@ -6,7 +6,21 @@ import { emitLocalSync } from './hlc.js';
 const DEFAULT_ACTOR = { type: 'human', id: null };
 const pendingDomainEvents = new Set();
 
+export const DOMAIN_EVENT_TYPES = new Set([
+  'board.created', 'board.updated', 'board.deleted',
+  'column.created', 'column.updated',
+  'label.created', 'label.updated', 'label.deleted',
+  'label.added_to_task', 'label.removed_from_task',
+  'task.created', 'task.updated', 'task.moved', 'task.deleted',
+  'subtask.added', 'subtask.toggled', 'subtask.text_changed', 'subtask.removed',
+  'relationship.added', 'relationship.removed',
+  'settings.updated'
+]);
+
 function buildDomainEvent({ type, scope = 'board', boardId = null, entityId = '', payload = {}, actor = DEFAULT_ACTOR }) {
+  if (!DOMAIN_EVENT_TYPES.has(type)) {
+    throw new Error(`Unknown domain event type: ${type}`);
+  }
   return {
     id: generateUUID(),
     type,

@@ -34,3 +34,11 @@ test('scheduleDomainEvent persists an unsynced immutable event row', async () =>
     synced: false
   });
 });
+
+test('scheduleDomainEvent rejects a type that is not a known domain event', () => {
+  expect(() => scheduleDomainEvent({
+    type: 'task.renamed',
+    boardId: 'board-a',
+    entityId: 'task-a'
+  })).toThrow(/Unknown domain event type: task\.renamed/);
+});
