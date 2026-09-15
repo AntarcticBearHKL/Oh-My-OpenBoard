@@ -1,4 +1,4 @@
-import { isDoneColumnId, loadLabels } from './storage.js';
+import { isDoneColumnId, loadLabels, loadTasks, loadSettings } from './storage.js';
 import { PRIORITIES } from './constants.js';
 import { calculateDaysUntilDue, formatCountdown, getCountdownClassName, formatDisplayDate } from './dateutils.js';
 import { labelTextColor } from './utils.js';
@@ -186,4 +186,42 @@ export function buildTaskMeta(task, settings, labelsMap = null, today = null) {
   }
 
   return { meta, staleTask };
+}
+
+export function syncMovedTaskDueDate(taskId, toColumn, tasksCache) {
+  if (!taskId) return;
+
+  const taskEl = document.querySelector(`.task[data-task-id="${taskId}"]`);
+  if (!taskEl) return;
+
+  const dueDateEl = taskEl.querySelector('.task-date');
+  if (!dueDateEl) return;
+
+  const tasks = tasksCache || loadTasks();
+  const task = tasks.find((t) => t.id === taskId);
+  if (!task) return;
+
+  const dueDateRaw = typeof task.dueDate === 'string' ? task.dueDate.trim() : '';
+  if (!dueDateRaw) return;
+
+  const settings = loadSettings();
+  const formattedDate = formatDisplayDate(dueDateRaw, settings?.locale);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const daysUntilDue = calculateDaysUntilDue(dueDateRaw, today);
+  if (daysUntilDue === null) return;
+
+  dueDateEl.classList.remove('countdown-urgent', 'countdown-warning', 'countdown-normal', 'countdown-none');
+
+  if (isDoneColumnId(toColumn)) {
+    dueDateEl.textContent = `Due ${formattedDate}`;
+    dueDateEl.classList.add('countdown-none');
+  } else {
+    const countdown = formatCountdown(daysUntilDue);
+    const urgentThreshold = settings?.countdownUrgentThreshold ?? 3;
+    const warningThreshold = settings?.countdownWarningThreshold ?? 10;
+    const countdownClass = getCountdownClassName(daysUntilDue, urgentThreshold, warningThreshold);
+    dueDateEl.textContent = `Due ${formattedDate} (${countdown})`;
+    dueDateEl.classList.add(countdownClass);
+  }
 }

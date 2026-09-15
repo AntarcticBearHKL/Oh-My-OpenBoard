@@ -156,7 +156,8 @@ test('reconcileBoard respects the active board filter, like a full render', asyn
   ];
   mountStandardBoard();
 
-  const { reconcileBoard, setBoardFilterQuery } = await import('../../src/modules/render.js');
+  const { reconcileBoard } = await import('../../src/modules/render.js');
+  const { setBoardFilterQuery } = await import('../../src/modules/board-filters.js');
   setBoardFilterQuery('ship');
   try {
     reconcileBoard();

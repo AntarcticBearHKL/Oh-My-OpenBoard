@@ -4,13 +4,14 @@ import { isDoneColumnId, listBoards, loadColumns, loadTasks, loadLabels, loadSet
 import { initDragDrop } from './dragdrop.js';
 import { renderIcons } from './icons.js';
 import { refreshNotifications } from './notifications.js';
-import { calculateDaysUntilDue, formatCountdown, getCountdownClassName, formatDisplayDate } from './dateutils.js';
 import { syncSwimLaneControls } from './swimlanes.js';
 import { on, DATA_CHANGED, DRAG_RECONCILE_BEGIN, DRAG_RECONCILE_END } from './events.js';
 import { createTaskElement } from './task-card.js';
 import { createColumnElement } from './column-element.js';
 import { renderSwimlaneBoard } from './swimlane-renderer.js';
 import { syncColumnWip } from './wip-limit.js';
+import { selectVisibleTasks, getDoneVisibleCount, buildShowMoreButton, DONE_INITIAL_BATCH_SIZE } from './board-filters.js';
+import { syncMovedTaskDueDate } from './task-card-meta.js';
 
 // Depth of the current drag-reconcile window. While open (> 0), a projected
 // DATA_CHANGED patches the board in place via reconcileBoard() instead of the
@@ -37,71 +38,6 @@ on(DATA_CHANGED, () => {
   renderBoard();
 });
 
-let boardFilterQuery = '';
-
-export function setBoardFilterQuery(query) {
-  boardFilterQuery = typeof query === 'string' ? query : '';
-}
-
-// Done column virtualization state
-const DONE_INITIAL_BATCH_SIZE = 50;
-const DONE_LOAD_MORE_SIZE = 50;
-let doneVisibleCount = DONE_INITIAL_BATCH_SIZE;
-
-function taskMatchesFilter(task, queryLower, labelsById) {
-  if (!queryLower) return true;
-
-  const legacyTitle = typeof task?.text === 'string' ? task.text : '';
-  const title = (typeof task?.title === 'string' && task.title.trim() !== '') ? task.title : legacyTitle;
-  const description = typeof task?.description === 'string' ? task.description : '';
-  const priority = typeof task?.priority === 'string' ? task.priority : '';
-
-  if (title.toLowerCase().includes(queryLower)) return true;
-  if (description.toLowerCase().includes(queryLower)) return true;
-  if (priority.toLowerCase().includes(queryLower)) return true;
-
-  const labelIds = Array.isArray(task?.labels) ? task.labels : [];
-  for (const id of labelIds) {
-    const label = labelsById.get(id);
-    if (!label) continue;
-    if (label.name.includes(queryLower)) return true;
-    if (label.group.includes(queryLower)) return true;
-  }
-
-  return false;
-}
-
-// Apply the active board filter. Shared by the full rebuild and the reconcile
-// adapter so both show and count exactly the same tasks under a filter.
-function selectVisibleTasks(tasks, labels) {
-  const queryLower = (boardFilterQuery || '').toString().trim().toLowerCase();
-  if (!queryLower) return tasks;
-  const labelsById = new Map(
-    labels.map((l) => [
-      l.id,
-      {
-        name: (l.name || '').toString().trim().toLowerCase(),
-        group: (l.group || '').toString().trim().toLowerCase(),
-      },
-    ])
-  );
-  return tasks.filter((t) => taskMatchesFilter(t, queryLower, labelsById));
-}
-
-// The Done-column "Show more" control. Shared by the full rebuild and the
-// reconcile adapter so both grow the virtualized batch identically.
-function buildShowMoreButton(remaining) {
-  const showMoreBtn = document.createElement('button');
-  showMoreBtn.classList.add('show-more-btn');
-  showMoreBtn.type = 'button';
-  showMoreBtn.textContent = `Show more (${remaining} remaining)`;
-  showMoreBtn.addEventListener('click', () => {
-    doneVisibleCount += DONE_LOAD_MORE_SIZE;
-    renderBoard();
-  });
-  return showMoreBtn;
-}
-
 function renderStandardBoard(container, sortedColumns, visibleTasks, settings, labelsMap, today) {
   sortedColumns.forEach(column => {
     const columnEl = createColumnElement(column);
@@ -114,6 +50,7 @@ function renderStandardBoard(container, sortedColumns, visibleTasks, settings, l
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
     const isDoneColumn = isDoneColumnId(column.id);
+  const doneVisibleCount = getDoneVisibleCount();
     const shouldVirtualize = isDoneColumn && columnTasks.length > DONE_INITIAL_BATCH_SIZE;
     const tasksToRender = shouldVirtualize ? columnTasks.slice(0, doneVisibleCount) : columnTasks;
 
@@ -122,7 +59,7 @@ function renderStandardBoard(container, sortedColumns, visibleTasks, settings, l
     });
 
     if (shouldVirtualize && doneVisibleCount < columnTasks.length) {
-      tasksList.appendChild(buildShowMoreButton(columnTasks.length - doneVisibleCount));
+      tasksList.appendChild(buildShowMoreButton(columnTasks.length - doneVisibleCount, renderBoard));
     }
 
     syncColumnWip(columnEl, columnTasks.length, column);
@@ -140,47 +77,6 @@ function updateColumnSelect() {
     option.textContent = col.name;
     select.appendChild(option);
   });
-}
-
-/**
- * Update the due-date element on a moved task card.
- */
-function syncMovedTaskDueDate(taskId, toColumn, tasksCache) {
-  if (!taskId) return;
-
-  const taskEl = document.querySelector(`.task[data-task-id="${taskId}"]`);
-  if (!taskEl) return;
-
-  const dueDateEl = taskEl.querySelector('.task-date');
-  if (!dueDateEl) return;
-
-  const tasks = tasksCache || loadTasks();
-  const task = tasks.find((t) => t.id === taskId);
-  if (!task) return;
-
-  const dueDateRaw = typeof task.dueDate === 'string' ? task.dueDate.trim() : '';
-  if (!dueDateRaw) return;
-
-  const settings = loadSettings();
-  const formattedDate = formatDisplayDate(dueDateRaw, settings?.locale);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const daysUntilDue = calculateDaysUntilDue(dueDateRaw, today);
-  if (daysUntilDue === null) return;
-
-  dueDateEl.classList.remove('countdown-urgent', 'countdown-warning', 'countdown-normal', 'countdown-none');
-
-  if (isDoneColumnId(toColumn)) {
-    dueDateEl.textContent = `Due ${formattedDate}`;
-    dueDateEl.classList.add('countdown-none');
-  } else {
-    const countdown = formatCountdown(daysUntilDue);
-    const urgentThreshold = settings?.countdownUrgentThreshold ?? 3;
-    const warningThreshold = settings?.countdownWarningThreshold ?? 10;
-    const countdownClass = getCountdownClassName(daysUntilDue, urgentThreshold, warningThreshold);
-    dueDateEl.textContent = `Due ${formattedDate} (${countdown})`;
-    dueDateEl.classList.add(countdownClass);
-  }
 }
 
 /**
@@ -246,6 +142,7 @@ export function reconcileBoard() {
     // Mirror renderStandardBoard's Done virtualization so a reconcile of an
     // overfull Done column renders only the visible batch, not every card.
     const isDoneColumn = isDoneColumnId(column.id);
+    const doneVisibleCount = getDoneVisibleCount();
     const shouldVirtualize = isDoneColumn && columnTasks.length > DONE_INITIAL_BATCH_SIZE;
     const tasksToRender = shouldVirtualize ? columnTasks.slice(0, doneVisibleCount) : columnTasks;
 
@@ -267,7 +164,7 @@ export function reconcileBoard() {
     });
 
     if (shouldVirtualize && doneVisibleCount < columnTasks.length) {
-      tasksList.appendChild(buildShowMoreButton(columnTasks.length - doneVisibleCount));
+      tasksList.appendChild(buildShowMoreButton(columnTasks.length - doneVisibleCount, renderBoard));
     }
 
     syncColumnWip(columnEl, columnTasks.length, column);

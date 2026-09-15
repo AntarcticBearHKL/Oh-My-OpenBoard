@@ -985,3 +985,26 @@ and `git log -S` attributes the removal to 66a0d17.
 Fix: delete the stale call. Re-verified in the browser afterwards - the console is clean, the
 labels manager opens, creates and deletes a label and refreshes, the boards manager lists the
 boards and opens the rename modal, and both close through the handlers that had been dead.
+
+### Batch 10: render.js split (329 to 226)
+
+Two groups left the orchestrator.
+
+The board filter and the Done-column pagination - the `boardFilterQuery` state,
+`taskMatchesFilter`, `selectVisibleTasks`, the batch-size constants and `buildShowMoreButton`
+- moved to `board-filters.js`. `renderBoard` and `reconcileBoard` both read that one filter
+and both grow that one batch, so the "Show more" button now takes the re-render as a
+parameter (`buildShowMoreButton(remaining, onShowMore)`) instead of importing `renderBoard`,
+which would have been a cycle.
+
+`syncMovedTaskDueDate` moved to `task-card-meta.js`, next to the due-date chip it patches -
+same classes, same thresholds, the update counterpart of the builder.
+
+Two side effects worth knowing: render.js no longer imports `dateutils.js` at all (only
+`syncMovedTaskDueDate` used it), and `setBoardFilterQuery` has left render.js's API - it is
+the filter state's own setter now, so `reconcile.test.js` imports it from `board-filters.js`.
+
+The dom suite covers `reconcileBoard` directly, filter and virtualization included, but
+`renderBoard()` still has no Vitest coverage, so the board was loaded in the browser too: all
+four fixed columns render with a clean console. Verification: build 0, unit 307/307, dom
+180/180.
