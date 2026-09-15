@@ -1379,3 +1379,62 @@ counts: `swimlanes.js` 698 -> 233, plus the new `swimlane-lane-model.js` 180,
 `swimlane-collapse.js` 68, `swimlane-order.js` 122 and `swimlane-controls.js` 142. Consumer
 deltas: `swimlane-renderer.js` 204 -> 206 and `tests/unit/swimlanes-utils.test.js` 95 -> 97;
 `render.js` (226), `kanban.js` (157) and `task-position.js` (239) are unchanged in length.
+
+### Batch 11: reports.js split (1070 to 33)
+
+`reports.js` is a page entry - only `reports.html` loads it (the `<script type="module" src="./modules/reports.js">` tag at line 220) and nothing imports from it - so there is no consumer churn to manage and no `vi.mock` to re-point. Two survey claims did not hold and are worth recording:
+
+- **There is no module-level mutable state.** The file has no top-level `let`/`const`/`var` at all; `charts` is local to `main()`. The only module-level side effect is `echarts.use([...])`, which is order-sensitive and was handled explicitly (below).
+- **The per-chart groups are self-contained, but `hexToRgba` is not.** It sits in the CFD block yet `buildBurndownOption` also calls it (see "What the split exposed").
+
+Two files cannot hold 1070 lines under the ceiling (2 x 249 = 498), and `main()` alone is 225 lines, so the split lands as six new modules plus the reduced entry:
+
+| Lines before | Lines after | File |
+|---:|---:|---|
+| 1070 | 33 | modules/reports.js |
+| - | 239 | modules/reports-main.js |
+| - | 205 | modules/reports-utils.js |
+| - | 211 | modules/reports-completions.js |
+| - | 185 | modules/reports-cfd.js |
+| - | 134 | modules/reports-velocity.js |
+| - | 79 | modules/reports-daily.js |
+
+**`reports.js` (33) - the page bootstrap.** It keeps only the ECharts registration (the component/chart/renderer imports plus `echarts.use([...])`), the `initStorage().then(main).catch(...)` call and its error log, and imports `main` from `reports-main.js`. The registration **had to stay here**: it must run before any `echarts.init`, and as the entry's top-level statement it runs after all of its dependencies have been evaluated and before the async `initStorage()` resolves - the same position it held at lines 21-33. Moving it into `reports-main.js` would have pushed that file to ~251 lines.
+
+**`reports-main.js` (239) - the wiring.** Exactly `main()` (original lines 841-1065, verbatim) plus its import block. It is the only module that knows every chart module, and the only one that calls `echarts.init` / `setOption` / `addEventListener` and reads the DOM ids. At 239 lines it is the closest to the ceiling and the reason the ECharts registration did not move here.
+
+**`reports-utils.js` (205) - the shared chart vocabulary.** The theme readers (`cssVar`, `cssVarPx`, `getChartTheme`), the date helpers (`isoDateOnly` through `eachMonthInclusive`), the granularity bucketers (`bucketKeyForDate`, `generateTimeSlots`), the shared `buildBarChartOption`, and `hexToRgba`. Every feature module reads from this and it imports only `isHexColor` from `normalize.js`, so it is the acyclic sink of the tree. Only the eleven symbols the other modules (or `main`) actually call are exported; `cssVar`, `cssVarPx`, `formatShortDate`, `formatMonthLabel`, `startOfMonth`, `eachWeekStartInclusive` and `eachMonthInclusive` stay internal, with no caller outside the module - the established rule from the calendar split ("do not export a helper for nothing").
+
+**`reports-daily.js` (79)** - the daily-updates heatmap: `computeDailyUpdateCounts` + `buildDailyUpdatesOption`. Cohesive because both exist only for the one calendar heatmap and nothing else in the file refers to the daily bucket.
+
+**`reports-completions.js` (211)** - the completions / same-day / lead-time group: `computeCompletions`, `computeSameDayCompletions`, `computeWeeklyLeadTimeAndCompletions`, `buildLeadTimeOption`, plus the private `movingAverage`. The four are the granularity-aware "how many finished" calculations and share `generateTimeSlots` / `bucketKeyForDate`; `movingAverage` is the lead-time chart's trend line and has no other caller.
+
+**`reports-cfd.js` (185)** - the Cumulative Flow Diagram: `computeCumulativeFlow` and `buildCfdOption`, with `sortColumnsForCfd` and `normalizeTaskColumnHistory` internal. They share the column ordering and the per-task history reconstruction, which only the CFD needs.
+
+**`reports-velocity.js` (134)** - the per-board velocity / burndown / cycle-time group: `computeVelocityRows`, `computeBurndownSeries`, `computeCycleDistribution`, `buildBurndownOption`, with `resolveDoneColumnId` and `taskPoints` internal. These are the only functions that map tasks to points and read `estimate`; `resolveDoneColumnId` / `taskPoints` are their shared private core. It is the only chart module that reaches back into `storage.js` (`loadTasksForBoard` / `loadColumnsForBoard`, used only by `computeVelocityRows`).
+
+**What the split exposed.**
+
+- **`hexToRgba` is shared, not CFD-local.** The survey filed it under the CFD group, but `buildBurndownOption` (in the velocity group) also calls it. Leaving it in `reports-cfd.js` would have made `reports-velocity.js` import a colour helper from a sibling feature module - no cycle, but the wrong direction. It moved to `reports-utils.js`, which is why that module now imports `isHexColor`, and why the CFD source is sliced at two places (its comment header 512-514, then 529-704 with `hexToRgba` extracted from the middle).
+- **No dead code and no unused imports.** Unlike the boards-modal and swimlanes splits, every import on original lines 13-19 has a caller, and every one of the 36 top-level functions is reached from `main()` or from another moved function. Nothing was dropped.
+- **Same-named helpers elsewhere are independent copies, not consumers.** `isoDateOnly`, `formatIsoDate`, `formatMonthLabel`, `safeDate`, `startOfMonth` and `eachDayInclusive` also appear in `calendar-utils.js`, `calendar.js` and `roadmap.js`, but a grep for importers of `reports.js` returns only the `reports.html` script tag - none of those modules import from here. They are their own private definitions. Reported, not touched: a later convergence (as `formatDisplayDate` was homed in `dateutils.js`) is a separate decision.
+- **The survey's module-level-state warning did not apply.** There is no chart instance or `let` at module scope to thread, so this was a pure line move: no function body was rewritten, no body was reindented, and no call ordering changed.
+
+**Dependency direction, verified rather than eyeballed.** Strictly one-way and acyclic; the move script asserts no new module references `./reports.js`, and an import-graph read of the seven files confirms it:
+
+```
+reports.js             -> storage.js, reports-main.js
+reports-main.js        -> reports-utils.js, reports-daily.js, reports-completions.js,
+                          reports-cfd.js, reports-velocity.js, storage.js, icons.js, theme.js
+reports-daily.js       -> reports-utils.js, security.js
+reports-completions.js -> reports-utils.js, security.js
+reports-cfd.js         -> reports-utils.js, constants.js, normalize.js, security.js
+reports-velocity.js    -> reports-utils.js, storage.js, constants.js
+reports-utils.js       -> normalize.js
+```
+
+No feature module imports another, no module imports back up to `reports.js` or `reports-main.js`, and `reports-utils.js` is a sink whose only repo edge is `normalize.js`. There is no cycle in either direction.
+
+**Script discipline.** The split ran as a Node script (under the temp dir, not the repo) over `/\r?\n/` with a first-line, last-line and interior-anchor assertion on all eleven ranges, a disjointness assertion, a coverage assertion that every non-empty original line from 20 onward belongs to exactly one output, and a `< 250` line-count assertion on each of the seven outputs *before* writing. Postconditions: `reports.js` declares no top-level symbol; no moved definition is left behind; each module's top-level declaration set matches exactly its planned exported+internal list; no internal name was exported; no new module imports `./reports.js`; and every imported identifier is used. The export transform enumerates `function` / `const` / `let` / `var` / `class` (the `PRIORITY_LANE_LABELS` lesson from the swimlanes split); there were no top-level consts here, so it only touched functions, but it is written to cover them.
+
+**Verification.** Build 0, unit 307/307, dom 180/180, with **no per-test timeout** - this split did not reproduce the 5s `reconcile.test.js` timeout, so no test file needed the module-scope warm `await import(...)` fix. `reports.js` has no Vitest coverage (audit §7.1) and the page was not opened in a browser here; that browser check remains to be done.
