@@ -31,6 +31,17 @@ function makeEvent(type, boardId, entityId) {
   };
 }
 
+function makeTask(boardId, id, fields) {
+  const event = makeEvent('task.created', boardId, id);
+  event.payload = { task: { id, ...fields } };
+  return event;
+}
+
+const CLAIM_STALE_MS = 5 * 60 * 1000;
+const NOW = 1_800_000_000_000;
+const STALE_REASON = 'Auto-blocked: no agent sync for over 5 minutes.';
+const minutesAgo = (ms) => new Date(NOW - ms).toISOString();
+
 const BOARD_A = '00000000-0000-4000-8000-0000000000a1';
 const BOARD_B = '00000000-0000-4000-8000-0000000000b1';
 const FIXED_COLUMN_IDS = [
@@ -110,6 +121,124 @@ test('a restart rebuilds the read model from the snapshot, not from the log', ()
   assert.equal(child.boards, store.getBoards().length, 'the child rebuilt the same boards');
   assert.equal(child.stats.trimSeq, store.getStats().trimSeq, 'and kept the floor');
 });
+
+test('a claimed in-progress task with no update for over five minutes is auto-blocked', () => {
+  store.appendEvents([makeTask(BOARD_A, 'task-stale', {
+    title: 'Stale claim',
+    column: FIXED_COLUMN_IDS[1],
+    claimedBy: 'agent-a',
+    claimedAt: minutesAgo(10 * 60 * 1000),
+    changeDate: minutesAgo(CLAIM_STALE_MS + 1),
+    columnHistory: [{ column: FIXED_COLUMN_IDS[1], at: minutesAgo(10 * 60 * 1000) }]
+  })]);
+
+  const moved = store.sweepStaleClaims(NOW);
+
+  assert.deepEqual(moved, ['task-stale'], 'the sweep reports the task it moved');
+  const task = store.getTasks(BOARD_A).find((entry) => entry.id === 'task-stale');
+  assert.equal(task.column, FIXED_COLUMN_IDS[2], 'the task lands in Blocked');
+  assert.equal(task.blockedReason, STALE_REASON);
+  assert.equal(task.blockedAt, new Date(NOW).toISOString(), 'blockedAt freezes the elapsed timer');
+  assert.equal(task.changeDate, new Date(NOW).toISOString());
+  assert.equal(task.columnHistory.at(-1).column, FIXED_COLUMN_IDS[2], 'the move is recorded in columnHistory');
+
+  const movedEvent = store.getEventsSince(0).find((event) => event.type === 'task.moved' && event.entity_id === 'task-stale');
+  assert.ok(movedEvent, 'a task.moved event is emitted for the watchdog move');
+  assert.ok(movedEvent.payload.order.some((entry) => entry.id === 'task-stale' && entry.column === FIXED_COLUMN_IDS[2]));
+});
+
+test('a claimed in-progress task updated within five minutes is left alone', () => {
+  store.appendEvents([makeTask(BOARD_A, 'task-fresh', {
+    title: 'Fresh claim',
+    column: FIXED_COLUMN_IDS[1],
+    claimedBy: 'agent-a',
+    claimedAt: minutesAgo(60 * 1000),
+    changeDate: minutesAgo(60 * 1000)
+  })]);
+
+  assert.deepEqual(store.sweepStaleClaims(NOW), []);
+  assert.equal(store.getTasks(BOARD_A).find((entry) => entry.id === 'task-fresh').column, FIXED_COLUMN_IDS[1]);
+});
+
+test('a claim exactly five minutes old is not stale yet', () => {
+  store.appendEvents([makeTask(BOARD_A, 'task-boundary', {
+    title: 'Boundary claim',
+    column: FIXED_COLUMN_IDS[1],
+    claimedBy: 'agent-a',
+    claimedAt: minutesAgo(CLAIM_STALE_MS),
+    changeDate: minutesAgo(CLAIM_STALE_MS)
+  })]);
+
+  assert.deepEqual(store.sweepStaleClaims(NOW), []);
+  assert.equal(store.getTasks(BOARD_A).find((entry) => entry.id === 'task-boundary').column, FIXED_COLUMN_IDS[1]);
+});
+
+test('an unclaimed in-progress task is left alone', () => {
+  store.appendEvents([makeTask(BOARD_A, 'task-unclaimed', {
+    title: 'Unclaimed',
+    column: FIXED_COLUMN_IDS[1],
+    changeDate: minutesAgo(30 * 60 * 1000)
+  })]);
+
+  assert.deepEqual(store.sweepStaleClaims(NOW), []);
+  assert.equal(store.getTasks(BOARD_A).find((entry) => entry.id === 'task-unclaimed').column, FIXED_COLUMN_IDS[1]);
+});
+
+test('a stale claimed task outside In Progress is left alone', () => {
+  store.appendEvents([makeTask(BOARD_A, 'task-backlog', {
+    title: 'Stale in Backlog',
+    column: FIXED_COLUMN_IDS[0],
+    claimedBy: 'agent-a',
+    claimedAt: minutesAgo(30 * 60 * 1000),
+    changeDate: minutesAgo(30 * 60 * 1000)
+  })]);
+
+  assert.deepEqual(store.sweepStaleClaims(NOW), []);
+  assert.equal(store.getTasks(BOARD_A).find((entry) => entry.id === 'task-backlog').column, FIXED_COLUMN_IDS[0]);
+});
+
+test('a task already in Blocked is not touched again by a second sweep', () => {
+  store.appendEvents([makeTask(BOARD_A, 'task-settled', {
+    title: 'Settled in Blocked',
+    column: FIXED_COLUMN_IDS[2],
+    claimedBy: 'agent-a',
+    claimedAt: minutesAgo(30 * 60 * 1000),
+    changeDate: minutesAgo(30 * 60 * 1000),
+    blockedReason: 'waiting on review',
+    blockedAt: minutesAgo(30 * 60 * 1000)
+  })]);
+
+  assert.deepEqual(store.sweepStaleClaims(NOW), []);
+  assert.deepEqual(store.sweepStaleClaims(NOW), [], 'a repeat sweep is still a no-op');
+  const task = store.getTasks(BOARD_A).find((entry) => entry.id === 'task-settled');
+  assert.equal(task.column, FIXED_COLUMN_IDS[2]);
+  assert.equal(task.blockedReason, 'waiting on review', 'the existing reason is preserved');
+  assert.equal(task.blockedAt, minutesAgo(30 * 60 * 1000));
+});
+
+test('the sweep covers every board, not just the first one', () => {
+  store.appendEvents([
+    makeTask(BOARD_A, 'task-stale-a', {
+      title: 'Stale on A',
+      column: FIXED_COLUMN_IDS[1],
+      claimedBy: 'agent-a',
+      claimedAt: minutesAgo(10 * 60 * 1000),
+      changeDate: minutesAgo(10 * 60 * 1000)
+    }),
+    makeTask(BOARD_B, 'task-stale-b', {
+      title: 'Stale on B',
+      column: FIXED_COLUMN_IDS[1],
+      claimedBy: 'agent-b',
+      claimedAt: minutesAgo(10 * 60 * 1000),
+      changeDate: minutesAgo(10 * 60 * 1000)
+    })
+  ]);
+
+  assert.deepEqual(store.sweepStaleClaims(NOW), ['task-stale-a', 'task-stale-b']);
+  assert.equal(store.getTasks(BOARD_A).find((entry) => entry.id === 'task-stale-a').column, FIXED_COLUMN_IDS[2]);
+  assert.equal(store.getTasks(BOARD_B).find((entry) => entry.id === 'task-stale-b').column, FIXED_COLUMN_IDS[2]);
+});
+
 after(() => {
   store.flushStore();
   rmSync(dataDir, { recursive: true, force: true });

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Task cards show who claimed the task and how long it has been running, counted from the claim rather than from the card being created.
+- A server-side watchdog that moves a claimed task from In Progress to Blocked when the agent has not synced for five minutes, with the reason recorded on the card. Any update to the task restarts the window, and moving the card to Finished or Blocked yourself stops the clock before the watchdog ever sees it.
 
 ### Changed
 

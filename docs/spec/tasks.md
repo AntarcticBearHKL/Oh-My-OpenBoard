@@ -15,6 +15,15 @@
 - In swim lane mode, a single drag can change both column and lane
 - Storage keeps task ordering flattened per column even while swim lanes are enabled
 
+## Claim Timing and the Stale-Claim Watchdog
+
+- A claim (`claim_task`) starts a five-minute sync window; any update that bumps `changeDate` (a comment, a description edit, a re-claim) restarts it
+- The harness sweeps every 30 seconds and moves a claimed In Progress task whose `changeDate` is older than five minutes to Blocked, exactly as an agent move does: it emits `task.moved` with the column ordering (recorded in `columnHistory`) and a `task.updated` that carries the blocked fields
+- The server sets `blockedAt` (which stops the card's elapsed timer) and `blockedReason` to `Auto-blocked: no agent sync for over 5 minutes.`
+- The sweep keys off the fixed In Progress and Blocked column ids, never column names, and only touches tasks that carry a claim marker (`claimedBy` or `claimedAt`); unclaimed, fresh, and already-blocked tasks are left alone
+- An agent that moves the card to Finished or Blocked itself stops the clock before the watchdog ever sees the task
+- The threshold is `CLAIM_STALE_MS` (five minutes) in `harness/src/store.mjs`; the interval is 30 seconds, started once at server boot
+
 ## Card Display
 
 - Task cards show title, optional description, labels, priority badge, delete button, and optional footer metadata
@@ -106,3 +115,4 @@ Update this file when you change:
 - relationship UI behavior or card indicator
 - sub-task card indicator layout (full sub-task spec lives in [sub-tasks.md](sub-tasks.md))
 - deletion confirmation wording or event propagation
+- claim timing rules or the stale-claim watchdog

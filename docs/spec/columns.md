@@ -14,6 +14,7 @@ The board always has exactly four fixed columns, in this order:
 - The fourth column keeps `role: "done"` and the fixed id `00000000-0000-4000-8000-000000000033`
 - `name` is display-only; column behaviour keys off the fixed ids, never the display name
 - Because the fixed definitions are reimposed on every board at load, renaming a fixed column needs no migration
+- A claimed task that sits in In Progress with no update for five minutes is moved to Blocked by the server watchdog, with the reason recorded on the card (see [tasks.md](tasks.md)).
 
 ## Column CRUD
 

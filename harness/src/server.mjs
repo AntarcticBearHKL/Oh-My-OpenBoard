@@ -16,7 +16,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 
-import { DEFAULT_BOARD_ID, appendEvents, getBoards, getEventsSince, getGroupsState, getSeq, getSkillsState, getSnapshot, getStats, initStore, flushStore, setBoardGroupMap, setGroups, setSkills } from './store.mjs';
+import { DEFAULT_BOARD_ID, appendEvents, getBoards, getEventsSince, getGroupsState, getSeq, getSkillsState, getSnapshot, getStats, initStore, flushStore, setBoardGroupMap, setGroups, setSkills, sweepStaleClaims } from './store.mjs';
 import { registerTools } from './mcp-tools.mjs';
 
 process.on('uncaughtException', (err) => console.error('[harness] uncaught', err));
@@ -27,6 +27,7 @@ const DIST_DIR = resolve(HERE, '..', '..', 'client', 'dist');
 const HOST = process.env.OPENAGILE_HOST || '127.0.0.1';
 const PORT = Number(process.env.OPENAGILE_PORT || process.env.PORT || 8787);
 const VERSION = '1.0.0';
+const CLAIM_WATCHDOG_INTERVAL_MS = 30_000;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -308,9 +309,22 @@ async function handleRequest(req, res) {
   }
 }
 
+// ── Claim watchdog ────────────────────────────────────────────────────────────
+
+let claimWatchdogTimer = null;
+
+export function startClaimWatchdog() {
+  if (claimWatchdogTimer) return;
+  claimWatchdogTimer = setInterval(() => {
+    try { sweepStaleClaims(); } catch (err) { console.error('[harness] claim watchdog failed', err); }
+  }, CLAIM_WATCHDOG_INTERVAL_MS);
+  claimWatchdogTimer.unref(); // never hold the process open
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 
 const boot = initStore();
+startClaimWatchdog();
 const httpServer = createServer((req, res) => { handleRequest(req, res); });
 
 httpServer.listen(PORT, HOST, () => {
@@ -324,6 +338,8 @@ httpServer.listen(PORT, HOST, () => {
 
 function shutdown(signal) {
   console.log(`[harness] ${signal} — flushing store and exiting`);
+  clearInterval(claimWatchdogTimer);
+  claimWatchdogTimer = null;
   try { flushStore(); } catch { /* ignore */ }
   for (const client of sseClients) { try { client.res.end(); } catch { /* ignore */ } }
   httpServer.close(() => process.exit(0));

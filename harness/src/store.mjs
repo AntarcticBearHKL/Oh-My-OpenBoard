@@ -30,6 +30,9 @@ export const STABLE_COLUMNS = [
   { id: '00000000-0000-4000-8000-000000000033', name: 'Finished', color: '#16a34a', order: 4, role: 'done' }
 ];
 
+const IN_PROGRESS_COLUMN_ID = STABLE_COLUMNS[1].id;
+const BLOCKED_COLUMN_ID = STABLE_COLUMNS[2].id;
+
 export const STABLE_LABELS = [
   { id: '00000000-0000-4000-8000-000000000020', name: 'Task', color: '#f59e0b', group: 'Activity' },
   { id: '00000000-0000-4000-8000-000000000021', name: 'Meeting', color: '#ffd001', group: 'Activity' },
@@ -357,6 +360,55 @@ export function findTask(taskId) {
     if (task) return { task, boardId };
   }
   return null;
+}
+
+function buildBoardOrder(boardId, taskId, targetColumnId) {
+  const byColumn = new Map();
+  for (const task of tasksByBoard.get(boardId) || []) {
+    if (task.deleted) continue;
+    const column = task.id === taskId ? targetColumnId : task.column;
+    if (!byColumn.has(column)) byColumn.set(column, []);
+    byColumn.get(column).push({ ...task, column });
+  }
+  const order = [];
+  for (const [columnId, list] of byColumn) {
+    list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    list.forEach((task, index) => order.push({ id: task.id, column: columnId, order: index + 1 }));
+  }
+  return order;
+}
+
+const CLAIM_STALE_MS = 5 * 60 * 1000;
+const CLAIM_STALE_REASON = 'Auto-blocked: no agent sync for over 5 minutes.';
+
+// Stale claims move with two events, exactly like a client drag: task.moved plus the blocked task.updated.
+export function sweepStaleClaims(now = Date.now()) {
+  const stale = [];
+  for (const [boardId, tasks] of tasksByBoard) {
+    for (const task of tasks) {
+      if (task.deleted || task.column !== IN_PROGRESS_COLUMN_ID) continue;
+      if (!task.claimedBy && !task.claimedAt) continue;
+      const changedAt = Date.parse(task.changeDate);
+      if (Number.isFinite(changedAt) && now - changedAt > CLAIM_STALE_MS) stale.push({ boardId, taskId: task.id });
+    }
+  }
+
+  const moved = [];
+  for (const { boardId, taskId } of stale) {
+    const task = (tasksByBoard.get(boardId) || []).find((entry) => entry.id === taskId && !entry.deleted && entry.column === IN_PROGRESS_COLUMN_ID);
+    if (!task) continue;
+    const order = buildBoardOrder(boardId, taskId, BLOCKED_COLUMN_ID);
+    emit('task.moved', { boardId, entityId: taskId, payload: { order } });
+    const at = new Date(now).toISOString();
+    emit('task.updated', {
+      boardId,
+      entityId: taskId,
+      payload: { fields: { blockedReason: CLAIM_STALE_REASON, blockedAt: at, changeDate: at } }
+    });
+    console.log(`[harness] auto-blocked ${task.key || taskId} (no sync for 5 minutes)`);
+    moved.push(taskId);
+  }
+  return moved;
 }
 
 export function getSeq() {
