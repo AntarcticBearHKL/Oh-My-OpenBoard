@@ -941,3 +941,24 @@ and `isDoneColumnId` travels with `isTaskDone`.
 by the suite: the harness serves the build on 8787, and `calendar.html` renders the correct
 Monday-start September 2026 grid with today marked `is-today`, and clicking a day moves the
 selected-list title. Verification: build 0, unit 307/307, dom 180/180.
+
+### Batch 10: labels-modal.js split (340 to 133)
+
+The file held two modals that talk to each other: the labels **manager** (list, search,
+accordion groups, delete) and the individual label **create/edit modal**. The individual
+modal became `label-edit-modal.js`, owning `editingLabelId`, the name-length guard flag, the
+hex-colour helpers and the whole `#label-form` submit path.
+
+The coupling runs both ways - the manager opens the edit modal (row edit button, Add Label,
+and the `kanban:open-label-modal` listener), and the edit modal refreshes and closes the
+manager after a successful save - so importing both ways would have closed a cycle. Instead
+the edit modal takes the manager's two functions as parameters
+(`initializeLabelEditModalHandlers(setupModalCloseHandlers, { refreshLabelsList, hideLabelsManager })`)
+and the manager supplies them. `taskModalState` stays with the edit modal, which now also
+exports `getTaskModalState()` for the manager's show/hide.
+
+It is `label-edit-modal.js` and not `label-modal.js` because `label-modal.js` next to
+`labels-modal.js` is a one-character difference and a standing trap.
+
+`labels-modal.js` has no Vitest coverage (audit §7.1), so this was checked in the browser as
+well - see the note on the boot bug below.

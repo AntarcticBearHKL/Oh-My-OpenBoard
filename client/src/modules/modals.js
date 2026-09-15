@@ -8,8 +8,9 @@ import { showModal, showEditModal, hideModal as hideTaskModal,
   getReturnToTaskModalFlag, setReturnToTaskModalFlag,
   getSelectCreatedLabelFlag, setSelectCreatedLabelFlag,
   restoreTaskModalAfterLabelsManager } from './task-modal.js';
-import { showLabelsModal, hideLabelModal, hideLabelsModal,
-  initializeLabelsModalHandlers, setTaskModalState } from './labels-modal.js';
+import { showLabelsModal, hideLabelsModal,
+  initializeLabelsModalHandlers } from './labels-modal.js';
+import { hideLabelModal, setTaskModalState } from './label-edit-modal.js';
 import { hideBoardsModal,
   initializeBoardsModalHandlers, showBoardsModal } from './boards-modal.js';
 import { hideBoardRenameModal } from './board-rename-modal.js';
