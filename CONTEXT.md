@@ -26,8 +26,15 @@ starting, start finishing* — surfaced only as a visual state on the board.
 
 **At limit / over limit** — the two breach states. *At limit* is `taskCount === wipLimit`; *over
 limit* is `taskCount > wipLimit`. A Column's count is measured **board-wide across all swimlanes**,
-not per lane×column cell — a WIP limit constrains system capacity, not each lane's. The **Done**
+not per lane×column cell — a WIP limit constrains system capacity, not each lane's. The **Finished**
 Column is exempt: it is terminal and unbounded, and limiting it would block finishing work.
+
+**Fixed columns** — every board has exactly four columns: **Backlog** (everything not started),
+**In Progress** (what an agent is actively working; tasks there are read-only), **Blocked** (work an
+agent could not finish and that needs a human decision, or work stuck on a resource conflict) and
+**Finished** (completed work). Their ids, order, and the fourth column's `role: "done"` are fixed;
+behaviour keys off those, never the display name. `name` is display-only, and the fixed definitions
+are reimposed on every board at load, so renaming a fixed column's label needs no migration.
 
 ---
 
@@ -178,7 +185,7 @@ all subscribe.
 | `task-modal.js` | Task edit modal (labels, subtasks, relationships) |
 | `labels.js` | Label CRUD |
 | `labels-modal.js` | Label management modal |
-| `render.js` | Two render adapters behind one read model: `renderBoard()` (full rebuild — `innerHTML` reset + `initDragDrop()`) and `reconcileBoard()` (in-place patch — moves cards by id, reorders, counters, collapsed titles, due dates, Done virtualization). Plus the **drag-reconcile window** (`beginDragReconcile()`/`endDragReconcile()`) that routes a drop's `DATA_CHANGED` through reconcile so the just-dragged node is never detached. See §7 "Board Render Flow". |
+| `render.js` | Two render adapters behind one read model: `renderBoard()` (full rebuild — `innerHTML` reset + `initDragDrop()`) and `reconcileBoard()` (in-place patch — moves cards by id, reorders, counters, collapsed titles, due dates, Finished-column virtualization). Plus the **drag-reconcile window** (`beginDragReconcile()`/`endDragReconcile()`) that routes a drop's `DATA_CHANGED` through reconcile so the just-dragged node is never detached. See §7 "Board Render Flow". |
 | `swimlanes.js` | Swimlane grouping logic (`groupTasksBySwimLane`, etc.) |
 | `swimlane-renderer.js` | Swimlane board DOM builder |
 | `dragdrop.js` | SortableJS initialization/teardown; swimlane-aware drop handling |
@@ -218,7 +225,7 @@ initStorage() → ensureBoardsInitialized() → renderBoard()
 A projected `DATA_CHANGED` normally drives a full `renderBoard()` rebuild. A
 **drag-drop** opens the drag-reconcile window first (`dragdrop.js` `onEnd`), so the
 same `DATA_CHANGED` is routed through `reconcileBoard()` — a keyed in-place patch —
-instead of the `innerHTML` teardown. This is why a drag-to-Done no longer detaches
+instead of the `innerHTML` teardown. This is why a drag-to-Finished no longer detaches
 the node Chrome's DnD engine still holds. `reconcileBoard()` returns `false` (→ full
 rebuild) for swimlane mode or a structural column-set change.
 ```
@@ -266,7 +273,7 @@ inspectImportPayload → buildImportConfirmationMessage → importTasks
 | Cross-board data | Use `loadTasksForBoard(id)` / `loadColumnsForBoard(id)` — never read or write another board's state |
 | Rendering | All state changes must end with `renderBoard()` or an incremental sync helper |
 | Circular deps | Use `events.js` bus for render triggers; do not use `await import('./render.js')` outside of initialization |
-| Done column | Use `isDoneColumn(col)` from `constants.js` — checks both `role === 'done'` and legacy `id === 'done'` |
+| Finished column | Use `isDoneColumn(col)` from `constants.js` — checks both `role === 'done'` and legacy `id === 'done'` |
 | UUID | All entity IDs use `generateUUID()` from `utils.js`; no numeric or legacy string IDs post-migration |
 | Keybindings | Never hardcode key strings; register in `DEFAULT_APP_KEYBINDINGS` in `constants.js` |
 | Entity factories | Always use `createTask()`, `createColumn()`, etc. from `schema.js` — never construct entities ad-hoc |

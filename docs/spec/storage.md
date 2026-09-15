@@ -57,7 +57,7 @@ Values are stored as native JavaScript objects (structured clone), not JSON stri
 - All CRUD operations act on the active board (determined by `getActiveBoardId()`)
 - Board data is namespaced by board id
 - Board, task, column, and label model `id` values are UUIDs
-- The permanent Done column is identified by `role: "done"`, not by a fixed column id
+- The permanent Finished column is identified by `role: "done"`, not by a fixed column id
 - Export operates on the active board unless the board-management UI exports a selected board
   (uses `loadTasksForBoard(id)`, `loadColumnsForBoard(id)`, etc.)
 - Import creates a new board from JSON and switches to it

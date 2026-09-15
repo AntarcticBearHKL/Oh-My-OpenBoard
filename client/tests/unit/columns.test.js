@@ -10,7 +10,7 @@ beforeEach(() => {
 
 test('columns are locked to the four fixed columns', () => {
   const names = loadColumns().map((c) => c.name);
-  expect(names).toEqual(['Backlog', 'In Progress', 'Blocked', 'Archived']);
+  expect(names).toEqual(['Backlog', 'In Progress', 'Blocked', 'Finished']);
 });
 
 

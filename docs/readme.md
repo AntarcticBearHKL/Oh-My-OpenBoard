@@ -37,7 +37,7 @@ OpenAgile == "Kanban" + "Nirvana" is a Kanban Board, browser-based task manager 
 2. **Task creation** — tasks are created by agents through the API; the board itself has no manual add button.
 3. **Move work forward** by drag-and-drop between columns.
 4. **Use the right tool for the job**
-	- **Columns** = workflow state (To Do → In Progress → Done)
+	- **Columns** = workflow state (Backlog → In Progress → Blocked → Finished)
 	- **Priority** = urgency (urgent/high/medium/low/none)
 	- **Labels** = categories (type/area/context/activity)
 	- **Due dates** = deadlines
@@ -121,7 +121,7 @@ Add a second dimension to your board by grouping tasks into horizontal swim lane
 - Drag and drop tasks across columns, lanes, or both in a single gesture
 - Collapse/expand individual cells, entire rows, or workflow columns independently
 - Agents create tasks through the API; swim lane cells offer no manual add control
-- Done tasks are hidden in lanes to keep rows compact while remaining a drop target
+- Finished tasks are hidden in lanes to keep rows compact while remaining a drop target
 - Sticky lane headers during horizontal scrolling and sticky workflow headers during vertical scrolling
 - Fully responsive on mobile with snap-scrolling columns and sticky lane headers
 - All swim lane settings, collapsed states, and lane assignments persist per board
@@ -144,7 +144,7 @@ Link tasks together to model dependencies and connections:
 Relationships are bidirectional: adding one automatically creates the inverse on the linked task, and removing it cleans up both sides. Search for tasks by short ID (e.g. `#ae2ry`) or title, view active relationships as color-coded badges in the task modal, and click any badge ID to jump to that task. Cards with relationships show a count indicator below the labels.
 
 ### Columns
-Customizable columns with colors, drag-to-reorder, collapse/expand, and sorting by due date or priority. Collapsed columns still accept drag-and-drop with visual hover feedback. The Done column is permanent and optimized for large task counts with virtualization.
+The board has four fixed columns — **Backlog** (everything not started), **In Progress** (what an agent is actively working; read-only), **Blocked** (work an agent could not finish and that needs a human decision, or work stuck on a resource conflict) and **Finished** (completed work). The ids, order and the done-column role are fixed, so display names can change without a migration. Columns keep their colors, collapse/expand, and sorting by due date or priority, and collapsed columns still accept drag-and-drop with visual hover feedback. The Finished column is permanent and optimized for large task counts with virtualization.
 
 ### Labels & Groups
 Color-coded labels organized into groups. Assign multiple labels per task. Search and filter across your board by label name, group, title, description, or priority. Create labels inline from the task editor search.

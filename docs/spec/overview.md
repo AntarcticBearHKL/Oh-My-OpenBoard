@@ -23,7 +23,7 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 |---|---|
 | `docs/spec/board-ui.md` | Main board layout, column/card rendering, drag-drop, mobile behavior |
 | `docs/spec/tasks.md` | Task CRUD, priority, due date, card display rules |
-| `docs/spec/columns.md` | Column CRUD, Done column invariants, ordering, collapse |
+| `docs/spec/columns.md` | Column CRUD, Finished column invariants, ordering, collapse |
 | `docs/spec/labels.md` | Label management, groups, color constraints |
 | `docs/spec/settings.md` | Per-board settings fields and persistence |
 | `docs/spec/relationships.md` | Task relationship types, bidirectional sync rules |
@@ -179,7 +179,8 @@ The app uses CSS custom properties and `html[data-theme]` for theming.
 
 ## Default Data
 
-- Default columns: `To Do`, `In Progress`, `Done`
+- Fixed columns: `Backlog`, `In Progress`, `Blocked`, `Finished`
+- Backlog holds everything not started; In Progress is what an agent is actively working; Blocked is work an agent could not finish and that needs a human decision or is stuck on a resource conflict; Finished is completed work
 - Default labels: `Urgent`, `Feature`, `Task`
 - Default sample board includes 6 sample tasks
 

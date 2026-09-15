@@ -27,7 +27,7 @@ export const STABLE_COLUMNS = [
   { id: '00000000-0000-4000-8000-000000000030', name: 'Backlog', color: '#3583ff', order: 1 },
   { id: '00000000-0000-4000-8000-000000000031', name: 'In Progress', color: '#f59e0b', order: 2 },
   { id: '00000000-0000-4000-8000-000000000032', name: 'Blocked', color: '#ef4444', order: 3 },
-  { id: '00000000-0000-4000-8000-000000000033', name: 'Archived', color: '#16a34a', order: 4, role: 'done' }
+  { id: '00000000-0000-4000-8000-000000000033', name: 'Finished', color: '#16a34a', order: 4, role: 'done' }
 ];
 
 export const STABLE_LABELS = [
@@ -439,14 +439,14 @@ const DEFAULT_SKILLS = [
       '- 任务内容由 agent 填写与维护：描述、验收标准、子任务；comments 是 agent 的进度记录，',
       '  annotations 是人的，任何时候都不要覆盖。',
       '- 卡住时移到 Blocked 并写 set_blocked_reason。',
-      '- 只有验收标准全部满足，才移入 Archived。',
+      '- 只有验收标准全部满足，才移入 Finished。',
       '- 任何时候新增或移动 item，都要顺手刷新那一列的总结 set_column_summary。',
       '',
       '【四列的语义（固定，不可增删）】',
       '- Backlog：已立项、待认领。人在这里读需求、写批注。',
       '- In Progress：已被某个 subagent 认领并在处理中 → 任务内容完全锁定（只读，含批注）。',
       '- Blocked：卡住了，必须写原因；连续两次日报仍卡住就升级。',
-      '- Archived：已完成，是速度/完成点数的统计来源。',
+      '- Finished：已完成，是速度/完成点数的统计来源。',
       '',
       '【交接约定】',
       '- 同一时刻一个任务只应被一个 subagent 认领；已被别人认领的任务不要动。',
@@ -467,7 +467,7 @@ const DEFAULT_SKILLS = [
       'Rules of engagement:',
       '- Never invent work that is not on the board; add it first (create_task) then do it.',
       '- Move a task only when it truly moved: In Progress when you start, Blocked with a reason',
-      '  when you cannot continue, Archived only when the acceptance criteria are met.',
+      '  when you cannot continue, Finished only when the acceptance criteria are met.',
       '- Prefer small tasks with story points over one large task.',
       '- Comment on the task for anything a reviewer would need to know.',
     ].join('\n')
@@ -497,7 +497,7 @@ const DEFAULT_SKILLS = [
       'Planning flow:',
       '- Set the iteration dates (startDate/endDate) and a one-line goal before starting.',
       '- Pull only what fits the recent velocity into the iteration; leave the rest unassigned.',
-      '- Keep the four columns honest: Backlog, In Progress, Blocked, Archived.',
+      '- Keep the four columns honest: Backlog, In Progress, Blocked, Finished.',
       '',
       'Reading the numbers:',
       '- Velocity = completed story points per iteration (Reports).',

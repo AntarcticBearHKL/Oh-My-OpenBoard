@@ -9,7 +9,7 @@
 ## Day Cells
 
 - Each day cell shows the number of tasks due on that date
-- If any listed task is overdue and not in Done, the count badge is shown in red
+- If any listed task is overdue and not in Finished, the count badge is shown in red
 
 ## Task List Behavior
 

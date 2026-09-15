@@ -573,7 +573,7 @@ export function registerTools(server) {
       boardId: z.string().optional()
     }
   }, async () => {
-    throw new Error('Columns are fixed: Backlog, In Progress, Blocked, Archived.');
+    throw new Error('Columns are fixed: Backlog, In Progress, Blocked, Finished.');
   });
 
   server.registerTool('update_column', {

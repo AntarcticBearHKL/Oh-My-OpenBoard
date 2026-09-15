@@ -12,11 +12,12 @@ export const FIXED_COLUMNS = [
   { id: '00000000-0000-4000-8000-000000000030', name: 'Backlog', color: '#3583ff', order: 1 },
   { id: '00000000-0000-4000-8000-000000000031', name: 'In Progress', color: '#f59e0b', order: 2 },
   { id: '00000000-0000-4000-8000-000000000032', name: 'Blocked', color: '#ef4444', order: 3 },
-  { id: '00000000-0000-4000-8000-000000000033', name: 'Archived', color: '#16a34a', order: 4, role: DONE_COLUMN_ROLE }
+  { id: '00000000-0000-4000-8000-000000000033', name: 'Finished', color: '#16a34a', order: 4, role: DONE_COLUMN_ROLE }
 ];
 
 export const FIXED_COLUMN_IDS = FIXED_COLUMNS.map((column) => column.id);
 export const IN_PROGRESS_COLUMN_ID = FIXED_COLUMNS[1].id;
+export const BLOCKED_COLUMN_ID = FIXED_COLUMNS[2].id;
 
 export const APP_NAME = 'OpenAgile';
 

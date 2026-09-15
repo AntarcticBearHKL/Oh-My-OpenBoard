@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deleting a board group now deletes the iterations inside it, instead of ungrouping them at the root. The group's delete button says how many iterations it will take with it.
 - Clicking a group name in the sidebar now collapses or expands that group, the same as its chevron. Double-clicking the name still renames it.
 - Iteration rows in the sidebar are indented consistently under their group, so the parent/child hierarchy reads clearly.
+- The fourth board column is now called Finished instead of Archived. Its id and its done-column role are unchanged, so existing boards rename themselves on load.
+- The In-Progress read-only lock and the Blocked-column detection now key off the fixed column ids instead of the column name, which is what makes the rename safe.
 
 ### Removed
 

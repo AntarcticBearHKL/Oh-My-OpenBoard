@@ -90,7 +90,7 @@ export function normalizeImportedColumns(columns) {
   // Ensure the permanent Done column always exists.
   if (!normalized.some((c) => c.id === DONE_COLUMN_ID || c.role === 'done')) {
     const maxOrder = normalized.reduce((max, c) => Math.max(max, Number.isFinite(c?.order) ? c.order : 0), 0);
-    normalized.push({ id: DONE_COLUMN_ID, name: 'Done', color: '#6d6d6d', order: maxOrder + 1, collapsed: false, role: 'done' });
+    normalized.push({ id: DONE_COLUMN_ID, name: 'Finished', color: '#6d6d6d', order: maxOrder + 1, collapsed: false, role: 'done' });
   }
 
   const isValid = normalized.every((c) => c.id && c.name);

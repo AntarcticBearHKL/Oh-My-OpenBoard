@@ -44,7 +44,7 @@
 - `priority` uses the stable order `urgent`, `high`, `medium`, `low`, `none`
 - `dueDate` is stored as `YYYY-MM-DD`
 - `changeDate` updates on task save and on column changes
-- `doneDate` exists only while the task is in the Done column
+- `doneDate` exists only while the task is in the Finished column
 - `columnHistory` is appended when a task changes columns and powers cumulative-flow reporting
 - `swimlaneLabelId` preserves explicit swim lane assignment metadata
 - `subTasks` defaults to `[]`; each entry is a SubTask — see SubTask Model below
@@ -73,6 +73,19 @@
 - The column with `role: "done"` is permanent and cannot be deleted
 - Legacy imported or migrated column id `done` is remapped to a UUID-backed column with `role: "done"`
 - `deleted` marks internal tombstones/deleted records
+
+### Fixed Columns
+
+The board always has exactly four columns — `Backlog`, `In Progress`, `Blocked`, `Finished` — with
+fixed ids and order:
+
+- Backlog holds everything not started
+- In Progress is what an agent is actively working; tasks there are read-only
+- Blocked is work an agent could not finish and that needs a human decision, or work stuck on a resource conflict
+- Finished is completed work; it carries `role: "done"` and is the source for completion and cycle-time statistics
+
+`name` is display-only: the fixed definitions are reimposed on every board at load time, so renaming
+a fixed column's display label needs no data migration.
 
 ## Label Model
 
@@ -175,7 +188,7 @@ Access rules on all operations: `owner = @request.auth.id`. Most collections sha
 | color | text | hex color |
 | order | number | |
 | collapsed | bool | |
-| role | text | `"done"` for the Done column; empty otherwise |
+| role | text | `"done"` for the Finished column; empty otherwise |
 | deleted | bool | tombstone/deleted-record flag |
 
 **labels**
@@ -204,7 +217,7 @@ Access rules on all operations: `owner = @request.auth.id`. Most collections sha
 | labels | relation[] → labels | maxSelect: 999 |
 | creation_date | text | ISO timestamp |
 | change_date | text | ISO timestamp |
-| done_date | text | ISO timestamp; only when in Done column |
+| done_date | text | ISO timestamp; only when in Finished column |
 | column_history | json | array of `{ column, at }` |
 | sub_tasks | json | array of SubTask objects |
 | swimlane_label_id | text | swim lane label UUID |

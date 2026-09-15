@@ -32,7 +32,7 @@
 - Countdown text shows days for short ranges and months plus days for longer ranges
 - Overdue tasks display `overdue by ...`
 - Urgency coloring uses configurable red and amber thresholds from settings
-- Tasks in the Done column show due dates without countdown text or urgency coloring
+- Tasks in the Finished column show due dates without countdown text or urgency coloring
 - Task age is derived from `creationDate` and displayed as years, months, and days as applicable
 
 ## Labels in Task Modal

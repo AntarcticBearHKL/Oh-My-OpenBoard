@@ -189,7 +189,7 @@ test('saveColumns + loadColumns roundtrip locks to the four fixed columns', () =
     { id: 'done', name: 'Done', color: '#222222', order: 2, collapsed: false }
   ]);
   const loaded = loadColumns();
-  expect(loaded.map((c) => c.name)).toEqual(['Backlog', 'In Progress', 'Blocked', 'Archived']);
+  expect(loaded.map((c) => c.name)).toEqual(['Backlog', 'In Progress', 'Blocked', 'Finished']);
 });
 
 test('loadTasks normalizes priority on load', () => {

@@ -39,11 +39,11 @@
 - Lane headers stay sticky on the left during horizontal scrolling
 - Each lane row contains one cell per workflow column
 
-## Done-Column Behavior
+## Finished-Column Behavior
 
-- Expanded swim lane rows hide task cards already in the Done column to keep lanes compact
-- The Done cell remains an active drop target and shows compact helper text instead of the hidden cards
-- Dragging into Done still persists the move and inserts the task at the top of the flattened Done order
+- Expanded swim lane rows hide task cards already in the Finished column to keep lanes compact
+- The Finished cell remains an active drop target and shows compact helper text instead of the hidden cards
+- Dragging into Finished still persists the move and inserts the task at the top of the flattened Finished order
 
 ## Collapse and Expand Controls
 

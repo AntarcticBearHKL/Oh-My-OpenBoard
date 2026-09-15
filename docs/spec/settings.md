@@ -21,7 +21,7 @@
 - Choose grouping mode: `label`, `label-group`, or `priority`
 - When `label-group` is selected, choose the specific label group to expand into lanes
 - Persist swim lane row collapse state and per-cell collapse state
-- Explain in the UI that done-column cards stay hidden while Done remains a valid drop target
+- Explain in the UI that done-column cards stay hidden while Finished remains a valid drop target
 
 ## Defaults
 

@@ -1,4 +1,5 @@
 import { test, expect } from 'vitest';
+import { BLOCKED_COLUMN_ID } from '../../src/modules/constants.js';
 import {
   DEFAULT_TASK_TYPE,
   STALE_AFTER_DAYS,
@@ -182,17 +183,17 @@ test('nextTaskKey ignores malformed or foreign keys', () => {
 
 // ── isBlockedColumnId ───────────────────────────────────────────────
 
-test('isBlockedColumnId matches the Blocked column by name', () => {
+test('isBlockedColumnId matches the Blocked column by id', () => {
   const columns = [
     { id: 'todo', name: 'To Do' },
-    { id: 'blocked', name: 'Blocked' }
+    { id: BLOCKED_COLUMN_ID, name: 'Blocked' }
   ];
 
-  expect(isBlockedColumnId('blocked', columns)).toBe(true);
+  expect(isBlockedColumnId(BLOCKED_COLUMN_ID, columns)).toBe(true);
   expect(isBlockedColumnId('todo', columns)).toBe(false);
   expect(isBlockedColumnId('missing', columns)).toBe(false);
   expect(isBlockedColumnId('', columns)).toBe(false);
-  expect(isBlockedColumnId('blocked', null)).toBe(false);
+  expect(isBlockedColumnId(BLOCKED_COLUMN_ID, null)).toBe(false);
 });
 
 // ── taskAgeDays / isTaskStale ───────────────────────────────────────

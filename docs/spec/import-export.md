@@ -9,7 +9,7 @@
 - Export filenames use `{boardName}-YYYY-MM-DD.json`
 - Export runs the same strict structural validation used by import preview; when invalid references are found, export is blocked and the user gets actionable guidance
 - Exported current data uses UUID model IDs for boards, tasks, columns, and labels
-- The Done column is exported with `role: "done"`
+- The Finished column is exported with `role: "done"`
 
 ## Import Behavior
 

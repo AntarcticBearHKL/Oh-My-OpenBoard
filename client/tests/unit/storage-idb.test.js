@@ -126,7 +126,7 @@ test('saveColumns persists to IDB and survives a session reset', async () => {
   await initStorage();
   setActiveBoardId(boardId);
   const columns = loadColumns();
-  expect(columns.map((c) => c.name)).toEqual(['Backlog', 'In Progress', 'Blocked', 'Archived']);
+  expect(columns.map((c) => c.name)).toEqual(['Backlog', 'In Progress', 'Blocked', 'Finished']);
 });
 
 test('saveLabels persists to IDB and survives a session reset', async () => {

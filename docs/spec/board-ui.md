@@ -7,6 +7,15 @@
 - Task counters appear in column headers and update after adds, deletes, and moves
 - The brand area shows the OpenAgile SVG logo and brand text shows the active board name rather than a fixed app title
 
+## Fixed Columns
+
+- The board always has exactly four fixed columns, in this order: Backlog, In Progress, Blocked, Finished
+- Backlog holds everything not started
+- In Progress is what an agent is actively working; tasks in it are read-only, including annotations
+- Blocked is work an agent could not finish and that needs a human decision, or work stuck on a resource conflict
+- Finished is completed work; it carries the done-column `role` and is the statistics source for velocity and cycle time
+- The column's id, order, and role are fixed, so keying behaviour off them survives display-name changes
+
 ## Controls Bar
 
 - Includes board-level task search beside the brand area
@@ -38,7 +47,7 @@
 
 - `renderBoard()` is the single board re-render entry point after data changes
 - Dynamic DOM updates should re-run `renderIcons()`
-- Done-column virtualization renders completed tasks in batches when the column is large
+- Finished-column virtualization renders completed tasks in batches when the column is large
 
 ## Drag and Drop Behavior
 
@@ -46,7 +55,7 @@
 - Columns are draggable via grip handle only
 - Dragging near the top or bottom of a long task list auto-scrolls the list
 - Collapsed columns accept drops and place the task at the top
-- Done column internal reordering is disabled and dropped tasks are inserted at the top
+- Finished column internal reordering is disabled and dropped tasks are inserted at the top
 - Task drops use incremental updates so counters, collapsed titles, and due-date display refresh without a full board rebuild
 
 ## Scrolling and Responsiveness

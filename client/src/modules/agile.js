@@ -4,6 +4,7 @@
 // client-created and agent-created tasks share one numbering scheme.
 
 import { generateUUID } from './utils.js';
+import { BLOCKED_COLUMN_ID } from './constants.js';
 
 export const TASK_TYPES = ['story', 'bug', 'task', 'spike'];
 export const DEFAULT_TASK_TYPE = 'task';
@@ -114,7 +115,7 @@ export function isBlockedColumnId(columnId, columns) {
   const id = typeof columnId === 'string' ? columnId.trim() : '';
   if (!id || !Array.isArray(columns)) return false;
   const column = columns.find((entry) => entry && entry.id === id);
-  return (column?.name || '').toString().trim().toLowerCase() === 'blocked';
+  return column?.id === BLOCKED_COLUMN_ID;
 }
 
 /** Whole days since creationDate, or null when the task has no valid date. */

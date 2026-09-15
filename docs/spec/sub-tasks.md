@@ -36,7 +36,7 @@ Sub-tasks do not support labels, relationships, priorities, due dates, or column
 
 - Each sub-task has a checkbox; checking it marks it complete, unchecking reverts it
 - Completed sub-tasks are visually distinct: title is struck through and muted
-- Completing all sub-tasks does **not** automatically move the parent task to Done
+- Completing all sub-tasks does **not** automatically move the parent task to Finished
 
 ## Progress Legend
 

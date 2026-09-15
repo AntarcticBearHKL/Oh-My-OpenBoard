@@ -1,6 +1,6 @@
 import { generateUUID } from './utils.js';
 import { IN_PROGRESS_COLUMN_ID } from './constants.js';
-import { getActiveBoardId, getActiveBoardName, isDoneColumnId, loadColumns, loadTasks } from './storage.js';
+import { getActiveBoardId, getActiveBoardName, isDoneColumnId, loadTasks } from './storage.js';
 import { normalizePriority, normalizeRelationships, normalizeSubTasks } from './normalize.js';
 import { nextTaskKey } from './agile.js';
 import { normalizeAgileFields, normalizeDueDate, reorderColumnTasks, syncRelationshipInverses } from './task-helpers.js';
@@ -180,8 +180,5 @@ export function removeAnnotation(taskId, annotationId) {
 export function isTaskLocked(task) {
   const columnId = task?.column;
   if (!columnId) return false;
-
-  const column = loadColumns().find((entry) => entry.id === columnId);
-  return columnId === IN_PROGRESS_COLUMN_ID
-    || String(column?.name || '').trim().toLowerCase() === 'in progress';
+  return columnId === IN_PROGRESS_COLUMN_ID;
 }

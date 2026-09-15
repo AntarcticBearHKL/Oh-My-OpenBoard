@@ -113,7 +113,7 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/unit/agile.test.js:169` nextTaskKey starts at 1 for a fresh board
 - `tests/unit/agile.test.js:173` nextTaskKey increments past the highest matching suffix
 - `tests/unit/agile.test.js:178` nextTaskKey ignores malformed or foreign keys
-- `tests/unit/agile.test.js:185` isBlockedColumnId matches the Blocked column by name
+- `tests/unit/agile.test.js:186` isBlockedColumnId matches the Blocked column by id
 - `tests/unit/agile.test.js:202` taskAgeDays counts whole days since creationDate
 - `tests/unit/agile.test.js:207` taskAgeDays returns null without a valid creationDate
 - `tests/unit/agile.test.js:212` isTaskStale flags tasks unchanged for more than 14 days

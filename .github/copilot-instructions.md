@@ -29,7 +29,7 @@
 - **tasks.js** - Task CRUD, drag-drop position updates (`updateTaskPositionsFromDrop`, `moveTaskToTopInColumn`)
 - **columns.js** - Column CRUD, collapse toggle, position updates
 - **boards.js** - Multi-board management, board create/switch, template system
-- **dragdrop.js** - SortableJS-based drag/drop for tasks and columns. Done column has `sort: false` for performance.
+- **dragdrop.js** - SortableJS-based drag/drop for tasks and columns. Finished column has `sort: false` for performance.
 - **modals.js** - Modal UX (close via Escape/backdrop). Uses DOM ids from index.html.
 - **dialog.js** - `confirmDialog()` / `alertDialog()` instead of `window.confirm`
 - **icons.js** - Lucide icons tree-shaking. To add an icon: import from `lucide`, add to `icons` object, call `renderIcons()` after dynamic DOM changes.
@@ -63,7 +63,8 @@ Mutations generally follow: **load → modify → save → `renderBoard()`**.
 
 ## Domain objects (what code expects)
 - **Task**: `id`, `title` (legacy: `text`), `description`, `priority` (`urgent|high|medium|low|none`), `dueDate` (`YYYY-MM-DD`), `column`, `order`, `labels[]`, `creationDate`, `changeDate`, `doneDate`, `columnHistory[]`
-- **Column**: `id`, `name`, `color` (hex), `order`, `collapsed`
+- **Column**: `id`, `name`, `color` (hex), `order`, `collapsed`, `role` (`"done"` only on the fourth fixed column)
+- **Fixed columns**: the four columns are Backlog (everything not started), In Progress (what an agent is actively working; read-only), Blocked (work an agent could not finish and that needs a human decision, or work stuck on a resource conflict) and Finished (completed work). Ids, order and `role` are fixed — key behaviour off those, never the display name; `name` is display-only and the fixed definitions are reimposed on every board at load, so a rename needs no migration.
 - **Label**: `id`, `name` (max 40 chars), `color` (hex), `group`
 
 ## UI conventions

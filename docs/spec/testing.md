@@ -57,6 +57,6 @@ expect(loadTasks().some(t => t.title === 'Persisted task')).toBe(true);
 - Board management flows
 - Task creation and validation
 - Task deletion flows: permanent delete confirmation removes the card and decrements the counter; cancel leaves the card and counter unchanged
-- Done-column virtualization behavior
+- Finished-column virtualization behavior
 - Swim lane rendering, settings persistence, and lane-aware moves
 - IDB storage: cross-session persistence, migration, and data integrity

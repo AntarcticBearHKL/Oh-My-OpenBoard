@@ -18,7 +18,7 @@ function legacyDefaultColumnsForImport() {
   return [
     { id: 'todo', name: 'To Do', color: '#3583ff', order: 1, collapsed: false },
     { id: 'inprogress', name: 'In Progress', color: '#f59e0b', order: 2, collapsed: false },
-    { id: DONE_COLUMN_ID, name: 'Done', color: '#505050', order: 3, collapsed: false, role: 'done' }
+    { id: DONE_COLUMN_ID, name: 'Finished', color: '#505050', order: 3, collapsed: false, role: 'done' }
   ];
 }
 

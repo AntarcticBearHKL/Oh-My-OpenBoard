@@ -1,6 +1,7 @@
 import { beforeEach, expect, test, vi } from 'vitest';
 import { fireEvent, waitFor } from '@testing-library/dom';
 import { mountToBody } from './setup.js';
+import { BLOCKED_COLUMN_ID } from '../../src/modules/constants.js';
 
 const mocks = vi.hoisted(() => ({
   addTask: vi.fn(),
@@ -13,7 +14,7 @@ const mocks = vi.hoisted(() => ({
   loadTasks: vi.fn(() => []),
   loadColumns: vi.fn(() => [
     { id: 'todo', name: 'To Do' },
-    { id: 'blocked', name: 'Blocked' }
+    { id: '00000000-0000-4000-8000-000000000032', name: 'Blocked' }
   ]),
   emit: vi.fn()
 }));
@@ -101,7 +102,7 @@ const FIXTURE = `
               <label for="task-column">Column</label>
               <select id="task-column">
                 <option value="todo">To Do</option>
-                <option value="blocked">Blocked</option>
+                <option value="${BLOCKED_COLUMN_ID}">Blocked</option>
               </select>
             </div>
             <div class="task-form-grid">
@@ -284,7 +285,7 @@ test('editing a task into Blocked prompts for and stores a reason', async () => 
   initializeTaskModalHandlers(() => {});
   showEditModal('t1');
 
-  document.getElementById('task-column').value = 'blocked';
+  document.getElementById('task-column').value = BLOCKED_COLUMN_ID;
   fireEvent.submit(document.getElementById('task-form'));
 
   await waitFor(() => expect(mocks.setTaskBlockedReason).toHaveBeenCalledWith('t1', 'Waiting on design'));
