@@ -624,3 +624,25 @@ These were re-verified against the current tree rather than taken on trust:
 
 Net effect: the only Batch 6 changes needed were the redundant renders, which are
 done (`c20df54`, `a0c8e75`, `e886aaa`).
+
+### Bulk-edit trap: assert the postcondition, never log success unconditionally
+
+While de-duplicating the priority list, a helper script reported `import added` for
+both files while the import had in fact not been inserted. It removed the local
+constant first, so the result was a `ReferenceError: PRIORITIES is not defined`
+that the build did not catch (it is a runtime error, not a syntax error) and that
+four test files did catch.
+
+Two causes, both worth remembering for this repo:
+
+1. The insertion regex used `^import ...` **without the `m` flag**, so `^` anchored
+   to the start of the whole string instead of the start of a line and never
+   matched an import sitting on line 2 or 3.
+2. Files read with `readFileSync` keep **CRLF** line endings on this checkout, so a
+   line-anchored pattern ending in `;\n` does not match a file whose lines end in
+   `;\r\n`. Normalise with `split(/\r?\n/)` then `join('\n')`, or match `\r?\n`.
+
+The scripting rule that follows: after a structural edit, assert the postcondition
+(the import is present, no old identifier remains) and **exit non-zero** when it
+fails - a helper that prints a fixed success string regardless of the outcome is
+worse than no helper, because it hides the breakage until the test run.
