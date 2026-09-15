@@ -6,31 +6,15 @@ import {
   saveSettings
 } from './storage.js';
 
-import { createBoard, listBoards, setActiveBoardId } from './storage.js';
+import { createBoard, setActiveBoardId } from './storage.js';
 import { emit, DATA_CHANGED } from './events.js';
-import { boardDisplayName } from './normalize.js';
-import { APP_NAME } from './constants.js';
 import { alertDialog, confirmDialog } from './dialog.js';
+import { refreshBoardSelect, refreshBrandText } from './board-select.js';
 import { validateImportFileMetadata, inspectImportPayload, buildImportConfirmationMessage } from './import-payload.js';
 
 function refreshBoardsUI(activeBoardId) {
-  const brandEl = document.getElementById('brand-text') || document.querySelector('.brand-text');
-  if (brandEl) brandEl.textContent = APP_NAME;
-
-  const selectEl = document.getElementById('board-select');
-  if (!selectEl) return;
-
-  const boards = listBoards();
-  selectEl.innerHTML = '';
-
-  boards.forEach((b) => {
-    const option = document.createElement('option');
-    option.value = b.id;
-    option.textContent = boardDisplayName(b);
-    selectEl.appendChild(option);
-  });
-
-  if (activeBoardId) selectEl.value = activeBoardId;
+  refreshBrandText();
+  refreshBoardSelect(document.getElementById('board-select'), activeBoardId);
 }
 
 // Import tasks and columns from JSON file

@@ -1,55 +1,18 @@
 import { generateUUID } from './utils.js';
 import { setupModalCloseHandlers } from './modal-utils.js';
 import { emit, on, DATA_CHANGED } from './events.js';
-import { APP_NAME } from './constants.js';
 import {
   ensureBoardsInitialized,
-  listBoards,
   createBoard,
-  getActiveBoardId,
   setActiveBoardId,
   getActiveBoardName
 } from './storage.js';
 import { applyBoardTemplate, getBuiltInBoardTemplates, populateTemplateSelect } from './board-templates.js';
 import { alertDialog } from './dialog.js';
-import { boardDisplayName } from './normalize.js';
 import { assignBoardToGroup } from './board-groups.js';
+import { refreshBoardSelect, boardSelectMatchesState, refreshBrandText } from './board-select.js';
 
 let pendingGroupId = null;
-
-function refreshBoardSelect(selectEl) {
-  const boards = listBoards();
-  const activeId = getActiveBoardId();
-
-  selectEl.innerHTML = '';
-
-  boards.forEach((b) => {
-    const option = document.createElement('option');
-    option.value = b.id;
-    option.textContent = boardDisplayName(b);
-    selectEl.appendChild(option);
-  });
-
-  if (activeId) selectEl.value = activeId;
-}
-
-// True when #board-select already reflects the current board list (ids + labels).
-// Lets us skip rebuilding on unrelated DATA_CHANGED churn (task moves, etc.).
-function boardSelectMatchesState(selectEl) {
-  const boards = listBoards();
-  if (selectEl.options.length !== boards.length) return false;
-  return boards.every(
-    (b, i) =>
-      selectEl.options[i].value === b.id &&
-      selectEl.options[i].textContent === boardDisplayName(b)
-  );
-}
-
-function refreshBrandText() {
-  const brandEl = document.getElementById('brand-text') || document.querySelector('.brand-text');
-  if (!brandEl) return;
-  brandEl.textContent = APP_NAME;
-}
 
 // Board Create Modal helpers
 export function showBoardCreateModal() {

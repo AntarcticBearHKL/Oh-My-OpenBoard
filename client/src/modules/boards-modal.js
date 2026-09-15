@@ -6,29 +6,18 @@ import { renderIcons } from './icons.js';
 import { exportBoard } from './importexport.js';
 import { emit, DATA_CHANGED } from './events.js';
 import { deleteBoardRemote, isAuthenticated } from './sync.js';
-import { APP_NAME, DEFAULT_APP_KEYBINDINGS, matchesKey } from './constants.js';
-import { $id, $, h } from './dom.js';
+import { DEFAULT_APP_KEYBINDINGS, matchesKey } from './constants.js';
+import { $id, h } from './dom.js';
 import { showBoardRenameModal, initializeBoardRenameModalHandlers } from './board-rename-modal.js';
+import { refreshBoardSelect, refreshBrandText } from './board-select.js';
 
 let keyboardNavIndex = -1;
 
 function renderBoardsSelect() {
   const selectEl = $id('board-select');
   if (!selectEl) return;
-
-  const boards = listBoards();
-  const active = getActiveBoardId();
-  selectEl.innerHTML = '';
-
-  boards.forEach((b) => {
-    const name = (typeof b.name === 'string' && b.name.trim()) ? b.name.trim() : 'Untitled board';
-    selectEl.appendChild(h('option', { value: b.id }, name));
-  });
-
-  if (active) selectEl.value = active;
-
-  const brandEl = $id('brand-text') || $('.brand-text');
-  if (brandEl) brandEl.textContent = APP_NAME;
+  refreshBoardSelect(selectEl);
+  refreshBrandText();
 }
 
 function renderBoardsList() {
