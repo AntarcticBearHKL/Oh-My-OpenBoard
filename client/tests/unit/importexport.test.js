@@ -1,6 +1,8 @@
 import { test, expect, beforeEach, vi } from 'vitest';
 import { resetLocalStorage } from './setup.js';
-import { inspectImportPayload, buildImportConfirmationMessage, IMPORT_LIMITS, exportBoard, importTasks } from '../../src/modules/importexport.js';
+import { exportBoard } from '../../src/modules/importexport.js';
+import { importTasks } from '../../src/modules/import-board.js';
+import { inspectImportPayload, buildImportConfirmationMessage, IMPORT_LIMITS } from '../../src/modules/import-payload.js';
 import { createBoard, getActiveBoardId, saveColumns, saveTasks } from '../../src/modules/storage.js';
 
 vi.mock('../../src/modules/dialog.js', () => ({

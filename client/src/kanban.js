@@ -5,7 +5,7 @@ import { renderBoard } from './modules/render.js';
 import { initializeSpotlight } from './modules/spotlight.js';
 import { initializeModalHandlers } from './modules/modals.js';
 import { showEditModal } from './modules/modals.js';
-import { importTasks } from './modules/importexport.js';
+import { importTasks } from './modules/import-board.js';
 import { initializeThemeToggle } from './modules/theme.js';
 import { initializeBoardsUI } from './modules/boards.js';
 import { initializeBoardSidebar } from './modules/board-sidebar.js';

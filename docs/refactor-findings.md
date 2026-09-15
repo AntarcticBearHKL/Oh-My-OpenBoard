@@ -1075,3 +1075,59 @@ The DOM suite covers this file's group-rename paths but not the armed delete, so
 was verified in the browser: the first click arms it (`!`, aria-label "Click again to confirm
 delete") and the 3-second timer disarms it back. Verification: build 0, unit 307/307, dom
 180/180.
+
+### Batch 10: importexport.js split (664 to 210; import side 462 to 90 + 213 + 164)
+
+This file is two features fused by one import: the export side (`exportTasks`, `exportBoard` and
+their normalizers) and the import side (validation, inspection, the confirmation message, the
+import normalizers and the `importTasks` orchestrator). The only thing the export side needs from
+the import side is `inspectImportPayload`, which both export functions call as an integrity gate
+before writing the blob; nothing travels the other way.
+
+That one-way dependency is the seam; the import side is what left. It could not fit one file:
+`importexport.js` had 664 lines and two files cap out at 498, so the import half needs two
+modules. It lands as three files in a strictly one-way chain:
+
+- `import-normalize.js` (164) - the pure shape normalizers `normalizeImportedTasks`,
+  `normalizeImportedColumns`, `normalizeImportedLabels`, `normalizeImportedSettings`; they read
+  only `normalize.js` and `DONE_COLUMN_ID`.
+- `import-payload.js` (213) - inspection and validation: `IMPORT_LIMITS`,
+  `legacyDefaultColumnsForImport`, `boardNameFromFile`, `getImportSections`, `pluralize`,
+  `validateImportFileMetadata`, the 109-line `inspectImportPayload` (the largest single block in
+  the original file) and `buildImportConfirmationMessage`. It imports the four normalizers from
+  `import-normalize.js`.
+- `import-board.js` (90) - the thin orchestrator: `importTasks` and its `refreshBoardsUI`, plus
+  the `FileReader` / storage side effects. It imports `validateImportFileMetadata`,
+  `inspectImportPayload` and `buildImportConfirmationMessage` from `import-payload.js`.
+
+`importexport.js` keeps the export side (`EXPORT_SCHEMA_VERSION`, `getCurrentAppVersion`,
+`buildExportMeta`, `normalizeSettingsForExport`, `normalizeTaskForExport`, `exportTasks`,
+`exportBoard`) and now imports `inspectImportPayload` from `./import-payload.js`.
+
+The dependency direction is strictly one-way and was checked by the script, not just by eye:
+`importexport.js -> import-payload.js`, `import-board.js -> import-payload.js`, and
+`import-payload.js -> import-normalize.js`. The hazard was the `inspectImportPayload` /
+`normalizeImported*` pair: `inspectImportPayload` consumes all four normalizers, so the
+normalizers sit one level below it and nothing imports back up. No module mentions
+`importexport.js`, so there is no cycle in either direction.
+
+The boundary differs from the proposal in one place only: the spec's first arrow
+(`importexport.js -> import-board.js`) becomes `importexport.js -> import-payload.js`, because
+`inspectImportPayload` - the export side's sole dependency - moves into `import-payload.js`
+rather than staying in the orchestrator. `kanban.js` was not edited: `importTasks` is still
+exported from `./import-board.js`.
+
+Consumers: `boards-modal.js` still imports `exportBoard` from `importexport.js`, and
+`boards-quick-switch.test.js`'s mock stays pointed there. The unit test's imports split three
+ways: `exportBoard` from `importexport.js`, `importTasks` from `import-board.js`, and
+`inspectImportPayload` / `buildImportConfirmationMessage` / `IMPORT_LIMITS` from
+`import-payload.js`.
+
+The move was scripted as line ranges over `/\r?\n/` with a first/last-line assertion on every
+range, an assertion that moved and kept ranges are disjoint, a coverage assertion that no
+non-empty line was dropped, and postcondition checks that no left-behind identifier leaked into
+a module and that no module references `importexport.js`.
+
+Final line counts: `importexport.js` 664 -> 210, `import-board.js` 462 -> 90, plus the new
+`import-payload.js` 213 and `import-normalize.js` 164; every file is under the 250 ceiling.
+Verification: build 0, unit 307/307, dom 180/180.
