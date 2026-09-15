@@ -1879,3 +1879,45 @@ module-scope warm `await import('../../src/modules/render.js')` already carried 
 `tests/dom/reconcile.test.js` from the `tasks.js` split absorbed the larger graph). No test file
 was edited. Final line counts: the table above; every file is under the 250 ceiling, the largest
 being `task-modal-form.js` at 203.
+
+## Batch 10 closed - every file is under the 250-line ceiling
+
+Measured on the tree at the end of the batch, across all 109 `.js` files under `client/src`:
+
+- **files at or over 250 lines: 0.** The largest file is `reports-main.js` at 239.
+- all fourteen files from the inventory are down: task-card 293->100, boards-modal 265->197,
+  calendar 285->187, labels-modal 340->133, render 329->226, dragdrop 343->86,
+  notifications 380->179, board-sidebar 267->232, importexport 664->210, tasks 743->187,
+  swimlanes 698->233, reports 1070->33, storage 1098->137, task-modal 1365->52.
+- the acceptance stayed green after each of the fourteen commits: build 0, unit 307/307, dom
+  180/180, plus `node harness/test.mjs` pass 5 / fail 0 and `/api/health` 200.
+
+Two rules earned their place and are worth keeping:
+1. **Freeze the public surface when a module has many consumers.** `storage.js` (63 importers,
+   exports enumerated by mock factories) and `task-modal.js` (ten-plus names wired into
+   `labels-modal.js`, mocked in DOM tests) were split by moving only their *implementation*,
+   with the export set diffed against HEAD to prove it. Zero consumer churn, and no mock could
+   go inert - the failure this document records twice.
+2. **A new module over the ceiling is not a split.** The first `importexport.js` extraction
+   produced a 462-line module, i.e. the same violation in a new place; 664 lines cannot fit two
+   files under 250. Every split was checked against the ceiling per output file *before*
+   writing.
+
+Five things the batch found that were not caused by it - fixed two, recorded three:
+- `initializeModalHandlers()` had thrown at boot since 66a0d17 (a dead call to a deleted
+  function), silently killing both manager modals and the whole Escape chain. Fixed, 1df6f9f.
+- `task-modal.js` called `groupLabels()` without importing it, so every task-modal open threw
+  and the label picker never rendered. Fixed, da63a92.
+- A reproducible 5s DOM timeout appeared once the module graph grew
+  (`tests/dom/reconcile.test.js`). Fixed with a module-scope warm import rather than a longer
+  timeout, 0cefffc; six other DOM files use the same pattern and are the first place to look.
+- Dead `temporarilyHideTaskModalForLabelsManager`, and an unused `createAccordionSection`
+  import in the original `task-modal.js`. Reported, not changed.
+- **The harness runs under `node --watch` and restarts on any change under `client/src`**, so
+  this batch restarted it dozens of times; it eventually lost the port race and died with
+  `Failed running 'src/server.mjs'`. Restarted via `harness/start-bg.ps1`; health 200. Worth
+  knowing before the next large refactor.
+
+The browser verification of the interactive modules did append events to the harness log
+(34 -> 50 events, in the untracked `harness/data/`); the three tasks it created were deleted
+again through the UI. Batch 10 itself is done.
