@@ -1668,3 +1668,214 @@ This is the second bug of the same shape found in this batch; the first was the 
 from an earlier refactor of this same codebase, and both were invisible to the build.
 **Anything that removes or relocates a binding needs its call sites checked by grep, not by
 the build.**
+
+### Batch 10: task-modal.js split (1365 to 52; 1365 = 52 + 190 + 68 + 43 + 203 + 161 + 100 + 37 + 96 + 125 + 105 + 141 + 103 + 62)
+
+`task-modal.js` is the largest and most interaction-heavy module in the app, and unlike the
+`reports.js` and `calendar.js` entries it has real consumers: `modals.js` imports twelve symbols
+from it (including the six state getters/setters that `modals.js` wires into `labels-modal.js`
+through `setTaskModalState`), `tests/dom/task-card-linkify.test.js` imports `updateDescriptionLinks`
+statically, and the two task-modal DOM tests import `initializeTaskModalHandlers`, `showModal` and
+`showEditModal`. The public import surface was therefore frozen, not just the line count.
+
+It lands as thirteen new modules plus the reduced entry:
+
+| Lines before | Lines after | File |
+|---:|---:|---|
+| 1365 | 52 | modules/task-modal.js |
+| - | 37 | modules/task-modal-state.js |
+| - | 100 | modules/task-modal-relationships.js |
+| - | 161 | modules/task-modal-labels.js |
+| - | 125 | modules/task-modal-subtasks.js |
+| - | 105 | modules/task-modal-summary.js |
+| - | 68 | modules/task-modal-annotations.js |
+| - | 96 | modules/task-modal-status.js |
+| - | 190 | modules/task-modal-agile-fields.js |
+| - | 43 | modules/task-modal-chrome.js |
+| - | 203 | modules/task-modal-form.js |
+| - | 103 | modules/task-modal-wiring-controls.js |
+| - | 141 | modules/task-modal-wiring-agile.js |
+| - | 62 | modules/task-modal-wiring-submit.js |
+
+The tree grew from 1365 to 1486 lines; the 121-line increase is entirely the fourteen import
+blocks and the module headers. No consumer file changed: `modals.js`, `labels-modal.js`,
+`label-edit-modal.js` and all tests are byte-identical, which is the point of the frozen surface.
+
+**`task-modal-state.js` (37) - the sink.** The one module the whole tree may import and that
+imports nothing: the four constants (`CREATE_LABEL_SENTINEL`, `COMMENT_AUTHOR_KEY`,
+`RELATIONSHIP_LABELS`, `RELATIONSHIP_DESCRIPTIONS`), the fifteen module-level mutable bindings,
+and the six public state accessors. The bindings had to become properties of one exported
+`state` object rather than fifteen exported `let`s, because ES module import bindings are
+read-only: every function that writes `selectedTaskLabels = ...` would otherwise have needed a
+setter. `state.x` is a purely mechanical substitution for a bare `x` and keeps the moved bodies
+verbatim; the DOM suite exercises the read/write paths.
+
+**`task-modal-relationships.js` (100)** - `shortId`, the active-relationship badges and the
+relationship search results. **`task-modal-labels.js` (161)** - the label search query, the active
+label chips, the checkbox picker, the highlight/keyboard selection and the
+labels-manager return trip (`restoreTaskModalAfterLabelsManager`, `updateTaskLabelsSelection`).
+**`task-modal-subtasks.js` (125)** - the sortable sub-task list and its inline editor.
+**`task-modal-summary.js` (105)** - the type/estimate/priority/due/column summary chips and the
+claim chip; it is the one new module with no state dependency.
+
+**`task-modal-annotations.js` (68)** - the annotation list, add and remove, plus
+`hideAnnotationsSection`. **`task-modal-status.js` (96)** - the read-only lock
+(`setTaskLocked`/`resetTaskLock`) and the acceptance-criteria list.
+**`task-modal-agile-fields.js` (190)** - comments, attachments, custom fields, the parent select
+and `renderAgileFields`/`resetAgileState`/`clearAgileInputs`.
+
+**`task-modal-chrome.js` (43)** - the fullscreen toggle and the description link-chip preview;
+both are used by the open/close path and by a wiring section, so they live below both.
+**`task-modal-form.js` (203)** - `showModal`, `showEditModal` and `hideModal`, the only module
+that knows every render group.
+
+**The wiring function, decomposed.** `initializeTaskModalHandlers` was one 248-line function
+organised as contiguous sections that each declare their own `$id(...)` local immediately before
+the listeners that use it. It is now fourteen section initializers - one per original section,
+each re-resolving its `$id` locals - called by the aggregate that stays in `task-modal.js`, plus
+the trailing `setupModalCloseHandlers('task-modal', hideModal)`:
+
+| Original lines | Initializer | Wiring module |
+|---|---|---|
+| 1118-1120 | initializeDescriptionHandlers | controls |
+| 1122-1164 | initializeLabelSearchHandlers | controls |
+| 1166-1176 | initializeRelationshipHandlers | controls |
+| 1178-1186 | initializeRelationshipOutsideClickHandlers | controls |
+| 1188-1193 | initializeAddLabelHandlers | controls |
+| 1195-1199 | initializeFullpageHandlers | controls |
+| 1201-1211 | initializeSubtaskHandlers | agile |
+| 1213-1222 | initializeAcceptanceHandlers | agile |
+| 1224-1242 | initializeCommentHandlers | agile |
+| 1244-1280 | initializeAttachmentHandlers | agile |
+| 1282-1298 | initializeCustomFieldHandlers | agile |
+| 1300-1305 | initializeAnnotationHandlers | agile |
+| 1307-1311 | initializeSummarySyncHandlers | agile |
+| 1313-1360 | initializeSubmitHandler | submit |
+
+The three wiring modules are `task-modal-wiring-controls.js` (103),
+`task-modal-wiring-agile.js` (141) and `task-modal-wiring-submit.js` (62).
+
+**Registration order, proved rather than assumed.** The sections were lifted from contiguous
+original ranges in source order, and the aggregate calls them in that order. The proof is
+mechanical: mapping each initializer name back to the first line of its original range and
+checking the call sequence yields 1118, 1122, 1166, 1178, 1188, 1195, 1201, 1213, 1224, 1244,
+1282, 1300, 1307 - strictly ascending, so the listener registration order is byte-for-byte the
+original one. The four section boundaries that matter were checked against the source before the
+move: the outside-click listener (1178) sits between the relationship search (1166) and the
+add-label button (1188), so the controls module holds relationship **and** outside-click before
+add-label; and the nested helpers `addCommentFromInputs` / `addAttachmentFromInputs` /
+`addCustomFieldFromInputs` moved with their own section, wrapped by the initializer, so no nested
+scope was broken.
+
+**The state problem, and the one line the transform missed.** Moving this file is not a pure line
+move like `reports.js`: every renderer both reads and writes the shared collections. The scripted
+substitution `x -> state.x` therefore ran over every moved range. Its lookbehind was
+`(?<![\w.$])`, which (correctly) refuses to re-prefix an already-prefixed `state.x` but also
+skips a spread - and `renderSubTaskList` contains `[...selectedTaskSubTasks]`. The postcondition
+that was supposed to catch a missing binding used the identical lookbehind, so it shared the
+blind spot and passed. **The DOM suite found it:** eleven tests failed with
+`ReferenceError: selectedTaskSubTasks is not defined` at `task-modal-subtasks.js:61`. The fix was
+one `state.` prefix and a corrected transform (`(?<!state\.)(?<![\w$])`), plus the same correction
+in both postcondition checks. This is the third "identifier used, binding missing" of this batch
+lineage and, once more, the build saw nothing.
+
+**Export set frozen, and compared programmatically.** Both the before and after sets were
+printed by the move script and are identical, thirteen names in each:
+
+```
+getReturnToTaskModalFlag, getSelectCreatedLabelFlag, getSelectedTaskLabels,
+hideModal, initializeTaskModalHandlers, restoreTaskModalAfterLabelsManager,
+setReturnToTaskModalFlag, setSelectCreatedLabelFlag, setSelectedTaskLabels,
+showEditModal, showModal, updateDescriptionLinks, updateTaskLabelsSelection
+```
+
+The mechanism is `export { ... } from './task-modal-state.js' | './task-modal-labels.js' |
+'./task-modal-chrome.js'` plus `export { showModal, showEditModal, hideModal }` for the three
+form functions, and re-exports are live bindings, so `modals.js` and the DOM tests import exactly
+what they did before. No test file and no mock target changed.
+
+**Dependency direction, verified rather than eyeballed.** A DFS over the fourteen modules reports
+no cycle, and the edge list is:
+
+```
+task-modal-state.js              -> (none)
+task-modal-chrome.js             -> (none)
+task-modal-summary.js            -> (none)
+task-modal-labels.js             -> task-modal-state.js
+task-modal-relationships.js      -> task-modal-state.js
+task-modal-subtasks.js           -> task-modal-state.js
+task-modal-status.js             -> task-modal-state.js
+task-modal-annotations.js        -> task-modal-state.js
+task-modal-agile-fields.js       -> task-modal-state.js, task-modal-status.js
+task-modal-form.js               -> state, chrome, labels, relationships, subtasks,
+                                    summary, status, annotations, agile-fields
+task-modal-wiring-controls.js    -> chrome, form, labels, relationships, state
+task-modal-wiring-agile.js       -> agile-fields, annotations, state, status,
+                                    subtasks, summary
+task-modal-wiring-submit.js      -> form, state
+task-modal.js                    -> state, labels, chrome, form, the three wiring modules
+```
+
+`task-modal-state.js`, `task-modal-chrome.js` and `task-modal-summary.js` are sinks; every other
+module points only downwards; no module imports `task-modal.js` (the script asserts
+`!content.includes("from './task-modal.js'")` for each new module), and the aggregate imports
+only section initializers, the form trio and the re-export targets. The topological order is
+sinks first, so the graph is a DAG in one direction.
+
+**What was deliberately left behind, and why.**
+
+- **The aggregate and the re-exports stay in `task-modal.js`.** The function is no longer 248
+  lines - it is fifteen call statements - but it is the one thing that must remain importable
+  from `./task-modal.js` and it is the only place that knows the registration order.
+- **`renderActiveTaskRelationships(onOpenTask)` / `updateRelationshipSearchResults(query,
+  onOpenTask)` take the open-editor action as a parameter.** The badge click used to call
+  `showEditModal(id)` directly. Form calls the renderer (in `showModal`/`showEditModal`) and the
+  renderer would have had to import form - a form ↔ relationships cycle - so the action is
+  threaded through instead, exactly as `buildShowMoreButton(remaining, onShowMore)` and
+  `renderNotificationBanner(onShowMore)` were. Callers pass `showEditModal`; behaviour is
+  identical.
+- **The dead `temporarilyHideTaskModalForLabelsManager` was kept, not deleted.** It has no caller
+  anywhere in `client/src` or `client/tests`; the only hit is its own definition. It now sits
+  unexported in `task-modal-labels.js`. Reported, not removed, per the deletion-is-separate rule.
+- **The unused `createAccordionSection` import was dropped** while the import preamble was
+  rewritten. It had no caller in the original file (the only hit was its own import line), the
+  same call as the `getActiveBoardName` and `loadTasks` import removals recorded earlier.
+
+**Consumers and mocks.** No `vi.mock` target moved: the two task-modal DOM tests mock
+`tasks.js`, `task-update.js`, `storage.js`, `icons.js`, `validation.js`, `dialog.js`,
+`render.js` and `sortablejs`, and the new modules import from those same specifiers, so a mock
+like `task-update.js` still intercepts `updateTask` wherever it is imported. `task-card-linkify.test.js`
+keeps importing `updateDescriptionLinks` from `./task-modal.js` because it is re-exported. No
+mock went inert and no test file was edited.
+
+**A build warning that moved, expectedly.** The `INEFFECTIVE_DYNAMIC_IMPORT` warning (`render.js`
+is dynamically imported by `task-drop.js` and also statically by `kanban.js`) used to name
+`task-modal.js`; it now names `task-modal-wiring-submit.js`, because the dynamic
+`await import('./render.js')` in the blocked-reason path travelled with the submit handler. The
+specifier is unchanged, so the behaviour is unchanged.
+
+**Script discipline.** The split ran as a Node script (under the temp dir, not the repo) over
+`/\r?\n/` with an exact first-line, last-line and interior-anchor assertion on all 60 ranges, a
+disjointness assertion across them, a coverage assertion that every non-empty original line from
+25 to 1363 belongs to exactly one range or to the three replaced aggregate-scaffold lines
+(1117, 1362, 1363), and a `< 250` line-count assertion on each of the fourteen outputs *before*
+writing. Postconditions: no moved definition left in `task-modal.js`; no kept definition leaked
+into a module; no new module imports `./task-modal.js`; every imported identifier is used; and a
+free-variable check that every known original top-level name referenced in a module is either
+declared or imported there. The state sink and the reduced entry were assembled by hand, because
+the declarations become object properties rather than fifteen `let`s.
+
+**What the work exposed.** Three things, all reported rather than fixed here:
+
+- the dead `temporarilyHideTaskModalForLabelsManager` (above);
+- the unused `createAccordionSection` import (above);
+- the transform's lookbehind blind spot (above), which is the useful one: a postcondition that
+  shares an implementation detail with the transform it is checking cannot catch that
+  transform's blind spot. The independent check is a grep for the *un-prefixed* identifier with a
+  lookbehind that does **not** exclude `.`, which is how the remaining occurrence was found.
+
+**Verification.** Build exit 0, unit 307/307, dom 180/180, with no per-test timeout (the
+module-scope warm `await import('../../src/modules/render.js')` already carried by
+`tests/dom/reconcile.test.js` from the `tasks.js` split absorbed the larger graph). No test file
+was edited. Final line counts: the table above; every file is under the 250 ceiling, the largest
+being `task-modal-form.js` at 203.
