@@ -962,3 +962,26 @@ It is `label-edit-modal.js` and not `label-modal.js` because `label-modal.js` ne
 
 `labels-modal.js` has no Vitest coverage (audit §7.1), so this was checked in the browser as
 well - see the note on the boot bug below.
+
+### Found while verifying: `initializeModalHandlers()` had been throwing since 66a0d17
+
+Opening the board in the browser to check the labels split surfaced
+`ReferenceError: initializeColumnModalHandlers is not defined` at startup. Commit 66a0d17
+dropped the unreachable column modal and removed the `column-modal.js` import and the
+Escape-chain entry, but missed the call to
+`initializeColumnModalHandlers(setupModalCloseHandlers)` inside `initializeModalHandlers()`.
+The call threw, so **every initializer after it never ran** - `initializeLabelsModalHandlers`,
+`initializeBoardsModalHandlers`, the help modal and the whole Escape chain. Both manager
+modals were dead in the shipped build.
+
+The DOM suite missed it because it calls the individual initializers directly
+(`boards-quick-switch.test.js`) and nothing covers `initializeModalHandlers()` itself;
+`labels-modal.js` has no coverage at all.
+
+Confirmed pre-existing rather than introduced by Batch 10: `git grep
+initializeColumnModalHandlers HEAD -- client/dist` finds the symbol in the committed bundle,
+and `git log -S` attributes the removal to 66a0d17.
+
+Fix: delete the stale call. Re-verified in the browser afterwards - the console is clean, the
+labels manager opens, creates and deletes a label and refreshes, the boards manager lists the
+boards and opens the rename modal, and both close through the handlers that had been dead.

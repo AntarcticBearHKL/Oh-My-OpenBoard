@@ -62,7 +62,6 @@ setTaskModalState({
 
 export function initializeModalHandlers() {
   initializeTaskModalHandlers(setupModalCloseHandlers);
-  initializeColumnModalHandlers(setupModalCloseHandlers);
   initializeLabelsModalHandlers(setupModalCloseHandlers);
   initializeBoardsModalHandlers(setupModalCloseHandlers);
 
