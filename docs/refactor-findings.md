@@ -2240,3 +2240,38 @@ codebase just went through fourteen splits, six convergences, two P0 fixes, an E
 harness feature and a token-isation pass, with the suite green after each. Rewriting further would
 trade a known-good state for unverifiable churn, especially in the areas with no automated coverage
 (all of `styles/**`, and the page-level interactions that only a browser exercises).
+
+## State/render hazards, re-verified in the current code
+
+A read-only pass re-located every item of §4.1-4.3 in the split tree and judged it against the code
+rather than against the recorded line numbers.
+
+**FIXED**
+- the in-place mutation of cached tasks in `updateTask`: `loadTasks()` now clones every task and
+  detaches the mutable nested arrays, so a throw between the mutation and the projection no longer
+  dirties the read model (`storage-entities.js`);
+- the redundant `emit(DATA_CHANGED)` after the domain event is gone for task delete, task save,
+  label delete, column collapse and column update (`column-modal.js` no longer exists at all).
+
+**LIVE, and fixed here because each is one line and safe** - the projection already emits
+`DATA_CHANGED` for the domain event that precedes them, so the second emit only cost a second full
+board rebuild:
+- board rename (`board-rename-modal.js`);
+- label add/update (`label-edit-modal.js`).
+
+**LIVE, with the smallest correct fix - deliberately not changed, because each is a behaviour or
+product decision rather than a cleanup:**
+
+| hazard | smallest correct fix | why it needs a decision |
+|---|---|---|
+| settings written twice (`settings.js` saves, the projector writes again) | drop the `saveSettings` call; the event already carries the fields | `saveSettings` also normalises, so that step has to move |
+| `ensureBoardsInitialized`/`createBoard` pre-write state, then emit scaffold events the projector re-writes | stop pre-writing what the events already carry | the same path writes local-only demo tasks that are intentionally not event-sourced |
+| `deleteBoard` races the projector, which resurrects the deleted slices as `[]` | let the projector delete instead of seed-rebuild | it is the single writer; observable only as stale empty keys |
+| direct writers with no domain event: column summaries, swimlane collapse/order, import and template writes | route them through the projector, or emit `DATA_CHANGED` if they are device-local | **whether a column summary or a swimlane collapse should sync across devices at all is a product decision** |
+| `setActiveBoardId` persists with no event, so every caller must remember to re-render | emit `DATA_CHANGED` inside it | the active board is device-local, so a *domain* event would be wrong - it would sync |
+| board-groups and skills re-render the whole board for unrelated state | filter `DATA_CHANGED`, or give them their own signal | render-rate vs. simplicity; no correctness impact |
+| notifications refresh on every render | refresh only when the due set changes | measurable only; no correctness impact |
+
+The two that are worth doing first, when someone wants the render count down: the board-groups/skills
+filter (no behaviour change at all) and the settings double write (one line, but move
+`normalizeSettings` with it).

@@ -1,7 +1,6 @@
 import { loadLabels } from './storage.js';
 import { addLabel, updateLabel } from './labels.js';
 import { alertDialog } from './dialog.js';
-import { emit, DATA_CHANGED } from './events.js';
 import { MAX_LABEL_NAME_LENGTH } from './constants.js';
 import { $id, h } from './dom.js';
 
@@ -213,7 +212,6 @@ export function initializeLabelEditModalHandlers(setupModalCloseHandlers, { refr
 
     hideLabelModal();
     refreshLabelsList();
-    emit(DATA_CHANGED);
 
     if (taskModalState?.getReturnToTaskModalFlag() && wasCreating) {
       hideLabelsManager();

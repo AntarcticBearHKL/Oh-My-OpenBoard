@@ -1,7 +1,6 @@
 import { ensureBoardsInitialized, listBoards, renameBoard, updateBoardFields } from './storage.js';
 import { alertDialog } from './dialog.js';
 import { renderIcons } from './icons.js';
-import { emit, DATA_CHANGED } from './events.js';
 import { $id } from './dom.js';
 
 let editingBoardId = null;
@@ -63,7 +62,6 @@ export function initializeBoardRenameModalHandlers(setupModalCloseHandlers, refr
 
     hideBoardRenameModal();
     refreshBoards();
-    emit(DATA_CHANGED);
     renderIcons();
   });
   setupModalCloseHandlers('board-rename-modal', hideBoardRenameModal);
