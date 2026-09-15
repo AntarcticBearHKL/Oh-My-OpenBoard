@@ -1921,3 +1921,42 @@ Five things the batch found that were not caused by it - fixed two, recorded thr
 The browser verification of the interactive modules did append events to the harness log
 (34 -> 50 events, in the untracked `harness/data/`); the three tasks it created were deleted
 again through the UI. Batch 10 itself is done.
+
+## P2 closed - the duplicated helpers converged
+
+All six items from Batch 5's tail, each landed with the full suite green:
+
+1. **Legacy default columns.** `storage-defaults.js` held three byte-identical factories
+   (`defaultColumns`, `legacyDefaultColumns`, `stableDefaultColumns`, every one of them
+   `FIXED_COLUMNS.map((c) => ({ ...c }))`). Two are gone and their three call sites use the one.
+   None of the three was re-exported from `storage.js`, so nothing outside `storage-*` moved.
+   `legacyDefaultColumnsForImport` in `import-payload.js` is a different function and stays.
+2. **The armed delete button.** `skills-modal.js` carried its own "click twice to confirm" copy.
+   The two are *not* interchangeable - skills-modal restores `textContent` 'Delete', does not
+   `stopPropagation`, restores the button *before* acting, and its handler is guarded on a
+   selection - so the shared part is the state machine, not the markup:
+   `createArmedDeleteController({ button, armedContent, armedTitle, armedAria, onRestore,
+   onConfirm })`, with `createArmedDeleteButton` now just the board-sidebar presentation on top of
+   it. All five call sites of the old disarm helper followed.
+3. **JSON-safe parsing.** One `parseJsonSafely(raw)` in `utils.js` - returning `undefined`, not
+   `null`, because `JSON.parse('null')` is a legitimate value - now serves `readLocalJson`,
+   `safeParseArray`, `safeParseObject`, the three SSE handlers in `local-server.js` and
+   `loadSyncMap`. `JSON.parse` survives in exactly three places: that helper, plus
+   `import-board.js` and `snapshot-sync.js`, whose `try` blocks wrap a whole flow and a gunzip
+   respectively, not a parse.
+4. **Board dropdown + brand text.** Three rebuilds of `#board-select` (`boards.js`,
+   `boards-modal.js`, `import-board.js`) and two brand writes became `board-select.js`
+   (`refreshBoardSelect`, `boardSelectMatchesState`, `refreshBrandText`). The option labels had
+   already diverged between `boardDisplayName` and an inline `trim() || 'Untitled board'` - the
+   two are equivalent, which is why this was a move and not a bug fix. Each consumer keeps a thin
+   wrapper, so no call site moved.
+5. **Done virtualization.** `renderStandardBoard` and `reconcileBoard` carried the same
+   filter/virtualize/slice/show-more sequence twice. `board-filters.js` now owns
+   `selectColumnRenderPlan(columnId, visibleTasks)` returning
+   `{ columnTasks, tasksToRender, remaining }`, so the "show more" guard (`remaining > 0`) cannot
+   drift from the slice it guards.
+
+Two notes for whoever picks this up: the audit's line numbers for these items were stale, so each
+was re-located in the split tree first; and two of the "duplicates" were not byte-identical (the
+select labels, and the armed-delete presentations) - exactly the case where a mechanical merge
+would have silently changed the UI, so each was diffed before it was merged.
