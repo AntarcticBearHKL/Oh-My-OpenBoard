@@ -1,0 +1,78 @@
+// ── Constants ──────────────────────────────────────────────────────────────────
+
+export const BOARDS_KEY = 'kanbanBoards';
+export const ACTIVE_BOARD_KEY = 'kanbanActiveBoardId';
+export const GLOBAL_SETTINGS_KEY = 'openagile:settings:global';
+
+export const LEGACY_COLUMNS_KEY = 'kanbanColumns';
+export const LEGACY_TASKS_KEY = 'kanbanTasks';
+export const LEGACY_LABELS_KEY = 'kanbanLabels';
+
+export const DEFAULT_BOARD_ID = 'default';
+// Well-known stable id for the auto-seeded "Default Board". Every fresh device
+// mints the default board with THIS id (not a random UUID) so two devices on the
+// same account converge onto a single board instead of accruing duplicates.
+// Valid uuid-v4 shape so it passes existing id validation/UUID_RE checks.
+export const STABLE_DEFAULT_BOARD_ID = '00000000-0000-4000-8000-000000000001';
+
+// ── In-memory state ────────────────────────────────────────────────────────────
+//
+// All public CRUD functions read/write this object synchronously.
+// IDB persistence happens asynchronously via schedulePersist().
+// Call initStorage() once at app startup to populate from IDB.
+
+export const state = {
+  boards: [],
+  activeBoardId: null,
+  tasks: {},    // { [boardId]: task[] | null }
+  columns: {},  // { [boardId]: column[] | null }
+  labels: {},   // { [boardId]: label[] | null }
+  settings: {},  // { [boardId]: object | null }
+  globalSettings: null
+};
+
+// Per-board default-task cache (keeps defaults stable within a session).
+export const taskCacheByBoard = new Map();
+
+// Handles both pre-parsed objects (from IDB) and JSON strings (from legacy localStorage).
+export function safeParseArray(value) {
+  if (!value) return null;
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : null;
+    } catch { return null; }
+  }
+  return null;
+}
+
+export function safeParseObject(value) {
+  if (!value) return null;
+  if (typeof value === 'object' && !Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+    } catch { return null; }
+  }
+  return null;
+}
+
+export function emitLocalChange(boardId, entity) {
+  if (typeof window === 'undefined') return;
+}
+
+function defaultGlobalSettings() {
+  return {};
+}
+
+export function normalizeGlobalSettings(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  return {};
+}
+
+export function loadGlobalSettings() {
+  const parsed = safeParseObject(state.globalSettings);
+  return parsed ? normalizeGlobalSettings(parsed) : defaultGlobalSettings();
+}

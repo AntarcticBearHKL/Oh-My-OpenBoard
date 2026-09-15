@@ -1438,3 +1438,211 @@ No feature module imports another, no module imports back up to `reports.js` or 
 **Script discipline.** The split ran as a Node script (under the temp dir, not the repo) over `/\r?\n/` with a first-line, last-line and interior-anchor assertion on all eleven ranges, a disjointness assertion, a coverage assertion that every non-empty original line from 20 onward belongs to exactly one output, and a `< 250` line-count assertion on each of the seven outputs *before* writing. Postconditions: `reports.js` declares no top-level symbol; no moved definition is left behind; each module's top-level declaration set matches exactly its planned exported+internal list; no internal name was exported; no new module imports `./reports.js`; and every imported identifier is used. The export transform enumerates `function` / `const` / `let` / `var` / `class` (the `PRIORITY_LANE_LABELS` lesson from the swimlanes split); there were no top-level consts here, so it only touched functions, but it is written to cover them.
 
 **Verification.** Build 0, unit 307/307, dom 180/180, with **no per-test timeout** - this split did not reproduce the 5s `reconcile.test.js` timeout, so no test file needed the module-scope warm `await import(...)` fix. `reports.js` has no Vitest coverage (audit §7.1) and the page was not opened in a browser here; that browser check remains to be done.
+
+### Batch 11: storage.js split (1098 to 137; 1098 = 137 + 78 + 27 + 97 + 101 + 137 + 168 + 141 + 205 + 48 + 90)
+
+`storage.js` is the most-imported module in the repo (63 importers across `client/src` and
+`client/tests`) and the one the DOM suite mocks most often: twelve tests do
+`vi.mock('../../src/modules/storage.js', factory)` with a factory that enumerates the exports under
+test. Moving an export so it is no longer importable from `./storage.js` would force an edit to
+every importer *and* leave those factories enumerating names the module no longer provides - the
+exact failure recorded above for `boards-modal.js` and `tasks.js`, where a mock left on the old
+target went inert and silently let the real module load. So this split is the one place where the
+public surface is the constraint, not the code.
+
+The surface was frozen. Every one of the original **40** export names is still importable from
+`./storage.js`; the mechanism is a re-export block, so no consumer and **no test file** changed.
+That is why the move script's central assertion is an export-set equality check rather than a list
+of importers to chase.
+
+The body had to be divided, not just trimmed. Under the cycle rule ("no new module may import
+`storage.js`") and the sink rule ("shared mutable state lives in one module that imports none of
+them"), `state` and `taskCacheByBoard` have to leave `storage.js` - any module that keeps them is
+imported by all the others, so a module that keeps them *and* imports the accessors is a cycle.
+Once `state` moved, `readModelProjector` could not stay either (see the reader-order note below).
+It lands as ten new modules plus the reduced original:
+
+| Lines before | Lines after | File |
+|---:|---:|---|
+| 1098 | 137 | modules/storage.js |
+| - | 78 | modules/storage-state.js |
+| - | 27 | modules/storage-projector.js |
+| - | 97 | modules/storage-defaults.js |
+| - | 101 | modules/storage-normalize.js |
+| - | 137 | modules/storage-migration.js |
+| - | 168 | modules/storage-boards.js |
+| - | 141 | modules/storage-board-mutations.js |
+| - | 205 | modules/storage-entities.js |
+| - | 48 | modules/storage-settings.js |
+| - | 90 | modules/storage-cross-board.js |
+
+Every file is under the 250 ceiling. The new tree is 1229 lines against 1098 - the 131-line
+increase is entirely the eleven import blocks plus the re-export block; no moved line was rewritten
+and none was duplicated.
+
+**`storage-state.js` (78) - the sink.** The only module the whole tree may import and that imports
+none of it: the key/id constants (`BOARDS_KEY`, `ACTIVE_BOARD_KEY`, `GLOBAL_SETTINGS_KEY`, the three
+`LEGACY_*` keys, `DEFAULT_BOARD_ID`, `STABLE_DEFAULT_BOARD_ID`), the two mutable singletons `state`
+and `taskCacheByBoard`, the two parse helpers (`safeParseArray` / `safeParseObject`), the no-op
+`emitLocalChange`, and the global-settings read path (`defaultGlobalSettings`,
+`normalizeGlobalSettings`, `loadGlobalSettings`). It imports nothing at all, so there is no edge
+into it that can be part of a cycle - "state first, functions after" in the literal sense. The
+global-settings trio lives here, not with the board settings, because `readModelProjector` is its one
+consumer and the projector must sit *below* `storage-boards.js`, which is precisely where the
+settings accessors cannot go (they call `ensureBoardsInitialized`).
+
+**`storage-projector.js` (27) - the sole read-model writer (ADR-0005).** The
+`createReadModelProjector({...})` call moved here verbatim, wired to `state`/`taskCacheByBoard` from
+the sink and to the IDB schedulers and `checkAndScheduleSnapshot` exactly as before. It is a module
+rather than a line in `storage.js` for one reason: `ensureBoardsInitialized()` calls
+`readModelProjector.register()`, and `ensureBoardsInitialized` is called by every entity accessor, so
+once the accessors live outside `storage.js` the projector must too - otherwise every one of them
+would import `storage.js` and the cycle rule fails on the first one. Putting it below the boards
+module is the only placement that lets `ensureBoardsInitialized` register the writer without a
+back-edge. No consumer imports it; `storage.js` and `storage-boards.js` do.
+
+**`storage-defaults.js` (97) - the default scaffolds.** `defaultColumns`,
+`legacyDefaultColumns`, `defaultLabels`, `defaultBoardData`, `stableDefaultBoardData`,
+`defaultSettings`, plus the two dead name-lookups below. Pure factories: `utils.js` and
+`FIXED_COLUMNS` are their only repo imports, so like the sink they can be a leaf.
+
+**`storage-normalize.js` (101) - the shape normalizers.** `normalizeColumn` / `ensureFixedColumns`
+(column repair), `normalizePriority`, `normalizeSettings` (including its private
+`normalizeSwimLaneGroupBy` / `normalizeSwimLaneLabelGroup` and the `ALLOWED_SWIMLANE_GROUP_BY` set).
+They read only `normalize.js`, `constants.js` and `defaultSettings`, touch no state, and are the one
+place a stored shape is coerced back to the canonical one; `storage-entities.js` and
+`storage-settings.js` are their only consumers.
+
+**`storage-migration.js` (137) - boot migration.** `normalizeIdbState` (the UUID/read-model
+normalization pass) and `migrateFromLocalStorage` (both the pre-multi-board and the multi-board
+paths). They are the only functions that read the legacy `localStorage` layout and the only ones that
+touch `board-serializer.js`; `initStorage` is their sole caller, which is why they could move whole
+without threading anything back.
+
+**`storage-boards.js` (168) - the board list and the init gate.** The `boardsEmptied` localStorage
+flags, `listBoards`, `getBoardById`, `getActiveBoardName`, `saveBoards`, `mergeBoardsFromRemote`,
+`getActiveBoardId`, `setActiveBoardId`, `ensureBoardsInitialized` and `emitBoardScaffoldEvents`. This
+is the layer every entity accessor sits on: `ensureBoardsInitialized` is the "make sure a board
+exists and the projector is subscribed" gate, and `getActiveBoardId` is the aggregate-root lookup
+every loader and saver calls. `emitBoardScaffoldEvents` stays with them because both
+`ensureBoardsInitialized` and `createBoard` use it, and moving it into the mutations module would
+close a cycle (`createBoard` needs `ensureBoardsInitialized`).
+
+**`storage-board-mutations.js` (141) - the board writers.** `createBoard`, `renameBoard`,
+`updateBoardFields`, `deleteBoard` and the private `BOARD_ITERATION_FIELDS`. They are the only board
+functions that emit `board.created` / `board.updated` / `board.deleted` and the only ones that touch
+`taskCacheByBoard.delete` and the per-board settings/deletion keys. They depend on
+`storage-boards.js` for `ensureBoardsInitialized` and `saveBoards`, never the other way round.
+
+**`storage-entities.js` (205) - the columns/tasks/labels accessors.** The largest module:
+`getDoneColumnId`, `isDoneColumnId`, `loadColumns`, `saveColumns`, `loadTasks`, `saveTasks`,
+`loadLabels`, `saveLabels`, with the three original section headers. They are one module because
+they are one layer - each calls `ensureBoardsInitialized` + `getActiveBoardId`, reads `state.<kind>`,
+parses, and schedules a read-model write - and because `loadTasks` reads the done-column vocabulary
+(`isDoneColumnId`) from the columns group. Splitting columns from tasks would have forced
+`storage-tasks.js -> storage-columns.js` for one predicate and gained nothing; the group is 205 lines
+with the whole task normalizer in it.
+
+**`storage-settings.js` (48) - per-board settings.** `loadSettings`, `saveSettings`,
+`loadColumnSummaries`, `saveColumnSummary`. The two summary helpers are a read-modify-write over
+`settings.columnSummaries`, so they belong with the settings loader they call twice; the module is
+small because it is thin on purpose.
+
+**`storage-cross-board.js` (90) - the per-board and deleted/purge helpers.** `load*ForBoard`,
+`loadDeleted*ForBoard`, `purgeDeleted`, `save*ForBoard`. These deliberately do **not** call
+`ensureBoardsInitialized` (they are given an explicit `boardId` by the sync layer), which is why they
+can sit beside the sink and depend on nothing but `state` and the IDB schedulers.
+
+**What stayed in `storage.js` and why.** The four things that must run against the sink and the
+projector and nothing else: `initStorage` (opens IDB, migrates, hydrates `state`, backfills the event
+log, registers the projector), `hydrateFromSnapshotState`, `_flushPersistsForTesting`,
+`_resetStorageForTesting` (which clears `state` and `taskCacheByBoard` in place and resets the
+projector). It is 137 lines: 34 import lines, a six-statement re-export block, and those four
+functions. It is not a wall of re-exports - roughly half the file is the boot path - but the surface
+is carried by the re-exports, and that is the point of the split.
+
+**Reader-order note (the ADR-0005 hazard).** `readModelProjector` is constructed at module load
+today and was constructed at module load before; the construction now happens in
+`storage-projector.js` rather than in `storage.js`. `createReadModelProjector` itself is pure (it
+destructures its context, allocates a `Set` and returns closures), so the only thing that changed is
+*where* the wiring runs, not *when* relative to `state`: the sink is evaluated before the projector
+because the projector imports it, and `register()` is still called only from
+`ensureBoardsInitialized()` and `initStorage()`, never at module scope. The suite is the proof:
+`storage.test.js`, `storage-idb.test.js`, the UUID-migration cases and the whole
+`tests/dom/event-sourcing/` set (`snapshot-catchup`, `replay-fidelity`, `realtime`) are green, so
+projection was not broken by the move.
+
+**Dependency direction, verified rather than eyeballed.** Strictly one-way and acyclic; the move
+script asserts that no new module references `./storage.js`, walks the storage-* graph for a cycle,
+and an import-graph read of the eleven files confirms:
+
+```
+storage.js                  -> storage-state.js, storage-projector.js,
+                               storage-migration.js, storage-boards.js,
+                               storage-board-mutations.js, storage-entities.js,
+                               storage-settings.js, storage-cross-board.js
+storage-board-mutations.js  -> storage-boards.js, storage-defaults.js, storage-state.js
+storage-boards.js           -> storage-projector.js, storage-defaults.js, storage-state.js
+storage-entities.js         -> storage-boards.js, storage-defaults.js, storage-normalize.js, storage-state.js
+storage-settings.js         -> storage-boards.js, storage-defaults.js, storage-normalize.js, storage-state.js
+storage-migration.js        -> storage-defaults.js, storage-state.js
+storage-normalize.js        -> storage-defaults.js
+storage-projector.js        -> storage-state.js
+storage-cross-board.js      -> storage-state.js
+storage-defaults.js         -> (none)
+storage-state.js            -> (none)
+```
+
+No module extracted from `storage.js` imports it back, `storage-state.js` and
+`storage-defaults.js` are sinks whose only edges are out, and the four entity/settings modules all
+point down through `storage-boards.js`. The graph is a DAG in one direction.
+
+**Script discipline.** The split ran as a Node script (under the temp dir, not the repo) over
+`/\r?\n/` with a first-line, last-line and at least one interior-anchor assertion on all 31 ranges, a
+disjointness assertion, and a coverage assertion that every non-empty original line from 13 onward
+belongs to exactly one range (only the 1-11 import preamble is replaced). It asserts `< 250` true
+lines per output *before* writing (counting rendered lines, not array entries - the first run's
+assertion counted a multi-line import as one line and under-reported, so it was corrected and the
+whole run repeated from the restored original). The export transform enumerates `function` / `const`
+/ `let` / `var` / `class` (the `PRIORITY_LANE_LABELS` lesson). Postconditions: no moved definition
+left in `storage.js`, no kept definition leaked into a module, no new module imports `./storage.js`,
+every imported identifier is used, and every exported name used by a re-export is actually exported
+by its target.
+
+**The bug the script caught that the build would not.** The first corrected run failed on a
+*missing* import: `storage-migration.js` referenced `LEGACY_COLUMNS_KEY` / `LEGACY_TASKS_KEY` /
+`LEGACY_LABELS_KEY` but the import block listed only the non-legacy keys. The "every imported
+identifier is used" check is one-directional and passed; the reverse check - every known in-repo
+name that is referenced must be declared or imported - is what caught it. This is a free-variable
+reference, so rolldown would not have failed the build and there is no compile error; it would have
+been a runtime `ReferenceError` on the migration path only, i.e. exactly the kind of failure the
+unit suite exists to catch, but only if a test exercises that path in that module. Both directions
+are now asserted.
+
+**What the split exposed.** Reported, not changed:
+
+- **Dead code.** `columnIdByName` and `labelIdByName` have no caller anywhere in `client/src` or
+  `client/tests` - the only hits are their own definitions. They were kept (deletion is a separate
+  decision) and now sit unexported in `storage-defaults.js`.
+- **A no-op with three callers.** `emitLocalChange(boardId, entity)` reads `window` and returns;
+  it is the only thing `saveColumns` / `saveTasks` / `saveLabels` share. Kept verbatim in the sink.
+- **Global settings are effectively unnormalized.** `defaultGlobalSettings` and
+  `normalizeGlobalSettings` both return `{}` unconditionally; `loadGlobalSettings` can therefore only
+  ever return `{}`. They live in the sink because the projector calls `loadGlobalSettings` on every
+  global-scope event. This is dead-ish behaviour that predates the split, not something it created.
+- **Three identical column builders.** `defaultColumns`, `legacyDefaultColumns` and
+  `stableDefaultColumns` are all `FIXED_COLUMNS.map((column) => ({ ...column }))`; only the first two
+  are exported, and only because their (differently named) call sites are kept verbatim.
+- **A stale import-preamble comment dropped.** Original line 5,
+  `// Re-export IDB helpers that tests import from this module for backward compatibility.`, sat
+  above the `board-serializer.js` import and described a re-export that does not exist: `storage.js`
+  imports `_flushIdbPersistsForTesting` / `_resetIdbForTesting` for its own use and does not
+  re-export them, and every test imports them from `./idb-store.js` directly. It was removed with
+  the rest of the import preamble that was rewritten - the same call as the unused `getActiveBoardName`
+  import in the `boards-modal.js` split - and is recorded here rather than silently dropped.
+
+**Verification.** Build 0, unit 307/307, dom 180/180. No Vitest timeout reproduced - the module
+graph `render.js` pulls in grew by ten modules but `tests/dom/reconcile.test.js` already carries the
+module-scope warm `await import('../../src/modules/render.js')` from the `tasks.js` split, so the
+transform is paid at collection time and no test file needed the fix. No test file needed editing at
+all. The export set was compared programmatically before and after: both are the same 40 names.
