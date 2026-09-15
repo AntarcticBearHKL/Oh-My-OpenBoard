@@ -4,7 +4,7 @@ import { isDoneColumnId, listBoards, loadColumns, loadTasks, loadLabels, loadSet
 import { initDragDrop } from './dragdrop.js';
 import { renderIcons } from './icons.js';
 import { refreshNotifications } from './notifications.js';
-import { syncSwimLaneControls } from './swimlanes.js';
+import { syncSwimLaneControls } from './swimlane-controls.js';
 import { on, DATA_CHANGED, DRAG_RECONCILE_BEGIN, DRAG_RECONCILE_END } from './events.js';
 import { createTaskElement } from './task-card.js';
 import { createColumnElement } from './column-element.js';

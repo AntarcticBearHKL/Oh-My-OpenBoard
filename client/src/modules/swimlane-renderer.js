@@ -6,12 +6,14 @@ import {
   buildBoardGrid,
   getHiddenTaskCountForLane,
   getVisibleTasksForLane,
-  groupTasksBySwimLane,
+  groupTasksBySwimLane
+} from './swimlanes.js';
+import {
   isSwimLaneCollapsed,
   isSwimLaneCellCollapsed,
   toggleSwimLaneCollapsed,
   toggleSwimLaneCellCollapsed
-} from './swimlanes.js';
+} from './swimlane-collapse.js';
 import { createTaskElement } from './task-card.js';
 import { emit, DATA_CHANGED } from './events.js';
 import { isDoneColumn as isPermanentDoneColumn } from './constants.js';

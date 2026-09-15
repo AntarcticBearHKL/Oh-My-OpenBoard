@@ -13,7 +13,7 @@ import { initializeSkillsUI } from './modules/skills-modal.js';
 import { initializeSettingsUI } from './modules/settings.js';
 import { initializeNotifications } from './modules/notifications.js';
 import { initStorage, ensureBoardsInitialized, setActiveBoardId } from './modules/storage.js';
-import { initializeSwimLaneControls } from './modules/swimlanes.js';
+import { initializeSwimLaneControls } from './modules/swimlane-controls.js';
 import { initializeAuthSyncUI } from './modules/authsync.js';
 import { initSyncQueue } from './modules/event-sourcing/sync-queue.js';
 import { initSnapshotSync } from './modules/event-sourcing/snapshot-sync.js';

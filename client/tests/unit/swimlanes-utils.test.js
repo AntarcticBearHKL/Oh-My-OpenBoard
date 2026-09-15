@@ -5,7 +5,9 @@ import {
   SWIMLANE_GROUP_BY_LABEL,
   SWIMLANE_GROUP_BY_LABEL_GROUP,
   SWIMLANE_GROUP_BY_PRIORITY,
-  SWIMLANE_HIDDEN_DONE_COLUMN_ID,
+  SWIMLANE_HIDDEN_DONE_COLUMN_ID
+} from '../../src/modules/swimlane-lane-model.js';
+import {
   buildBoardGrid,
   getVisibleTasksForLane,
   getSwimLaneValue,

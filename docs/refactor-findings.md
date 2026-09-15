@@ -1250,3 +1250,132 @@ further Batch 10 split grows the graph, so this is the first place to look when 
 starts timing out.
 
 Verification: build 0, unit 307/307, dom 180/180.
+
+### Batch 11: swimlanes.js split (698 to 233)
+
+`swimlanes.js` was one flat file of small top-level declarations, so it looked like a cheap
+split, but the line count hid two hazards: every "pure" helper was private to the file, and the
+bottom third was a second feature (the settings UI) that reads the same helpers as the board
+renderer. Two files cap out at 498, so 698 lines need at least three; the shared vocabulary has
+to be extracted *below* both features rather than moved sideways. It lands as four new modules
+plus the reduced original.
+
+| Lines before | Lines after | File |
+|---:|---:|---|
+| 698 | 233 | modules/swimlanes.js |
+| - | 180 | modules/swimlane-lane-model.js |
+| - | 68 | modules/swimlane-collapse.js |
+| - | 122 | modules/swimlane-order.js |
+| - | 142 | modules/swimlane-controls.js |
+
+**`swimlane-lane-model.js` (180)** is the lane vocabulary: the six exported `SWIMLANE_*` /
+`NO_GROUP_*` constants, `PRIORITY_LANE_LABELS`, the private `SWIMLANE_GROUP_BY_VALUES` set, and
+the thirteen pure normalizers/selectors (`normalizeSelectedLabelGroup`, `normalizeGroupBy`,
+`normalizeCollapsedLaneKeys`, `normalizePriorityLaneKey`, `getPriorityLaneDescriptor`,
+`normalizeLabelCollection`, `getAvailableLabelGroupsFromCollection`, `getSelectedLabelGroup`,
+`getLabelsForSelectedGroup`, `getSelectedGroupLaneLabel`, `getTaskLabelIds`,
+`getExplicitLaneValue`, `getFallbackLaneDescriptor`). It reads only `constants.js` (`PRIORITIES`)
+and touches no DOM, no settings and no Sortable, so it is the bottom of the tree and the one
+place the label/priority vocabulary is defined.
+
+Its role is forced by the cycle rule. The board renderer, the collapse state, the lane-order
+editor and the settings controls all need `normalizeGroupBy` and its neighbours; leaving them in
+`swimlanes.js` would make every new module import the file it came out of. Extracting them first
+turns one flat file into a two-level tree whose leaves are shared, which is the only shape that
+keeps every new module free of a back-edge.
+
+**`swimlanes.js` (233)** keeps the board-level API: `getSwimLaneDescriptor`,
+`groupTasksBySwimLane`, `buildBoardGrid`, `getVisibleTasksForLane`,
+`getHiddenTaskCountForLane` and `applySwimLaneAssignment`. `applySwimLaneAssignment` stayed here
+rather than getting its own module because it is the write counterpart of
+`getSwimLaneDescriptor` - the same label/priority branch run backwards to produce the next task -
+and `task-position.js`, its only caller, keeps importing it from `swimlanes.js` unchanged. That
+is the one consumer this split did not have to touch.
+
+**`swimlane-collapse.js` (68)** is the settings-backed collapse state: `isSwimLaneCollapsed`,
+`toggleSwimLaneCollapsed`, `makeCellCollapseKey`, `isSwimLaneCellCollapsed`,
+`toggleSwimLaneCellCollapsed`, plus the private `CELL_KEY_DELIMITER` and
+`normalizeCellCollapsedKeys`. Lane collapse keys and cell (`lane::column`) keys are the same
+read-modify-write over `swimLaneCollapsedKeys` / `swimLaneCellCollapsedKeys` in `storage.js`, and
+nothing outside this group reads either key. `applySwimLaneAssignment` was deliberately *not*
+folded in here despite being adjacent in the original: it never touches settings, and pulling it
+in would put a pure function behind a module named for a UI state.
+
+**`swimlane-order.js` (122)** is the lane-order editor: `getAvailableLanes`,
+`mergeWithSavedOrder`, `renderLaneOrderList`, `initLaneOrderSortable`, plus the module-level
+`laneOrderSortable` handle. This is the only group that owns a mutable Sortable instance and the
+only one that reads `swimLaneOrder` out of `settings` and writes it back on drop, so the state
+stays with its reader. The four functions were private in the original and become exports because
+the controls module is now their only caller, in one direction.
+
+**`swimlane-controls.js` (142)** is the settings UI wiring: `syncSwimLaneControls` and
+`initializeSwimLaneControls`, including the four change listeners the latter registers. It is the
+only module that imports `swimlane-order.js`; the arrow `controls -> order` is the seam that lets
+the drag handler stay out of the settings module.
+
+**What was deliberately left behind, and why.** Everything above is the whole split - no function
+was rewritten and no moved body was reindented. In particular:
+
+- `applySwimLaneAssignment` stays in `swimlanes.js` (see above): moving it would force
+  `task-position.js` to import a module whose name ("collapse") does not describe it, for no
+  line-count gain.
+- `getVisibleTasksForLane` / `getHiddenTaskCountForLane` stay next to the grid builder - they are
+  the done-column read side of `buildBoardGrid`, both call `isDoneColumnId`, and nothing else in
+  the file does.
+- The dead `loadTasks` import was dropped while the import preamble was rewritten. It had no
+  caller in the file; removing an unused binding is not a behaviour change and matches the
+  `getActiveBoardName` precedent from the `boards-modal.js` split.
+
+**Consumers and mocks.** No `vi.mock(...swimlanes.js...)` exists anywhere in the suite, so no
+mock went inert and none had to be re-pointed - checked with a grep for `vi.mock` on `swimlane`,
+which returns nothing. Four import blocks changed: `kanban.js` and `render.js` now take
+`initializeSwimLaneControls` / `syncSwimLaneControls` from `./swimlane-controls.js`;
+`swimlane-renderer.js` keeps the four grid/visibility symbols on `./swimlanes.js` and takes the
+four collapse symbols from `./swimlane-collapse.js`; and `tests/unit/swimlanes-utils.test.js`
+takes the six constants from `../../src/modules/swimlane-lane-model.js` and keeps
+`buildBoardGrid`, `getVisibleTasksForLane` and `groupTasksBySwimLane` on `swimlanes.js`. The
+test's `getSwimLaneValue` and `moveTask` imports are *not* re-homed: neither symbol exists
+anywhere in `client/src` - they were already inert named imports from the old file and stay inert
+on the same target rather than being "moved" to a module that never exported them.
+`task-position.js` was not edited at all.
+
+**Dependency direction, verified rather than eyeballed.** The move script asserts that no new
+module references `./swimlanes.js`, and an import-graph walk over the nine involved files
+confirms the graph is acyclic:
+
+```
+kanban.js            -> render.js, swimlane-controls.js
+render.js            -> swimlane-controls.js, swimlane-renderer.js
+swimlane-renderer.js -> swimlane-collapse.js, swimlanes.js
+task-position.js     -> swimlanes.js
+swimlanes.js         -> swimlane-lane-model.js
+swimlane-controls.js -> swimlane-lane-model.js, swimlane-order.js
+swimlane-order.js    -> swimlane-lane-model.js
+swimlane-collapse.js -> swimlane-lane-model.js
+```
+
+The only edges into `swimlanes.js` are the external consumers (`swimlane-renderer.js`,
+`task-position.js`); no module extracted from it points back, and `swimlane-lane-model.js` is a
+sink whose only outgoing repo edge is `constants.js`. `swimlanes.js` imports none of
+`collapse`/`order`/`controls` either, so the two feature halves (board render vs settings UI) only
+meet at the lane-model sink.
+
+**Script discipline.** The split ran as a Node script over the original LF text with a first-line,
+last-line and interior-anchor assertion on all ten ranges, a disjointness assertion, a coverage
+assertion that every non-empty original line from the end of the import preamble onward belongs to
+exactly one range, and a `< 250` line-count assertion on each of the five outputs *before*
+writing. It also asserts that no moved definition was left in `swimlanes.js`, that no kept
+definition leaked into a module, that every imported identifier is used, and that no new module
+imports `swimlanes.js`. The first run wrote all five files and passed every one of its own
+assertions, and the *build* still caught the one thing the script had missed:
+`PRIORITY_LANE_LABELS` is a `const` in the moved block, so the "prefix the top-level functions
+with `export`" transform never touched it, and `swimlane-order.js` imported a name
+`swimlane-lane-model.js` did not export. rolldown's `MISSING_EXPORT` was the catch; the fix is
+one `export` keyword, and the lesson is that a function-shaped export transform has to enumerate
+the consts too.
+
+**Verification.** Build 0, unit 307/307, dom 180/180, with no per-test timeout. Final line
+counts: `swimlanes.js` 698 -> 233, plus the new `swimlane-lane-model.js` 180,
+`swimlane-collapse.js` 68, `swimlane-order.js` 122 and `swimlane-controls.js` 142. Consumer
+deltas: `swimlane-renderer.js` 204 -> 206 and `tests/unit/swimlanes-utils.test.js` 95 -> 97;
+`render.js` (226), `kanban.js` (157) and `task-position.js` (239) are unchanged in length.
