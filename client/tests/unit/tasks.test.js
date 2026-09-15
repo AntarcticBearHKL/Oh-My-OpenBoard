@@ -1,7 +1,9 @@
 import { test, expect, beforeEach } from 'vitest';
 import { resetLocalStorage } from './setup.js';
 import { createBoard, getActiveBoardId, loadDeletedTasksForBoard, loadTasks, saveColumns, saveLabels, saveSettings, saveTasks } from '../../src/modules/storage.js';
-import { addTask, updateTask, deleteTask, moveTaskToTopInColumn, setTaskBlockedReason, updateTaskPositionsFromDrop } from '../../src/modules/tasks.js';
+import { addTask, deleteTask, moveTaskToTopInColumn, setTaskBlockedReason } from '../../src/modules/tasks.js';
+import { updateTask } from '../../src/modules/task-update.js';
+import { updateTaskPositionsFromDrop } from '../../src/modules/task-position.js';
 
 const BLOCKED_COLUMN_ID = '00000000-0000-4000-8000-000000000032';
 

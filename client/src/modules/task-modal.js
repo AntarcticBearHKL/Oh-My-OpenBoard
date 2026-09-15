@@ -2,7 +2,8 @@
 
 import { isDoneColumnId, loadLabels, loadColumns, loadSettings, loadTasks } from './storage.js';
 import { formatTimestamp } from './dateutils.js';
-import { addAnnotation, addTask, isTaskLocked, removeAnnotation, setTaskBlockedReason, updateTask } from './tasks.js';
+import { addAnnotation, addTask, isTaskLocked, removeAnnotation, setTaskBlockedReason } from './tasks.js';
+import { updateTask } from './task-update.js';
 import { renderIcons } from './icons.js';
 import { validateAndShowTaskTitleError, clearFieldError } from './validation.js';
 import { createAccordionSection } from './accordion.js';

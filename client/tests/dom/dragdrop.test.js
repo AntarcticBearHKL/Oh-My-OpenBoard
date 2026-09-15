@@ -22,9 +22,12 @@ vi.mock('sortablejs', () => ({
 }));
 
 vi.mock('../../src/modules/tasks.js', () => ({
-  updateTaskPositionsFromDrop: mocks.updateTaskPositionsFromDrop,
   moveTaskToTopInColumn: mocks.moveTaskToTopInColumn,
   setTaskBlockedReason: mocks.setTaskBlockedReason,
+}));
+
+vi.mock('../../src/modules/task-position.js', () => ({
+  updateTaskPositionsFromDrop: mocks.updateTaskPositionsFromDrop,
 }));
 
 vi.mock('../../src/modules/dialog.js', () => ({

@@ -1,4 +1,5 @@
-import { moveTaskToTopInColumn, setTaskBlockedReason, updateTaskPositionsFromDrop } from './tasks.js';
+import { moveTaskToTopInColumn, setTaskBlockedReason } from './tasks.js';
+import { updateTaskPositionsFromDrop } from './task-position.js';
 import { emit, DATA_CHANGED, DRAG_RECONCILE_BEGIN, DRAG_RECONCILE_END } from './events.js';
 import { promptDialog } from './dialog.js';
 import { isSwimlaneViewEnabled, cleanupTaskDragState } from './drag-session.js';

@@ -20,11 +20,14 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('../../src/modules/tasks.js', () => ({
   addTask: mocks.addTask,
-  updateTask: mocks.updateTask,
   setTaskBlockedReason: mocks.setTaskBlockedReason,
   addAnnotation: mocks.addAnnotation,
   removeAnnotation: mocks.removeAnnotation,
   isTaskLocked: mocks.isTaskLocked
+}));
+
+vi.mock('../../src/modules/task-update.js', () => ({
+  updateTask: mocks.updateTask
 }));
 
 vi.mock('../../src/modules/storage.js', () => ({

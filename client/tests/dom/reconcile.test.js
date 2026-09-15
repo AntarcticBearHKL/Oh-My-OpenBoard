@@ -43,6 +43,10 @@ beforeEach(() => {
   refreshNotifications.mockClear();
 });
 
+// Warm the render graph here: the first import of render.js transforms its whole
+// module graph, which does not fit in vitest's 5s per-test budget under load.
+await import('../../src/modules/render.js');
+
 function mountStandardBoard() {
   mountToBody(`
     <div id="board-container" data-view-mode="columns">

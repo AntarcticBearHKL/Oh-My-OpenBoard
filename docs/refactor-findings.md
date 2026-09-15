@@ -1131,3 +1131,122 @@ a module and that no module references `importexport.js`.
 Final line counts: `importexport.js` 664 -> 210, `import-board.js` 462 -> 90, plus the new
 `import-payload.js` 213 and `import-normalize.js` 164; every file is under the 250 ceiling.
 Verification: build 0, unit 307/307, dom 180/180.
+
+### Batch 10: tasks.js split (743 to 187; 743 = 187 + 117 + 219 + 239)
+
+Unlike `importexport.js`, this file could not be split into two. `updateTask` alone is 204
+lines, so a single "rest" module would have violated the ceiling it was meant to fix. It
+lands as three new modules plus the reduced original:
+
+| Lines before | Lines after | File |
+|---:|---:|---|
+| 743 | 187 | modules/tasks.js |
+| - | 117 | modules/task-helpers.js |
+| - | 219 | modules/task-update.js |
+| - | 239 | modules/task-position.js |
+
+**`task-update.js` (219)** owns exactly `updateTask` and nothing else - the 204-line writer
+plus its imports. It is the only module allowed to know all ten event types that function
+emits, and it was left as one unsplit block on purpose: the changed-field diff, the
+relationship/label/subtask event fan-out and the column-history push all read and write the
+same `tasks[taskIndex]`, so cutting it further would thread that mutable record through
+several modules for no line-count gain.
+
+**`task-position.js` (239)** is the DOM-to-order drop path: `getColumnContainer`,
+`getLaneKey`, `buildOrderByColumnFromDom` and `updateTaskPositionsFromDrop`, plus the
+existing doc comment. These are the only functions in the file that touch `document` and
+the only ones that read order out of the DOM, so they travel together. This file is the
+closest to the ceiling, and the reason `reorderColumnTasks` did **not** go here: the group
+as originally proposed (the four above plus `reorderColumnTasks`) is 245 lines before its
+imports and would have been over 250 after them - a new file over the ceiling relocates the
+violation rather than fixing it.
+
+**`task-helpers.js` (117)** is the internal shared layer: `RELATIONSHIP_INVERSE`,
+`relationshipKey`, `syncRelationshipInverses`, `normalizeAgileFields`, `sameJson`,
+`normalizeDueDate` and `reorderColumnTasks`. Every one of these is used by the create/update
+writers or by both the update writer and the drop path, so they cannot live in either
+consumer without one importing the other. `syncRelationshipInverses` was the clearest case:
+`addTask` and `updateTask` both call it, and it is the only place the inverse map is read.
+
+**What stayed in `tasks.js` and why.** The public surface is the remaining writers:
+`addTask`, `deleteTask`, `setTaskBlockedReason`, `moveTaskToTopInColumn`, `addAnnotation`,
+`removeAnnotation` and `isTaskLocked`, plus the private `emitTaskFields` that the two
+annotation writers share. They are all thin wrappers over `loadTasks` +
+`scheduleDomainEvent`, they call no DOM and no `updateTask`, and nothing in the file
+references the drop path, so the group is genuinely self-contained and leaves the file at
+187 lines with room to spare.
+
+**Dead helpers - reported, not deleted.** `getColumnName`, `getLabelName` and `getTaskTitle`
+have no caller anywhere in `client/src` or `client/tests`; the only hits are their own
+definitions. They were kept (deletion is a separate decision) and moved to `task-helpers.js`
+as unexported internals, which is also why that module imports `loadColumns`. They are the
+one part of the new tree that is dead code.
+
+**Dependency direction, verified rather than eyeballed.** The graph is strictly one-way and
+acyclic:
+
+```
+tasks.js         -> task-helpers.js, storage.js, normalize.js, agile.js,
+                    utils.js, constants.js, event-sourcing/emitter.js
+task-update.js   -> task-helpers.js, storage.js, normalize.js, agile.js,
+                    event-sourcing/emitter.js
+task-position.js -> task-helpers.js, storage.js, normalize.js, agile.js,
+                    swimlanes.js, event-sourcing/emitter.js
+task-helpers.js  -> storage.js, agile.js
+```
+
+No new module imports `./tasks.js`, and `tasks.js` imports none of the modules that were
+extracted out of it, so there is no back-edge in either direction. The move script asserts
+this (`!content.includes("from './tasks.js'")` for each new module) instead of trusting the
+author. On the swimlane question: `swimlanes.js` does **not** import `tasks.js` - it imports
+only `sortablejs`, `storage.js` and `constants.js`, and its sole in-repo consumer is
+`render.js`/`swimlane-renderer.js`. The only edge today is `tasks.js -> swimlanes.js`
+(`applySwimLaneAssignment`), and after the split it is `task-position.js -> swimlanes.js`;
+the direction is unchanged and no pre-existing cycle was worsened, because none existed.
+`normalizeDueDate` deserves a note as a near-miss: `normalize.js` exports a different
+`normalizeDueDate` that strips an ISO time portion, while the tasks-local one only trims.
+The local version was moved verbatim into `task-helpers.js` (which imports nothing from
+`normalize.js` for it) so the create/update semantics are byte-identical.
+
+**Consumers and mocks.** `task-modal.js` now takes `updateTask` from `task-update.js` and
+the rest from `tasks.js`; `task-drop.js` takes `updateTaskPositionsFromDrop` from
+`task-position.js`. The two event-sourcing DOM tests and the unit `tasks.test.js` had their
+imports split three ways. Two `vi.mock` targets had to move, or the mock would have gone
+inert and let the real module load (the failure mode this document already records for
+`boards-modal.js`): `dragdrop.test.js` now mocks `task-position.js` for
+`updateTaskPositionsFromDrop`, and `task-modal-agile.test.js` /
+`task-modal-annotations.test.js` mock `task-update.js` for `updateTask`. The `deleteTask`
+mocks stay on `tasks.js`, where `deleteTask` still lives. Net consumer deltas:
+`task-drop.js` 79 -> 80, `task-modal.js` 1363 -> 1364, `tasks.test.js` 497 -> 499,
+`replay-fidelity.test.js` 157 -> 159, `feature-modules-emit-events.test.js` 126 -> 127,
+`dragdrop.test.js` 261 -> 264, `task-modal-agile.test.js` 312 -> 315,
+`task-modal-annotations.test.js` 393 -> 396.
+
+**Script discipline.** The split ran as a Node script over `/\r?\n/` with a first/last-line
+assertion on all 23 ranges, a disjointness assertion, a coverage assertion that every
+non-empty original line from the end of the import preamble onward belongs to exactly one
+range, a `< 250` line-count assertion on each output *before* writing, and postconditions
+that no moved definition was left in `tasks.js`, that no required import is missing, that no
+declared import is unused, and that no foreign identifier leaked into the wrong module. It
+writes nothing unless every assertion holds.
+
+**A follow-up this split forced.** The first full-suite run after the move was red: the first
+test in `tests/dom/reconcile.test.js` timed out at 5000ms, reproducibly. The split added three
+modules to the graph `render.js` pulls in, and that file's first test pays the whole graph
+transform inside its own 5s budget. In isolation the file is fine (10/10, with only 1.2s of
+test time against 4.3s of jsdom setup); under the 26-file parallel run it is not.
+
+Hoisting that file's `await import(...)` to module scope is not the fix: it mocks
+`notifications.js` with a factory closing over a top-level `const refreshNotifications`, so a
+static import hits its temporal dead zone (`Cannot access 'refreshNotifications' before
+initialization`) - which is why the file imports dynamically at all. The fix is a module-scope
+warm `await import('../../src/modules/render.js')` placed after the mocks: the transform is
+paid once at collection time, outside any per-test budget, and the cached module keeps the
+per-test imports instant.
+
+Six other DOM files use the same dynamic-import-in-test pattern (`dragdrop`, `skills-modal`,
+`authsync`, `task-row`, `task-card-delete`, `task-row-agile`). They are green today, but every
+further Batch 10 split grows the graph, so this is the first place to look when one of them
+starts timing out.
+
+Verification: build 0, unit 307/307, dom 180/180.

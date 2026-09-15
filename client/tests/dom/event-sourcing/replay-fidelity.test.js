@@ -16,7 +16,9 @@ import {
   _flushPersistsForTesting,
   _resetStorageForTesting
 } from '../../../src/modules/storage.js';
-import { addTask, updateTask, updateTaskPositionsFromDrop } from '../../../src/modules/tasks.js';
+import { addTask } from '../../../src/modules/tasks.js';
+import { updateTask } from '../../../src/modules/task-update.js';
+import { updateTaskPositionsFromDrop } from '../../../src/modules/task-position.js';
 import { applyEvents, createProjectionState } from '../../../src/modules/reducer.js';
 import { DONE_COLUMN_ID, DONE_COLUMN_ROLE } from '../../../src/modules/constants.js';
 

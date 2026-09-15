@@ -4,7 +4,8 @@ import { EVENT_EMITTED, on, off } from '../../../src/modules/events.js';
 import { createBoard, initStorage, saveColumns, saveTasks, _flushPersistsForTesting, _resetStorageForTesting } from '../../../src/modules/storage.js';
 import { addColumn } from '../../../src/modules/columns.js';
 import { addLabel, deleteLabel } from '../../../src/modules/labels.js';
-import { deleteTask, updateTask } from '../../../src/modules/tasks.js';
+import { deleteTask } from '../../../src/modules/tasks.js';
+import { updateTask } from '../../../src/modules/task-update.js';
 
 const DB_NAME = 'openagile-db';
 
