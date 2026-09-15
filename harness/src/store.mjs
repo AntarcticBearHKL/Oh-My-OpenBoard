@@ -118,6 +118,7 @@ function appendEvent(raw) {
   events.push(event);
   seenIds.add(event.id);
   schedulePersist();
+  if (events.length >= COMPACT_AFTER_EVENTS) compactEvents();
   return event;
 }
 
@@ -152,10 +153,56 @@ export function emit(type, {
   return appendEvent(event);
 }
 
+// ── Compaction ────────────────────────────────────────────────────────────────
+
+// Highest seq already folded into the persisted read-model snapshot (0 = never
+// compacted). Clients that are behind hydrate from /api/snapshot at boot and tail
+// from snapshot.seq, so a trimmed range is never replayed.
+let trimSeq = 0;
+const COMPACT_AFTER_EVENTS = 5000;
+
+function snapshotReadModel() {
+  return {
+    seq: meta.seq,
+    boards,
+    tasksByBoard: [...tasksByBoard.entries()],
+    columnsByBoard: [...columnsByBoard.entries()],
+    labelsByBoard: [...labelsByBoard.entries()],
+    settingsByBoard: [...settingsByBoard.entries()],
+    globalSettings
+  };
+}
+
+function hydrateReadModel(snapshot) {
+  if (!snapshot || typeof snapshot !== "object") return false;
+  if (Array.isArray(snapshot.boards)) boards = snapshot.boards;
+  const restore = (map, entries) => {
+    map.clear();
+    for (const [key, value] of Array.isArray(entries) ? entries : []) map.set(key, value);
+  };
+  restore(tasksByBoard, snapshot.tasksByBoard);
+  restore(columnsByBoard, snapshot.columnsByBoard);
+  restore(labelsByBoard, snapshot.labelsByBoard);
+  restore(settingsByBoard, snapshot.settingsByBoard);
+  if (snapshot.globalSettings && typeof snapshot.globalSettings === "object") globalSettings = snapshot.globalSettings;
+  return true;
+}
+
 // ── Persistence ───────────────────────────────────────────────────────────────
 
 function persistNow() {
-  const payload = JSON.stringify({ nodeId: meta.nodeId, seq: meta.seq, events, groups, boardGroups, noBoards, skills, skillsSeeded });
+  const payload = JSON.stringify({
+    nodeId: meta.nodeId,
+    seq: meta.seq,
+    trimSeq,
+    snapshot: trimSeq > 0 ? snapshotReadModel() : null,
+    events,
+    groups,
+    boardGroups,
+    noBoards,
+    skills,
+    skillsSeeded
+  });
   const tmp = `${STATE_FILE}.tmp`;
   writeFileSync(tmp, payload);
   renameSync(tmp, STATE_FILE);
@@ -172,6 +219,18 @@ function schedulePersist() {
 export function flushStore() {
   if (persistTimer) { clearTimeout(persistTimer); persistTimer = null; }
   try { persistNow(); } catch { /* ignore */ }
+}
+
+// Fold the whole log into a read-model snapshot and drop it. `getStats().trimSeq`
+// reports the floor. Note this forgets event ids: a client that re-posts an event
+// from before the floor after a restart is no longer rejected by id (the
+// *.created dedupe still applies).
+export function compactEvents() {
+  if (events.length === 0) return { compacted: false, seq: meta.seq, trimSeq };
+  trimSeq = meta.seq;
+  events = [];
+  schedulePersist();
+  return { compacted: true, seq: meta.seq, trimSeq };
 }
 
 // ── Seed ──────────────────────────────────────────────────────────────────────
@@ -208,6 +267,7 @@ export function initStore() {
 
   // Replay persisted events in commit (seq) order to rebuild the read model.
   let loadedEvents = [];
+  let loadedSnapshot = null;
   if (existsSync(STATE_FILE)) {
     try {
       const loaded = JSON.parse(readFileSync(STATE_FILE, 'utf8'));
@@ -221,6 +281,8 @@ export function initStore() {
       if (loaded?.noBoards === true) noBoards = true;
       if (Array.isArray(loaded?.skills)) skills = loaded.skills;
       if (loaded?.skillsSeeded === true) skillsSeeded = true;
+      if (Number.isFinite(loaded?.trimSeq)) trimSeq = loaded.trimSeq;
+      if (loaded?.snapshot && typeof loaded.snapshot === "object") loadedSnapshot = loaded.snapshot;
     } catch (err) {
       console.error('[harness] state file unreadable, starting fresh', err?.message);
       meta = { nodeId: null, seq: 0 };
@@ -234,8 +296,13 @@ export function initStore() {
   if (!meta.nodeId) meta.nodeId = randomUUID();
   initHlc(meta.nodeId);
 
+  // A persisted snapshot already contains every event at or below its seq, so
+  // those are not replayed (the log holds only what came after it).
+  const snapshotSeq = hydrateReadModel(loadedSnapshot) && Number.isFinite(loadedSnapshot.seq) ? loadedSnapshot.seq : 0;
+
   for (const event of loadedEvents) {
     if (!event?.id || seenIds.has(event.id)) continue;
+    if (Number.isFinite(event.seq) && event.seq <= snapshotSeq) { seenIds.add(event.id); continue; }
     if (!Number.isFinite(event.seq)) event.seq = ++meta.seq;
     else meta.seq = Math.max(meta.seq, event.seq);
     if (event.hlc) observeRemote(event.hlc);
@@ -333,6 +400,7 @@ export function getStats() {
     boards: getBoards().length,
     events: events.length,
     seq: meta.seq,
+    trimSeq,
     nodeId: meta.nodeId
   };
 }

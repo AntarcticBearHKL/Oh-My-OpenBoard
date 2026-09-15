@@ -2027,3 +2027,36 @@ material is the user's call rather than a side effect of removing tests:
 **Still open from §4:** the user chose "keep groups/skills as out-of-band state" and nothing else, so
 `globalSettings` (keep and add a `scope:'global'` emitter, or delete the inert path) and whether
 `GET /api/health` keeps doubling as the PocketBase probe fallback remain undecided.
+
+## P4: the harness log now compacts
+
+The last agreed item. `state.json` grew without bound: the store kept every event forever and
+rebuilt its read model by replaying the whole log at startup. The client has `gcEvents`; the harness
+had no equivalent.
+
+`store.mjs` now persists a **read-model snapshot** alongside the log (`snapshot` + `trimSeq`), and
+`compactEvents()` folds the whole log into that snapshot and drops it. `initStore()` hydrates from the
+snapshot and replays only what came after it. A state file with no snapshot behaves exactly as before -
+which is why the running harness picked the change up without touching its existing `state.json`
+(`trimSeq: 0`). Compaction also runs automatically once the log passes 5000 events, and `getStats()`,
+which `/api/harness` serves, reports the floor.
+
+**Why this is safe for a client:** `local-server.js` fetches `/api/snapshot` at boot and hydrates
+whenever it is behind (`lastSeq === 0 || snapshot.seq > lastSeq`), then tails strictly after
+`snapshot.seq` - its own comment says "no replay gap and no duplicate application". A trimmed range is
+therefore never replayed. Two bounds are worth knowing: a *live* EventSource that stays disconnected
+longer than the retained window reconnects with a stale `since` and would see a gap, and compaction
+forgets event ids, so after a restart a client re-posting an event from below the floor is no longer
+rejected by id (the `*.created` dedupe still applies).
+
+Verified by two new `harness/test.mjs` tests (7 pass, 0 fail): compaction keeps the read model and
+leaves a snapshot with an empty log in the file, and a **child process** re-opening the store from that
+file rebuilds the same boards and tasks - a real restart, not a simulation.
+
+Two notes from doing it: the running harness died twice today with `Failed running 'src/server.mjs'`
+followed by a `^C`, both times after a burst of `node --watch` restarts (once during Batch 10, once
+here). The log shows a *successful* start - banner, `events: 52` - immediately before the failure, and
+`harness/test.mjs` passes, so it is not the store change; restart it with `harness/start-bg.ps1`. And
+`String.prototype.replace` treats `$'` in the *replacement* as "everything after the match", which
+silently spliced a whole `after(...)` block into the middle of a generated test file - use
+`split(...).join(...)` for scripted edits, not `replace`.
