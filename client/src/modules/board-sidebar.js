@@ -26,8 +26,7 @@ import {
   readBoardGroupMap,
   renameGroup,
   toggleGroupCollapsed,
-  toggleGroupPrefixCollapsed,
-  UNTITLED_GROUP_NAME
+  toggleGroupPrefixCollapsed
 } from './board-groups.js';
 
 function findGroupElement(listEl, groupId) {
@@ -61,7 +60,7 @@ export function initializeBoardSidebar() {
     emit(DATA_CHANGED);
   };
 
-  const startGroupRename = (groupId, { fallbackName = '', onCancel } = {}) => {
+  const startGroupRename = (groupId) => {
     const groupEl = findGroupElement(listEl, groupId);
     const nameEl = groupEl?.querySelector('.board-group-name');
     if (!nameEl) return;
@@ -77,12 +76,8 @@ export function initializeBoardSidebar() {
     const finish = (commit) => {
       if (settled) return;
       settled = true;
-      if (!commit) {
-        if (onCancel) onCancel();
-      } else {
-        const name = input.value.trim() || fallbackName;
-        if (name) renameGroup(groupId, name);
-      }
+      const name = input.value.trim();
+      if (commit && name) renameGroup(groupId, name);
       render();
     };
 
@@ -100,6 +95,56 @@ export function initializeBoardSidebar() {
     nameEl.replaceWith(input);
     input.focus();
     input.select();
+  };
+
+  const openGroupCreateInput = () => {
+    const existing = listEl.querySelector('.board-group-create-input');
+    if (existing) {
+      existing.focus();
+      return;
+    }
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'board-group-create-input';
+    input.maxLength = 60;
+    input.setAttribute('aria-label', 'Group name');
+
+    const row = document.createElement('li');
+    row.className = 'board-group-create';
+    row.appendChild(input);
+
+    let settled = false;
+    const close = () => {
+      if (settled) return false;
+      settled = true;
+      row.remove();
+      return true;
+    };
+    const commit = () => {
+      const name = input.value.trim();
+      if (!name || !close()) return false;
+      createGroup(name);
+      render();
+      return true;
+    };
+
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        if (!commit()) input.focus();
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        close();
+      }
+    });
+    input.addEventListener('blur', () => {
+      if (input.value.trim()) commit();
+      else close();
+    });
+
+    listEl.appendChild(row);
+    input.focus();
   };
 
   const buildBoardItem = (board, activeId, label) => {
@@ -319,12 +364,5 @@ export function initializeBoardSidebar() {
   render();
   on(DATA_CHANGED, render);
 
-  document.getElementById('add-group-btn')?.addEventListener('click', () => {
-    const group = createGroup();
-    render();
-    startGroupRename(group.id, {
-      fallbackName: UNTITLED_GROUP_NAME,
-      onCancel: () => deleteGroup(group.id)
-    });
-  });
+  document.getElementById('add-group-btn')?.addEventListener('click', openGroupCreateInput);
 }

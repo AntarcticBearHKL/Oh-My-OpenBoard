@@ -43,8 +43,7 @@ import {
   assignBoardToGroup,
   createGroup,
   listGroups,
-  readBoardGroupMap,
-  UNTITLED_GROUP_NAME
+  readBoardGroupMap
 } from '../../src/modules/board-groups.js';
 
 const FIXTURE = `
@@ -338,61 +337,72 @@ describe('sidebar group tree', () => {
     expect(listGroups().map((entry) => entry.name)).toEqual(['Draft']);
   });
 
-  test('#add-group-btn opens the inline rename input and stores the typed name', () => {
+  test('#add-group-btn opens a name input without creating a group', () => {
     initializeBoardSidebar();
     const before = listGroups().map((group) => group.id);
 
     fireEvent.click(document.getElementById('add-group-btn'));
 
-    const input = document.querySelector('.board-group-rename-input');
+    const input = document.querySelector('.board-group-create-input');
     expect(input).not.toBeNull();
     expect(document.activeElement).toBe(input);
-    expect(input.selectionStart).toBe(0);
-    expect(input.selectionEnd).toBe(input.value.length);
+    expect(input.value).toBe('');
+    expect(listGroups().map((group) => group.id)).toEqual(before);
+    expect(groupElements()).toHaveLength(before.length);
 
+    expect(fireEvent.keyDown(input, { key: 'Q' })).toBe(true);
+  });
+
+  test('committing the typed name creates the group with that name', () => {
+    initializeBoardSidebar();
+    const before = listGroups().map((group) => group.id);
+
+    fireEvent.click(document.getElementById('add-group-btn'));
+    const input = document.querySelector('.board-group-create-input');
     input.value = 'Q3 delivery';
     fireEvent.keyDown(input, { key: 'Enter' });
 
-    const added = listGroups().find((group) => !before.includes(group.id));
-    expect(added.name).toBe('Q3 delivery');
+    const added = listGroups().filter((group) => !before.includes(group.id));
+    expect(added).toHaveLength(1);
+    expect(added[0].name).toBe('Q3 delivery');
     expect(groupByName('Q3 delivery')).not.toBeUndefined();
     expect(listGroups().some((group) => group.name === 'New Group' && !before.includes(group.id))).toBe(false);
+    expect(document.querySelector('.board-group-create-input')).toBeNull();
   });
 
-  test('Escape discards a brand-new group instead of keeping a placeholder name', () => {
+  test('committing an empty name creates nothing and keeps the input open', () => {
     initializeBoardSidebar();
     const before = listGroups().map((group) => group.id);
 
     fireEvent.click(document.getElementById('add-group-btn'));
-    const input = document.querySelector('.board-group-rename-input');
-    input.value = 'Half typed';
-    fireEvent.keyDown(input, { key: 'Escape' });
-
-    expect(document.querySelector('.board-group-rename-input')).toBeNull();
-    expect(listGroups().map((group) => group.id)).toEqual(before);
-    expect(groupElements()).toHaveLength(before.length);
-  });
-
-  test('committing an empty name falls back to Untitled group', () => {
-    initializeBoardSidebar();
-    const before = listGroups().map((group) => group.id);
-
-    fireEvent.click(document.getElementById('add-group-btn'));
-    const input = document.querySelector('.board-group-rename-input');
+    const input = document.querySelector('.board-group-create-input');
     input.value = '   ';
     fireEvent.keyDown(input, { key: 'Enter' });
 
-    const added = listGroups().find((group) => !before.includes(group.id));
-    expect(UNTITLED_GROUP_NAME).toBe('Untitled group');
-    expect(added.name).toBe(UNTITLED_GROUP_NAME);
-    expect(groupByName(UNTITLED_GROUP_NAME)).not.toBeUndefined();
+    expect(listGroups().map((group) => group.id)).toEqual(before);
+    expect(document.querySelector('.board-group-create-input')).toBe(input);
+    expect(document.activeElement).toBe(input);
+  });
+
+  test('Escape cancels the new-group input and creates nothing', () => {
+    initializeBoardSidebar();
+    const before = listGroups().map((group) => group.id);
+
+    fireEvent.click(document.getElementById('add-group-btn'));
+    const input = document.querySelector('.board-group-create-input');
+    input.value = 'Half typed';
+    fireEvent.keyDown(input, { key: 'Escape' });
+
+    expect(document.querySelector('.board-group-create-input')).toBeNull();
+    expect(listGroups().map((group) => group.id)).toEqual(before);
+    expect(groupElements()).toHaveLength(before.length);
   });
 
   test('a group created from the add control is still renameable afterwards', () => {
     initializeBoardSidebar();
 
     fireEvent.click(document.getElementById('add-group-btn'));
-    const input = document.querySelector('.board-group-rename-input');
+    const input = document.querySelector('.board-group-create-input');
     input.value = 'Delivery';
     fireEvent.keyDown(input, { key: 'Enter' });
 

@@ -408,6 +408,29 @@ a.control-btn {
   outline-offset: -2px;
 }
 
+.board-group-create {
+  list-style: none;
+  padding: 0 var(--space-2) 0 var(--space-1);
+}
+
+.board-group-create-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--sidebar-hover);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.board-group-create-input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
 .board-group-actions {
   display: inline-flex;
   align-items: center;
