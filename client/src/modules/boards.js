@@ -5,29 +5,17 @@ import {
   createBoard,
   setActiveBoardId
 } from './storage.js';
-import { assignBoardToGroup, nextIterationName } from './board-groups.js';
+import { nextIterationName } from './board-groups.js';
 import { refreshBoardSelect, boardSelectMatchesState, refreshBrandText } from './board-select.js';
-
-let pendingGroupId = null;
 
 // Board Create Modal helpers
 export function showBoardCreateModal() {
-  const modal = document.getElementById('board-create-modal');
-  if (!modal) return;
-
-  const titleEl = document.getElementById('board-create-modal-title');
-  const submitBtn = document.getElementById('board-create-submit-btn');
-  const isIteration = Boolean(pendingGroupId);
-  if (titleEl) titleEl.textContent = isIteration ? 'New Iteration' : 'Create New Board';
-  if (submitBtn) submitBtn.textContent = isIteration ? 'Create Iteration' : 'Create Board';
-
-  modal.classList.remove('hidden');
+  document.getElementById('board-create-modal')?.classList.remove('hidden');
 }
 
 function hideBoardCreateModal() {
   const modal = document.getElementById('board-create-modal');
   if (modal) modal.classList.add('hidden');
-  pendingGroupId = null;
 }
 
 export function initializeBoardsUI() {
@@ -50,8 +38,7 @@ export function initializeBoardsUI() {
     }
   });
 
-  document.addEventListener('kanban:open-board-create', (event) => {
-    pendingGroupId = event?.detail?.groupId || null;
+  document.addEventListener('kanban:open-board-create', () => {
     showBoardCreateModal();
   });
 
@@ -95,10 +82,8 @@ export function initializeBoardsUI() {
     createForm.addEventListener('submit', (e) => {
       e.preventDefault();
 
-      const board = createBoard(nextIterationName(pendingGroupId));
+      const board = createBoard(nextIterationName(null));
       setActiveBoardId(board.id);
-
-      if (pendingGroupId) assignBoardToGroup(board.id, pendingGroupId);
 
       refreshBoardSelect(selectEl);
       refreshBrandText();

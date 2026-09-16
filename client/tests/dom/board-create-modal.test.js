@@ -17,7 +17,6 @@ const mocks = vi.hoisted(() => ({
   setActiveBoardId: vi.fn(),
   alertDialog: vi.fn(),
   promptDialog: vi.fn(),
-  assignBoardToGroup: vi.fn(),
   nextIterationName: vi.fn(),
   showModal: vi.fn(),
   addTask: vi.fn(),
@@ -46,7 +45,6 @@ vi.mock('../../src/modules/storage.js', () => ({
 }));
 
 vi.mock('../../src/modules/board-groups.js', () => ({
-  assignBoardToGroup: mocks.assignBoardToGroup,
   nextIterationName: mocks.nextIterationName
 }));
 
@@ -175,17 +173,6 @@ describe('board create modal', () => {
     initializeBoardsUI();
   });
 
-  test("opening from a group's New iteration control shows the iteration wording and no name field", () => {
-    document.dispatchEvent(
-      new CustomEvent('kanban:open-board-create', { detail: { groupId: 'group-1' } })
-    );
-
-    expect(document.getElementById('board-create-modal').classList.contains('hidden')).toBe(false);
-    expect(document.getElementById('board-create-modal-title').textContent).toBe('New Iteration');
-    expect(document.getElementById('board-create-submit-btn').textContent).toBe('Create Iteration');
-    expect(document.getElementById('board-create-name')).toBeNull();
-  });
-
   test('opening as a plain board shows the Create New Board wording', () => {
     document.dispatchEvent(new CustomEvent('kanban:open-board-create'));
 
@@ -216,17 +203,6 @@ describe('board create modal', () => {
     ).toContain(created.id);
 
     off(DATA_CHANGED, dataChanged);
-  });
-
-  test('a successful submit opened from a group derives the name for that group and assigns the board to it', () => {
-    document.dispatchEvent(
-      new CustomEvent('kanban:open-board-create', { detail: { groupId: 'group-7' } })
-    );
-
-    fireEvent.submit(document.getElementById('board-create-form'));
-
-    expect(mocks.nextIterationName).toHaveBeenCalledWith('group-7');
-    expect(mocks.assignBoardToGroup).toHaveBeenCalledWith(mocks.boards.at(-1).id, 'group-7');
   });
 
   test('the create dialog asks for no board name and has no template picker', () => {

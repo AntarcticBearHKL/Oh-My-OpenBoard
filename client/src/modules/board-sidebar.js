@@ -2,6 +2,7 @@ import { emit, on, DATA_CHANGED } from './events.js';
 import { renderIcons } from './icons.js';
 import { DONE_COLUMN_ID, isDoneColumn } from './constants.js';
 import {
+  createBoard,
   deleteBoard as deleteBoardById,
   ensureBoardsInitialized,
   getActiveBoardId,
@@ -13,17 +14,20 @@ import {
 } from './storage.js';
 import { createArmedDeleteButton } from './armed-delete-button.js';
 import {
+  assignBoardToGroup,
   createGroup,
   deleteGroup,
   ensureBoardsGrouped,
   initGroupSync,
   iterationLabel,
   listGroups,
+  nextIterationName,
   pruneBoardGroups,
   readBoardGroupMap,
   renameGroup,
   toggleGroupCollapsed,
-  toggleGroupPrefixCollapsed
+  toggleGroupPrefixCollapsed,
+  UNTITLED_GROUP_NAME
 } from './board-groups.js';
 
 function findGroupElement(listEl, groupId) {
@@ -57,7 +61,7 @@ export function initializeBoardSidebar() {
     emit(DATA_CHANGED);
   };
 
-  const startGroupRename = (groupId) => {
+  const startGroupRename = (groupId, { fallbackName = '', onCancel } = {}) => {
     const groupEl = findGroupElement(listEl, groupId);
     const nameEl = groupEl?.querySelector('.board-group-name');
     if (!nameEl) return;
@@ -73,7 +77,12 @@ export function initializeBoardSidebar() {
     const finish = (commit) => {
       if (settled) return;
       settled = true;
-      if (commit) renameGroup(groupId, input.value);
+      if (!commit) {
+        if (onCancel) onCancel();
+      } else {
+        const name = input.value.trim() || fallbackName;
+        if (name) renameGroup(groupId, name);
+      }
       render();
     };
 
@@ -189,9 +198,11 @@ export function initializeBoardSidebar() {
     addBtn.innerHTML = '<span data-lucide="plus" aria-hidden="true"></span>';
     addBtn.addEventListener('click', (event) => {
       event.stopPropagation();
-      document.dispatchEvent(
-        new CustomEvent('kanban:open-board-create', { detail: { groupId: group.id } })
-      );
+      const board = createBoard(nextIterationName(group.id));
+      setActiveBoardId(board.id);
+      assignBoardToGroup(board.id, group.id);
+      emit(DATA_CHANGED);
+      document.dispatchEvent(new CustomEvent('kanban:boards-changed'));
     });
 
     const iterationCount = boards.length;
@@ -311,6 +322,9 @@ export function initializeBoardSidebar() {
   document.getElementById('add-group-btn')?.addEventListener('click', () => {
     const group = createGroup();
     render();
-    startGroupRename(group.id);
+    startGroupRename(group.id, {
+      fallbackName: UNTITLED_GROUP_NAME,
+      onCancel: () => deleteGroup(group.id)
+    });
   });
 }

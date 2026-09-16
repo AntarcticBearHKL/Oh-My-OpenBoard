@@ -4,6 +4,7 @@ import { emit, DATA_CHANGED } from './events.js';
 export const GROUPS_KEY = 'openagile:groups';
 export const BOARD_GROUP_KEY = 'openagile:boardGroup';
 export const UNGROUPED_GROUP_ID = '__ungrouped__';
+export const UNTITLED_GROUP_NAME = 'Untitled group';
 
 const GROUPS_MIGRATED_KEY = 'openagile:groupsMigrated';
 const ITERATION_NAME_PREFIX = 'Iteration';
@@ -20,7 +21,7 @@ const GROUPS_API = '/api/groups';
 
 function normalizeGroup(raw, index) {
   if (!raw || typeof raw.id !== 'string' || !raw.id.trim()) return null;
-  const name = typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : 'Untitled group';
+  const name = typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : UNTITLED_GROUP_NAME;
   const order = Number.isFinite(raw.order) ? raw.order : index + 1;
   return { id: raw.id, name, order, collapsed: raw.collapsed === true, prefixCollapsed: raw.prefixCollapsed === true };
 }

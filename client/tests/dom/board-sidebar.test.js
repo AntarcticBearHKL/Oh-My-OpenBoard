@@ -12,6 +12,11 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../../src/modules/storage.js', () => ({
   ensureBoardsInitialized: vi.fn(),
   listBoards: vi.fn(() => mocks.boards),
+  createBoard: vi.fn((name) => {
+    const board = { id: `board-${mocks.boards.length + 1}`, name };
+    mocks.boards.push(board);
+    return board;
+  }),
   getActiveBoardId: vi.fn(() => mocks.activeId),
   setActiveBoardId: vi.fn((id) => { mocks.activeId = id; }),
   renameBoard: vi.fn((id, name) => {
@@ -38,7 +43,8 @@ import {
   assignBoardToGroup,
   createGroup,
   listGroups,
-  readBoardGroupMap
+  readBoardGroupMap,
+  UNTITLED_GROUP_NAME
 } from '../../src/modules/board-groups.js';
 
 const FIXTURE = `
@@ -332,18 +338,91 @@ describe('sidebar group tree', () => {
     expect(listGroups().map((entry) => entry.name)).toEqual(['Draft']);
   });
 
-  test('#add-group-btn creates a group and opens its inline rename input', () => {
+  test('#add-group-btn opens the inline rename input and stores the typed name', () => {
     initializeBoardSidebar();
+    const before = listGroups().map((group) => group.id);
 
     fireEvent.click(document.getElementById('add-group-btn'));
 
-    const groups = listGroups();
-    expect(groups).toHaveLength(2);
-    expect(groups[1].name).toBe('New Group');
-    expect(groupElements()).toHaveLength(2);
     const input = document.querySelector('.board-group-rename-input');
     expect(input).not.toBeNull();
-    expect(input.value).toBe('New Group');
+    expect(document.activeElement).toBe(input);
+    expect(input.selectionStart).toBe(0);
+    expect(input.selectionEnd).toBe(input.value.length);
+
+    input.value = 'Q3 delivery';
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    const added = listGroups().find((group) => !before.includes(group.id));
+    expect(added.name).toBe('Q3 delivery');
+    expect(groupByName('Q3 delivery')).not.toBeUndefined();
+    expect(listGroups().some((group) => group.name === 'New Group' && !before.includes(group.id))).toBe(false);
+  });
+
+  test('Escape discards a brand-new group instead of keeping a placeholder name', () => {
+    initializeBoardSidebar();
+    const before = listGroups().map((group) => group.id);
+
+    fireEvent.click(document.getElementById('add-group-btn'));
+    const input = document.querySelector('.board-group-rename-input');
+    input.value = 'Half typed';
+    fireEvent.keyDown(input, { key: 'Escape' });
+
+    expect(document.querySelector('.board-group-rename-input')).toBeNull();
+    expect(listGroups().map((group) => group.id)).toEqual(before);
+    expect(groupElements()).toHaveLength(before.length);
+  });
+
+  test('committing an empty name falls back to Untitled group', () => {
+    initializeBoardSidebar();
+    const before = listGroups().map((group) => group.id);
+
+    fireEvent.click(document.getElementById('add-group-btn'));
+    const input = document.querySelector('.board-group-rename-input');
+    input.value = '   ';
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    const added = listGroups().find((group) => !before.includes(group.id));
+    expect(UNTITLED_GROUP_NAME).toBe('Untitled group');
+    expect(added.name).toBe(UNTITLED_GROUP_NAME);
+    expect(groupByName(UNTITLED_GROUP_NAME)).not.toBeUndefined();
+  });
+
+  test('a group created from the add control is still renameable afterwards', () => {
+    initializeBoardSidebar();
+
+    fireEvent.click(document.getElementById('add-group-btn'));
+    const input = document.querySelector('.board-group-rename-input');
+    input.value = 'Delivery';
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    fireEvent.dblClick(groupByName('Delivery').querySelector('.board-group-name'));
+    const rename = document.querySelector('.board-group-rename-input');
+    rename.value = 'Delivery 2026';
+    fireEvent.keyDown(rename, { key: 'Enter' });
+
+    expect(listGroups().some((group) => group.name === 'Delivery')).toBe(false);
+    expect(groupByName('Delivery 2026')).not.toBeUndefined();
+  });
+
+  test("a group's add control creates the next iteration immediately, with no dialog", () => {
+    const group = createGroup('Delivery');
+    assignBoardToGroup('board-1', group.id);
+    initializeBoardSidebar();
+    expect(iterationLabels('Delivery')).toEqual(['Iteration 1', 'Iteration 2']);
+
+    const openCreate = vi.fn();
+    document.addEventListener('kanban:open-board-create', openCreate);
+
+    fireEvent.click(groupByName('Delivery').querySelector('.board-group-add'));
+
+    expect(openCreate).not.toHaveBeenCalled();
+    const created = mocks.boards.at(-1);
+    expect(created.name).toBe('Iteration 3');
+    expect(readBoardGroupMap()[created.id]).toBe(group.id);
+    expect(mocks.activeId).toBe(created.id);
+    expect(iterationLabels('Delivery')).toEqual(['Iteration 1', 'Iteration 2', 'Iteration 3']);
+    expect(document.querySelector('.board-group-rename-input')).toBeNull();
   });
 
   test('deleting a group takes its iterations with it', () => {
