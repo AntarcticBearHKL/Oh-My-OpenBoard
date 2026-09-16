@@ -203,8 +203,6 @@
 
   /* Canvas — cocoa paper with a low-emphasis dot grid */
   --canvas-bg: #f4f2ed;
-  --dot-color: rgba(68, 64, 60, 0.28);
-  --dot-tile: 22px;
 
   /* Glass — the defining chrome surface (light cocoa) */
   --glass-bg: rgba(251, 250, 247, 0.72);
@@ -326,8 +324,6 @@
 
   /* Canvas — warm dark cocoa paper with a low-emphasis dot grid */
   --canvas-bg: #181715;
-  --dot-color: rgba(245, 245, 244, 0.24);
-  --dot-tile: 22px;
 
   /* Glass — same frosted recipe, warm dark cocoa */
   --glass-bg: rgba(31, 29, 26, 0.72);

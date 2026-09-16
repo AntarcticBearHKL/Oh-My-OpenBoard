@@ -13,11 +13,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
   padding: 10px;
-  /* Warm cocoa paper with a low-emphasis dot grid — the canvas every glass
-     surface floats above. Dots are the reference ink at 40% layer opacity. */
   background-color: var(--canvas-bg);
-  background-image: radial-gradient(color-mix(in srgb, var(--dot-color) 40%, transparent) 1px, transparent 1px);
-  background-size: var(--dot-tile) var(--dot-tile);
   color: var(--text);
   min-height: 100vh;
   display: flex;
