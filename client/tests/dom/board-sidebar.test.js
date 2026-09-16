@@ -14,6 +14,12 @@ vi.mock('../../src/modules/storage.js', () => ({
   listBoards: vi.fn(() => mocks.boards),
   getActiveBoardId: vi.fn(() => mocks.activeId),
   setActiveBoardId: vi.fn((id) => { mocks.activeId = id; }),
+  renameBoard: vi.fn((id, name) => {
+    const board = mocks.boards.find((entry) => entry.id === id);
+    if (!board) return false;
+    board.name = name;
+    return true;
+  }),
   deleteBoard: vi.fn((id) => {
     mocks.boards = mocks.boards.filter((board) => board.id !== id);
     return true;
@@ -22,16 +28,12 @@ vi.mock('../../src/modules/storage.js', () => ({
   loadColumnsForBoard: vi.fn((boardId) => mocks.columnsByBoard[boardId] || [])
 }));
 
-vi.mock('../../src/modules/board-rename-modal.js', () => ({
-  showBoardRenameModal: vi.fn()
-}));
-
 vi.mock('../../src/modules/icons.js', () => ({
   renderIcons: vi.fn()
 }));
 
 import { initializeBoardSidebar } from '../../src/modules/board-sidebar.js';
-import { on, DATA_CHANGED } from '../../src/modules/events.js';
+import { emit, on, DATA_CHANGED } from '../../src/modules/events.js';
 import {
   assignBoardToGroup,
   createGroup,
@@ -68,6 +70,12 @@ function prefixToggleFor(name) {
   return groupByName(name).querySelector('.board-group-prefix-toggle');
 }
 
+function iterationLabels(name) {
+  return Array.from(groupByName(name).querySelectorAll('.board-list-item-name')).map(
+    (el) => el.textContent
+  );
+}
+
 beforeEach(() => {
   mocks.boards = [
     { id: 'board-1', name: 'Work' },
@@ -80,29 +88,27 @@ beforeEach(() => {
 });
 
 describe('sidebar group tree', () => {
-  test('renders group names derived from their order', () => {
-    const first = createGroup();
-    const second = createGroup();
+  test('renders the user-set group names', () => {
+    const first = createGroup('Delivery');
+    const second = createGroup('Personal work');
     assignBoardToGroup('board-1', first.id);
     assignBoardToGroup('board-2', second.id);
 
     initializeBoardSidebar();
 
     const names = groupElements().map((el) => el.querySelector('.board-group-name').textContent);
-    expect(names).toEqual(['Iterations 1', 'Iterations 2']);
+    expect(names).toEqual(['Delivery', 'Personal work']);
   });
 
   test('a board without a group is placed in the last group on render', () => {
-    const first = createGroup();
-    const second = createGroup();
+    const first = createGroup('Delivery');
+    const second = createGroup('Personal work');
     assignBoardToGroup('board-2', first.id);
 
     initializeBoardSidebar();
 
-    const work = groupByName('Iterations 1').querySelector('.board-list-item-name');
-    const personal = groupByName('Iterations 2').querySelector('.board-list-item-name');
-    expect(work.textContent).toBe('Personal');
-    expect(personal.textContent).toBe('Work');
+    expect(groupByName('Personal work').querySelector('[data-board-id="board-1"]')).not.toBeNull();
+    expect(groupByName('Delivery').querySelector('[data-board-id="board-2"]')).not.toBeNull();
     expect(readBoardGroupMap()).toEqual({ 'board-1': second.id, 'board-2': first.id });
 
     initializeBoardSidebar();
@@ -115,7 +121,7 @@ describe('sidebar group tree', () => {
 
     const groups = listGroups();
     expect(groups).toHaveLength(1);
-    expect(groups[0].name).toBe('Iterations 1');
+    expect(groups[0].name).toBe('New Group');
     expect(readBoardGroupMap()).toEqual({ 'board-1': groups[0].id, 'board-2': groups[0].id });
     expect(rootItems()).toHaveLength(0);
   });
@@ -141,35 +147,135 @@ describe('sidebar group tree', () => {
     expect(changed).toHaveBeenCalled();
   });
 
-  test('the chevron collapses a group and persists the state', () => {
-    const group = createGroup();
+  test('numbers a group in display order', () => {
+    const group = createGroup('Delivery');
+    mocks.boards.push({ id: 'board-3', name: 'Later' });
+    assignBoardToGroup('board-1', group.id);
+    assignBoardToGroup('board-2', group.id);
+    assignBoardToGroup('board-3', group.id);
+
     initializeBoardSidebar();
 
-    const toggle = groupByName('Iterations 1').querySelector('.board-group-toggle');
+    expect(iterationLabels('Delivery')).toEqual(['Iteration 1', 'Iteration 2', 'Iteration 3']);
+    expect(mocks.boards.map((board) => board.name)).toEqual([
+      'Iteration 1',
+      'Iteration 2',
+      'Iteration 3'
+    ]);
+  });
+
+  test('renumbers after an iteration is created', () => {
+    const group = createGroup('Delivery');
+    assignBoardToGroup('board-1', group.id);
+    assignBoardToGroup('board-2', group.id);
+    initializeBoardSidebar();
+    expect(iterationLabels('Delivery')).toEqual(['Iteration 1', 'Iteration 2']);
+
+    mocks.boards.push({ id: 'board-3', name: 'Untitled board' });
+    assignBoardToGroup('board-3', group.id);
+    emit(DATA_CHANGED);
+
+    expect(iterationLabels('Delivery')).toEqual(['Iteration 1', 'Iteration 2', 'Iteration 3']);
+    expect(mocks.boards.find((board) => board.id === 'board-3').name).toBe('Iteration 3');
+  });
+
+  test('renumbers after an iteration is deleted', () => {
+    const group = createGroup('Delivery');
+    mocks.boards = [
+      { id: 'board-1', name: 'Iteration 1' },
+      { id: 'board-2', name: 'Iteration 2' },
+      { id: 'board-3', name: 'Iteration 3' }
+    ];
+    ['board-1', 'board-2', 'board-3'].forEach((id) => assignBoardToGroup(id, group.id));
+    initializeBoardSidebar();
+    expect(iterationLabels('Delivery')).toEqual(['Iteration 1', 'Iteration 2', 'Iteration 3']);
+
+    const deleteBtn = document.querySelector(
+      '.board-list-item[data-board-id="board-2"] .board-list-delete'
+    );
+    fireEvent.click(deleteBtn);
+    fireEvent.click(deleteBtn);
+
+    expect(document.querySelector('.board-list-item[data-board-id="board-2"]')).toBeNull();
+    expect(iterationLabels('Delivery')).toEqual(['Iteration 1', 'Iteration 2']);
+    expect(mocks.boards).toHaveLength(2);
+    expect(mocks.boards.find((board) => board.id === 'board-3').name).toBe('Iteration 2');
+  });
+
+  test('renumbers both groups when an iteration moves between them', () => {
+    const first = createGroup('Delivery');
+    const second = createGroup('Personal work');
+    mocks.boards = [
+      { id: 'board-1', name: 'Iteration 1' },
+      { id: 'board-2', name: 'Iteration 2' },
+      { id: 'board-3', name: 'Iteration 1' }
+    ];
+    assignBoardToGroup('board-1', first.id);
+    assignBoardToGroup('board-2', first.id);
+    assignBoardToGroup('board-3', second.id);
+    initializeBoardSidebar();
+    expect(iterationLabels('Delivery')).toEqual(['Iteration 1', 'Iteration 2']);
+    expect(iterationLabels('Personal work')).toEqual(['Iteration 1']);
+
+    assignBoardToGroup('board-1', second.id);
+    emit(DATA_CHANGED);
+
+    expect(iterationLabels('Delivery')).toEqual(['Iteration 1']);
+    expect(iterationLabels('Personal work')).toEqual(['Iteration 1', 'Iteration 2']);
+    expect(mocks.boards.find((board) => board.id === 'board-1').name).toBe('Iteration 1');
+    expect(mocks.boards.find((board) => board.id === 'board-2').name).toBe('Iteration 1');
+    expect(mocks.boards.find((board) => board.id === 'board-3').name).toBe('Iteration 2');
+  });
+
+  test('an iteration cannot be renamed by hand', () => {
+    const group = createGroup('Delivery');
+    mocks.boards = [
+      { id: 'board-1', name: 'Iteration 1' },
+      { id: 'board-2', name: 'Iteration 2' }
+    ];
+    assignBoardToGroup('board-1', group.id);
+    assignBoardToGroup('board-2', group.id);
+    initializeBoardSidebar();
+
+    const item = document.querySelector('.board-list-item[data-board-id="board-1"]');
+    expect(item.getAttribute('title')).toBeNull();
+
+    fireEvent.dblClick(item.querySelector('.board-list-item-name'));
+
+    expect(document.querySelector('.board-group-rename-input')).toBeNull();
+    expect(item.querySelector('.board-list-item-name').textContent).toBe('Iteration 1');
+    expect(mocks.boards.find((board) => board.id === 'board-1').name).toBe('Iteration 1');
+  });
+
+  test('the chevron collapses a group and persists the state', () => {
+    const group = createGroup('Delivery');
+    initializeBoardSidebar();
+
+    const toggle = groupByName('Delivery').querySelector('.board-group-toggle');
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
 
     fireEvent.click(toggle);
 
-    expect(groupByName('Iterations 1').classList.contains('is-collapsed')).toBe(true);
+    expect(groupByName('Delivery').classList.contains('is-collapsed')).toBe(true);
     expect(listGroups().find((entry) => entry.id === group.id).collapsed).toBe(true);
   });
 
   test('clicking a group name toggles collapse and updates both aria-expanded states', () => {
-    createGroup();
+    createGroup('Delivery');
     initializeBoardSidebar();
 
     vi.useFakeTimers();
     try {
-      const nameEl = groupByName('Iterations 1').querySelector('.board-group-name');
+      const nameEl = groupByName('Delivery').querySelector('.board-group-name');
       expect(nameEl.getAttribute('role')).toBe('button');
       expect(nameEl.getAttribute('aria-expanded')).toBe('true');
 
       fireEvent.click(nameEl);
-      expect(groupByName('Iterations 1').classList.contains('is-collapsed')).toBe(false);
+      expect(groupByName('Delivery').classList.contains('is-collapsed')).toBe(false);
 
       vi.advanceTimersByTime(200);
 
-      const collapsed = groupByName('Iterations 1');
+      const collapsed = groupByName('Delivery');
       expect(collapsed.classList.contains('is-collapsed')).toBe(true);
       expect(collapsed.querySelector('.board-group-name').getAttribute('aria-expanded')).toBe('false');
       expect(collapsed.querySelector('.board-group-toggle').getAttribute('aria-expanded')).toBe('false');
@@ -179,62 +285,85 @@ describe('sidebar group tree', () => {
   });
 
   test('Enter and Space on the focused group name toggle collapse immediately', () => {
-    createGroup();
+    createGroup('Delivery');
     initializeBoardSidebar();
 
-    const nameEl = groupByName('Iterations 1').querySelector('.board-group-name');
+    const nameEl = groupByName('Delivery').querySelector('.board-group-name');
     nameEl.focus();
     expect(document.activeElement).toBe(nameEl);
     expect(nameEl.tabIndex).toBe(0);
 
     fireEvent.keyDown(nameEl, { key: 'Enter' });
-    expect(groupByName('Iterations 1').classList.contains('is-collapsed')).toBe(true);
+    expect(groupByName('Delivery').classList.contains('is-collapsed')).toBe(true);
 
-    fireEvent.keyDown(groupByName('Iterations 1').querySelector('.board-group-name'), { key: ' ' });
-    expect(groupByName('Iterations 1').classList.contains('is-collapsed')).toBe(false);
+    fireEvent.keyDown(groupByName('Delivery').querySelector('.board-group-name'), { key: ' ' });
+    expect(groupByName('Delivery').classList.contains('is-collapsed')).toBe(false);
   });
 
-  test('#add-group-btn creates a group with a derived name and no rename input', () => {
+  test('double-clicking a group name opens the rename input and Enter commits the name', () => {
+    const group = createGroup('Draft');
+    initializeBoardSidebar();
+
+    fireEvent.dblClick(groupByName('Draft').querySelector('.board-group-name'));
+
+    const input = document.querySelector('.board-group-rename-input');
+    expect(input).not.toBeNull();
+    expect(input.value).toBe('Draft');
+    expect(document.activeElement).toBe(input);
+
+    input.value = 'Q3 delivery';
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(document.querySelector('.board-group-rename-input')).toBeNull();
+    expect(listGroups().find((entry) => entry.id === group.id).name).toBe('Q3 delivery');
+    expect(groupByName('Q3 delivery')).not.toBeUndefined();
+  });
+
+  test('Escape in the group rename input keeps the old name', () => {
+    createGroup('Draft');
+    initializeBoardSidebar();
+
+    fireEvent.dblClick(groupByName('Draft').querySelector('.board-group-name'));
+    const input = document.querySelector('.board-group-rename-input');
+    input.value = 'Changed';
+    fireEvent.keyDown(input, { key: 'Escape' });
+
+    expect(document.querySelector('.board-group-rename-input')).toBeNull();
+    expect(listGroups().map((entry) => entry.name)).toEqual(['Draft']);
+  });
+
+  test('#add-group-btn creates a group and opens its inline rename input', () => {
     initializeBoardSidebar();
 
     fireEvent.click(document.getElementById('add-group-btn'));
 
     const groups = listGroups();
     expect(groups).toHaveLength(2);
-    expect(groups[1].name).toBe('Iterations 2');
+    expect(groups[1].name).toBe('New Group');
     expect(groupElements()).toHaveLength(2);
-    expect(document.querySelector('.board-group-rename-input')).toBeNull();
+    const input = document.querySelector('.board-group-rename-input');
+    expect(input).not.toBeNull();
+    expect(input.value).toBe('New Group');
   });
 
-  test('double-clicking a group name does not open a rename input', () => {
-    createGroup();
-    initializeBoardSidebar();
-
-    const nameEl = groupByName('Iterations 1').querySelector('.board-group-name');
-    fireEvent.dblClick(nameEl);
-
-    expect(document.querySelector('.board-group-rename-input')).toBeNull();
-    expect(groupByName('Iterations 1').querySelector('.board-group-name').textContent).toBe('Iterations 1');
-  });
-
-  test('deleting a group takes its iterations with it and renames the rest', () => {
-    const keep = createGroup();
-    const doomed = createGroup();
+  test('deleting a group takes its iterations with it', () => {
+    const keep = createGroup('Keep');
+    const doomed = createGroup('Doomed');
     assignBoardToGroup('board-1', keep.id);
     assignBoardToGroup('board-2', doomed.id);
     initializeBoardSidebar();
 
-    const deleteBtn = groupByName('Iterations 2').querySelector('.board-group-delete');
+    const deleteBtn = groupByName('Doomed').querySelector('.board-group-delete');
 
     fireEvent.click(deleteBtn);
     expect(deleteBtn.classList.contains('is-armed')).toBe(true);
     expect(listGroups()).toHaveLength(2);
 
     fireEvent.click(deleteBtn);
-    expect(listGroups().map((group) => group.name)).toEqual(['Iterations 1']);
+    expect(listGroups().map((group) => group.name)).toEqual(['Keep']);
     expect(readBoardGroupMap()).toEqual({ 'board-1': keep.id });
     expect(mocks.boards.map((board) => board.id)).toEqual(['board-1']);
-    expect(groupByName('Iterations 1').querySelectorAll('.board-list-item')).toHaveLength(1);
+    expect(groupByName('Keep').querySelectorAll('.board-list-item')).toHaveLength(1);
   });
 
   test('deleting an iteration needs two clicks', () => {
@@ -249,7 +378,7 @@ describe('sidebar group tree', () => {
   });
 
   test('the finished prefix gets one collapse control that hides only the prefix', () => {
-    const group = createGroup();
+    const group = createGroup('Delivery');
     assignBoardToGroup('board-1', group.id);
     assignBoardToGroup('board-2', group.id);
     mocks.boards.push({ id: 'board-3', name: 'Later' });
@@ -262,39 +391,39 @@ describe('sidebar group tree', () => {
 
     initializeBoardSidebar();
 
-    const toggle = prefixToggleFor('Iterations 1');
+    const toggle = prefixToggleFor('Delivery');
     expect(toggle).not.toBeNull();
     expect(toggle.tagName).toBe('BUTTON');
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
-    expect(groupByName('Iterations 1').classList.contains('is-prefix-collapsed')).toBe(false);
+    expect(groupByName('Delivery').classList.contains('is-prefix-collapsed')).toBe(false);
 
-    const first = groupByName('Iterations 1').querySelector('.board-list-item[data-board-id="board-1"]');
-    const second = groupByName('Iterations 1').querySelector('.board-list-item[data-board-id="board-2"]');
-    const third = groupByName('Iterations 1').querySelector('.board-list-item[data-board-id="board-3"]');
+    const first = groupByName('Delivery').querySelector('.board-list-item[data-board-id="board-1"]');
+    const second = groupByName('Delivery').querySelector('.board-list-item[data-board-id="board-2"]');
+    const third = groupByName('Delivery').querySelector('.board-list-item[data-board-id="board-3"]');
     expect(first.classList.contains('board-list-item--finished-prefix')).toBe(true);
     expect(second.classList.contains('board-list-item--finished-prefix')).toBe(false);
     expect(third.classList.contains('board-list-item--finished-prefix')).toBe(false);
 
     fireEvent.click(toggle);
 
-    const collapsed = groupByName('Iterations 1');
+    const collapsed = groupByName('Delivery');
     expect(collapsed.classList.contains('is-prefix-collapsed')).toBe(true);
-    expect(prefixToggleFor('Iterations 1').getAttribute('aria-expanded')).toBe('false');
+    expect(prefixToggleFor('Delivery').getAttribute('aria-expanded')).toBe('false');
     expect(listGroups()[0].prefixCollapsed).toBe(true);
     expect(collapsed.querySelector('.board-list-item[data-board-id="board-1"]')).not.toBeNull();
     expect(collapsed.querySelector('.board-list-item[data-board-id="board-2"]')).not.toBeNull();
     expect(collapsed.querySelector('.board-list-item[data-board-id="board-3"]')).not.toBeNull();
 
     initializeBoardSidebar();
-    expect(groupByName('Iterations 1').classList.contains('is-prefix-collapsed')).toBe(true);
+    expect(groupByName('Delivery').classList.contains('is-prefix-collapsed')).toBe(true);
 
-    fireEvent.click(prefixToggleFor('Iterations 1'));
+    fireEvent.click(prefixToggleFor('Delivery'));
     expect(listGroups()[0].prefixCollapsed).toBe(false);
-    expect(groupByName('Iterations 1').classList.contains('is-prefix-collapsed')).toBe(false);
+    expect(groupByName('Delivery').classList.contains('is-prefix-collapsed')).toBe(false);
   });
 
   test('a group with an unfinished first iteration shows no prefix control', () => {
-    const group = createGroup();
+    const group = createGroup('Delivery');
     assignBoardToGroup('board-1', group.id);
     assignBoardToGroup('board-2', group.id);
     mocks.tasksByBoard = {
@@ -303,11 +432,11 @@ describe('sidebar group tree', () => {
 
     initializeBoardSidebar();
 
-    expect(prefixToggleFor('Iterations 1')).toBeNull();
+    expect(prefixToggleFor('Delivery')).toBeNull();
   });
 
   test('a group whose iterations are all finished shows no prefix control', () => {
-    const group = createGroup();
+    const group = createGroup('Delivery');
     assignBoardToGroup('board-1', group.id);
     assignBoardToGroup('board-2', group.id);
     mocks.tasksByBoard = {
@@ -317,6 +446,6 @@ describe('sidebar group tree', () => {
 
     initializeBoardSidebar();
 
-    expect(prefixToggleFor('Iterations 1')).toBeNull();
+    expect(prefixToggleFor('Delivery')).toBeNull();
   });
 });

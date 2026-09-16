@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The board has five fixed columns now, with HIL (Human In The Loop) second, and HIL is the only column where a task can be added by hand - Backlog is for work an agent proposes.
 - Acceptance criteria became key points: an append-only list the human writes, with no done flag. The description belongs to the agent and the key points belong to the human, and appending one sets needsDigest so the agent folds it into the description before starting; adding one to a finished task sends it back to Backlog marked as rework.
 - Task cards show one column of content: title, description and key points.
+- The task dialog is one column now and shows only the title, the description and the list of notes to the agent. The status chip, the type and estimate fields, the comment thread and the relationship search are gone from it.
+- Corrected the naming rule the wrong way round: a group is named by the user and stays renameable, while an iteration is a board inside a group that is numbered in order and cannot be named by hand.
 
 ### Removed
 

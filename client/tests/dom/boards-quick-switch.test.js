@@ -62,8 +62,8 @@ const FIXTURE = `
   <div id="board-rename-modal" class="hidden">
     <div class="modal-backdrop"></div>
     <form id="board-rename-form">
-      <h2 id="board-rename-modal-title">Rename Board</h2>
-      <input id="board-rename-name">
+      <h2 id="board-rename-modal-title">Edit Iteration</h2>
+      <input id="board-goal">
       <button type="submit" id="board-rename-submit-btn">Save</button>
       <button id="board-rename-cancel-btn" type="button">Cancel</button>
     </form>
@@ -137,7 +137,7 @@ describe('Ctrl+B shortcut', () => {
 
   it('does not open the modal when an input is focused', () => {
     const modal = document.getElementById('boards-modal');
-    const input = document.getElementById('board-rename-name');
+    const input = document.getElementById('board-goal');
 
     input.focus();
     fireEvent.keyDown(document, { key: 'B', ctrlKey: true });

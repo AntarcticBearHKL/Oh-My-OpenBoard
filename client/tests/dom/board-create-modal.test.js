@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { fireEvent, waitFor } from '@testing-library/dom';
+import { fireEvent } from '@testing-library/dom';
 import INDEX_HTML from '../../src/index.html?raw';
 import { mountToBody } from './setup.js';
 import {
@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   alertDialog: vi.fn(),
   promptDialog: vi.fn(),
   assignBoardToGroup: vi.fn(),
+  nextIterationName: vi.fn(),
   showModal: vi.fn(),
   addTask: vi.fn(),
   updateTask: vi.fn(),
@@ -45,7 +46,8 @@ vi.mock('../../src/modules/storage.js', () => ({
 }));
 
 vi.mock('../../src/modules/board-groups.js', () => ({
-  assignBoardToGroup: mocks.assignBoardToGroup
+  assignBoardToGroup: mocks.assignBoardToGroup,
+  nextIterationName: mocks.nextIterationName
 }));
 
 vi.mock('../../src/modules/dialog.js', () => ({
@@ -103,10 +105,7 @@ const CREATE_MODAL_FIXTURE = `
         </button>
       </header>
       <form id="board-create-form" novalidate>
-        <div class="form-group">
-          <label for="board-create-name">Board Name <span aria-hidden="true">*</span></label>
-          <input type="text" id="board-create-name" required placeholder="Enter board name..." aria-required="true">
-        </div>
+        <p class="form-help">The iteration is numbered automatically inside its group.</p>
         <div class="form-actions">
           <button type="button" id="cancel-board-create-btn" class="btn btn-secondary">Cancel</button>
           <button type="submit" id="board-create-submit-btn" class="btn btn-primary">Create Board</button>
@@ -128,98 +127,20 @@ const TASK_MODAL_FIXTURE = `
         </div>
       </header>
       <form id="task-form" novalidate>
-        <div class="task-form-columns">
-          <div class="task-form-column-left">
-            <div class="form-group"><label for="task-title">Title</label><input id="task-title" type="text"></div>
-            <div class="form-group">
-              <label for="task-description">Description</label>
-              <textarea id="task-description"></textarea>
-              <div id="task-description-links" hidden></div>
-            </div>
-            <div class="form-group">
-              <label for="task-priority">Priority</label>
-              <select id="task-priority">
-                <option value="urgent">Urgent</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-                <option value="none" selected>None</option>
-              </select>
-            </div>
-            <div class="form-group"><label for="task-due-date">Due Date</label><input id="task-due-date" type="date"></div>
-            <div class="task-form-grid">
-              <div class="form-group">
-                <label for="task-type">Type</label>
-                <select id="task-type">
-                  <option value="story">Story</option>
-                  <option value="bug">Bug</option>
-                  <option value="task" selected>Task</option>
-                  <option value="spike">Spike</option>
-                </select>
-              </div>
-              <div class="form-group"><label for="task-estimate">Estimate</label><input id="task-estimate" type="number"></div>
-            </div>
-            <div class="form-group"><label for="task-assignee">Assignee</label><input id="task-assignee" type="text"></div>
-            <div class="form-group">
-              <label for="task-parent">Parent (Epic)</label>
-              <select id="task-parent"><option value="">None</option></select>
-            </div>
-          </div>
-          <div class="task-form-column-right">
-            <fieldset class="form-group">
-              <legend>Labels</legend>
-              <div id="task-active-labels"></div>
-              <input type="text" id="task-label-search">
-              <button id="task-add-label-btn" type="button"></button>
-              <div id="task-labels-selection"></div>
-            </fieldset>
-            <fieldset class="form-group" id="task-relationships-fieldset">
-              <legend>Relationships</legend>
-              <div id="task-active-relationships"></div>
-              <select id="task-relationship-type"><option value="related">Related</option></select>
-              <div class="rel-type-tooltip" id="rel-type-tooltip"></div>
-              <input type="text" id="task-relationship-search">
-              <div id="task-relationship-results" hidden></div>
-            </fieldset>
-            <fieldset class="form-group" id="task-subtasks-fieldset">
-              <legend>Sub-tasks <span id="task-subtasks-progress-legend" hidden></span></legend>
-              <ul id="task-subtasks-list"></ul>
-              <input type="text" id="task-subtask-input">
-            </fieldset>
-            <fieldset class="form-group" id="task-key-points-fieldset">
-              <legend>Key points</legend>
-              <ul id="task-key-points-list"></ul>
-              <input type="text" id="task-key-point-input">
-            </fieldset>
-            <fieldset class="form-group" id="task-comments-fieldset">
-              <legend>Comments <span id="task-comments-count" hidden></span></legend>
-              <ul id="task-comments-list"></ul>
-              <div class="task-comment-add-row">
-                <input type="text" id="task-comment-author">
-                <input type="text" id="task-comment-input">
-                <button type="button" id="task-comment-add-btn">Add</button>
-              </div>
-            </fieldset>
-            <fieldset class="form-group" id="task-attachments-fieldset">
-              <legend>Attachments</legend>
-              <ul id="task-attachments-list"></ul>
-              <div class="task-attachment-add-row">
-                <input type="text" id="task-attachment-name">
-                <input type="url" id="task-attachment-url">
-                <button type="button" id="task-attachment-add-btn">Add</button>
-              </div>
-            </fieldset>
-            <fieldset class="form-group" id="task-custom-fields-fieldset">
-              <legend>Custom fields</legend>
-              <ul id="task-custom-fields-list"></ul>
-              <div class="task-custom-field-add-row">
-                <input type="text" id="task-custom-field-key">
-                <input type="text" id="task-custom-field-value">
-                <button type="button" id="task-custom-field-add-btn">Add</button>
-              </div>
-            </fieldset>
-          </div>
+        <div class="form-group"><label for="task-title">Title</label><input id="task-title" type="text"></div>
+        <div class="form-group">
+          <label for="task-description">Description</label>
+          <textarea id="task-description"></textarea>
+          <div id="task-description-links" hidden></div>
         </div>
+        <fieldset class="form-group" id="task-key-points-fieldset">
+          <legend>Notes to the agent</legend>
+          <ul id="task-key-points-list"></ul>
+          <div class="task-key-point-add-row">
+            <input type="text" id="task-key-point-input">
+            <button type="button" id="task-key-point-add-btn">+</button>
+          </div>
+        </fieldset>
         <div class="form-actions">
           <button type="button" id="cancel-task-btn" class="btn btn-secondary">Cancel</button>
           <button type="submit" id="task-submit-btn" class="btn btn-primary">Add Task</button>
@@ -244,6 +165,7 @@ beforeEach(() => {
   });
   mocks.alertDialog.mockResolvedValue(undefined);
   mocks.promptDialog.mockResolvedValue(null);
+  mocks.nextIterationName.mockImplementation(() => 'Iteration 1');
   mocks.showModal.mockImplementation((columnId) => openTaskModal(columnId));
 });
 
@@ -253,7 +175,7 @@ describe('board create modal', () => {
     initializeBoardsUI();
   });
 
-  test("opening from a group's New iteration control shows the iteration wording and an empty name", () => {
+  test("opening from a group's New iteration control shows the iteration wording and no name field", () => {
     document.dispatchEvent(
       new CustomEvent('kanban:open-board-create', { detail: { groupId: 'group-1' } })
     );
@@ -261,7 +183,7 @@ describe('board create modal', () => {
     expect(document.getElementById('board-create-modal').classList.contains('hidden')).toBe(false);
     expect(document.getElementById('board-create-modal-title').textContent).toBe('New Iteration');
     expect(document.getElementById('board-create-submit-btn').textContent).toBe('Create Iteration');
-    expect(document.getElementById('board-create-name').value).toBe('');
+    expect(document.getElementById('board-create-name')).toBeNull();
   });
 
   test('opening as a plain board shows the Create New Board wording', () => {
@@ -272,25 +194,8 @@ describe('board create modal', () => {
     expect(document.getElementById('board-create-submit-btn').textContent).toBe('Create Board');
   });
 
-  test('submitting a whitespace-only name alerts and creates nothing', async () => {
+  test('a successful submit creates the board with a derived iteration name, activates it, hides the modal and dispatches kanban:boards-changed', () => {
     document.dispatchEvent(new CustomEvent('kanban:open-board-create'));
-    document.getElementById('board-create-name').value = '   ';
-
-    fireEvent.submit(document.getElementById('board-create-form'));
-
-    await waitFor(() => expect(mocks.alertDialog).toHaveBeenCalledTimes(1));
-    expect(mocks.alertDialog).toHaveBeenCalledWith({
-      title: 'Error',
-      message: 'Board name cannot be empty.'
-    });
-    expect(mocks.createBoard).not.toHaveBeenCalled();
-    expect(mocks.setActiveBoardId).not.toHaveBeenCalled();
-    expect(document.getElementById('board-create-modal').classList.contains('hidden')).toBe(false);
-  });
-
-  test('a successful submit creates the board, activates it, hides the modal and dispatches kanban:boards-changed', () => {
-    document.dispatchEvent(new CustomEvent('kanban:open-board-create'));
-    document.getElementById('board-create-name').value = '  Roadmap  ';
 
     const dataChanged = vi.fn();
     on(DATA_CHANGED, dataChanged);
@@ -299,7 +204,8 @@ describe('board create modal', () => {
 
     fireEvent.submit(document.getElementById('board-create-form'));
 
-    expect(mocks.createBoard).toHaveBeenCalledWith('Roadmap');
+    expect(mocks.nextIterationName).toHaveBeenCalledWith(null);
+    expect(mocks.createBoard).toHaveBeenCalledWith('Iteration 1');
     const created = mocks.boards.at(-1);
     expect(mocks.setActiveBoardId).toHaveBeenCalledWith(created.id);
     expect(document.getElementById('board-create-modal').classList.contains('hidden')).toBe(true);
@@ -312,25 +218,29 @@ describe('board create modal', () => {
     off(DATA_CHANGED, dataChanged);
   });
 
-  test('a successful submit opened from a group assigns the board to that group', () => {
+  test('a successful submit opened from a group derives the name for that group and assigns the board to it', () => {
     document.dispatchEvent(
       new CustomEvent('kanban:open-board-create', { detail: { groupId: 'group-7' } })
     );
-    document.getElementById('board-create-name').value = 'Sprint 7';
 
     fireEvent.submit(document.getElementById('board-create-form'));
 
+    expect(mocks.nextIterationName).toHaveBeenCalledWith('group-7');
     expect(mocks.assignBoardToGroup).toHaveBeenCalledWith(mocks.boards.at(-1).id, 'group-7');
   });
 
-  test('the create dialog markup has no template picker', () => {
+  test('the create dialog asks for no board name and has no template picker', () => {
     const parsed = new DOMParser().parseFromString(INDEX_HTML, 'text/html');
     const dialog = parsed.getElementById('board-create-modal');
 
     expect(dialog).not.toBeNull();
     expect(dialog.querySelector('#board-create-template')).toBeNull();
     expect(dialog.querySelector('select')).toBeNull();
-    expect(dialog.querySelector('#board-create-name')).not.toBeNull();
+    expect(dialog.querySelector('#board-create-name')).toBeNull();
+    expect(dialog.querySelector('input')).toBeNull();
+    expect(dialog.querySelector('.form-help').textContent).toBe(
+      'The iteration is numbered automatically inside its group.'
+    );
   });
 });
 
@@ -359,28 +269,21 @@ describe('HIL manual add', () => {
     [
       'task-title',
       'task-description',
-      'task-type',
-      'task-priority',
-      'task-estimate',
-      'task-assignee',
-      'task-due-date',
-      'task-parent',
-      'task-key-point-input',
-      'task-labels-selection',
-      'task-relationships-fieldset',
-      'task-subtasks-list',
-      'task-comments-list',
-      'task-attachments-list',
-      'task-custom-fields-list'
+      'task-key-point-input'
     ].forEach((id) => {
       const field = document.getElementById(id);
       expect(field).not.toBeNull();
       expect(field.hasAttribute('disabled')).toBe(false);
     });
 
-    expect(
-      [...document.getElementById('task-priority').options].map((option) => option.value)
-    ).toEqual(['urgent', 'high', 'medium', 'low', 'none']);
+    [
+      'task-type',
+      'task-estimate',
+      'task-comments-fieldset',
+      'task-relationships-fieldset'
+    ].forEach((id) => {
+      expect(document.getElementById(id)).toBeNull();
+    });
   });
 
   test('columns other than HIL expose no manual add-task control', () => {

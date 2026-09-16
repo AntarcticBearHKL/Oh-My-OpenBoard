@@ -71,8 +71,6 @@
   /* Chip remove buttons — translucent overlays on coloured chips */
   --label-remove-bg: rgba(255, 255, 255, 0.25);
   --label-remove-bg-hover: rgba(255, 255, 255, 0.4);
-  --relationship-remove-bg: rgba(0, 0, 0, 0.08);
-  --relationship-remove-bg-hover: rgba(0, 0, 0, 0.18);
 
   /* Toggle switch */
   --switch-track: rgba(28, 25, 23, 0.18);
@@ -263,10 +261,6 @@
   --item-hover: rgba(250, 250, 249, 0.08);
   --item-selected: rgba(250, 250, 249, 0.12);
   --selection-fill: rgba(250, 250, 249, 0.10);
-
-  /* Chip remove buttons — dark-mode overlay values */
-  --relationship-remove-bg: rgba(255, 255, 255, 0.1);
-  --relationship-remove-bg-hover: rgba(255, 255, 255, 0.2);
 
   /* Toggle switch */
   --switch-track: rgba(255, 255, 255, 0.18);

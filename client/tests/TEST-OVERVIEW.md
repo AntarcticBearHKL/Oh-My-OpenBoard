@@ -4,10 +4,10 @@ Generated from test source. Do not edit by hand; run `npm run test:overview` fro
 
 ## Fast Scan
 
-- Test files: 55
-- Test cases: 463
+- Test files: 54
+- Test cases: 455
 - Unit files: 30
-- DOM integration files: 25
+- DOM integration files: 24
 - E2E files: 0
 
 ## How To Use This
@@ -61,15 +61,11 @@ These lists compare source/spec filenames against test file names and test title
 - `src/modules/swimlane-lane-model.js`
 - `src/modules/swimlane-order.js`
 - `src/modules/swimlane-renderer.js`
-- `src/modules/task-card-meta.js`
 - `src/modules/task-helpers.js`
-- `src/modules/task-modal-agile-fields.js`
 - `src/modules/task-modal-chrome.js`
 - `src/modules/task-modal-form.js`
-- `src/modules/task-modal-relationships.js`
 - `src/modules/task-modal-state.js`
 - `src/modules/task-modal-status.js`
-- `src/modules/task-modal-summary.js`
 - `src/modules/task-modal-wiring-agile.js`
 - `src/modules/task-modal-wiring-controls.js`
 - `src/modules/task-modal-wiring-submit.js`
@@ -87,29 +83,30 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/unit/agile.test.js`
 - Type: Unit
-- Test count: 21
+- Test count: 22
 
 - `tests/unit/agile.test.js:19` normalizeTaskType accepts the four agile types
 - `tests/unit/agile.test.js:26` normalizeTaskType is case-insensitive and trims
 - `tests/unit/agile.test.js:31` normalizeTaskType falls back to task for invalid values
 - `tests/unit/agile.test.js:40` normalizeEstimate keeps finite numbers including zero
 - `tests/unit/agile.test.js:47` normalizeEstimate returns null for empty or invalid values
-- `tests/unit/agile.test.js:57` normalizeAcceptanceCriteria keeps entries and coerces done
-- `tests/unit/agile.test.js:68` normalizeAcceptanceCriteria generates missing ids and drops empty text
-- `tests/unit/agile.test.js:81` normalizeAcceptanceCriteria returns [] for non-arrays
-- `tests/unit/agile.test.js:88` normalizeComments defaults the author to You and preserves timestamps
-- `tests/unit/agile.test.js:97` normalizeComments stamps a missing timestamp and drops empty text
-- `tests/unit/agile.test.js:106` boardKeyPrefix uses initials for multi-word names
-- `tests/unit/agile.test.js:112` boardKeyPrefix uses the first three chars for single-word names
-- `tests/unit/agile.test.js:118` boardKeyPrefix strips non-alphanumerics and falls back to BRD
-- `tests/unit/agile.test.js:126` nextTaskKey starts at 1 for a fresh board
-- `tests/unit/agile.test.js:130` nextTaskKey increments past the highest matching suffix
-- `tests/unit/agile.test.js:135` nextTaskKey ignores malformed or foreign keys
-- `tests/unit/agile.test.js:142` isBlockedColumnId matches the Blocked column by id
-- `tests/unit/agile.test.js:159` taskAgeDays counts whole days since creationDate
-- `tests/unit/agile.test.js:164` taskAgeDays returns null without a valid creationDate
-- `tests/unit/agile.test.js:169` isTaskStale flags tasks unchanged for more than 14 days
-- `tests/unit/agile.test.js:175` isTaskStale falls back to creationDate and ignores missing dates
+- `tests/unit/agile.test.js:57` normalizeKeyPoints keeps text, ids and timestamps and drops any done flag
+- `tests/unit/agile.test.js:69` normalizeKeyPoints generates missing ids and timestamps and drops empty text
+- `tests/unit/agile.test.js:83` normalizeKeyPoints preserves a digestedAt stamp
+- `tests/unit/agile.test.js:91` normalizeKeyPoints returns [] for non-arrays
+- `tests/unit/agile.test.js:98` normalizeComments defaults the author to You and preserves timestamps
+- `tests/unit/agile.test.js:107` normalizeComments stamps a missing timestamp and drops empty text
+- `tests/unit/agile.test.js:116` boardKeyPrefix uses initials for multi-word names
+- `tests/unit/agile.test.js:122` boardKeyPrefix uses the first three chars for single-word names
+- `tests/unit/agile.test.js:128` boardKeyPrefix strips non-alphanumerics and falls back to BRD
+- `tests/unit/agile.test.js:136` nextTaskKey starts at 1 for a fresh board
+- `tests/unit/agile.test.js:140` nextTaskKey increments past the highest matching suffix
+- `tests/unit/agile.test.js:145` nextTaskKey ignores malformed or foreign keys
+- `tests/unit/agile.test.js:152` isBlockedColumnId matches the Blocked column by id
+- `tests/unit/agile.test.js:169` taskAgeDays counts whole days since creationDate
+- `tests/unit/agile.test.js:174` taskAgeDays returns null without a valid creationDate
+- `tests/unit/agile.test.js:179` isTaskStale flags tasks unchanged for more than 14 days
+- `tests/unit/agile.test.js:185` isTaskStale falls back to creationDate and ignores missing dates
 
 ### Backend Event Schema
 
@@ -171,13 +168,14 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/unit/columns.test.js`
 - Type: Unit
-- Test count: 5
+- Test count: 6
 
-- `tests/unit/columns.test.js:11` columns are locked to the four fixed columns
-- `tests/unit/columns.test.js:17` toggleColumnCollapsed toggles from false to true
-- `tests/unit/columns.test.js:24` toggleColumnCollapsed toggles from true to false
-- `tests/unit/columns.test.js:31` toggleColumnCollapsed returns false for non-existent column
-- `tests/unit/columns.test.js:35` toggleColumnCollapsed returns false for empty ID
+- `tests/unit/columns.test.js:12` columns are locked to the five fixed columns
+- `tests/unit/columns.test.js:17` an existing four-column board gains HIL without losing its tasks
+- `tests/unit/columns.test.js:33` toggleColumnCollapsed toggles from false to true
+- `tests/unit/columns.test.js:40` toggleColumnCollapsed toggles from true to false
+- `tests/unit/columns.test.js:47` toggleColumnCollapsed returns false for non-existent column
+- `tests/unit/columns.test.js:51` toggleColumnCollapsed returns false for empty ID
 
 ### Constants
 
@@ -185,11 +183,11 @@ These lists compare source/spec filenames against test file names and test title
 - Type: Unit
 - Test count: 5
 
-- `tests/unit/constants.test.js:14` the board has four fixed columns in workflow order
-- `tests/unit/constants.test.js:22` DONE_COLUMN_ID is done
-- `tests/unit/constants.test.js:26` DEFAULT_COLUMN_COLOR is a valid hex color
-- `tests/unit/constants.test.js:30` MAX_LABEL_NAME_LENGTH is a positive integer
-- `tests/unit/constants.test.js:35` open boards modal shortcut defaults to Ctrl+B
+- `tests/unit/constants.test.js:15` the board has five fixed columns with HIL in position two
+- `tests/unit/constants.test.js:24` DONE_COLUMN_ID is done
+- `tests/unit/constants.test.js:28` DEFAULT_COLUMN_COLOR is a valid hex color
+- `tests/unit/constants.test.js:32` MAX_LABEL_NAME_LENGTH is a positive integer
+- `tests/unit/constants.test.js:37` open boards modal shortcut defaults to Ctrl+B
 
 ### Dateutils
 
@@ -332,7 +330,7 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/unit/importexport.test.js`
 - Type: Unit
-- Test count: 8
+- Test count: 9
 
 - `tests/unit/importexport.test.js:46` inspectImportPayload accepts valid board export objects
 - `tests/unit/importexport.test.js:71` inspectImportPayload remaps legacy model ids to UUIDs while preserving references
@@ -341,7 +339,8 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/unit/importexport.test.js:124` inspectImportPayload preserves and remaps task relationships
 - `tests/unit/importexport.test.js:146` inspectImportPayload remaps swimlane settings that reference labels and columns
 - `tests/unit/importexport.test.js:173` inspectImportPayload ignores the removed task fields from an older export
-- `tests/unit/importexport.test.js:210` buildImportConfirmationMessage includes summary details
+- `tests/unit/importexport.test.js:210` inspectImportPayload reads legacy acceptanceCriteria into keyPoints
+- `tests/unit/importexport.test.js:239` buildImportConfirmationMessage includes summary details
 
 ### Labels
 
@@ -451,7 +450,7 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/unit/storage.test.js:160` getActiveBoardName returns board name
 - `tests/unit/storage.test.js:168` loadColumns returns default columns on fresh board
 - `tests/unit/storage.test.js:177` loadColumns ensures Done column exists
-- `tests/unit/storage.test.js:185` saveColumns + loadColumns roundtrip locks to the four fixed columns
+- `tests/unit/storage.test.js:185` saveColumns + loadColumns roundtrip locks to the five fixed columns
 - `tests/unit/storage.test.js:195` loadTasks leaves legacy removed fields in stored data untouched
 - `tests/unit/storage.test.js:205` loadTasks adds doneDate to tasks in Done column that lack it
 - `tests/unit/storage.test.js:215` loadTasks removes doneDate from tasks not in Done column
@@ -498,9 +497,9 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/unit/tasks.test.js`
 - Type: Unit
-- Test count: 32
+- Test count: 37
 
-- `tests/unit/tasks.test.js:21` addTask creates task in Backlog with order 1
+- `tests/unit/tasks.test.js:21` addTask creates the task in HIL with order 1
 - `tests/unit/tasks.test.js:31` addTask with only title, description, type and estimate keeps the slim model
 - `tests/unit/tasks.test.js:45` addTask bumps existing task orders in the same column
 - `tests/unit/tasks.test.js:55` addTask does nothing for empty title
@@ -521,17 +520,22 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/unit/tasks.test.js:236` moveTaskToTopInColumn returns null for missing args
 - `tests/unit/tasks.test.js:243` addTask generates a board-prefixed key
 - `tests/unit/tasks.test.js:252` addTask defaults the agile fields
-- `tests/unit/tasks.test.js:266` addTask persists provided agile fields
-- `tests/unit/tasks.test.js:285` addTask persists acceptance criteria as { id, text, done }
-- `tests/unit/tasks.test.js:299` updateTask persists agile fields and rejects a self-parent
-- `tests/unit/tasks.test.js:319` updateTask without extraFields leaves agile fields untouched
-- `tests/unit/tasks.test.js:332` updateTask leaves assignee and parentId untouched when the payload omits them
-- `tests/unit/tasks.test.js:345` updateTask replaces acceptance criteria and comments wholesale
-- `tests/unit/tasks.test.js:388` updateTaskPositionsFromDrop flags and records a move into Blocked
-- `tests/unit/tasks.test.js:406` updateTaskPositionsFromDrop leaves the reason empty when none is provided
-- `tests/unit/tasks.test.js:417` updateTaskPositionsFromDrop clears blocked fields when leaving Blocked
-- `tests/unit/tasks.test.js:440` setTaskBlockedReason stores a trimmed reason and clears on empty
-- `tests/unit/tasks.test.js:455` setTaskBlockedReason returns false for a missing task
+- `tests/unit/tasks.test.js:267` addTask persists provided agile fields
+- `tests/unit/tasks.test.js:286` addTask persists key points as { id, text, at } and flags them for digest
+- `tests/unit/tasks.test.js:301` updateTask persists agile fields and rejects a self-parent
+- `tests/unit/tasks.test.js:321` updateTask without extraFields leaves agile fields untouched
+- `tests/unit/tasks.test.js:334` updateTask leaves assignee and parentId untouched when the payload omits them
+- `tests/unit/tasks.test.js:347` updateTask replaces key points and comments wholesale
+- `tests/unit/tasks.test.js:367` appending a key point in Backlog sets needsDigest
+- `tests/unit/tasks.test.js:386` appending a key point in HIL sets needsDigest
+- `tests/unit/tasks.test.js:399` appending a key point to a Finished task returns it to Backlog with isRework
+- `tests/unit/tasks.test.js:417` re-saving unchanged key points does not re-flag or move a Finished task
+- `tests/unit/tasks.test.js:437` a stored legacy acceptanceCriteria array is read as key points
+- `tests/unit/tasks.test.js:475` updateTaskPositionsFromDrop flags and records a move into Blocked
+- `tests/unit/tasks.test.js:493` updateTaskPositionsFromDrop leaves the reason empty when none is provided
+- `tests/unit/tasks.test.js:504` updateTaskPositionsFromDrop clears blocked fields when leaving Blocked
+- `tests/unit/tasks.test.js:527` setTaskBlockedReason stores a trimmed reason and clears on empty
+- `tests/unit/tasks.test.js:542` setTaskBlockedReason returns false for a missing task
 
 ### Utils
 
@@ -605,14 +609,14 @@ These lists compare source/spec filenames against test file names and test title
 - Type: DOM Integration
 - Test count: 8
 
-- `tests/dom/board-create-modal.test.js:263` board create modal > opening from a group's New iteration control shows the iteration wording and an empty name
-- `tests/dom/board-create-modal.test.js:274` board create modal > opening as a plain board shows the Create New Board wording
-- `tests/dom/board-create-modal.test.js:282` board create modal > submitting a whitespace-only name alerts and creates nothing
-- `tests/dom/board-create-modal.test.js:298` board create modal > a successful submit creates the board, activates it, hides the modal and dispatches kanban:boards-changed
-- `tests/dom/board-create-modal.test.js:322` board create modal > a successful submit opened from a group assigns the board to that group
-- `tests/dom/board-create-modal.test.js:333` board create modal > the create dialog markup has no template picker
-- `tests/dom/board-create-modal.test.js:350` Backlog manual add > the Backlog add-task control opens the full task modal for that column
-- `tests/dom/board-create-modal.test.js:394` Backlog manual add > columns other than Backlog expose no manual add-task control
+- `tests/dom/board-create-modal.test.js:178` board create modal > opening from a group's New iteration control shows the iteration wording and an empty name
+- `tests/dom/board-create-modal.test.js:189` board create modal > opening as a plain board shows the Create New Board wording
+- `tests/dom/board-create-modal.test.js:197` board create modal > submitting a whitespace-only name alerts and creates nothing
+- `tests/dom/board-create-modal.test.js:213` board create modal > a successful submit creates the board, activates it, hides the modal and dispatches kanban:boards-changed
+- `tests/dom/board-create-modal.test.js:237` board create modal > a successful submit opened from a group assigns the board to that group
+- `tests/dom/board-create-modal.test.js:248` board create modal > the create dialog markup has no template picker
+- `tests/dom/board-create-modal.test.js:265` HIL manual add > the HIL add-task control opens the full task modal for that column
+- `tests/dom/board-create-modal.test.js:301` HIL manual add > columns other than HIL expose no manual add-task control
 
 ### Board Sidebar
 
@@ -800,7 +804,7 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/dom/reconcile.test.js:148` reconcileBoard defers to a full rebuild when swimlane mode is on
 - `tests/dom/reconcile.test.js:161` reconcileBoard defers to a full rebuild when the column set changed
 - `tests/dom/reconcile.test.js:174` reconcileBoard virtualizes an overfull Done column instead of rendering every card
-- `tests/dom/reconcile.test.js:189` reconcileBoard renders a new card with acceptance progress and the notes indicator
+- `tests/dom/reconcile.test.js:189` reconcileBoard renders a new card with only title, description and key points
 
 ### Settings Ui
 
@@ -833,18 +837,13 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/dom/task-card-claim-timer.test.js`
 - Type: DOM Integration
-- Test count: 10
+- Test count: 5
 
-- `tests/dom/task-card-claim-timer.test.js:54` renders the claim chip with claimant and elapsed time for a claimed task
-- `tests/dom/task-card-claim-timer.test.js:68` shows no claim chip for an unclaimed task
-- `tests/dom/task-card-claim-timer.test.js:73` shows no claim chip in a column without a timing rule
-- `tests/dom/task-card-claim-timer.test.js:83` keeps the plain assignee initials chip when there is no claim timing
-- `tests/dom/task-card-claim-timer.test.js:93` falls back to the assignee as claimant when claimedBy is empty
-- `tests/dom/task-card-claim-timer.test.js:107` the shared tick updates only the elapsed text
-- `tests/dom/task-card-claim-timer.test.js:123` the tick skips hidden documents and catches up when visible again
-- `tests/dom/task-card-claim-timer.test.js:137` starting the ticker twice does not leave extra intervals behind
-- `tests/dom/task-card-claim-timer.test.js:152` freezes the elapsed time for a blocked task
-- `tests/dom/task-card-claim-timer.test.js:170` freezes the elapsed time for a finished task at doneDate
+- `tests/dom/task-card-claim-timer.test.js:63` the card renders no claimant or elapsed chip for a claimed in-progress task
+- `tests/dom/task-card-claim-timer.test.js:71` the shared tick refreshes the elapsed text of any claim chip in the DOM
+- `tests/dom/task-card-claim-timer.test.js:83` the tick skips hidden documents and catches up when visible again
+- `tests/dom/task-card-claim-timer.test.js:96` starting the ticker twice does not leave extra intervals behind
+- `tests/dom/task-card-claim-timer.test.js:110` a frozen end time is left alone by the tick
 
 ### Task Card Delete
 
@@ -883,29 +882,11 @@ These lists compare source/spec filenames against test file names and test title
 - Type: DOM Integration
 - Test count: 5
 
-- `tests/dom/task-modal-agile.test.js:159` add form saves title, description, type, estimate and relationships through addTask
-- `tests/dom/task-modal-agile.test.js:182` the acceptance editor adds, toggles and removes items and reports done/total
-- `tests/dom/task-modal-agile.test.js:213` a comment written in the dialog renders in the thread with author and time
-- `tests/dom/task-modal-agile.test.js:235` the agent reply shows up in the same thread when the dialog reopens
-- `tests/dom/task-modal-agile.test.js:257` editing a task saves the slim payload through updateTask
-
-### Task Row Agile
-
-- Path: `tests/dom/task-row-agile.test.js`
-- Type: DOM Integration
-- Test count: 11
-
-- `tests/dom/task-row-agile.test.js:31` renders the human-readable key when present
-- `tests/dom/task-row-agile.test.js:36` omits the key when the task has none
-- `tests/dom/task-row-agile.test.js:41` renders a colour-coded type marker for known types
-- `tests/dom/task-row-agile.test.js:51` omits the type marker for unknown types
-- `tests/dom/task-row-agile.test.js:56` renders an estimate badge when set
-- `tests/dom/task-row-agile.test.js:61` omits the estimate badge when null
-- `tests/dom/task-row-agile.test.js:66` renders assignee initials with the full name as title
-- `tests/dom/task-row-agile.test.js:74` renders a blocked indicator when blockedReason is set
-- `tests/dom/task-row-agile.test.js:82` omits the blocked indicator without a reason
-- `tests/dom/task-row-agile.test.js:87` never renders a task age badge even when creationDate is set
-- `tests/dom/task-row-agile.test.js:94` ignores the showAge setting because the age badge is gone
+- `tests/dom/task-modal-agile.test.js:135` the dialog renders the title, the description and the notes list and nothing else
+- `tests/dom/task-modal-agile.test.js:159` the add form saves the title, description and notes through addTask
+- `tests/dom/task-modal-agile.test.js:176` the notes list appends and removes items
+- `tests/dom/task-modal-agile.test.js:204` opening the edit dialog prefills the title, description and notes
+- `tests/dom/task-modal-agile.test.js:226` editing a task saves the slim payload through updateTask
 
 ### Task Row
 
@@ -913,16 +894,16 @@ These lists compare source/spec filenames against test file names and test title
 - Type: DOM Integration
 - Test count: 10
 
-- `tests/dom/task-row.test.js:34` renders a single compact row without card chrome
+- `tests/dom/task-row.test.js:34` renders a single compact row with the title and no card chrome
 - `tests/dom/task-row.test.js:45` renders a one-line description preview when a description is present
 - `tests/dom/task-row.test.js:53` omits the description preview when there is no description
-- `tests/dom/task-row.test.js:58` no longer renders a priority chip, a due date or a label area
-- `tests/dom/task-row.test.js:76` shows acceptance progress as done over total
-- `tests/dom/task-row.test.js:92` omits acceptance progress when there are no criteria
-- `tests/dom/task-row.test.js:97` shows a notes indicator when comments exist
-- `tests/dom/task-row.test.js:112` omits the notes indicator without comments
-- `tests/dom/task-row.test.js:117` clicking the title opens the task editor
-- `tests/dom/task-row.test.js:124` keeps the delete control inside the row actions
+- `tests/dom/task-row.test.js:58` renders the key points list in order
+- `tests/dom/task-row.test.js:71` omits the key points list when there are none
+- `tests/dom/task-row.test.js:76` shows needsDigest and isRework as quiet markers when set
+- `tests/dom/task-row.test.js:86` omits the signal marker when neither flag is set
+- `tests/dom/task-row.test.js:91` renders nothing else: no type, estimate, key, assignee, timer, notes or status chip
+- `tests/dom/task-row.test.js:121` clicking the title opens the task editor
+- `tests/dom/task-row.test.js:128` keeps the delete control inside the row actions
 
 ### Wip Limit
 

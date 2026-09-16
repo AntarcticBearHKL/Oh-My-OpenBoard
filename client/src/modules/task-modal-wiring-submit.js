@@ -5,7 +5,6 @@ import { state } from './task-modal-state.js';
 import { addTask } from './tasks.js';
 import { updateTask } from './task-update.js';
 import { validateAndShowTaskTitleError } from './validation.js';
-import { normalizeEstimate } from './agile.js';
 import { hideModal } from './task-modal-form.js';
 
 export function initializeSubmitHandler() {
@@ -18,11 +17,7 @@ export function initializeSubmitHandler() {
     const title = titleInput.value.trim();
     const description = $id('task-description').value;
     const fields = {
-      type: $id('task-type')?.value,
-      estimate: normalizeEstimate($id('task-estimate')?.value),
-      keyPoints: state.selectedTaskKeyPoints,
-      comments: state.selectedTaskComments,
-      relationships: state.selectedTaskRelationships
+      keyPoints: state.selectedTaskKeyPoints
     };
 
     if (state.editingTaskId) {

@@ -54,12 +54,12 @@
 ### Task Field Notes
 
 - `title` is the only required field; a task needs only a title and a description to be created
-- `type` is one of `story`, `bug`, `task`, `spike` and defaults to `task`; `estimate` is a whole number of story points or `null` when unestimated — these two are the only planning fields
-- `keyPoints` are the human's input and the agent may only read them: each entry is `{ id, text, at }`, `text` is required, and there is no done flag. `digestedAt` is stamped by `digest_key_points` once the agent folds the point into the description
-- `needsDigest` is set when the human appends a key point while the task is in Backlog or HIL, and cleared by `digest_key_points`; it means the agent must fold the points into the description before starting work
-- `isRework` is set when the human appends a key point to a Finished task; the task returns to Backlog, the move is emitted like any other move, and the agent must digest the new points before redoing the work
-- Legacy `acceptanceCriteria` arrays are read as key points: `text` is kept and the old `done` flags are dropped
-- `comments` is the thread the human writes and the agent answers; each entry is `{ id, author, text, at }`
+- `type` is one of `story`, `bug`, `task`, `spike` and defaults to `task`; `estimate` is a whole number of story points or `null` when unestimated. They remain model fields set through the task tools; the task dialog does not expose them
+- `keyPoints` are the notes to the agent (the human's input) and the agent may only read them: each entry is `{ id, text, at }`, `text` is required, and there is no done flag. `digestedAt` is stamped by `digest_key_points` once the agent folds the note into the description
+- `needsDigest` is set when the human appends a note while the task is in Backlog or HIL, and cleared by `digest_key_points`; it means the agent must fold the notes into the description before starting work
+- `isRework` is set when the human appends a note to a Finished task; the task returns to Backlog, the move is emitted like any other move, and the agent must digest the new notes before redoing the work
+- Legacy `acceptanceCriteria` arrays are read as notes to the agent: `text` is kept and the old `done` flags are dropped
+- `comments` is the `{ id, author, text, at }` thread written by the `add_comment`/`remove_comment` task tools; the task dialog no longer edits or displays it
 - `assignee` is who the task is assigned to; `claim_task` sets it when empty, and `claimedBy`/`claimedAt` record the claim (releasing keeps `claimedAt` so the claim duration stays derivable)
 - `creationDate` is kept in storage for lead time and velocity, but is never shown in the UI
 - `changeDate` updates on task save and on column changes; it drives the five-minute claim sync window
@@ -67,7 +67,7 @@
 - `blockedAt`/`blockedReason` record why a task is blocked; leaving Blocked clears both
 - `columnHistory` is appended when a task changes columns and powers cumulative-flow reporting
 - `swimlaneLabelId`/`swimlaneLabelGroup` preserve explicit swim lane assignment metadata
-- `key` is the per-board `PREFIX-N` identifier shown on the card and used by relationship search
+- `key` is the per-board `PREFIX-N` identifier shown on the card and in relationship output
 - `relationships` defaults to `[]`; each entry stores a `type` (`prerequisite`, `dependent`, or `related`) and the UUID `targetTaskId` of the linked task; both sides of a relationship are always stored (bidirectional)
 - `deleted` marks internal tombstones/deleted records; normal read functions filter `deleted: true`
 - The task carries no `priority`, `dueDate`, task `labels`, `subTasks`, `attachments`, `customFields`, or `annotations`; older exported files that still carry them are read with those fields dropped on import

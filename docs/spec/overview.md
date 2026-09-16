@@ -22,7 +22,7 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 | Spec | Purpose |
 |---|---|
 | `docs/spec/board-ui.md` | Main board layout, column/card rendering, drag-drop, mobile behavior |
-| `docs/spec/tasks.md` | Task CRUD, key points, the digest workflow, comments, claim timing, card display rules |
+| `docs/spec/tasks.md` | Task CRUD, notes to the agent, the digest workflow, claim timing, card display rules |
 | `docs/spec/columns.md` | Fixed columns, column UI, WIP limits, Finished column invariants |
 | `docs/spec/labels.md` | Label management, groups, color constraints, and their use by swim lanes |
 | `docs/spec/settings.md` | Per-board settings fields and persistence |

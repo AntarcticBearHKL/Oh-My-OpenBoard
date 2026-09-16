@@ -47,7 +47,7 @@ function renderBoardsList() {
     }, h('span', { 'data-lucide': 'download' }));
 
     const editBtn = h('button', {
-      class: 'btn-small', title: 'Edit board',
+      class: 'btn-small', title: 'Edit iteration',
       onClick: () => showBoardRenameModal(board.id)
     }, h('span', { 'data-lucide': 'pencil' }));
 

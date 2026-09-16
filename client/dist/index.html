@@ -9,12 +9,12 @@
   <!-- Kanban favicon (inline SVG data URI) -->
   <link rel="icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='2' y='3' width='6' height='18' rx='1.5' fill='%233b82f6'/%3E%3Crect x='9' y='3' width='6' height='12' rx='1.5' fill='%2360a5fa'/%3E%3Crect x='16' y='3' width='6' height='8' rx='1.5' fill='%2393c5fd'/%3E%3C/svg%3E">
   <script defer src="https://analytics.gomogi.com/script.js" data-website-id="4ebd005d-0f3f-4956-8100-a78c3d89dda8"></script>
-  <script type="module" crossorigin src="./assets/index-DE9TkKHT.js"></script>
+  <script type="module" crossorigin src="./assets/index-D4Ywagr4.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-DK3Fl9T5.js">
-  <link rel="modulepreload" crossorigin href="./assets/styles-BIs7HBQj.js">
+  <link rel="modulepreload" crossorigin href="./assets/styles-DhTFijjT.js">
   <link rel="modulepreload" crossorigin href="./assets/vendor-CagdCKyi.js">
   <link rel="modulepreload" crossorigin href="./assets/theme-DRo51J1s.js">
-  <link rel="stylesheet" crossorigin href="./assets/styles-B4TX0TZr.css">
+  <link rel="stylesheet" crossorigin href="./assets/styles-BO1gDnS_.css">
 </head>
 <body>
   <!-- Skip link for accessibility -->
@@ -157,104 +157,37 @@
         </div>
       </header>
 
-      <section id="task-summary" class="task-summary hidden" aria-label="Task summary">
-        <div class="task-summary-badges">
-          <span id="task-summary-column" class="task-summary-chip hidden"></span>
-        </div>
-        <div id="task-claim-chip" class="task-claim-chip hidden">
-          <span data-lucide="bot" aria-hidden="true"></span>
-          <span>Claimed by <strong id="task-claim-agent"></strong></span>
-          <span id="task-claim-time" class="task-claim-time"></span>
-        </div>
-      </section>
-
       <div id="task-lock-notice" class="task-lock-notice hidden" role="status"></div>
 
       <form id="task-form" novalidate>
-        <div class="task-form-columns">
-          <div class="task-form-column-left">
-            <div class="form-group">
-              <label for="task-title">Title <span aria-hidden="true">*</span></label>
-              <input id="task-title" type="text" required placeholder="Enter task title..." aria-required="true">
-            </div>
-            <div class="form-group">
-              <label for="task-description">Description</label>
-              <textarea id="task-description" rows="3" placeholder="Enter task description..."></textarea>
-              <div id="task-description-links" class="description-links" hidden aria-label="Links in description"></div>
-            </div>
-            <div class="task-form-grid">
-              <div class="form-group">
-                <label for="task-type">Type</label>
-                <select id="task-type">
-                  <option value="story">Story</option>
-                  <option value="bug">Bug</option>
-                  <option value="task" selected>Task</option>
-                  <option value="spike">Spike</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="task-estimate">Estimate</label>
-                <input id="task-estimate" type="number" min="0" step="1" inputmode="numeric" placeholder="—" aria-label="Story point estimate">
-              </div>
-            </div>
-          </div>
-          <div class="task-form-column-right">
-            <fieldset class="form-group" id="task-key-points-fieldset">
-              <legend>
-                <span data-lucide="list-checks" aria-hidden="true"></span>
-                Key points
-              </legend>
-              <p class="form-help">The human writes key points here. The agent reads them and folds them into the description before starting work.</p>
-              <ul id="task-key-points-list" class="key-points-list" role="list" aria-label="Key points"></ul>
-              <div class="task-key-point-add-row">
-                <input
-                  type="text"
-                  id="task-key-point-input"
-                  placeholder="Add a key point and press Enter…"
-                  autocomplete="off"
-                  maxlength="200"
-                  aria-label="New key point"
-                >
-                <button type="button" id="task-key-point-add-btn" class="btn-small" aria-label="Add key point">+</button>
-              </div>
-            </fieldset>
-            <fieldset class="form-group" id="task-comments-fieldset">
-              <legend>
-                <span data-lucide="message-square" aria-hidden="true"></span>
-                Notes to the agent
-                <span id="task-comments-count" class="field-progress-legend" hidden></span>
-              </legend>
-              <p class="form-help">Write what the agent should know or answer; the agent replies in the same thread.</p>
-              <ul id="task-comments-list" class="comments-list" role="list" aria-label="Comments"></ul>
-              <div class="task-comment-add-row">
-                <input type="text" id="task-comment-author" placeholder="You" autocomplete="off" maxlength="60" aria-label="Comment author">
-                <input type="text" id="task-comment-input" placeholder="Add a note…" autocomplete="off" maxlength="500" aria-label="New comment">
-                <button type="button" id="task-comment-add-btn" class="btn-small" aria-label="Add comment">Add</button>
-              </div>
-            </fieldset>
-            <fieldset class="form-group" id="task-relationships-fieldset">
-              <legend>
-                <span data-lucide="git-branch" aria-hidden="true"></span>
-                Relationships
-              </legend>
-              <div id="task-active-relationships" class="active-relationships" role="list" aria-label="Active relationships"></div>
-              <div class="task-relationship-add-row">
-                <div class="rel-type-wrapper">
-                  <select id="task-relationship-type" aria-label="Relationship type">
-                    <option value="prerequisite">Prerequisite</option>
-                    <option value="dependent">Dependent</option>
-                    <option value="related">Related</option>
-                  </select>
-                  <div class="rel-type-tooltip" id="rel-type-tooltip" role="tooltip">
-                    Another task must be completed before this one can begin.
-                  </div>
-                </div>
-                <input type="text" id="task-relationship-search" placeholder="Search by #id or title…" autocomplete="off" aria-label="Search tasks to link">
-              </div>
-              <div id="task-relationship-results" class="relationship-results" role="listbox" aria-label="Task search results" hidden></div>
-            </fieldset>
-          </div>
+        <div class="form-group">
+          <label for="task-title">Title <span aria-hidden="true">*</span></label>
+          <input id="task-title" type="text" required placeholder="Enter task title..." aria-required="true">
         </div>
+        <div class="form-group">
+          <label for="task-description">Description</label>
+          <textarea id="task-description" rows="3" placeholder="Enter task description..."></textarea>
+          <div id="task-description-links" class="description-links" hidden aria-label="Links in description"></div>
+        </div>
+        <fieldset class="form-group" id="task-key-points-fieldset">
+          <legend>
+            <span data-lucide="list-checks" aria-hidden="true"></span>
+            Notes to the agent
+          </legend>
+          <p class="form-help">The human writes notes here. The agent reads them and folds them into the description before starting work.</p>
+          <ul id="task-key-points-list" class="key-points-list" role="list" aria-label="Notes to the agent"></ul>
+          <div class="task-key-point-add-row">
+            <input
+              type="text"
+              id="task-key-point-input"
+              placeholder="Add a note and press Enter…"
+              autocomplete="off"
+              maxlength="200"
+              aria-label="New note"
+            >
+            <button type="button" id="task-key-point-add-btn" class="btn-small" aria-label="Add note">+</button>
+          </div>
+        </fieldset>
         <div class="form-actions">
           <button type="button" id="cancel-task-btn" class="btn btn-secondary">Cancel</button>
           <button type="submit" id="task-submit-btn" class="btn btn-primary">Add Task</button>
@@ -421,21 +354,17 @@
     </article>
   </div>
 
-  <!-- Board Rename / Iteration Modal -->
+  <!-- Iteration Details Modal -->
   <div id="board-rename-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="board-rename-modal-title">
     <div class="modal-backdrop" data-close-modal></div>
     <article class="modal-content">
       <header class="modal-header-row">
-        <h3 id="board-rename-modal-title">Edit Board</h3>
+        <h3 id="board-rename-modal-title">Edit Iteration</h3>
         <button id="board-rename-close-btn" type="button" class="icon-btn" aria-label="Close" title="Close">
           <span data-lucide="x" aria-hidden="true"></span>
         </button>
       </header>
       <form id="board-rename-form" novalidate>
-        <div class="form-group">
-          <label for="board-rename-name">Board Name <span aria-hidden="true">*</span></label>
-          <input type="text" id="board-rename-name" required placeholder="Enter board name..." aria-required="true">
-        </div>
         <div class="task-form-grid">
           <div class="form-group">
             <label for="board-start-date">Start date</label>
@@ -469,10 +398,7 @@
         </button>
       </header>
       <form id="board-create-form" novalidate>
-        <div class="form-group">
-          <label for="board-create-name">Board Name <span aria-hidden="true">*</span></label>
-          <input type="text" id="board-create-name" required placeholder="Enter board name..." aria-required="true">
-        </div>
+        <p class="form-help">The iteration is numbered automatically inside its group.</p>
         <div class="form-actions">
           <button type="button" id="cancel-board-create-btn" class="btn btn-secondary">Cancel</button>
           <button type="submit" id="board-create-submit-btn" class="btn btn-primary">Create Board</button>
@@ -574,7 +500,7 @@
             <li><strong>Groups</strong> hold iterations; each iteration is a full board.</li>
             <li><strong>New group:</strong> Click the plus next to <strong>Groups</strong>, then type a name.</li>
             <li><strong>New iteration:</strong> Click the plus on a group header.</li>
-            <li><strong>Rename:</strong> Double-click a group or iteration name.</li>
+            <li><strong>Rename a group:</strong> Double-click the group name. Iterations are numbered automatically (Iteration 1, Iteration 2, …) and cannot be renamed.</li>
             <li><strong>Delete:</strong> Hover a group or iteration and click the ×.</li>
           </ul>
         </section>
@@ -583,7 +509,7 @@
           <h4>Tasks</h4>
           <ul>
             <li><strong>Add:</strong> Use the <strong>Add task</strong> control in the <strong>HIL</strong> column header to add a task by hand; Backlog and the other columns are driven by agents.</li>
-            <li><strong>Edit:</strong> Click a task row to edit details (title, description, key points and notes).</li>
+            <li><strong>Edit:</strong> Click a task row to edit details (title, description and notes to the agent).</li>
             <li><strong>Move:</strong> Drag and drop between columns.</li>
           </ul>
         </section>

@@ -8,25 +8,29 @@ import {
   listBoards,
   loadColumnsForBoard,
   loadTasksForBoard,
+  renameBoard,
   setActiveBoardId
 } from './storage.js';
-import { showBoardRenameModal } from './board-rename-modal.js';
 import { createArmedDeleteButton } from './armed-delete-button.js';
 import {
   createGroup,
   deleteGroup,
   ensureBoardsGrouped,
   initGroupSync,
+  iterationLabel,
   listGroups,
   pruneBoardGroups,
   readBoardGroupMap,
+  renameGroup,
   toggleGroupCollapsed,
   toggleGroupPrefixCollapsed
 } from './board-groups.js';
 
-function boardName(board) {
-  const name = typeof board?.name === 'string' ? board.name.trim() : '';
-  return name || 'Untitled board';
+function findGroupElement(listEl, groupId) {
+  for (const el of listEl.querySelectorAll('.board-group')) {
+    if (el.dataset.groupId === groupId) return el;
+  }
+  return null;
 }
 
 function isFinishedIteration(boardId) {
@@ -53,9 +57,44 @@ export function initializeBoardSidebar() {
     emit(DATA_CHANGED);
   };
 
-  const buildBoardItem = (board, activeId) => {
+  const startGroupRename = (groupId) => {
+    const groupEl = findGroupElement(listEl, groupId);
+    const nameEl = groupEl?.querySelector('.board-group-name');
+    if (!nameEl) return;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'board-group-rename-input';
+    input.value = nameEl.textContent;
+    input.maxLength = 60;
+    input.setAttribute('aria-label', 'Group name');
+
+    let settled = false;
+    const finish = (commit) => {
+      if (settled) return;
+      settled = true;
+      if (commit) renameGroup(groupId, input.value);
+      render();
+    };
+
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        finish(true);
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        finish(false);
+      }
+    });
+    input.addEventListener('blur', () => finish(true));
+
+    nameEl.replaceWith(input);
+    input.focus();
+    input.select();
+  };
+
+  const buildBoardItem = (board, activeId, label) => {
     const isActive = board.id === activeId;
-    const label = boardName(board);
 
     const nameEl = document.createElement('span');
     nameEl.className = 'board-list-item-name';
@@ -73,7 +112,6 @@ export function initializeBoardSidebar() {
     item.className = `board-list-item${isActive ? ' board-list-item--active' : ''}`;
     item.dataset.boardId = board.id;
     item.tabIndex = 0;
-    item.title = 'Double-click to rename';
     if (isActive) item.setAttribute('aria-current', 'true');
 
     item.addEventListener('click', (event) => {
@@ -85,10 +123,6 @@ export function initializeBoardSidebar() {
         event.preventDefault();
         selectBoard(board.id);
       }
-    });
-    nameEl.addEventListener('dblclick', (event) => {
-      event.stopPropagation();
-      showBoardRenameModal(board.id);
     });
 
     item.append(nameEl, deleteBtn);
@@ -117,7 +151,9 @@ export function initializeBoardSidebar() {
     const nameEl = document.createElement('span');
     nameEl.className = 'board-group-name';
     nameEl.textContent = group.name;
-    nameEl.title = isCollapsed ? 'Click to expand' : 'Click to collapse';
+    nameEl.title = isCollapsed
+      ? 'Click to expand, double-click to rename'
+      : 'Click to collapse, double-click to rename';
     nameEl.setAttribute('role', 'button');
     nameEl.tabIndex = 0;
     nameEl.setAttribute('aria-expanded', String(!isCollapsed));
@@ -126,11 +162,17 @@ export function initializeBoardSidebar() {
     nameEl.addEventListener('click', (event) => {
       event.stopPropagation();
       clearTimeout(pendingToggle);
-      // Deferred so a double-click collapses once instead of toggling twice.
+      // Deferred so a double-click can cancel the toggle before rename replaces this node.
       pendingToggle = setTimeout(() => {
         pendingToggle = null;
         if (nameEl.isConnected) toggle();
       }, 200);
+    });
+    nameEl.addEventListener('dblclick', (event) => {
+      event.stopPropagation();
+      clearTimeout(pendingToggle);
+      pendingToggle = null;
+      startGroupRename(group.id);
     });
     nameEl.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' || event.key === ' ') {
@@ -207,8 +249,8 @@ export function initializeBoardSidebar() {
     }
 
     const finishedPrefixIds = new Set(finishedPrefix.map((board) => board.id));
-    boards.forEach((board) => {
-      const item = buildBoardItem(board, activeId);
+    boards.forEach((board, index) => {
+      const item = buildBoardItem(board, activeId, iterationLabel(index));
       if (finishedPrefixIds.has(board.id)) item.classList.add('board-list-item--finished-prefix');
       items.appendChild(item);
     });
@@ -220,38 +262,55 @@ export function initializeBoardSidebar() {
     return groupEl;
   };
 
+  let rendering = false;
+
   const render = () => {
-    ensureBoardsInitialized();
-    const boards = listBoards();
-    const activeId = getActiveBoardId();
-    const boardIds = boards.map((board) => board.id);
+    // renameBoard emits DATA_CHANGED synchronously, so this render can re-enter itself.
+    if (rendering) return;
+    rendering = true;
+    try {
+      ensureBoardsInitialized();
+      const boards = listBoards();
+      const activeId = getActiveBoardId();
+      const boardIds = boards.map((board) => board.id);
 
-    pruneBoardGroups(boardIds);
-    ensureBoardsGrouped(boardIds);
+      pruneBoardGroups(boardIds);
+      ensureBoardsGrouped(boardIds);
 
-    const groups = listGroups();
-    const boardGroupMap = readBoardGroupMap();
-    const knownGroupIds = new Set(groups.map((group) => group.id));
-    const buckets = new Map(groups.map((group) => [group.id, []]));
+      const groups = listGroups();
+      const boardGroupMap = readBoardGroupMap();
+      const knownGroupIds = new Set(groups.map((group) => group.id));
+      const buckets = new Map(groups.map((group) => [group.id, []]));
 
-    for (const board of boards) {
-      const groupId = boardGroupMap[board.id];
-      if (groupId && knownGroupIds.has(groupId)) buckets.get(groupId).push(board);
+      for (const board of boards) {
+        const groupId = boardGroupMap[board.id];
+        if (groupId && knownGroupIds.has(groupId)) buckets.get(groupId).push(board);
+      }
+
+      groups.forEach((group) => {
+        (buckets.get(group.id) || []).forEach((board, index) => {
+          const label = iterationLabel(index);
+          if (board.name !== label) renameBoard(board.id, label);
+        });
+      });
+
+      listEl.innerHTML = '';
+      groups.forEach((group) => {
+        listEl.appendChild(buildGroupElement(group, buckets.get(group.id) || [], activeId));
+      });
+
+      renderIcons();
+    } finally {
+      rendering = false;
     }
-
-    listEl.innerHTML = '';
-    groups.forEach((group) => {
-      listEl.appendChild(buildGroupElement(group, buckets.get(group.id) || [], activeId));
-    });
-
-    renderIcons();
   };
 
   render();
   on(DATA_CHANGED, render);
 
   document.getElementById('add-group-btn')?.addEventListener('click', () => {
-    createGroup();
+    const group = createGroup();
     render();
+    startGroupRename(group.id);
   });
 }

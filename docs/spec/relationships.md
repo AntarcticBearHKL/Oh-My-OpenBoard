@@ -24,7 +24,6 @@ Tasks can optionally be linked to one or more other tasks using typed relationsh
 
 - A task pair can have at most one relationship type at a time.
 - If a relationship already exists between Task A and Task B, adding a new type replaces the existing one and updates both sides atomically.
-- Already-linked tasks appear in the search results with their current type shown so the user can see the existing relationship before replacing it.
 
 ## Data Model
 
@@ -46,53 +45,22 @@ Each task stores its relationships as an array on the task object:
 
 ## Short ID Format
 
-- Tasks are identified in the relationships UI using a short ID: `#` followed by the last 5 characters of the task UUID.
+- Tasks are identified in relationship output using a short ID: `#` followed by the last 5 characters of the task UUID.
 - Example: a task with ID `a1b2c3d4-e5f6-7890-abcd-ef1234ae2ry5` displays as `#ae2ry`.
 - Short IDs are display-only; storage always uses the full UUID.
 
 ## Card Display
 
-- Task cards show a relationship indicator only when `task.relationships.length > 0`.
-- The indicator uses the `git-branch` Lucide icon followed by the relationship count.
-- The indicator sits in the card's meta cluster next to the other badges.
-- No relationship indicator is shown when the count is zero.
+- Task cards do not show a relationship indicator.
+- Relationships are not editable in the task dialog either; they are managed through the relationship task tools (`add_relationship`, `remove_relationship`).
+- Editing a task in the dialog leaves its existing relationships untouched.
 
-## Modal UI
+## Where Relationships Are Edited
 
-### Relationships Fieldset
-
-- The task edit modal includes a "Relationships" fieldset in the right form column, below the key-points and comments fieldsets.
-- The fieldset contains:
-  - An active relationships list showing current relationships as badges
-  - A type selector (`<select>`) with options: Prerequisite, Dependent, Related
-  - A search input for finding tasks by short ID or title
-  - A results dropdown (autocomplete)
-
-### Relationship Badges
-
-- Each active relationship is displayed as a compact pill badge.
-- Badge content: type label + short ID (e.g. `prerequisite #ae2ry`)
-- Badges are color-coded by type (subtle background color per type).
-- Each badge has a remove button (×) to delete that relationship.
-- Clicking the short ID portion of a badge opens the linked task in the edit modal.
-
-### Search and Autocomplete
-
-- The search input filters all tasks on the current board (excluding the task being edited and done tasks).
-- Filtering matches against:
-  - Short ID prefix: typing `#ae` matches tasks whose last-5 UUID chars start with `ae`
-  - Title substring: case-insensitive match anywhere in the title
-- Up to 8 results are shown in the dropdown.
-- Already-linked tasks appear in results with their current type indicated (e.g. `[prerequisite] Task B #ae2ry`).
-- Selecting a result adds it to the active relationships using the currently selected type. If the task is already linked, the type is replaced.
-- The search input and results are cleared after a selection.
-- Clicking outside the results dropdown closes it.
-
-### Persistence
-
-- Relationships are saved when the task form is submitted (same as other task fields).
-- The bidirectional sync (auto-create/remove inverse) is applied at save time in `tasks.js`.
-- All affected tasks (the edited task and any target tasks) are saved in a single `saveTasks()` call.
+- The task edit dialog has no Relationships fieldset. It shows the title, the description and the notes-to-the-agent list only.
+- Relationships are created and removed through the task tools (`add_relationship` with a type and a target task, `remove_relationship`), which apply the same bidirectional sync described above.
+- The form submit path does not carry a relationships payload, so saving title, description or notes never rewrites relationships.
+- The short-ID display format above is used wherever relationships are surfaced externally.
 
 ## Normalization
 
@@ -115,6 +83,6 @@ Update this file when you change:
 - bidirectional sync rules
 - short ID format or display
 - card indicator behavior
-- modal UI structure or search behavior
+- relationship tool behavior or validation
 - data model shape or normalization rules
 - import/export handling for relationships

@@ -8,9 +8,12 @@ import {
   deleteGroup,
   ensureBoardsGrouped,
   getGroupIdForBoard,
+  iterationLabel,
   listGroups,
+  nextIterationName,
   pruneBoardGroups,
   readBoardGroupMap,
+  renameGroup,
   setGroupCollapsed,
   setGroupPrefixCollapsed,
   toggleGroupCollapsed,
@@ -26,36 +29,54 @@ describe('group store', () => {
     expect(listGroups()).toEqual([]);
   });
 
-  test('createGroup persists a derived name, order, collapsed and prefixCollapsed under openagile:groups', () => {
-    const group = createGroup();
+  test('createGroup persists the given name, order, collapsed and prefixCollapsed under openagile:groups', () => {
+    const group = createGroup('Q3 work');
 
     expect(group.id).toBeTruthy();
-    expect(group.name).toBe('Iterations 1');
+    expect(group.name).toBe('Q3 work');
     expect(group.order).toBe(1);
     expect(group.collapsed).toBe(false);
     expect(group.prefixCollapsed).toBe(false);
     expect(JSON.parse(localStorage.getItem(GROUPS_KEY))).toEqual([group]);
   });
 
-  test('createGroup names each new group after its order', () => {
-    createGroup();
-    createGroup();
+  test('createGroup falls back to New Group when the name is blank', () => {
+    expect(createGroup('   ').name).toBe('New Group');
+    expect(createGroup().name).toBe('New Group');
 
     const groups = listGroups();
-    expect(groups.map((group) => group.name)).toEqual(['Iterations 1', 'Iterations 2']);
+    expect(groups.map((group) => group.name)).toEqual(['New Group', 'New Group']);
     expect(groups.map((group) => group.order)).toEqual([1, 2]);
   });
 
-  test('listGroups derives names from the stored order, not a stored name', () => {
+  test('renameGroup changes the stored name without touching the order', () => {
+    const group = createGroup('Draft');
+    createGroup('Later');
+
+    expect(renameGroup(group.id, '  Q3 delivery  ')).toBe(true);
+
+    const groups = listGroups();
+    expect(groups.map((group) => group.name)).toEqual(['Q3 delivery', 'Later']);
+    expect(groups.map((group) => group.order)).toEqual([1, 2]);
+  });
+
+  test('renameGroup rejects blank names and unknown ids', () => {
+    const group = createGroup('Draft');
+
+    expect(renameGroup(group.id, '   ')).toBe(false);
+    expect(renameGroup('missing', 'Name')).toBe(false);
+    expect(listGroups().map((entry) => entry.name)).toEqual(['Draft']);
+  });
+
+  test('listGroups keeps stored names, sorts by order, and falls back to Untitled group', () => {
     localStorage.setItem(GROUPS_KEY, JSON.stringify([
       { id: 'a', name: 'Hand typed', order: 2, collapsed: false },
-      { id: 'b', name: 'Also typed', order: 1, collapsed: true }
+      { id: 'b', order: 1, collapsed: true }
     ]));
 
     const groups = listGroups();
     expect(groups.map((group) => group.id)).toEqual(['b', 'a']);
-    expect(groups.map((group) => group.name)).toEqual(['Iterations 1', 'Iterations 2']);
-    expect(groups.map((group) => group.order)).toEqual([1, 2]);
+    expect(groups.map((group) => group.name)).toEqual(['Untitled group', 'Hand typed']);
   });
 
   test('toggleGroupCollapsed flips and persists the collapsed flag', () => {
@@ -99,16 +120,16 @@ describe('group store', () => {
     expect(deleteGroup('missing')).toBe(false);
   });
 
-  test('deleteGroup re-derives the names and order of the groups that remain', () => {
-    createGroup();
-    const middle = createGroup();
-    createGroup();
+  test('deleteGroup keeps the names and order of the groups that remain', () => {
+    createGroup('First');
+    const middle = createGroup('Second');
+    createGroup('Third');
 
     expect(deleteGroup(middle.id)).toBe(true);
 
     const groups = listGroups();
-    expect(groups.map((group) => group.name)).toEqual(['Iterations 1', 'Iterations 2']);
-    expect(groups.map((group) => group.order)).toEqual([1, 2]);
+    expect(groups.map((group) => group.name)).toEqual(['First', 'Third']);
+    expect(groups.map((group) => group.order)).toEqual([1, 3]);
   });
 
   test('ensureBoardsGrouped attaches ungrouped boards to the last group', () => {
@@ -123,8 +144,34 @@ describe('group store', () => {
     const targetId = ensureBoardsGrouped(['board-1', 'board-2']);
 
     expect(listGroups()).toHaveLength(1);
-    expect(listGroups()[0].name).toBe('Iterations 1');
+    expect(listGroups()[0].name).toBe('New Group');
     expect(readBoardGroupMap()).toEqual({ 'board-1': targetId, 'board-2': targetId });
+  });
+
+  test('iterationLabel numbers from one', () => {
+    expect(iterationLabel(0)).toBe('Iteration 1');
+    expect(iterationLabel(2)).toBe('Iteration 3');
+  });
+
+  test('nextIterationName counts the boards already in the target group', () => {
+    const group = createGroup('Delivery');
+    assignBoardToGroup('board-1', group.id);
+    assignBoardToGroup('board-2', group.id);
+
+    expect(nextIterationName(group.id)).toBe('Iteration 3');
+  });
+
+  test('nextIterationName targets the last group when no group is given', () => {
+    createGroup('First');
+    const last = createGroup('Last');
+    assignBoardToGroup('board-1', last.id);
+
+    expect(nextIterationName(null)).toBe('Iteration 2');
+  });
+
+  test('nextIterationName starts at Iteration 1 with no groups', () => {
+    expect(nextIterationName(null)).toBe('Iteration 1');
+    expect(nextIterationName('missing')).toBe('Iteration 1');
   });
 
   test('ensureBoardsGrouped ignores boards that are already grouped', () => {

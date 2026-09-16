@@ -3,7 +3,7 @@
 ## Export Behavior
 
 - Export combines the selected board's `boardName`, tasks, columns, labels, and settings into one JSON file
-- Exported tasks carry the current task model: title, description, type, estimate, assignee, parentId, key points, comments, relationships, column, order, dates, blocked fields, claim fields, `needsDigest`/`isRework`, and swim lane assignment
+- Exported tasks carry the current task model: title, description, type, estimate, assignee, parentId, notes to the agent (`keyPoints`), comments, relationships, column, order, dates, blocked fields, claim fields, `needsDigest`/`isRework`, and swim lane assignment
 - Import/export actions are accessed from Manage Boards; the main toolbar does not provide separate import/export buttons
 - Board-management export can export a chosen board directly
 - Export writes metadata in `exportMeta` including `appVersion`, `schemaVersion`, and `exportedAt`

@@ -5,8 +5,7 @@ import {
   createBoard,
   setActiveBoardId
 } from './storage.js';
-import { alertDialog } from './dialog.js';
-import { assignBoardToGroup } from './board-groups.js';
+import { assignBoardToGroup, nextIterationName } from './board-groups.js';
 import { refreshBoardSelect, boardSelectMatchesState, refreshBrandText } from './board-select.js';
 
 let pendingGroupId = null;
@@ -14,8 +13,7 @@ let pendingGroupId = null;
 // Board Create Modal helpers
 export function showBoardCreateModal() {
   const modal = document.getElementById('board-create-modal');
-  const nameInput = document.getElementById('board-create-name');
-  if (!modal || !nameInput) return;
+  if (!modal) return;
 
   const titleEl = document.getElementById('board-create-modal-title');
   const submitBtn = document.getElementById('board-create-submit-btn');
@@ -23,9 +21,7 @@ export function showBoardCreateModal() {
   if (titleEl) titleEl.textContent = isIteration ? 'New Iteration' : 'Create New Board';
   if (submitBtn) submitBtn.textContent = isIteration ? 'Create Iteration' : 'Create Board';
 
-  nameInput.value = '';
   modal.classList.remove('hidden');
-  nameInput.focus();
 }
 
 function hideBoardCreateModal() {
@@ -96,19 +92,10 @@ export function initializeBoardsUI() {
   setupModalCloseHandlers('board-create-modal', hideBoardCreateModal);
 
   if (createForm) {
-    createForm.addEventListener('submit', async (e) => {
+    createForm.addEventListener('submit', (e) => {
       e.preventDefault();
 
-      const nameInput = document.getElementById('board-create-name');
-      const trimmed = (nameInput?.value || '').trim();
-
-      if (!trimmed) {
-        await alertDialog({ title: 'Error', message: 'Board name cannot be empty.' });
-        nameInput?.focus();
-        return;
-      }
-
-      const board = createBoard(trimmed);
+      const board = createBoard(nextIterationName(pendingGroupId));
       setActiveBoardId(board.id);
 
       if (pendingGroupId) assignBoardToGroup(board.id, pendingGroupId);

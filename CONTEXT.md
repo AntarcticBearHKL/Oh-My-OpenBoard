@@ -49,7 +49,7 @@ Board ──< Column ──< Task ──< Relationship (→ other Task)
 
 - **Board** is the aggregate root. No cross-board references exist.
 - **Task** does not carry a label list; swim lane assignment references a Label by ID (`swimlaneLabelId`).
-- **Relationship** is embedded inside Task (not a top-level entity), alongside the embedded `acceptanceCriteria` and `comments` collections.
+- **Relationship** is embedded inside Task (not a top-level entity), alongside the embedded `keyPoints` (the notes to the agent) and `comments` collections.
 - Every mutation is also recorded as an immutable **domain event** in the event store — the basis of
   sync and replay (see §9, and [ADR-0004](docs/adr/0004-event-sourced-sync.md)). The old inline task
   `activityLog` and board `BoardEvents` audit logs were removed in issue #110.
@@ -181,7 +181,7 @@ all subscribe.
 | `column-element.js` | Column DOM element factory |
 | `tasks.js` | Task CRUD |
 | `task-card.js` | Task card DOM element factory |
-| `task-modal.js` | Task edit modal (acceptance criteria, comments, relationships) |
+| `task-modal.js` | Task edit modal (title, description, notes to the agent) |
 | `labels.js` | Label CRUD |
 | `labels-modal.js` | Label management modal |
 | `render.js` | Two render adapters behind one read model: `renderBoard()` (full rebuild — `innerHTML` reset + `initDragDrop()`) and `reconcileBoard()` (in-place patch — moves cards by id, reorders, collapsed titles, card meta, Finished-column virtualization). Plus the **drag-reconcile window** (`beginDragReconcile()`/`endDragReconcile()`) that routes a drop's `DATA_CHANGED` through reconcile so the just-dragged node is never detached. See §7 "Board Render Flow". |
@@ -346,5 +346,5 @@ event stream.
 | API mocking | MSW | `client/tests/mocks/*.js` |
 
 Key coverage areas: storage CRUD, UUID migration, swimlane utilities, import/export preflight,
-claim timing, acceptance criteria, comments, validation, normalization, and the event-sourcing
+claim timing, notes to the agent (`keyPoints`), comments, validation, normalization, and the event-sourcing
 layer (HLC, reducer, outbound queue, realtime/catch-up, snapshots, sync indicator).

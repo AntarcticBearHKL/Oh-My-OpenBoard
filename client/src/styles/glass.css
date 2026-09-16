@@ -13,8 +13,6 @@
   .modal-content,
   .modal-content .form-actions,
   .spotlight-panel,
-  .relationship-results,
-  .rel-type-tooltip,
   body.reports-page .rpt-header,
   .session-status {
     background-color: var(--glass-bg-opaque);

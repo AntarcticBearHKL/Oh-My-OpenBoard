@@ -36,8 +36,8 @@ export function renderKeyPointsList() {
     const removeBtn = h('button', {
       type: 'button',
       class: 'key-point-remove-btn',
-      title: 'Remove key point',
-      'aria-label': `Remove key point "${point.text}"`,
+      title: 'Remove note',
+      'aria-label': `Remove note "${point.text}"`,
       onClick: () => {
         state.selectedTaskKeyPoints = state.selectedTaskKeyPoints.filter((entry) => entry.id !== point.id);
         renderKeyPointsList();

@@ -3,28 +3,18 @@
 import { loadTasks } from './storage.js';
 import { clearFieldError } from './validation.js';
 import { isTaskLocked } from './tasks.js';
-import {
-  normalizeKeyPoints,
-  normalizeComments,
-  normalizeEstimate,
-  normalizeTaskType
-} from './agile.js';
+import { normalizeKeyPoints } from './agile.js';
 import { $id } from './dom.js';
 import { state } from './task-modal-state.js';
 import { setTaskModalFullscreen, updateDescriptionLinks } from './task-modal-chrome.js';
-import { renderActiveTaskRelationships } from './task-modal-relationships.js';
-import { updateTaskSummary } from './task-modal-summary.js';
-import { resetTaskLock, setTaskLocked } from './task-modal-status.js';
-import { clearAgileInputs, renderAgileFields, resetAgileState } from './task-modal-agile-fields.js';
+import { renderKeyPointsList, resetTaskLock, setTaskLocked } from './task-modal-status.js';
 
 export function showModal() {
   state.editingTaskId = null;
-  state.selectedTaskRelationships = [];
+  state.selectedTaskKeyPoints = [];
 
   resetTaskLock();
-  $id('task-summary')?.classList.add('hidden');
   $id('task-modal-key')?.classList.add('hidden');
-  $id('task-claim-chip')?.classList.add('hidden');
 
   setTaskModalFullscreen(false);
   $id('task-fullpage-btn')?.classList.add('hidden');
@@ -43,20 +33,10 @@ export function showModal() {
   taskDescription.value = '';
   updateDescriptionLinks('');
 
-  resetAgileState();
-  clearAgileInputs();
-  const taskType = $id('task-type');
-  if (taskType) taskType.value = 'task';
-  const taskEstimate = $id('task-estimate');
-  if (taskEstimate) taskEstimate.value = '';
+  const keyPointInput = $id('task-key-point-input');
+  if (keyPointInput) keyPointInput.value = '';
 
-  const relSearch = $id('task-relationship-search');
-  if (relSearch) relSearch.value = '';
-  const relResults = $id('task-relationship-results');
-  if (relResults) { relResults.hidden = true; relResults.innerHTML = ''; }
-
-  renderActiveTaskRelationships(showEditModal);
-  renderAgileFields();
+  renderKeyPointsList();
   modal.classList.remove('hidden');
   taskTitle.focus();
 }
@@ -67,9 +47,7 @@ export function showEditModal(taskId) {
   if (!task) return;
 
   state.editingTaskId = taskId;
-  state.selectedTaskRelationships = Array.isArray(task.relationships) ? [...task.relationships] : [];
   state.selectedTaskKeyPoints = normalizeKeyPoints(task.keyPoints ?? task.acceptanceCriteria).map((entry) => ({ ...entry }));
-  state.selectedTaskComments = normalizeComments(task.comments).map((entry) => ({ ...entry }));
 
   setTaskModalFullscreen(false);
   $id('task-fullpage-btn')?.classList.remove('hidden');
@@ -90,24 +68,18 @@ export function showEditModal(taskId) {
   taskDescription.value = typeof task.description === 'string' ? task.description : '';
   updateDescriptionLinks(taskDescription.value);
 
-  const taskType = $id('task-type');
-  if (taskType) taskType.value = normalizeTaskType(task.type);
-  const taskEstimate = $id('task-estimate');
-  if (taskEstimate) {
-    const estimate = normalizeEstimate(task.estimate);
-    taskEstimate.value = estimate === null ? '' : String(estimate);
+  const keyEl = $id('task-modal-key');
+  if (keyEl) {
+    const key = typeof task.key === 'string' ? task.key.trim() : '';
+    keyEl.textContent = key;
+    keyEl.classList.toggle('hidden', !key);
   }
 
-  const relSearch = $id('task-relationship-search');
-  if (relSearch) relSearch.value = '';
-  const relResults = $id('task-relationship-results');
-  if (relResults) { relResults.hidden = true; relResults.innerHTML = ''; }
+  const keyPointInput = $id('task-key-point-input');
+  if (keyPointInput) keyPointInput.value = '';
 
-  renderActiveTaskRelationships(showEditModal);
-  clearAgileInputs();
-  renderAgileFields();
+  renderKeyPointsList();
 
-  updateTaskSummary(task);
   const locked = isTaskLocked(task);
   setTaskLocked(locked, task);
 
@@ -118,12 +90,8 @@ export function showEditModal(taskId) {
 export function hideModal() {
   $id('task-modal').classList.add('hidden');
   state.editingTaskId = null;
-  state.selectedTaskRelationships = [];
 
   resetTaskLock();
-
-  const relResults = $id('task-relationship-results');
-  if (relResults) { relResults.hidden = true; relResults.innerHTML = ''; }
 
   setTaskModalFullscreen(false);
   $id('task-fullpage-btn')?.classList.add('hidden');

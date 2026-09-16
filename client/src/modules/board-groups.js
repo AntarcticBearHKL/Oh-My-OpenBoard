@@ -6,7 +6,7 @@ export const BOARD_GROUP_KEY = 'openagile:boardGroup';
 export const UNGROUPED_GROUP_ID = '__ungrouped__';
 
 const GROUPS_MIGRATED_KEY = 'openagile:groupsMigrated';
-const GROUP_NAME_PREFIX = 'Iterations';
+const ITERATION_NAME_PREFIX = 'Iteration';
 
 function markMigrated() {
   try { localStorage.setItem(GROUPS_MIGRATED_KEY, '1'); } catch { /* ignore */ }
@@ -18,18 +18,15 @@ function isMigrated() {
 
 const GROUPS_API = '/api/groups';
 
-function deriveGroupNames(groups) {
-  return groups.map((group, index) => ({
-    ...group,
-    order: index + 1,
-    name: `${GROUP_NAME_PREFIX} ${index + 1}`
-  }));
-}
-
 function normalizeGroup(raw, index) {
   if (!raw || typeof raw.id !== 'string' || !raw.id.trim()) return null;
+  const name = typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : 'Untitled group';
   const order = Number.isFinite(raw.order) ? raw.order : index + 1;
-  return { id: raw.id, order, collapsed: raw.collapsed === true, prefixCollapsed: raw.prefixCollapsed === true };
+  return { id: raw.id, name, order, collapsed: raw.collapsed === true, prefixCollapsed: raw.prefixCollapsed === true };
+}
+
+export function iterationLabel(index) {
+  return `${ITERATION_NAME_PREFIX} ${index + 1}`;
 }
 
 function pushToServer() {
@@ -44,26 +41,38 @@ function pushToServer() {
 export function listGroups() {
   const raw = readJson(GROUPS_KEY, []);
   if (!Array.isArray(raw)) return [];
-  const groups = raw
+  return raw
     .map((group, index) => normalizeGroup(group, index))
     .filter(Boolean)
     .sort((a, b) => a.order - b.order);
-  return deriveGroupNames(groups);
 }
 
-export function createGroup() {
+export function createGroup(name = 'New Group') {
   const groups = listGroups();
-  const order = groups.length + 1;
+  const trimmed = typeof name === 'string' ? name.trim() : '';
   const group = {
     id: generateUUID(),
-    name: `${GROUP_NAME_PREFIX} ${order}`,
-    order,
+    name: trimmed || 'New Group',
+    order: groups.length + 1,
     collapsed: false,
     prefixCollapsed: false
   };
   writeJson(GROUPS_KEY, [...groups, group]);
   pushToServer();
   return group;
+}
+
+export function renameGroup(groupId, newName) {
+  const id = typeof groupId === 'string' ? groupId : '';
+  const name = typeof newName === 'string' ? newName.trim() : '';
+  if (!id || !name) return false;
+
+  const groups = listGroups();
+  if (!groups.some((group) => group.id === id)) return false;
+
+  writeJson(GROUPS_KEY, groups.map((group) => (group.id === id ? { ...group, name } : group)));
+  pushToServer();
+  return true;
 }
 
 export function setGroupCollapsed(groupId, collapsed) {
@@ -115,7 +124,7 @@ export function deleteGroup(groupId) {
   const groups = listGroups();
   if (!groups.some((group) => group.id === id)) return false;
 
-  writeJson(GROUPS_KEY, deriveGroupNames(groups.filter((group) => group.id !== id)));
+  writeJson(GROUPS_KEY, groups.filter((group) => group.id !== id));
 
   const map = readBoardGroupMap();
   let changed = false;
@@ -147,6 +156,17 @@ export function getGroupIdForBoard(boardId) {
   const id = typeof boardId === 'string' ? boardId : '';
   if (!id) return null;
   return readBoardGroupMap()[id] || null;
+}
+
+export function nextIterationName(groupId) {
+  const groups = listGroups();
+  const requested = typeof groupId === 'string' ? groupId : '';
+  const target = requested || groups[groups.length - 1]?.id || '';
+  if (!target) return iterationLabel(0);
+
+  const map = readBoardGroupMap();
+  const count = Object.values(map).filter((value) => value === target).length;
+  return iterationLabel(count);
 }
 
 export function assignBoardToGroup(boardId, groupId) {
@@ -202,10 +222,7 @@ export function ensureBoardsGrouped(boardIds) {
 export function adoptGroupsState(state) {
   if (!state || typeof state !== 'object') return;
   if (Array.isArray(state.groups)) {
-    writeJson(
-      GROUPS_KEY,
-      deriveGroupNames(state.groups.map((group, index) => normalizeGroup(group, index)).filter(Boolean))
-    );
+    writeJson(GROUPS_KEY, state.groups.map((group, index) => normalizeGroup(group, index)).filter(Boolean));
   }
   if (state.boardGroups && typeof state.boardGroups === 'object' && !Array.isArray(state.boardGroups)) {
     writeJson(BOARD_GROUP_KEY, state.boardGroups);

@@ -39,4 +39,4 @@ The board always has exactly five fixed columns, in this order:
 - The column with `role: "done"` is permanent and cannot be deleted
 - Finished-column sorting via drag reordering is disabled for performance
 - Dropping into Finished always inserts tasks at the top
-- Appending a key point to a task in Finished returns it to Backlog as rework (see [tasks.md](tasks.md))
+- Appending a note to a task in Finished returns it to Backlog as rework (see [tasks.md](tasks.md))

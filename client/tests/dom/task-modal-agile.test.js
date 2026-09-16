@@ -9,10 +9,7 @@ const mocks = vi.hoisted(() => ({
   isTaskLocked: vi.fn(() => false),
   promptDialog: vi.fn(async () => null),
   loadTasks: vi.fn(() => []),
-  loadColumns: vi.fn(() => [
-    { id: 'todo', name: 'To Do' },
-    { id: '00000000-0000-4000-8000-000000000032', name: 'Blocked' }
-  ]),
+  loadColumns: vi.fn(() => []),
   emit: vi.fn()
 }));
 
@@ -75,64 +72,22 @@ const FIXTURE = `
           <button id="task-close-btn" type="button" class="btn-small"></button>
         </div>
       </header>
-      <section id="task-summary" class="task-summary hidden">
-        <span id="task-summary-column" class="task-summary-chip hidden"></span>
-        <div id="task-claim-chip" class="task-claim-chip hidden">
-          <span id="task-claim-agent"></span>
-          <span id="task-claim-time"></span>
-        </div>
-      </section>
       <div id="task-lock-notice" class="task-lock-notice hidden" role="status"></div>
       <form id="task-form" novalidate>
-        <div class="task-form-columns">
-          <div class="task-form-column-left">
-            <div class="form-group"><label for="task-title">Title</label><input id="task-title" type="text"></div>
-            <div class="form-group">
-              <label for="task-description">Description</label>
-              <textarea id="task-description"></textarea>
-              <div id="task-description-links" hidden></div>
-            </div>
-            <div class="task-form-grid">
-              <div class="form-group">
-                <label for="task-type">Type</label>
-                <select id="task-type">
-                  <option value="story">Story</option>
-                  <option value="bug">Bug</option>
-                  <option value="task" selected>Task</option>
-                  <option value="spike">Spike</option>
-                </select>
-              </div>
-              <div class="form-group"><label for="task-estimate">Estimate</label><input id="task-estimate" type="number"></div>
-            </div>
-          </div>
-          <div class="task-form-column-right">
-            <fieldset class="form-group" id="task-key-points-fieldset">
-              <legend>Key points</legend>
-              <ul id="task-key-points-list"></ul>
-              <div class="task-key-point-add-row">
-                <input type="text" id="task-key-point-input">
-                <button type="button" id="task-key-point-add-btn">+</button>
-              </div>
-            </fieldset>
-            <fieldset class="form-group" id="task-comments-fieldset">
-              <legend>Notes to the agent <span id="task-comments-count" hidden></span></legend>
-              <ul id="task-comments-list"></ul>
-              <div class="task-comment-add-row">
-                <input type="text" id="task-comment-author">
-                <input type="text" id="task-comment-input">
-                <button type="button" id="task-comment-add-btn">Add</button>
-              </div>
-            </fieldset>
-            <fieldset class="form-group" id="task-relationships-fieldset">
-              <legend>Relationships</legend>
-              <div id="task-active-relationships"></div>
-              <select id="task-relationship-type"><option value="related">Related</option></select>
-              <div class="rel-type-tooltip" id="rel-type-tooltip"></div>
-              <input type="text" id="task-relationship-search">
-              <div id="task-relationship-results" hidden></div>
-            </fieldset>
-          </div>
+        <div class="form-group"><label for="task-title">Title</label><input id="task-title" type="text"></div>
+        <div class="form-group">
+          <label for="task-description">Description</label>
+          <textarea id="task-description"></textarea>
+          <div id="task-description-links" hidden></div>
         </div>
+        <fieldset class="form-group" id="task-key-points-fieldset">
+          <legend>Notes to the agent</legend>
+          <ul id="task-key-points-list" aria-label="Notes to the agent"></ul>
+          <div class="task-key-point-add-row">
+            <input type="text" id="task-key-point-input">
+            <button type="button" id="task-key-point-add-btn">+</button>
+          </div>
+        </fieldset>
         <div class="form-actions">
           <button type="button" id="cancel-task-btn" class="btn btn-secondary">Cancel</button>
           <button type="submit" id="task-submit-btn" class="btn btn-primary">Add Task</button>
@@ -141,6 +96,28 @@ const FIXTURE = `
     </article>
   </div>
 `;
+
+const REMOVED_IDS = [
+  'task-type',
+  'task-estimate',
+  'task-comments-fieldset',
+  'task-comments-list',
+  'task-comments-count',
+  'task-comment-author',
+  'task-comment-input',
+  'task-comment-add-btn',
+  'task-relationships-fieldset',
+  'task-active-relationships',
+  'task-relationship-type',
+  'rel-type-tooltip',
+  'task-relationship-search',
+  'task-relationship-results',
+  'task-summary',
+  'task-summary-column',
+  'task-claim-chip',
+  'task-claim-agent',
+  'task-claim-time'
+];
 
 beforeEach(() => {
   mountToBody(FIXTURE);
@@ -151,19 +128,40 @@ beforeEach(() => {
   mocks.promptDialog.mockResolvedValue(null);
   mocks.loadTasks.mockReset();
   mocks.loadTasks.mockReturnValue([]);
-  mocks.loadColumns.mockClear();
   mocks.emit.mockClear();
   localStorage.clear();
 });
 
-test('add form saves title, description, type, estimate and relationships through addTask', () => {
+test('the dialog renders the title, the description and the notes list and nothing else', () => {
+  initializeTaskModalHandlers(() => {});
+  showModal();
+
+  const form = document.getElementById('task-form');
+  expect(form.querySelector('.task-form-columns')).toBeNull();
+  expect(form.querySelector('.task-form-column-left')).toBeNull();
+  expect(form.querySelector('.task-form-column-right')).toBeNull();
+
+  const blocks = [...form.children];
+  expect(blocks).toHaveLength(4);
+  expect(blocks[0].querySelector('#task-title')).not.toBeNull();
+  expect(blocks[1].querySelector('#task-description')).not.toBeNull();
+  expect(blocks[2].querySelector('#task-key-points-list')).not.toBeNull();
+  expect(blocks[3].classList.contains('form-actions')).toBe(true);
+
+  expect(document.getElementById('task-key-points-fieldset').querySelector('legend').textContent.trim()).toBe('Notes to the agent');
+  expect(document.getElementById('task-key-points-list').getAttribute('aria-label')).toBe('Notes to the agent');
+
+  REMOVED_IDS.forEach((id) => {
+    expect(document.getElementById(id), `#${id} should not exist`).toBeNull();
+  });
+});
+
+test('the add form saves the title, description and notes through addTask', () => {
   initializeTaskModalHandlers(() => {});
   showModal();
 
   document.getElementById('task-title').value = 'New task';
   document.getElementById('task-description').value = 'What the agent should do';
-  document.getElementById('task-type').value = 'bug';
-  document.getElementById('task-estimate').value = '5';
 
   fireEvent.submit(document.getElementById('task-form'));
 
@@ -171,30 +169,25 @@ test('add form saves title, description, type, estimate and relationships throug
   const [title, description, fields] = mocks.addTask.mock.calls[0];
   expect(title).toBe('New task');
   expect(description).toBe('What the agent should do');
-  expect(fields.type).toBe('bug');
-  expect(fields.estimate).toBe(5);
   expect(fields.keyPoints).toEqual([]);
-  expect(fields.comments).toEqual([]);
-  expect(fields.relationships).toEqual([]);
-  expect(Object.keys(fields).sort()).toEqual(['comments', 'estimate', 'keyPoints', 'relationships', 'type']);
+  expect(Object.keys(fields)).toEqual(['keyPoints']);
 });
 
-test('the key points editor appends and removes items', () => {
+test('the notes list appends and removes items', () => {
   initializeTaskModalHandlers(() => {});
   showModal();
-  document.getElementById('task-title').value = 'Checklist task';
+  document.getElementById('task-title').value = 'Notes task';
 
   const keyPointInput = document.getElementById('task-key-point-input');
-  keyPointInput.value = 'First key point';
+  keyPointInput.value = 'First note';
   fireEvent.keyDown(keyPointInput, { key: 'Enter' });
-  keyPointInput.value = 'Second key point';
+  keyPointInput.value = 'Second note';
   fireEvent.click(document.getElementById('task-key-point-add-btn'));
 
   let items = document.querySelectorAll('#task-key-points-list .key-point-item');
   expect(items).toHaveLength(2);
-  expect(items[0].querySelector('.key-point-text').textContent).toBe('First key point');
-  expect(items[1].querySelector('.key-point-text').textContent).toBe('Second key point');
-  expect(items[0].querySelector('input[type="checkbox"]')).toBeNull();
+  expect(items[0].querySelector('.key-point-text').textContent).toBe('First note');
+  expect(items[1].querySelector('.key-point-text').textContent).toBe('Second note');
 
   fireEvent.click(items[1].querySelector('.key-point-remove-btn'));
   items = document.querySelectorAll('#task-key-points-list .key-point-item');
@@ -204,53 +197,30 @@ test('the key points editor appends and removes items', () => {
 
   const fields = mocks.addTask.mock.calls[0][2];
   expect(fields.keyPoints).toHaveLength(1);
-  expect(fields.keyPoints[0]).toMatchObject({ text: 'First key point' });
+  expect(fields.keyPoints[0]).toMatchObject({ text: 'First note' });
   expect(fields.keyPoints[0].at).toBeTruthy();
-  expect(fields.keyPoints[0].done).toBeUndefined();
 });
 
-test('a comment written in the dialog renders in the thread with author and time', () => {
-  initializeTaskModalHandlers(() => {});
-  showModal();
-  document.getElementById('task-title').value = 'Notes task';
-
-  document.getElementById('task-comment-author').value = 'Ada';
-  document.getElementById('task-comment-input').value = 'Please answer this';
-  fireEvent.click(document.getElementById('task-comment-add-btn'));
-
-  const items = document.querySelectorAll('#task-comments-list .comment-item');
-  expect(items).toHaveLength(1);
-  expect(items[0].querySelector('.comment-author').textContent).toBe('Ada');
-  expect(items[0].querySelector('.comment-text').textContent).toBe('Please answer this');
-  expect(items[0].querySelector('.comment-at').textContent).not.toBe('');
-  expect(document.getElementById('task-comments-count').textContent).toBe('1');
-
-  fireEvent.submit(document.getElementById('task-form'));
-  const fields = mocks.addTask.mock.calls[0][2];
-  expect(fields.comments).toHaveLength(1);
-  expect(fields.comments[0]).toMatchObject({ author: 'Ada', text: 'Please answer this' });
-});
-
-test('the agent reply shows up in the same thread when the dialog reopens', () => {
+test('opening the edit dialog prefills the title, description and notes', () => {
   mocks.loadTasks.mockReturnValue([
     {
       id: 't1',
-      title: 'Answered task',
+      title: 'Fine task',
+      description: 'Agent-written description',
       column: 'todo',
-      comments: [
-        { id: 'c1', author: 'Ada', text: 'Any update?', at: '2026-01-01T10:00:00.000Z' },
-        { id: 'c2', author: 'agent-7', text: 'Shipped in build 42', at: '2026-01-01T11:00:00.000Z' }
-      ]
+      keyPoints: [{ id: 'k1', text: 'Human note', at: '2026-01-01T10:00:00.000Z' }]
     }
   ]);
   initializeTaskModalHandlers(() => {});
   showEditModal('t1');
 
-  const items = document.querySelectorAll('#task-comments-list .comment-item');
-  expect(items).toHaveLength(2);
-  expect(items[0].querySelector('.comment-author').textContent).toBe('Ada');
-  expect(items[1].querySelector('.comment-author').textContent).toBe('agent-7');
-  expect(items[1].querySelector('.comment-text').textContent).toBe('Shipped in build 42');
+  expect(document.getElementById('task-modal-title').textContent).toBe('Edit Task');
+  expect(document.getElementById('task-title').value).toBe('Fine task');
+  expect(document.getElementById('task-description').value).toBe('Agent-written description');
+
+  const items = document.querySelectorAll('#task-key-points-list .key-point-item');
+  expect(items).toHaveLength(1);
+  expect(items[0].querySelector('.key-point-text').textContent).toBe('Human note');
 });
 
 test('editing a task saves the slim payload through updateTask', async () => {
@@ -271,16 +241,14 @@ test('editing a task saves the slim payload through updateTask', async () => {
   showEditModal('t1');
 
   document.getElementById('task-title').value = 'Renamed task';
-  document.getElementById('task-type').value = 'spike';
-  document.getElementById('task-estimate').value = '8';
   fireEvent.submit(document.getElementById('task-form'));
 
   await waitFor(() => expect(mocks.updateTask).toHaveBeenCalledTimes(1));
-  const [taskId, title, , fields] = mocks.updateTask.mock.calls[0];
+  const [taskId, title, description, fields] = mocks.updateTask.mock.calls[0];
   expect(taskId).toBe('t1');
   expect(title).toBe('Renamed task');
-  expect(fields.type).toBe('spike');
-  expect(fields.estimate).toBe(8);
+  expect(description).toBe('old');
+  expect(Object.keys(fields)).toEqual(['keyPoints']);
   expect(fields.column).toBeUndefined();
   expect(mocks.promptDialog).not.toHaveBeenCalled();
   expect(mocks.setTaskBlockedReason).not.toHaveBeenCalled();
