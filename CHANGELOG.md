@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The skills and the documentation describe the slimmed task model instead of the old fields, so an agent that reads them is no longer told to use a priority, a due date, a label or a sub-task.
 - The Backlog add-task row is now a neutral surface with a solid hairline, and the column controls around it were unified. A dashed border means "placeholder or drop target" everywhere else in this interface, which is what made that button read as a drop zone.
 - The Backlog add-task control moved out of the column footer and into the column header, using the same icon button the swimlane view already used. The same action used to be two different controls in two different places; now it is one, and the column header and footer controls share a single surface, border, radius, spacing and state language.
+- The dialog action area paints nothing of its own any more: the footer is neither filled nor blurred, and only the hairline above the actions remains. A translucent fill double-stacked over the dialog and brightened it, while the backdrop blur pulled the lighter page in from outside the dialog edge, which is why a white sheet kept appearing behind the buttons.
 
 ### Removed
 

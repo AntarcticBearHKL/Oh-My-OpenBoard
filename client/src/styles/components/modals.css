@@ -44,13 +44,12 @@
 
 /* Keep modal actions visible: content scrolls, buttons stay pinned. */
 .modal-content .form-actions {
+  background: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   position: sticky;
   bottom: 0;
   z-index: 1;
-  /* transparent on purpose: a second glass layer over the modal's own reads as a white band */
-  background: transparent;
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
   border-top: 1px solid var(--glass-border);
   margin-top: 20px;
   padding-top: 16px;
