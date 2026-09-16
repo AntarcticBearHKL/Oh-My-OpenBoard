@@ -356,7 +356,7 @@ describe('Backlog manual add', () => {
     const columnEl = createColumnElement(backlog);
     document.body.appendChild(columnEl);
 
-    const addButton = columnEl.querySelector('.add-task-row-btn');
+    const addButton = columnEl.querySelector('.column-header .add-task-btn-icon');
     expect(addButton).not.toBeNull();
     expect(addButton.getAttribute('aria-label')).toBe(`Add task to ${backlog.name}`);
 
@@ -400,6 +400,6 @@ describe('Backlog manual add', () => {
     const columnEl = createColumnElement(inProgress);
     document.body.appendChild(columnEl);
 
-    expect(columnEl.querySelector('.add-task-row-btn')).toBeNull();
+    expect(columnEl.querySelector('.add-task-btn-icon')).toBeNull();
   });
 });

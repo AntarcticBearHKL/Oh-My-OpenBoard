@@ -193,7 +193,18 @@ export function createColumnElement(column) {
 
   syncSummaryButton(summaryButton);
 
-  const headerDiv = h('header', { class: 'column-header' }, columnTitle, taskCounter, summaryButton);
+  const addTaskButton = column.id === BACKLOG_COLUMN_ID
+    ? h('button', {
+      class: 'add-task-btn-icon',
+      type: 'button',
+      'aria-label': `Add task to ${column.name}`,
+      title: 'Add task',
+      onClick: () => showModal(column.id)
+    }, h('span', { 'data-lucide': 'plus', 'aria-hidden': 'true' }))
+    : null;
+
+  const headerDiv = h('header', { class: 'column-header' },
+    columnTitle, taskCounter, summaryButton, addTaskButton);
 
   const ul = h('ul', {
     class: 'tasks',
@@ -201,26 +212,11 @@ export function createColumnElement(column) {
     'aria-label': `Tasks in ${column.name}`
   });
 
-  const addRow = column.id === BACKLOG_COLUMN_ID
-    ? h('div', { class: 'column-add-row' },
-      h('button', {
-        class: 'add-task-row-btn',
-        type: 'button',
-        'aria-label': `Add task to ${column.name}`,
-        title: 'Add task',
-        onClick: () => showModal(column.id)
-      },
-        h('span', { 'data-lucide': 'plus', 'aria-hidden': 'true' }),
-        h('span', { class: 'add-task-row-label' }, 'Add task')
-      )
-    )
-    : null;
-
   return h('article', {
     class: 'task-column',
     'data-column': column.id,
     'data-wip': getWipState(taskCount, column),
     'aria-labelledby': `column-title-${column.id}`,
     style: column?.color ? { '--column-accent': column.color } : {}
-  }, headerDiv, ul, addRow);
+  }, headerDiv, ul);
 }

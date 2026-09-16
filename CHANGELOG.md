@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The skills the board ships are now written in Chinese, and they document the claim-timing contract: a claim starts the clock, any task update restarts the five-minute window, and the agent is expected to move the card to Finished or Blocked itself.
 - The skills and the documentation describe the slimmed task model instead of the old fields, so an agent that reads them is no longer told to use a priority, a due date, a label or a sub-task.
 - The Backlog add-task row is now a neutral surface with a solid hairline, and the column controls around it were unified. A dashed border means "placeholder or drop target" everywhere else in this interface, which is what made that button read as a drop zone.
+- The Backlog add-task control moved out of the column footer and into the column header, using the same icon button the swimlane view already used. The same action used to be two different controls in two different places; now it is one, and the column header and footer controls share a single surface, border, radius, spacing and state language.
 
 ### Removed
 

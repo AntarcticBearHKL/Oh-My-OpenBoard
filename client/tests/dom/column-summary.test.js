@@ -136,19 +136,19 @@ test('the edit affordance saves a human override through saveColumnSummary', () 
   expect(document.querySelector('.column-summary-text').textContent).toBe('Human override text');
 });
 
-test('the column still renders its add-task row and task list', () => {
+test('the column renders its add-task control in the header and its task list', () => {
   const columnEl = mountColumn();
 
   expect(columnEl.querySelector('.tasks')).not.toBeNull();
-  expect(columnEl.querySelector('.column-add-row')).not.toBeNull();
-  expect(columnEl.querySelector('.add-task-row-btn')).not.toBeNull();
+  expect(columnEl.querySelector('.column-header .add-task-btn-icon')).not.toBeNull();
+  expect(columnEl.querySelector('.column-add-row')).toBeNull();
   expect(columnEl.querySelector('.column-header h2').textContent).toBe('Backlog');
 });
 
-test('clicking the add-task row opens the create-task modal for the column', () => {
+test('clicking the header add-task control opens the create-task modal for the column', () => {
   const columnEl = mountColumn();
 
-  fireEvent.click(columnEl.querySelector('.add-task-row-btn'));
+  fireEvent.click(columnEl.querySelector('.add-task-btn-icon'));
 
   expect(mocks.showModal).toHaveBeenCalledWith(COLUMN.id);
 });
@@ -161,5 +161,5 @@ test.each([
   const columnEl = mountColumn({ ...column, wipLimit: 0 });
 
   expect(columnEl.querySelector('.column-add-row')).toBeNull();
-  expect(columnEl.querySelector('.add-task-row-btn')).toBeNull();
+  expect(columnEl.querySelector('.add-task-btn-icon')).toBeNull();
 });

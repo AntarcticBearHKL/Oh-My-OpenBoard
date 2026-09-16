@@ -189,6 +189,15 @@
   --focus-ring: rgba(28, 25, 23, 0.12);
   --primary-soft: rgba(23, 23, 23, 0.06);
 
+  /* Board chrome controls (column header actions + card actions). They reference
+     theme-varying tokens, so they resolve per theme and need no dark override. */
+  --board-control-size: 28px;
+  --board-control-size-compact: 24px;
+  --board-control-radius: var(--radius-sm);
+  --board-control-border: var(--border);
+  --board-control-surface: color-mix(in srgb, var(--surface-raised) 55%, transparent);
+  --board-control-gap: var(--space-2);
+
   /* Column accent — the fallback when a column carries no inline accent */
   --column-accent-default: #8a9bb5;
 

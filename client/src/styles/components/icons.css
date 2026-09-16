@@ -2,9 +2,8 @@
    Icon Button Components
    ========================================================================== */
 
-/* Base icon button pattern */
+/* Base icon button pattern (task-row actions) */
 .icon-btn,
-.add-task-btn-icon,
 .delete-task-btn {
   background: none;
   border: none;
@@ -19,53 +18,32 @@
 }
 
 .icon-btn:hover,
-.add-task-btn-icon:hover,
 .delete-task-btn:hover {
   opacity: 1;
 }
 
 .icon-btn svg,
-.add-task-btn-icon svg,
 .delete-task-btn svg {
   width: 16px;
   height: 16px;
   stroke-width: 2;
 }
 
-/* Add task button (swimlane headers) */
-.add-task-btn-icon {
-  padding: 3px;
-  border: 1px solid var(--border);
-  background-color: color-mix(in srgb, var(--surface-raised) 55%, transparent);
-  color: var(--text-muted);
-  opacity: 1;
-  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
-}
-
-.add-task-btn-icon:hover {
-  background-color: var(--item-hover);
-  border-color: var(--column-accent-hover);
-  color: var(--column-accent-hover);
-}
-
-.add-task-btn-icon:active {
-  background-color: var(--item-selected);
-  border-color: var(--column-accent-hover);
-  color: var(--column-accent-hover);
-}
-
-.add-task-btn-icon:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-.add-task-btn-icon svg {
-  stroke: currentColor;
-}
-
 /* Delete task button */
+.delete-task-btn {
+  box-sizing: border-box;
+  width: var(--board-control-size-compact);
+  height: var(--board-control-size-compact);
+  padding: 0;
+}
+
 .delete-task-btn:hover {
   background-color: var(--color-danger-bg);
+}
+
+.delete-task-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .delete-task-btn svg {
