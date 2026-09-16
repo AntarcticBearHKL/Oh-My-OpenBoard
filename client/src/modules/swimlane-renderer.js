@@ -147,7 +147,7 @@ export function renderSwimlaneBoard(container, sortedColumns, visibleTasks, labe
   const grid = buildBoardGrid(sortedColumns, lanes, visibleTasks, settings.swimLaneGroupBy, labels, settings.swimLaneLabelGroup);
 
   const colTemplate = sortedColumns
-    .map((column) => (column?.collapsed === true ? '72px' : 'minmax(280px, 1fr)'))
+    .map((column) => (column?.collapsed === true ? '72px' : 'minmax(var(--column-min-width, 170px), 1fr)'))
     .join(' ');
 
   const headerRow = h('div', { class: 'swimlane-grid-header' });

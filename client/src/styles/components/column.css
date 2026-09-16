@@ -17,9 +17,9 @@
   border-radius: 0;
   margin: 0 0 0 -1px;
   padding: 0;
-  flex: 0 0 var(--column-width, var(--column-default-width));
-  width: var(--column-width, var(--column-default-width));
-  min-width: var(--column-width, var(--column-default-width));
+  flex: 1 1 var(--column-min-width);
+  width: auto;
+  min-width: var(--column-min-width);
   background-color: var(--glass-bg);
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
@@ -198,7 +198,7 @@
 .swimlane-grid-header,
 .swimlane-row-cells {
   display: grid;
-  grid-template-columns: var(--swimlane-grid-template, repeat(var(--swimlane-column-count, 3), minmax(280px, 1fr)));
+  grid-template-columns: var(--swimlane-grid-template, repeat(var(--swimlane-column-count, 3), minmax(var(--column-min-width, 170px), 1fr)));
   gap: 16px;
   align-items: start;
 }

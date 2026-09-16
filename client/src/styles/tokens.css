@@ -182,7 +182,7 @@
   --skills-modal-width: 920px;
   --skills-layout-height: 420px;
   --skills-pane-width: 280px;
-  --column-default-width: 300px;
+  --column-min-width: 170px;
   --column-min-height: 220px;
   --swimlane-min-height: 116px;
   --reports-kpis-min-height: 520px;
