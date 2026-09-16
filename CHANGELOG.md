@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Backlog add-task control moved out of the column footer and into the column header, using the same icon button the swimlane view already used. The same action used to be two different controls in two different places; now it is one, and the column header and footer controls share a single surface, border, radius, spacing and state language.
 - The dialog action area paints nothing of its own any more: the footer is neither filled nor blurred, and only the hairline above the actions remains. A translucent fill double-stacked over the dialog and brightened it, while the backdrop blur pulled the lighter page in from outside the dialog edge, which is why a white sheet kept appearing behind the buttons.
 - The board canvas no longer paints a dot grid; it is plain paper now. The two dot tokens went with it.
+- The board has five fixed columns now, with HIL (Human In The Loop) second, and HIL is the only column where a task can be added by hand - Backlog is for work an agent proposes.
+- Acceptance criteria became key points: an append-only list the human writes, with no done flag. The description belongs to the agent and the key points belong to the human, and appending one sets needsDigest so the agent folds it into the description before starting; adding one to a finished task sends it back to Backlog marked as rework.
+- Task cards show one column of content: title, description and key points.
 
 ### Removed
 
