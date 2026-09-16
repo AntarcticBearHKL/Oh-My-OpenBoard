@@ -6,6 +6,7 @@ export const BOARD_GROUP_KEY = 'openagile:boardGroup';
 export const UNGROUPED_GROUP_ID = '__ungrouped__';
 
 const GROUPS_MIGRATED_KEY = 'openagile:groupsMigrated';
+const GROUP_NAME_PREFIX = 'Iterations';
 
 function markMigrated() {
   try { localStorage.setItem(GROUPS_MIGRATED_KEY, '1'); } catch { /* ignore */ }
@@ -17,11 +18,18 @@ function isMigrated() {
 
 const GROUPS_API = '/api/groups';
 
+function deriveGroupNames(groups) {
+  return groups.map((group, index) => ({
+    ...group,
+    order: index + 1,
+    name: `${GROUP_NAME_PREFIX} ${index + 1}`
+  }));
+}
+
 function normalizeGroup(raw, index) {
   if (!raw || typeof raw.id !== 'string' || !raw.id.trim()) return null;
-  const name = typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : 'Untitled group';
   const order = Number.isFinite(raw.order) ? raw.order : index + 1;
-  return { id: raw.id, name, order, collapsed: raw.collapsed === true };
+  return { id: raw.id, order, collapsed: raw.collapsed === true, prefixCollapsed: raw.prefixCollapsed === true };
 }
 
 function pushToServer() {
@@ -36,37 +44,26 @@ function pushToServer() {
 export function listGroups() {
   const raw = readJson(GROUPS_KEY, []);
   if (!Array.isArray(raw)) return [];
-  return raw
+  const groups = raw
     .map((group, index) => normalizeGroup(group, index))
     .filter(Boolean)
     .sort((a, b) => a.order - b.order);
+  return deriveGroupNames(groups);
 }
 
-export function createGroup(name = 'New Group') {
+export function createGroup() {
   const groups = listGroups();
-  const trimmed = typeof name === 'string' ? name.trim() : '';
+  const order = groups.length + 1;
   const group = {
     id: generateUUID(),
-    name: trimmed || 'New Group',
-    order: groups.length + 1,
-    collapsed: false
+    name: `${GROUP_NAME_PREFIX} ${order}`,
+    order,
+    collapsed: false,
+    prefixCollapsed: false
   };
   writeJson(GROUPS_KEY, [...groups, group]);
   pushToServer();
   return group;
-}
-
-export function renameGroup(groupId, newName) {
-  const id = typeof groupId === 'string' ? groupId : '';
-  const name = typeof newName === 'string' ? newName.trim() : '';
-  if (!id || !name) return false;
-
-  const groups = listGroups();
-  if (!groups.some((group) => group.id === id)) return false;
-
-  writeJson(GROUPS_KEY, groups.map((group) => (group.id === id ? { ...group, name } : group)));
-  pushToServer();
-  return true;
 }
 
 export function setGroupCollapsed(groupId, collapsed) {
@@ -90,6 +87,27 @@ export function toggleGroupCollapsed(groupId) {
   return setGroupCollapsed(groupId, !group.collapsed);
 }
 
+export function setGroupPrefixCollapsed(groupId, collapsed) {
+  const id = typeof groupId === 'string' ? groupId : '';
+  if (!id) return false;
+
+  const groups = listGroups();
+  if (!groups.some((group) => group.id === id)) return false;
+
+  writeJson(
+    GROUPS_KEY,
+    groups.map((group) => (group.id === id ? { ...group, prefixCollapsed: collapsed === true } : group))
+  );
+  pushToServer();
+  return true;
+}
+
+export function toggleGroupPrefixCollapsed(groupId) {
+  const group = listGroups().find((entry) => entry.id === groupId);
+  if (!group) return false;
+  return setGroupPrefixCollapsed(groupId, !group.prefixCollapsed);
+}
+
 export function deleteGroup(groupId) {
   const id = typeof groupId === 'string' ? groupId : '';
   if (!id) return false;
@@ -97,7 +115,7 @@ export function deleteGroup(groupId) {
   const groups = listGroups();
   if (!groups.some((group) => group.id === id)) return false;
 
-  writeJson(GROUPS_KEY, groups.filter((group) => group.id !== id));
+  writeJson(GROUPS_KEY, deriveGroupNames(groups.filter((group) => group.id !== id)));
 
   const map = readBoardGroupMap();
   let changed = false;
@@ -166,10 +184,28 @@ export function pruneBoardGroups(validBoardIds) {
   return changed;
 }
 
+export function ensureBoardsGrouped(boardIds) {
+  const ids = Array.isArray(boardIds) ? boardIds.filter((boardId) => typeof boardId === 'string' && boardId) : [];
+  if (ids.length === 0) return null;
+
+  const groups = listGroups();
+  const map = readBoardGroupMap();
+  const known = new Set(groups.map((group) => group.id));
+  const orphans = ids.filter((boardId) => !known.has(map[boardId]));
+  if (orphans.length === 0) return null;
+
+  const targetId = groups.length > 0 ? groups[groups.length - 1].id : createGroup().id;
+  for (const boardId of orphans) assignBoardToGroup(boardId, targetId);
+  return targetId;
+}
+
 export function adoptGroupsState(state) {
   if (!state || typeof state !== 'object') return;
   if (Array.isArray(state.groups)) {
-    writeJson(GROUPS_KEY, state.groups.map((group, index) => normalizeGroup(group, index)).filter(Boolean));
+    writeJson(
+      GROUPS_KEY,
+      deriveGroupNames(state.groups.map((group, index) => normalizeGroup(group, index)).filter(Boolean))
+    );
   }
   if (state.boardGroups && typeof state.boardGroups === 'object' && !Array.isArray(state.boardGroups)) {
     writeJson(BOARD_GROUP_KEY, state.boardGroups);

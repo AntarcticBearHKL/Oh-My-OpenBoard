@@ -149,14 +149,13 @@ The board has four fixed columns — **Backlog** (everything not started), **In 
 ### Labels & Groups
 Color-coded labels organized into groups. Labels are board-level and feed swim lane grouping — group by **label** or by **label group**. Manage them from **Manage Labels**; board search matches task titles and descriptions.
 
-### Reports & Calendar
-Dedicated pages for productivity analytics and date-based planning:
+### Reports
+Dedicated pages for productivity analytics:
 
 - **Activity Heatmap**: Daily updates calendar covering the last 365 days
 - **Lead Time & Completion**: Weekly lead time chart with trend line, completion KPIs, and sparklines
 - **Same-Day Completions**: Track ad-hoc tasks created and completed on the same day with KPIs and 12-week sparkline
 - **Cumulative Flow Diagram**: Stacked area chart showing task distribution across columns over time
-- **Calendar View**: Monthly due-date calendar with overdue highlighting and clickable task links (currently has no data source — the slimmed task model no longer carries due dates)
 
 ### Settings
 Per-board configuration: locale, the updated-timestamp toggle, column summaries, and swim lane grouping mode, label-group source, lane order, and collapsed lane states.

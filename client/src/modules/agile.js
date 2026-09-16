@@ -25,15 +25,21 @@ export function normalizeEstimate(value) {
   return Number.isFinite(n) ? n : null;
 }
 
-export function normalizeAcceptanceCriteria(value) {
+export function normalizeKeyPoints(value) {
   if (!Array.isArray(value)) return [];
+  const nowIso = new Date().toISOString();
   return value
     .filter((entry) => entry && typeof entry === 'object')
-    .map((entry) => ({
-      id: (entry.id ?? '').toString().trim() || generateUUID(),
-      text: (entry.text ?? '').toString().trim(),
-      done: entry.done === true
-    }))
+    .map((entry) => {
+      const point = {
+        id: (entry.id ?? '').toString().trim() || generateUUID(),
+        text: (entry.text ?? '').toString().trim(),
+        at: (entry.at ?? '').toString().trim() || nowIso
+      };
+      const digestedAt = (entry.digestedAt ?? '').toString().trim();
+      if (digestedAt) point.digestedAt = digestedAt;
+      return point;
+    })
     .filter((entry) => entry.text);
 }
 

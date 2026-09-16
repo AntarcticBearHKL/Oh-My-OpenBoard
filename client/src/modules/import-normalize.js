@@ -1,4 +1,5 @@
 import { isHexColor } from './normalize.js';
+import { normalizeKeyPoints } from './agile.js';
 import { DONE_COLUMN_ID } from './constants.js';
 
 export function normalizeImportedTasks(tasks, doneColumnIds = new Set([DONE_COLUMN_ID])) {
@@ -42,6 +43,7 @@ export function normalizeImportedTasks(tasks, doneColumnIds = new Set([DONE_COLU
       title: title.trim(),
       description: description.trim(),
       column: column.trim(),
+      keyPoints: normalizeKeyPoints(Array.isArray(t?.keyPoints) ? t.keyPoints : t?.acceptanceCriteria),
       ...(order !== undefined ? { order } : {}),
       ...(creationDate ? { creationDate } : {}),
       ...(typeof changeDate === 'string' && changeDate.trim() ? { changeDate: changeDate.trim() } : {}),

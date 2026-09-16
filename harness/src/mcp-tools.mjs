@@ -8,6 +8,7 @@ import {
   DEFAULT_BOARD_ID,
   createBoard,
   deleteBoard,
+  digestKeyPoints,
   emit,
   findTask,
   getBoard,
@@ -173,6 +174,10 @@ function computeMetrics(boardId) {
   };
 }
 
+function withDerivedGroupNames(groups) {
+  return groups.map((group, index) => ({ ...group, order: index + 1, name: `Iterations ${index + 1}` }));
+}
+
 export function registerTools(server) {
   // ── Boards / reads ──────────────────────────────────────────────────────────
 
@@ -211,27 +216,17 @@ export function registerTools(server) {
   server.registerTool('create_group', {
     title: 'Create group',
     description: 'Create a group: a top-level container for boards (iterations).',
-    inputSchema: { name: z.string().optional() }
-  }, async ({ name } = {}) => {
-    const groups = getGroups();
-    const order = groups.reduce((max, group) => Math.max(max, group.order ?? 0), 0) + 1;
-    const trimmed = typeof name === 'string' && name.trim() ? name.trim() : 'New Group';
-    const group = { id: randomUUID(), name: trimmed, order, collapsed: false };
+    inputSchema: {}
+  }, async () => {
+    const groups = withDerivedGroupNames(getGroups());
+    const group = {
+      id: randomUUID(),
+      name: `Iterations ${groups.length + 1}`,
+      order: groups.length + 1,
+      collapsed: false
+    };
     setGroups([...groups, group]);
     return ok(group);
-  });
-
-  server.registerTool('rename_group', {
-    title: 'Rename group',
-    description: 'Rename a group.',
-    inputSchema: { groupId: z.string(), name: z.string() }
-  }, async ({ groupId, name }) => {
-    const trimmed = typeof name === 'string' ? name.trim() : '';
-    if (!trimmed) throw new Error('name is required');
-    const groups = getGroups();
-    if (!groups.some((group) => group.id === groupId)) throw new Error(`Group not found: ${groupId}`);
-    setGroups(groups.map((group) => (group.id === groupId ? { ...group, name: trimmed } : group)));
-    return ok({ groupId, name: trimmed });
   });
 
   server.registerTool('delete_group', {
@@ -241,7 +236,7 @@ export function registerTools(server) {
   }, async ({ groupId }) => {
     const groups = getGroups();
     if (!groups.some((group) => group.id === groupId)) throw new Error(`Group not found: ${groupId}`);
-    setGroups(groups.filter((group) => group.id !== groupId));
+    setGroups(withDerivedGroupNames(groups.filter((group) => group.id !== groupId)));
     const map = getBoardGroupMap();
     const next = {};
     for (const [boardId, mappedGroupId] of Object.entries(map)) {
@@ -318,7 +313,8 @@ export function registerTools(server) {
         column: t.column, columnName: columnsById.get(t.column) || '',
         type: t.type || 'task', estimate: Number.isFinite(t.estimate) ? t.estimate : null,
         claimedBy: t.claimedBy || '', assignee: t.assignee || '',
-        acceptanceCriteria: t.acceptanceCriteria || [], comments: t.comments || [],
+        keyPoints: t.keyPoints || [], needsDigest: t.needsDigest === true, isRework: t.isRework === true,
+        comments: t.comments || [],
         relationships: t.relationships || []
       }));
     return ok(tasks);
@@ -326,7 +322,7 @@ export function registerTools(server) {
 
   server.registerTool('get_task', {
     title: 'Get task',
-    description: 'Get a single task by id, including acceptance criteria, comments and relationships.',
+    description: 'Get a single task by id, including key points, comments and relationships.',
     inputSchema: { taskId: z.string() }
   }, async ({ taskId }) => {
     const { task, boardId } = findTaskOrThrow(taskId);
@@ -338,7 +334,7 @@ export function registerTools(server) {
 
   server.registerTool('create_task', {
     title: 'Create task',
-    description: 'Create a task in Backlog. Supports type, story-point estimate, assignee, parent (epic) and acceptance criteria.',
+    description: 'Create a task in Backlog. Supports type, story-point estimate, assignee and parent (epic). Key points are the human\'s to write and cannot be set here.',
     inputSchema: {
       title: z.string().describe('Task title'),
       description: z.string().optional(),
@@ -346,10 +342,9 @@ export function registerTools(server) {
       estimate: z.number().optional().describe('Story points'),
       assignee: z.string().optional(),
       parentId: z.string().optional().describe('Parent / epic task id'),
-      acceptanceCriteria: z.array(z.string()).optional(),
       boardId: z.string().optional()
     }
-  }, async ({ title, description = '', type = 'task', estimate = null, assignee = '', parentId = '', acceptanceCriteria = [], boardId }) => {
+  }, async ({ title, description = '', type = 'task', estimate = null, assignee = '', parentId = '', boardId }) => {
     const bid = resolveBoard(boardId);
     if (!title || !String(title).trim()) throw new Error('title is required');
     const backlogColumn = resolveBacklogColumn(bid);
@@ -365,7 +360,7 @@ export function registerTools(server) {
       estimate: Number.isFinite(estimate) ? estimate : null,
       assignee,
       parentId: parentId || null,
-      acceptanceCriteria: acceptanceCriteria.map((text) => ({ id: randomUUID(), text: String(text), done: false })),
+      keyPoints: [],
       column: backlogColumn.id,
       order: maxOrder(backlogColumn.id, tasks) + 1,
       creationDate: now,
@@ -381,7 +376,7 @@ export function registerTools(server) {
 
   server.registerTool('update_task', {
     title: 'Update task',
-    description: 'Update task fields: title, description, type, estimate, assignee, parentId or blockedReason.',
+    description: 'Update task fields: title, description, type, estimate, assignee, parentId or blockedReason. Key points cannot be added, edited or removed here.',
     inputSchema: {
       taskId: z.string(),
       title: z.string().optional(),
@@ -486,7 +481,7 @@ export function registerTools(server) {
       boardId: z.string().optional()
     }
   }, async () => {
-    throw new Error('Columns are fixed: Backlog, In Progress, Blocked, Finished.');
+    throw new Error('Columns are fixed: Backlog, HIL, In Progress, Blocked, Finished.');
   });
 
   server.registerTool('update_column', {
@@ -689,38 +684,11 @@ export function registerTools(server) {
     return ok({ deleted: labelId });
   });
 
-  server.registerTool('set_acceptance_criteria', {
-    title: 'Set acceptance criteria',
-    description: 'Replace a task acceptance criteria with the given list of texts.',
-    inputSchema: { taskId: z.string(), criteria: z.array(z.string()) }
-  }, async ({ taskId, criteria }) => {
-    const { boardId } = findTaskOrThrow(taskId);
-    const list = (Array.isArray(criteria) ? criteria : []).map((text) => ({ id: randomUUID(), text: String(text), done: false }));
-    emit('task.updated', {
-      boardId,
-      entityId: taskId,
-      payload: { fields: { acceptanceCriteria: list, changeDate: new Date().toISOString() } },
-      actor: AGENT
-    });
-    return ok(list);
-  });
-
-  server.registerTool('toggle_acceptance_criterion', {
-    title: 'Toggle acceptance criterion',
-    description: 'Mark one acceptance criterion of a task as done or not done.',
-    inputSchema: { taskId: z.string(), criterionId: z.string(), done: z.boolean() }
-  }, async ({ taskId, criterionId, done }) => {
-    const { task, boardId } = findTaskOrThrow(taskId);
-    const list = (Array.isArray(task.acceptanceCriteria) ? task.acceptanceCriteria : [])
-      .map((entry) => (entry.id === criterionId ? { ...entry, done: done === true } : entry));
-    emit('task.updated', {
-      boardId,
-      entityId: taskId,
-      payload: { fields: { acceptanceCriteria: list, changeDate: new Date().toISOString() } },
-      actor: AGENT
-    });
-    return ok(list);
-  });
+  server.registerTool('digest_key_points', {
+    title: 'Digest key points',
+    description: 'Mark human key points as folded into the description and clear the needsDigest flag. Pass pointIds to stamp specific points, or omit them to stamp every point on the task.',
+    inputSchema: { taskId: z.string(), pointIds: z.array(z.string()).optional() }
+  }, async ({ taskId, pointIds }) => ok(digestKeyPoints(taskId, pointIds)));
 
   server.registerTool('claim_task', {
     title: 'Claim task',
@@ -749,70 +717,6 @@ export function registerTools(server) {
       actor: AGENT
     });
     return ok({ taskId, claimedBy: '' });
-  });
-
-  server.registerTool('add_annotation', {
-    title: 'Add annotation',
-    description: 'Add a human annotation (note) to a task. Kept separate from agent comments.',
-    inputSchema: { taskId: z.string(), text: z.string(), author: z.string().optional() }
-  }, async ({ taskId, text, author = 'human' }) => {
-    const { task, boardId } = findTaskOrThrow(taskId);
-    const annotation = { id: randomUUID(), text: String(text), author, at: new Date().toISOString() };
-    const annotations = [...(Array.isArray(task.annotations) ? task.annotations : []), annotation];
-    emit('task.updated', {
-      boardId,
-      entityId: taskId,
-      payload: { fields: { annotations, changeDate: annotation.at } },
-      actor: AGENT
-    });
-    return ok(annotation);
-  });
-
-  server.registerTool('remove_annotation', {
-    title: 'Remove annotation',
-    description: 'Remove an annotation from a task.',
-    inputSchema: { taskId: z.string(), annotationId: z.string() }
-  }, async ({ taskId, annotationId }) => {
-    const { task, boardId } = findTaskOrThrow(taskId);
-    const annotations = (Array.isArray(task.annotations) ? task.annotations : [])
-      .filter((entry) => entry.id !== annotationId);
-    emit('task.updated', {
-      boardId,
-      entityId: taskId,
-      payload: { fields: { annotations, changeDate: new Date().toISOString() } },
-      actor: AGENT
-    });
-    return ok({ removed: annotationId });
-  });
-
-  server.registerTool('set_column_summary', {
-    title: 'Set column summary',
-    description: 'Store the agent summary of a column state. Shown to the human next to the column count.',
-    inputSchema: { boardId: z.string().optional(), column: z.string(), text: z.string() }
-  }, async ({ boardId, column, text }) => {
-    const bid = resolveBoard(boardId);
-    const target = resolveColumn(bid, column);
-    const settings = getSettings(bid) || {};
-    const summaries = { ...(settings.columnSummaries || {}) };
-    summaries[target.id] = { text: String(text), at: new Date().toISOString(), by: AGENT_ID };
-    emit('settings.updated', {
-      boardId: bid,
-      entityId: bid,
-      payload: { fields: { columnSummaries: summaries } },
-      actor: AGENT
-    });
-    return ok({ column: target.id, columnName: target.name, summary: summaries[target.id] });
-  });
-
-  server.registerTool('get_column_summary', {
-    title: 'Get column summary',
-    description: 'Return the stored summary for a column.',
-    inputSchema: { boardId: z.string().optional(), column: z.string() }
-  }, async ({ boardId, column }) => {
-    const bid = resolveBoard(boardId);
-    const target = resolveColumn(bid, column);
-    const summaries = (getSettings(bid) || {}).columnSummaries || {};
-    return ok({ column: target.id, columnName: target.name, summary: summaries[target.id] || null });
   });
 
   server.registerTool('list_skills', {

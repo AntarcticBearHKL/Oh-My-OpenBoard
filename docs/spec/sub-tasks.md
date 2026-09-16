@@ -2,15 +2,15 @@
 
 > **Status: RETIRED — the current task model has no sub-tasks.**
 > The `subTasks` field on a task, the modal fieldset, the card donut indicator, and the
-> import/export handling were removed when the task model was slimmed. The checklist role is
-> now covered by **acceptance criteria** (`acceptanceCriteria`), which are the definition of
-> done — see [tasks.md](tasks.md). Older exports that still carry `subTasks` import cleanly
-> with the field dropped.
+> import/export handling were removed when the task model was slimmed. Human input is now
+> carried by **key points** (`keyPoints`) — the human appends them and the agent folds them
+> into the description — see [tasks.md](tasks.md). Older exports that still carry `subTasks`
+> import cleanly with the field dropped.
 >
 > This document is kept only so existing links keep resolving; it does not describe current
 > behaviour.
 
 ## What replaced it
 
-- Acceptance criteria are an inline checklist with a `done` flag per item and a `done / total` progress shown on the card.
-- Breaking a task into steps is expressed as acceptance criteria, not as sub-tasks.
+- Key points are the human's one-at-a-time notes on a task; the agent reads them, folds them into the description, and marks them digested.
+- Breaking a task into steps is expressed in the description (written by the agent) or as key points (written by the human), never as sub-tasks.

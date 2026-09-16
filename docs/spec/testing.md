@@ -56,9 +56,10 @@ expect(loadTasks().some(t => t.title === 'Persisted task')).toBe(true);
 - The overview also includes filename-based gap heuristics for source modules and spec files without obvious named coverage. These heuristics are a fast triage aid, not a coverage guarantee.
 - Board management flows, including the reconstructed board-create dialog
 - Task creation and validation
-- Task deletion flows: permanent delete confirmation removes the card and decrements the counter; cancel leaves the card and counter unchanged
-- Task card meta: type/estimate badges, claim timing, acceptance progress, and the comments indicator
-- Task modal: acceptance-criteria editor, comment thread, agile fields, and the read-only lock on an In Progress task
+- Task deletion flows: permanent delete confirmation removes the card; cancel leaves the card unchanged
+- Task card content: title, description preview, key points, and the `needsDigest`/`isRework` marker
+- Task modal: key-point editor, comment thread, agile fields, and the read-only lock on an In Progress task
+- Key-point workflow: digest flags on append, Finished-to-Backlog rework, and `digest_key_points`
 - Finished-column virtualization behavior
 - Swim lane rendering, settings persistence, and lane-aware moves
 - Claim timing and the stale-claim watchdog

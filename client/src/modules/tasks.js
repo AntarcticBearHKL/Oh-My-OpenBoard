@@ -1,18 +1,16 @@
 import { generateUUID } from './utils.js';
-import { BACKLOG_COLUMN_ID, IN_PROGRESS_COLUMN_ID } from './constants.js';
+import { HIL_COLUMN_ID, IN_PROGRESS_COLUMN_ID } from './constants.js';
 import { getActiveBoardId, getActiveBoardName, loadTasks } from './storage.js';
 import { normalizeRelationships } from './normalize.js';
 import { nextTaskKey } from './agile.js';
 import { normalizeAgileFields, reorderColumnTasks, syncRelationshipInverses } from './task-helpers.js';
 import { scheduleDomainEvent } from './event-sourcing/emitter.js';
 
-// Add a new task. Board-created tasks always land in Backlog — the dialog never
-// asks for a column.
 export function addTask(title, description, extraFields = {}) {
   if (!title || title.trim() === '') return;
 
   const tasks = loadTasks();
-  const columnName = BACKLOG_COLUMN_ID;
+  const columnName = HIL_COLUMN_ID;
   // Insert new tasks at the top of the column.
   // Normalize the column's existing task orders so they start at 2 (leaving 1 for the new task).
   const columnTasks = tasks
@@ -47,8 +45,9 @@ export function addTask(title, description, extraFields = {}) {
     estimate: agileFields.estimate,
     assignee: agileFields.assignee,
     parentId: agileFields.parentId,
-    acceptanceCriteria: agileFields.acceptanceCriteria,
+    keyPoints: agileFields.keyPoints,
     comments: agileFields.comments,
+    needsDigest: agileFields.keyPoints.length > 0,
     blockedReason: '',
     blockedAt: null,
     creationDate: nowIso,
@@ -155,22 +154,6 @@ function emitTaskFields(taskId, fields) {
     payload: { fields: { ...fields, changeDate: new Date().toISOString() } }
   });
   return true;
-}
-
-export function addAnnotation(taskId, text, author = 'human') {
-  const task = loadTasks().find((entry) => entry.id === taskId);
-  if (!task) return null;
-  const annotation = { id: generateUUID(), text: String(text || ''), author, at: new Date().toISOString() };
-  const annotations = [...(Array.isArray(task.annotations) ? task.annotations : []), annotation];
-  return emitTaskFields(taskId, { annotations }) ? annotation : null;
-}
-
-export function removeAnnotation(taskId, annotationId) {
-  const task = loadTasks().find((entry) => entry.id === taskId);
-  if (!task) return false;
-  const annotations = (Array.isArray(task.annotations) ? task.annotations : [])
-    .filter((entry) => entry.id !== annotationId);
-  return emitTaskFields(taskId, { annotations });
 }
 
 export function isTaskLocked(task) {

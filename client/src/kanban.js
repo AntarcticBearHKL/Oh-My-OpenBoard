@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await initLocalServer();
 
-  // Deep-link support (e.g., from calendar.html): open a task modal by ID.
+  // Deep-link support: open a task modal by ID.
   const urlParams = new URLSearchParams(window.location.search);
   const openTaskId = (urlParams.get('openTaskId') || '').trim();
   const openTaskBoardId = (urlParams.get('openTaskBoardId') || '').trim();

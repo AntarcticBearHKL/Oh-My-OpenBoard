@@ -16,15 +16,9 @@ import {
 } from './swimlane-collapse.js';
 import { createTaskElement } from './task-card.js';
 import { emit, DATA_CHANGED } from './events.js';
-import { BACKLOG_COLUMN_ID, isDoneColumn as isPermanentDoneColumn } from './constants.js';
+import { HIL_COLUMN_ID, isDoneColumn as isPermanentDoneColumn } from './constants.js';
 import { h, cx } from './dom.js';
-import { applyWipCounter, getWipState } from './wip-limit.js';
-
-function buildSwimlaneCounter(column, taskCount) {
-  const counter = h('span', { class: 'task-counter', 'data-column-id': column.id });
-  applyWipCounter(counter, taskCount, column);
-  return counter;
-}
+import { getWipState } from './wip-limit.js';
 
 export function createSwimlaneHeaderCell(column, taskCount) {
   const isCollapsed = column?.collapsed === true;
@@ -47,8 +41,7 @@ export function createSwimlaneHeaderCell(column, taskCount) {
   },
     collapseBtn,
     !isCollapsed ? h('h2', {}, column.name) : null,
-    !isCollapsed ? buildSwimlaneCounter(column, taskCount) : null,
-    !isCollapsed && column.id === BACKLOG_COLUMN_ID ? h('button', {
+    !isCollapsed && column.id === HIL_COLUMN_ID ? h('button', {
       class: 'add-task-btn-icon', type: 'button',
       'aria-label': `Add task to ${column.name}`, title: 'Add task',
       onClick: () => showModal(column.id)
@@ -111,7 +104,7 @@ export function createSwimlaneCell(column, lane, tasksInCell, visibleTasks, sett
       onClick: () => { toggleSwimLaneCellCollapsed(lane.key, column.id); emit(DATA_CHANGED); }
     }, h('i', { 'data-lucide': isCollapsed ? 'chevron-right' : 'chevron-down' }));
 
-    const addBtn = column.id === BACKLOG_COLUMN_ID ? h('button', {
+    const addBtn = column.id === HIL_COLUMN_ID ? h('button', {
       type: 'button',
       class: 'swimlane-cell-add-btn',
       'aria-label': `Add task to ${column.name}, ${lane.value}`,

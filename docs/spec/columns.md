@@ -2,32 +2,32 @@
 
 ## Fixed Columns
 
-The board always has exactly four fixed columns, in this order:
+The board always has exactly five fixed columns, in this order:
 
 | Column | Semantics |
 |---|---|
-| Backlog | Everything not started |
+| Backlog | Work the agent has proposed; the agent's queue |
+| HIL | Human In The Loop — the human's entry point and the only column where a human can add a task by hand |
 | In Progress | What an agent is actively working; tasks are read-only there |
 | Blocked | Work an agent could not finish and that needs a human decision, or work stuck on a resource conflict |
 | Finished | Completed work; carries the done-column `role` and feeds velocity and cycle-time statistics |
 
-- The fixed definitions (id, name, order, role) are reimposed on every board at load; `name` is display-only and behaviour keys off the fixed ids, never the display name
-- The fourth column keeps `role: "done"` and the fixed id `00000000-0000-4000-8000-000000000033`
+- The fixed definitions (id, name, order, role) are reimposed on every board at load, so an existing board gains HIL without losing its columns or tasks; `name` is display-only and behaviour keys off the fixed ids, never the display name
+- HIL has the fixed id `00000000-0000-4000-8000-000000000034` and order 2
+- The Finished column keeps `role: "done"` and the fixed id `00000000-0000-4000-8000-000000000033`
 - A claimed task that sits in In Progress with no update for five minutes is moved to Blocked by the server watchdog, with the reason recorded on the card (see [tasks.md](tasks.md))
 
 ## Column UI
 
 - Columns are fixed: the board has no add, edit, delete, or reorder controls for columns, and the column tools reject create/delete/reorder
-- Each column header shows the column name, a WIP-aware task counter, and a Summary button
-- The Summary button opens the agent-written column summary; a human can read it and edit or clear it
-- The Backlog column additionally renders a full-width Add task row; the other columns have no add control
+- Each column header shows the column name
+- The HIL column additionally renders an add-task control in both the standard board header and the swim lane header/cell; no other column has one
 - A long task list scrolls within its column; the Finished column adds a "Show more (N remaining)" control when its list exceeds the virtualization batch
 
 ## WIP Limits
 
 - Each column stores an advisory `wipLimit`; `0` means unlimited (the default)
 - WIP limits are never enforced: nothing blocks adding, dragging, importing, or syncing a task into a column at or over its limit
-- The header counter reflects the breach state (at limit / over limit); Finished is exempt because it is terminal and unbounded
 
 ## Color Behavior
 
@@ -39,3 +39,4 @@ The board always has exactly four fixed columns, in this order:
 - The column with `role: "done"` is permanent and cannot be deleted
 - Finished-column sorting via drag reordering is disabled for performance
 - Dropping into Finished always inserts tasks at the top
+- Appending a key point to a task in Finished returns it to Backlog as rework (see [tasks.md](tasks.md))

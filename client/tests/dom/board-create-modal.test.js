@@ -5,6 +5,7 @@ import { mountToBody } from './setup.js';
 import {
   BACKLOG_COLUMN_ID,
   FIXED_COLUMNS,
+  HIL_COLUMN_ID,
   IN_PROGRESS_COLUMN_ID
 } from '../../src/modules/constants.js';
 
@@ -40,9 +41,7 @@ vi.mock('../../src/modules/storage.js', () => ({
   loadColumns: vi.fn(() => mocks.columns),
   loadSettings: vi.fn(() => ({})),
   loadTasks: vi.fn(() => []),
-  isDoneColumnId: vi.fn(() => false),
-  loadColumnSummaries: vi.fn(() => ({})),
-  saveColumnSummary: vi.fn()
+  isDoneColumnId: vi.fn(() => false)
 }));
 
 vi.mock('../../src/modules/board-groups.js', () => ({
@@ -57,8 +56,6 @@ vi.mock('../../src/modules/dialog.js', () => ({
 vi.mock('../../src/modules/tasks.js', () => ({
   addTask: mocks.addTask,
   setTaskBlockedReason: mocks.setTaskBlockedReason,
-  addAnnotation: vi.fn(),
-  removeAnnotation: vi.fn(() => true),
   isTaskLocked: vi.fn(() => false)
 }));
 
@@ -119,10 +116,6 @@ const CREATE_MODAL_FIXTURE = `
   </div>
 `;
 
-const COLUMN_OPTIONS = FIXED_COLUMNS.map(
-  (column) => `<option value="${column.id}">${column.name}</option>`
-).join('');
-
 const TASK_MODAL_FIXTURE = `
   <div id="task-modal" class="modal hidden">
     <div class="modal-backdrop" data-close-modal></div>
@@ -154,10 +147,6 @@ const TASK_MODAL_FIXTURE = `
               </select>
             </div>
             <div class="form-group"><label for="task-due-date">Due Date</label><input id="task-due-date" type="date"></div>
-            <div class="form-group">
-              <label for="task-column">Column</label>
-              <select id="task-column">${COLUMN_OPTIONS}</select>
-            </div>
             <div class="task-form-grid">
               <div class="form-group">
                 <label for="task-type">Type</label>
@@ -197,10 +186,10 @@ const TASK_MODAL_FIXTURE = `
               <ul id="task-subtasks-list"></ul>
               <input type="text" id="task-subtask-input">
             </fieldset>
-            <fieldset class="form-group" id="task-acceptance-fieldset">
-              <legend>Acceptance criteria <span id="task-acceptance-progress" hidden></span></legend>
-              <ul id="task-acceptance-list"></ul>
-              <input type="text" id="task-acceptance-input">
+            <fieldset class="form-group" id="task-key-points-fieldset">
+              <legend>Key points</legend>
+              <ul id="task-key-points-list"></ul>
+              <input type="text" id="task-key-point-input">
             </fieldset>
             <fieldset class="form-group" id="task-comments-fieldset">
               <legend>Comments <span id="task-comments-count" hidden></span></legend>
@@ -345,28 +334,27 @@ describe('board create modal', () => {
   });
 });
 
-describe('Backlog manual add', () => {
+describe('HIL manual add', () => {
   beforeEach(() => {
     mountToBody(TASK_MODAL_FIXTURE);
     initializeTaskModalHandlers(() => {});
   });
 
-  test('the Backlog add-task control opens the full task modal for that column', () => {
-    const backlog = FIXED_COLUMNS.find((column) => column.id === BACKLOG_COLUMN_ID);
-    const columnEl = createColumnElement(backlog);
+  test('the HIL add-task control opens the full task modal for that column', () => {
+    const hil = FIXED_COLUMNS.find((column) => column.id === HIL_COLUMN_ID);
+    const columnEl = createColumnElement(hil);
     document.body.appendChild(columnEl);
 
     const addButton = columnEl.querySelector('.column-header .add-task-btn-icon');
     expect(addButton).not.toBeNull();
-    expect(addButton.getAttribute('aria-label')).toBe(`Add task to ${backlog.name}`);
+    expect(addButton.getAttribute('aria-label')).toBe(`Add task to ${hil.name}`);
 
     fireEvent.click(addButton);
 
-    expect(mocks.showModal).toHaveBeenCalledWith(BACKLOG_COLUMN_ID);
+    expect(mocks.showModal).toHaveBeenCalledWith(HIL_COLUMN_ID);
     expect(document.getElementById('task-modal').classList.contains('hidden')).toBe(false);
     expect(document.getElementById('task-modal-title').textContent).toBe('Add New Task');
     expect(document.getElementById('task-submit-btn').textContent).toBe('Add Task');
-    expect(document.getElementById('task-column').value).toBe(BACKLOG_COLUMN_ID);
 
     [
       'task-title',
@@ -377,7 +365,7 @@ describe('Backlog manual add', () => {
       'task-assignee',
       'task-due-date',
       'task-parent',
-      'task-acceptance-input',
+      'task-key-point-input',
       'task-labels-selection',
       'task-relationships-fieldset',
       'task-subtasks-list',
@@ -395,11 +383,13 @@ describe('Backlog manual add', () => {
     ).toEqual(['urgent', 'high', 'medium', 'low', 'none']);
   });
 
-  test('columns other than Backlog expose no manual add-task control', () => {
-    const inProgress = FIXED_COLUMNS.find((column) => column.id === IN_PROGRESS_COLUMN_ID);
-    const columnEl = createColumnElement(inProgress);
-    document.body.appendChild(columnEl);
+  test('columns other than HIL expose no manual add-task control', () => {
+    [BACKLOG_COLUMN_ID, IN_PROGRESS_COLUMN_ID].forEach((columnId) => {
+      const column = FIXED_COLUMNS.find((entry) => entry.id === columnId);
+      const columnEl = createColumnElement(column);
+      document.body.appendChild(columnEl);
 
-    expect(columnEl.querySelector('.add-task-btn-icon')).toBeNull();
+      expect(columnEl.querySelector('.add-task-btn-icon'), column.name).toBeNull();
+    });
   });
 });

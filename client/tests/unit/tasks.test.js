@@ -4,7 +4,7 @@ import { createBoard, getActiveBoardId, loadDeletedTasksForBoard, loadTasks, sav
 import { addTask, deleteTask, moveTaskToTopInColumn, setTaskBlockedReason } from '../../src/modules/tasks.js';
 import { updateTask } from '../../src/modules/task-update.js';
 import { updateTaskPositionsFromDrop } from '../../src/modules/task-position.js';
-import { BACKLOG_COLUMN_ID, DONE_COLUMN_ID } from '../../src/modules/constants.js';
+import { BACKLOG_COLUMN_ID, HIL_COLUMN_ID, DONE_COLUMN_ID } from '../../src/modules/constants.js';
 
 const BLOCKED_COLUMN_ID = '00000000-0000-4000-8000-000000000032';
 
@@ -18,14 +18,14 @@ beforeEach(() => {
 
 // ── addTask ─────────────────────────────────────────────────────────
 
-test('addTask creates task in Backlog with order 1', () => {
+test('addTask creates the task in HIL with order 1', () => {
   addTask('First', 'desc');
   const tasks = loadTasks();
   expect(tasks.length).toBe(1);
   expect(tasks[0].title).toBe('First');
   expect(tasks[0].description).toBe('desc');
   expect(tasks[0].order).toBe(1);
-  expect(tasks[0].column).toBe(BACKLOG_COLUMN_ID);
+  expect(tasks[0].column).toBe(HIL_COLUMN_ID);
 });
 
 test('addTask with only title, description, type and estimate keeps the slim model', () => {
@@ -36,7 +36,7 @@ test('addTask with only title, description, type and estimate keeps the slim mod
   expect(task.description).toBe('A note');
   expect(task.type).toBe('bug');
   expect(task.estimate).toBe(3);
-  expect(task.column).toBe(BACKLOG_COLUMN_ID);
+  expect(task.column).toBe(HIL_COLUMN_ID);
   for (const field of REMOVED_FIELDS) {
     expect(task[field]).toBeUndefined();
   }
@@ -64,7 +64,7 @@ test('addTask sets creationDate, changeDate, and columnHistory', () => {
   expect(task.changeDate).toBeTruthy();
   expect(Array.isArray(task.columnHistory)).toBe(true);
   expect(task.columnHistory.length).toBe(1);
-  expect(task.columnHistory[0].column).toBe(BACKLOG_COLUMN_ID);
+  expect(task.columnHistory[0].column).toBe(HIL_COLUMN_ID);
 });
 
 // ── updateTask ──────────────────────────────────────────────────────
@@ -104,7 +104,7 @@ test('updateTask keeps the current column when none is passed', () => {
   updateTask(task.id, 'Renamed', '');
 
   const updated = loadTasks().find(t => t.id === task.id);
-  expect(updated.column).toBe(BACKLOG_COLUMN_ID);
+  expect(updated.column).toBe(HIL_COLUMN_ID);
   expect(updated.columnHistory.length).toBe(1);
 });
 
@@ -226,7 +226,7 @@ test('moveTaskToTopInColumn moves specified task to order 1', () => {
   const tasks = loadTasks();
   const first = tasks.find(t => t.title === 'First');
 
-  moveTaskToTopInColumn(first.id, BACKLOG_COLUMN_ID);
+  moveTaskToTopInColumn(first.id, HIL_COLUMN_ID);
 
   const after = loadTasks();
   const moved = after.find(t => t.id === first.id);
@@ -257,7 +257,8 @@ test('addTask defaults the agile fields', () => {
   expect(task.estimate).toBeNull();
   expect(task.assignee).toBe('');
   expect(task.parentId).toBeNull();
-  expect(task.acceptanceCriteria).toEqual([]);
+  expect(task.keyPoints).toEqual([]);
+  expect(task.needsDigest).toBe(false);
   expect(task.comments).toEqual([]);
   expect(task.blockedReason).toBe('');
   expect(task.blockedAt).toBeNull();
@@ -269,7 +270,7 @@ test('addTask persists provided agile fields', () => {
     estimate: 5,
     assignee: 'Ada',
     parentId: 'epic-1',
-    acceptanceCriteria: [{ id: 'ac1', text: 'Works offline', done: true }],
+    keyPoints: [{ id: 'kp1', text: 'Works offline', at: '2026-01-01T00:00:00.000Z' }],
     comments: [{ id: 'c1', author: 'Ada', text: 'First', at: '2026-01-01T00:00:00.000Z' }]
   });
 
@@ -278,22 +279,23 @@ test('addTask persists provided agile fields', () => {
   expect(task.estimate).toBe(5);
   expect(task.assignee).toBe('Ada');
   expect(task.parentId).toBe('epic-1');
-  expect(task.acceptanceCriteria).toEqual([{ id: 'ac1', text: 'Works offline', done: true }]);
+  expect(task.keyPoints).toEqual([{ id: 'kp1', text: 'Works offline', at: '2026-01-01T00:00:00.000Z' }]);
   expect(task.comments[0]).toMatchObject({ author: 'Ada', text: 'First' });
 });
 
-test('addTask persists acceptance criteria as { id, text, done }', () => {
-  addTask('Checked', '', {
-    acceptanceCriteria: [
-      { id: 'ac1', text: 'First', done: false },
-      { id: 'ac2', text: 'Second', done: true }
+test('addTask persists key points as { id, text, at } and flags them for digest', () => {
+  addTask('Checklist', '', {
+    keyPoints: [
+      { id: 'kp1', text: 'First', at: '2026-01-01T00:00:00.000Z' },
+      { id: 'kp2', text: 'Second', at: '2026-01-02T00:00:00.000Z', done: true }
     ]
   });
 
   const task = loadTasks()[0];
-  expect(task.acceptanceCriteria).toHaveLength(2);
-  expect(task.acceptanceCriteria[0]).toMatchObject({ id: 'ac1', text: 'First', done: false });
-  expect(task.acceptanceCriteria[1]).toMatchObject({ id: 'ac2', text: 'Second', done: true });
+  expect(task.keyPoints).toHaveLength(2);
+  expect(task.keyPoints[0]).toEqual({ id: 'kp1', text: 'First', at: '2026-01-01T00:00:00.000Z' });
+  expect(task.keyPoints[1].done).toBeUndefined();
+  expect(task.needsDigest).toBe(true);
 });
 
 test('updateTask persists agile fields and rejects a self-parent', () => {
@@ -305,7 +307,7 @@ test('updateTask persists agile fields and rejects a self-parent', () => {
     estimate: 3,
     assignee: 'Grace',
     parentId: task.id,
-    acceptanceCriteria: [{ id: 'ac1', text: 'Investigate', done: false }]
+    keyPoints: [{ id: 'kp1', text: 'Investigate', at: '2026-01-01T00:00:00.000Z' }]
   });
 
   const updated = loadTasks().find(t => t.id === task.id);
@@ -313,7 +315,7 @@ test('updateTask persists agile fields and rejects a self-parent', () => {
   expect(updated.estimate).toBe(3);
   expect(updated.assignee).toBe('Grace');
   expect(updated.parentId).toBeNull();
-  expect(updated.acceptanceCriteria[0].text).toBe('Investigate');
+  expect(updated.keyPoints[0].text).toBe('Investigate');
 });
 
 test('updateTask without extraFields leaves agile fields untouched', () => {
@@ -333,7 +335,7 @@ test('updateTask leaves assignee and parentId untouched when the payload omits t
   addTask('Keep', '', { assignee: 'Ada', parentId: 'epic-1', type: 'bug', estimate: 2 });
   const task = loadTasks()[0];
 
-  updateTask(task.id, 'Keep renamed', '', { type: 'task', estimate: 3, acceptanceCriteria: [], comments: [] });
+  updateTask(task.id, 'Keep renamed', '', { type: 'task', estimate: 3, keyPoints: [], comments: [] });
 
   const updated = loadTasks().find(t => t.id === task.id);
   expect(updated.assignee).toBe('Ada');
@@ -342,22 +344,107 @@ test('updateTask leaves assignee and parentId untouched when the payload omits t
   expect(updated.estimate).toBe(3);
 });
 
-test('updateTask replaces acceptance criteria and comments wholesale', () => {
+test('updateTask replaces key points and comments wholesale', () => {
   addTask('Notes', '', {
-    acceptanceCriteria: [{ id: 'ac1', text: 'Old', done: false }],
+    keyPoints: [{ id: 'kp1', text: 'Old', at: '2026-01-01T00:00:00.000Z' }],
     comments: [{ id: 'c1', author: 'Ada', text: 'Old note', at: '2026-01-01T00:00:00.000Z' }]
   });
   const task = loadTasks()[0];
 
   updateTask(task.id, 'Notes', '', {
-    acceptanceCriteria: [{ id: 'ac2', text: 'New', done: true }],
+    keyPoints: [{ id: 'kp2', text: 'New', at: '2026-01-02T00:00:00.000Z' }],
     comments: [{ id: 'c2', author: 'Agent', text: 'Answer', at: '2026-01-02T00:00:00.000Z' }]
   });
 
   const updated = loadTasks().find(t => t.id === task.id);
-  expect(updated.acceptanceCriteria).toEqual([{ id: 'ac2', text: 'New', done: true }]);
+  expect(updated.keyPoints).toEqual([{ id: 'kp2', text: 'New', at: '2026-01-02T00:00:00.000Z' }]);
   expect(updated.comments).toHaveLength(1);
   expect(updated.comments[0]).toMatchObject({ author: 'Agent', text: 'Answer' });
+});
+
+// ── key point workflow ──────────────────────────────────────────────
+
+test('appending a key point in Backlog sets needsDigest', () => {
+  saveTasks([{
+    id: 't1',
+    title: 'Backlog task',
+    column: BACKLOG_COLUMN_ID,
+    keyPoints: [],
+    columnHistory: [{ column: BACKLOG_COLUMN_ID, at: '2024-01-01T00:00:00.000Z' }]
+  }]);
+
+  updateTask('t1', 'Backlog task', '', {
+    keyPoints: [{ id: 'kp1', text: 'Must be green', at: '2026-01-01T00:00:00.000Z' }]
+  });
+
+  const updated = loadTasks().find(t => t.id === 't1');
+  expect(updated.needsDigest).toBe(true);
+  expect(updated.isRework).toBeUndefined();
+  expect(updated.column).toBe(BACKLOG_COLUMN_ID);
+});
+
+test('appending a key point in HIL sets needsDigest', () => {
+  addTask('Human task', '');
+  const task = loadTasks()[0];
+
+  updateTask(task.id, 'Human task', '', {
+    keyPoints: [{ id: 'kp1', text: 'Human input', at: '2026-01-01T00:00:00.000Z' }]
+  });
+
+  const updated = loadTasks().find(t => t.id === task.id);
+  expect(updated.needsDigest).toBe(true);
+  expect(updated.column).toBe(HIL_COLUMN_ID);
+});
+
+test('appending a key point to a Finished task returns it to Backlog with isRework', () => {
+  addTask('Done task', '');
+  const task = loadTasks()[0];
+  updateTask(task.id, 'Done task', '', { column: DONE_COLUMN_ID });
+  expect(loadTasks().find(t => t.id === task.id).column).toBe(DONE_COLUMN_ID);
+
+  updateTask(task.id, 'Done task', '', {
+    keyPoints: [{ id: 'kp1', text: 'Change the copy', at: '2026-01-01T00:00:00.000Z' }]
+  });
+
+  const updated = loadTasks().find(t => t.id === task.id);
+  expect(updated.column).toBe(BACKLOG_COLUMN_ID);
+  expect(updated.isRework).toBe(true);
+  expect(updated.needsDigest).toBe(true);
+  expect(updated.doneDate).toBeUndefined();
+  expect(updated.columnHistory.at(-1).column).toBe(BACKLOG_COLUMN_ID);
+});
+
+test('re-saving unchanged key points does not re-flag or move a Finished task', () => {
+  saveTasks([{
+    id: 't1',
+    title: 'Settled',
+    column: DONE_COLUMN_ID,
+    keyPoints: [{ id: 'kp1', text: 'Kept', at: '2026-01-01T00:00:00.000Z' }],
+    needsDigest: false,
+    doneDate: '2026-01-01T00:00:00.000Z'
+  }]);
+
+  updateTask('t1', 'Settled', '', {
+    keyPoints: [{ id: 'kp1', text: 'Kept', at: '2026-01-01T00:00:00.000Z' }]
+  });
+
+  const updated = loadTasks().find(t => t.id === 't1');
+  expect(updated.column).toBe(DONE_COLUMN_ID);
+  expect(updated.needsDigest).toBe(false);
+  expect(updated.isRework).toBeUndefined();
+});
+
+test('a stored legacy acceptanceCriteria array is read as key points', () => {
+  saveTasks([{
+    id: 't1',
+    title: 'Legacy',
+    column: BACKLOG_COLUMN_ID,
+    acceptanceCriteria: [{ id: 'ac1', text: 'Works offline', done: true }]
+  }]);
+
+  const task = loadTasks().find(t => t.id === 't1');
+  expect(task.acceptanceCriteria).toBeUndefined();
+  expect(task.keyPoints).toEqual([{ id: 'ac1', text: 'Works offline', at: expect.any(String) }]);
 });
 
 // ── blocked reason transitions ──────────────────────────────────────

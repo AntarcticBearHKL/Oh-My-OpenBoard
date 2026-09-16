@@ -12,7 +12,7 @@ thread on large writes. IDB supports 50–80% of available disk space and writes
 
 ## Initialisation
 
-Every HTML entry point (`index.html`, `reports.html`, `calendar.html`) must call `await initStorage()` before any board rendering.
+Every HTML entry point (`index.html`, `reports.html`) must call `await initStorage()` before any board rendering.
 This is the only async operation in the storage layer.
 
 ```js

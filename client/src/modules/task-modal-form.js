@@ -4,7 +4,7 @@ import { loadTasks } from './storage.js';
 import { clearFieldError } from './validation.js';
 import { isTaskLocked } from './tasks.js';
 import {
-  normalizeAcceptanceCriteria,
+  normalizeKeyPoints,
   normalizeComments,
   normalizeEstimate,
   normalizeTaskType
@@ -15,19 +15,16 @@ import { setTaskModalFullscreen, updateDescriptionLinks } from './task-modal-chr
 import { renderActiveTaskRelationships } from './task-modal-relationships.js';
 import { updateTaskSummary } from './task-modal-summary.js';
 import { resetTaskLock, setTaskLocked } from './task-modal-status.js';
-import { hideAnnotationsSection, renderAnnotationsList } from './task-modal-annotations.js';
 import { clearAgileInputs, renderAgileFields, resetAgileState } from './task-modal-agile-fields.js';
 
 export function showModal() {
   state.editingTaskId = null;
   state.selectedTaskRelationships = [];
-  state.selectedTaskAnnotations = [];
 
   resetTaskLock();
   $id('task-summary')?.classList.add('hidden');
   $id('task-modal-key')?.classList.add('hidden');
   $id('task-claim-chip')?.classList.add('hidden');
-  hideAnnotationsSection();
 
   setTaskModalFullscreen(false);
   $id('task-fullpage-btn')?.classList.add('hidden');
@@ -71,9 +68,8 @@ export function showEditModal(taskId) {
 
   state.editingTaskId = taskId;
   state.selectedTaskRelationships = Array.isArray(task.relationships) ? [...task.relationships] : [];
-  state.selectedTaskAcceptanceCriteria = normalizeAcceptanceCriteria(task.acceptanceCriteria).map((entry) => ({ ...entry }));
+  state.selectedTaskKeyPoints = normalizeKeyPoints(task.keyPoints ?? task.acceptanceCriteria).map((entry) => ({ ...entry }));
   state.selectedTaskComments = normalizeComments(task.comments).map((entry) => ({ ...entry }));
-  state.selectedTaskAnnotations = Array.isArray(task.annotations) ? task.annotations.map((entry) => ({ ...entry })) : [];
 
   setTaskModalFullscreen(false);
   $id('task-fullpage-btn')?.classList.remove('hidden');
@@ -112,17 +108,11 @@ export function showEditModal(taskId) {
   renderAgileFields();
 
   updateTaskSummary(task);
-  $id('task-annotations-fieldset')?.classList.remove('hidden');
-  renderAnnotationsList();
   const locked = isTaskLocked(task);
   setTaskLocked(locked, task);
 
   modal.classList.remove('hidden');
-  if (locked) {
-    $id('task-annotation-input')?.focus();
-  } else {
-    taskTitle.focus();
-  }
+  taskTitle.focus();
 }
 
 export function hideModal() {
@@ -131,7 +121,6 @@ export function hideModal() {
   state.selectedTaskRelationships = [];
 
   resetTaskLock();
-  hideAnnotationsSection();
 
   const relResults = $id('task-relationship-results');
   if (relResults) { relResults.hidden = true; relResults.innerHTML = ''; }

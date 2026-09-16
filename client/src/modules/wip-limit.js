@@ -22,44 +22,10 @@ export function getWipState(count, column) {
   return 'under';
 }
 
-export function wipCounterLabel(count, column) {
-  const limit = getWipLimit(column);
-  if (!limit) return `${count} tasks`;
-  const state = getWipState(count, column);
-  const suffix = state === 'over' ? ', over limit' : state === 'at' ? ', at limit' : '';
-  return `${count} of ${limit} tasks${suffix}`;
-}
-
-function pulseCounter(counterEl) {
-  if (!counterEl) return;
-  counterEl.classList.remove('wip-pulse');
-  // Force reflow so re-adding the class restarts the animation.
-  void counterEl.offsetWidth;
-  counterEl.classList.add('wip-pulse');
-  counterEl.addEventListener('animationend', () => counterEl.classList.remove('wip-pulse'), { once: true });
-}
-
-export function applyWipCounter(counterEl, count, column) {
-  if (!counterEl) return;
-  const limit = getWipLimit(column);
-  counterEl.textContent = String(count);
-  if (limit) {
-    const limitEl = document.createElement('span');
-    limitEl.className = 'wip-limit';
-    limitEl.textContent = `/${limit}`;
-    counterEl.appendChild(limitEl);
-  }
-  counterEl.setAttribute('aria-label', wipCounterLabel(count, column));
-}
-
 export function syncColumnWip(columnEl, count, column) {
   if (!columnEl) return;
-  const counterEl = columnEl.querySelector('.task-counter');
-  applyWipCounter(counterEl, count, column);
-
   const next = getWipState(count, column);
   const prev = columnEl.getAttribute('data-wip');
   if (prev === next) return;
   columnEl.setAttribute('data-wip', next);
-  if (prev && prev !== 'over' && next === 'over') pulseCounter(counterEl);
 }

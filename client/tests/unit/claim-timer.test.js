@@ -3,7 +3,7 @@ import { claimStartMs, claimTiming, deriveElapsedMs } from '../../src/modules/cl
 import { BLOCKED_COLUMN_ID, FIXED_COLUMNS, IN_PROGRESS_COLUMN_ID } from '../../src/modules/constants.js';
 
 const BACKLOG_COLUMN_ID = FIXED_COLUMNS[0].id;
-const DONE_FIXED_COLUMN_ID = FIXED_COLUMNS[3].id;
+const DONE_FIXED_COLUMN_ID = FIXED_COLUMNS[4].id;
 const NOW = new Date('2026-06-01T12:00:00.000Z');
 const MINUTE = 60000;
 

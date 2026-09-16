@@ -1,8 +1,9 @@
 import { getActiveBoardId, isDoneColumnId, loadColumns, loadTasks } from './storage.js';
+import { BACKLOG_COLUMN_ID, HIL_COLUMN_ID } from './constants.js';
 import { normalizeRelationships } from './normalize.js';
 import {
   isBlockedColumnId,
-  normalizeAcceptanceCriteria,
+  normalizeKeyPoints,
   normalizeComments,
   normalizeEstimate,
   normalizeTaskType
@@ -10,9 +11,7 @@ import {
 import { RELATIONSHIP_INVERSE, relationshipKey, sameJson, syncRelationshipInverses } from './task-helpers.js';
 import { scheduleDomainEvent } from './event-sourcing/emitter.js';
 
-// Update an existing task. The task dialog edits title, description, type,
-// estimate, acceptance criteria and comments; a column move is only honoured
-// when the caller passes `column` explicitly.
+// A column move is only honoured when the caller passes `column` explicitly.
 export function updateTask(taskId, title, description, extraFields = undefined) {
   if (!title || title.trim() === '') return;
 
@@ -22,7 +21,7 @@ export function updateTask(taskId, title, description, extraFields = undefined) 
     const source = extraFields && typeof extraFields === 'object' ? extraFields : null;
     const prevColumn = tasks[taskIndex].column;
     const requestedColumn = typeof source?.column === 'string' && source.column.trim() ? source.column.trim() : '';
-    const nextColumn = requestedColumn || prevColumn;
+    let nextColumn = requestedColumn || prevColumn;
     const nowIso = new Date().toISOString();
 
     // Ensure we have a baseline history entry before appending transitions.
@@ -58,8 +57,20 @@ export function updateTask(taskId, title, description, extraFields = undefined) 
       const requestedParentId = (source.parentId ?? '').toString().trim();
       tasks[taskIndex].parentId = requestedParentId && requestedParentId !== taskId ? requestedParentId : null;
     }
-    if (has('acceptanceCriteria')) {
-      tasks[taskIndex].acceptanceCriteria = normalizeAcceptanceCriteria(source.acceptanceCriteria);
+    if (has('keyPoints')) {
+      const nextKeyPoints = normalizeKeyPoints(source.keyPoints);
+      const previousKeyPoints = normalizeKeyPoints(previousTask.keyPoints ?? previousTask.acceptanceCriteria);
+      const appended = nextKeyPoints.some((point) => !previousKeyPoints.some((prev) => prev.id === point.id));
+      tasks[taskIndex].keyPoints = nextKeyPoints;
+
+      if (appended && isDoneColumnId(nextColumn)) {
+        nextColumn = BACKLOG_COLUMN_ID;
+        tasks[taskIndex].column = nextColumn;
+        tasks[taskIndex].isRework = true;
+        tasks[taskIndex].needsDigest = true;
+      } else if (appended && (nextColumn === BACKLOG_COLUMN_ID || nextColumn === HIL_COLUMN_ID)) {
+        tasks[taskIndex].needsDigest = true;
+      }
     }
     if (has('comments')) {
       tasks[taskIndex].comments = normalizeComments(source.comments);
@@ -92,8 +103,14 @@ export function updateTask(taskId, title, description, extraFields = undefined) 
         changedFields.parentId = tasks[taskIndex].parentId;
       }
     }
-    if (has('acceptanceCriteria') && !sameJson(normalizeAcceptanceCriteria(previousTask.acceptanceCriteria), tasks[taskIndex].acceptanceCriteria)) {
-      changedFields.acceptanceCriteria = tasks[taskIndex].acceptanceCriteria;
+    if (has('keyPoints') && !sameJson(normalizeKeyPoints(previousTask.keyPoints ?? previousTask.acceptanceCriteria), tasks[taskIndex].keyPoints)) {
+      changedFields.keyPoints = tasks[taskIndex].keyPoints;
+    }
+    if (tasks[taskIndex].needsDigest === true && previousTask.needsDigest !== true) {
+      changedFields.needsDigest = true;
+    }
+    if (tasks[taskIndex].isRework === true && previousTask.isRework !== true) {
+      changedFields.isRework = true;
     }
     if (has('comments') && !sameJson(normalizeComments(previousTask.comments), tasks[taskIndex].comments)) {
       changedFields.comments = tasks[taskIndex].comments;

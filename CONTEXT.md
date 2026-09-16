@@ -181,16 +181,15 @@ all subscribe.
 | `column-element.js` | Column DOM element factory |
 | `tasks.js` | Task CRUD |
 | `task-card.js` | Task card DOM element factory |
-| `task-modal.js` | Task edit modal (acceptance criteria, comments, annotations, relationships) |
+| `task-modal.js` | Task edit modal (acceptance criteria, comments, relationships) |
 | `labels.js` | Label CRUD |
 | `labels-modal.js` | Label management modal |
-| `render.js` | Two render adapters behind one read model: `renderBoard()` (full rebuild — `innerHTML` reset + `initDragDrop()`) and `reconcileBoard()` (in-place patch — moves cards by id, reorders, counters, collapsed titles, card meta, Finished-column virtualization). Plus the **drag-reconcile window** (`beginDragReconcile()`/`endDragReconcile()`) that routes a drop's `DATA_CHANGED` through reconcile so the just-dragged node is never detached. See §7 "Board Render Flow". |
+| `render.js` | Two render adapters behind one read model: `renderBoard()` (full rebuild — `innerHTML` reset + `initDragDrop()`) and `reconcileBoard()` (in-place patch — moves cards by id, reorders, collapsed titles, card meta, Finished-column virtualization). Plus the **drag-reconcile window** (`beginDragReconcile()`/`endDragReconcile()`) that routes a drop's `DATA_CHANGED` through reconcile so the just-dragged node is never detached. See §7 "Board Render Flow". |
 | `swimlanes.js` | Swimlane grouping logic (`groupTasksBySwimLane`, etc.) |
 | `swimlane-renderer.js` | Swimlane board DOM builder |
 | `dragdrop.js` | SortableJS initialization/teardown; swimlane-aware drop handling |
 | `importexport.js` | Board JSON export/import with preflight validation |
 | `reports.js` | ECharts: lead time, daily completions, cumulative flow diagram |
-| `calendar.js` | Monthly calendar view; reads `task.dueDate`, which the slimmed task model no longer has (currently no data source) |
 | `reducer.js` | Pure event reducer — `applyEvent(state, event)` folds a domain event into projection state |
 | `event-sourcing/emitter.js` | `emitDomainEvent()` / `scheduleDomainEvent()` — stamp (UUID + HLC), persist, emit `EVENT_EMITTED` |
 | `event-sourcing/dispatcher.js` | `reduceEventAndNotify()` — runs the reducer and signals re-render |

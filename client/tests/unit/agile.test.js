@@ -7,7 +7,7 @@ import {
   isBlockedColumnId,
   isTaskStale,
   nextTaskKey,
-  normalizeAcceptanceCriteria,
+  normalizeKeyPoints,
   normalizeComments,
   normalizeEstimate,
   normalizeTaskType,
@@ -52,23 +52,24 @@ test('normalizeEstimate returns null for empty or invalid values', () => {
   expect(normalizeEstimate(Infinity)).toBeNull();
 });
 
-// ── normalizeAcceptanceCriteria ─────────────────────────────────────
+// ── normalizeKeyPoints ──────────────────────────────────────────────
 
-test('normalizeAcceptanceCriteria keeps entries and coerces done', () => {
-  const result = normalizeAcceptanceCriteria([
-    { id: 'a1', text: ' Works offline ', done: true },
-    { id: 'a2', text: 'Syncs', done: 'yes' }
+test('normalizeKeyPoints keeps text, ids and timestamps and drops any done flag', () => {
+  const result = normalizeKeyPoints([
+    { id: 'k1', text: ' Works offline ', done: true, at: '2026-01-01T00:00:00.000Z' },
+    { id: 'k2', text: 'Syncs', done: 'yes', at: '2026-01-02T00:00:00.000Z' }
   ]);
 
-  expect(result).toHaveLength(2);
-  expect(result[0]).toEqual({ id: 'a1', text: 'Works offline', done: true });
-  expect(result[1]).toEqual({ id: 'a2', text: 'Syncs', done: false });
+  expect(result).toEqual([
+    { id: 'k1', text: 'Works offline', at: '2026-01-01T00:00:00.000Z' },
+    { id: 'k2', text: 'Syncs', at: '2026-01-02T00:00:00.000Z' }
+  ]);
 });
 
-test('normalizeAcceptanceCriteria generates missing ids and drops empty text', () => {
-  const result = normalizeAcceptanceCriteria([
+test('normalizeKeyPoints generates missing ids and timestamps and drops empty text', () => {
+  const result = normalizeKeyPoints([
     { text: 'No id' },
-    { id: 'a2', text: '   ' },
+    { id: 'k2', text: '   ' },
     null
   ]);
 
@@ -76,11 +77,20 @@ test('normalizeAcceptanceCriteria generates missing ids and drops empty text', (
   expect(result[0].text).toBe('No id');
   expect(typeof result[0].id).toBe('string');
   expect(result[0].id.length).toBeGreaterThan(0);
+  expect(Number.isNaN(new Date(result[0].at).getTime())).toBe(false);
 });
 
-test('normalizeAcceptanceCriteria returns [] for non-arrays', () => {
-  expect(normalizeAcceptanceCriteria(null)).toEqual([]);
-  expect(normalizeAcceptanceCriteria('nope')).toEqual([]);
+test('normalizeKeyPoints preserves a digestedAt stamp', () => {
+  const result = normalizeKeyPoints([
+    { id: 'k1', text: 'Folded in', at: '2026-01-01T00:00:00.000Z', digestedAt: '2026-01-02T00:00:00.000Z' }
+  ]);
+
+  expect(result[0].digestedAt).toBe('2026-01-02T00:00:00.000Z');
+});
+
+test('normalizeKeyPoints returns [] for non-arrays', () => {
+  expect(normalizeKeyPoints(null)).toEqual([]);
+  expect(normalizeKeyPoints('nope')).toEqual([]);
 });
 
 // ── normalizeComments ───────────────────────────────────────────────

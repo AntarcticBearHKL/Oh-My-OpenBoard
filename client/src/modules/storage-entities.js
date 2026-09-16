@@ -1,6 +1,7 @@
 import { nowIso } from './utils.js';
 import { DONE_COLUMN_ID, isDoneColumn } from './constants.js';
 import { normalizeRelationships } from './normalize.js';
+import { normalizeKeyPoints } from './agile.js';
 import { scheduleReadModelPersist } from './idb-store.js';
 import { ensureBoardsInitialized, getActiveBoardId } from './storage-boards.js';
 import { defaultColumns, defaultLabels } from './storage-defaults.js';
@@ -128,6 +129,12 @@ export function loadTasks() {
       const nextRelationships = normalizeRelationships(task.relationships);
       if (JSON.stringify(task.relationships) !== JSON.stringify(nextRelationships)) {
         task.relationships = nextRelationships;
+        didChange = true;
+      }
+
+      if (Object.prototype.hasOwnProperty.call(task, 'acceptanceCriteria')) {
+        if (!Array.isArray(task.keyPoints)) task.keyPoints = normalizeKeyPoints(task.acceptanceCriteria);
+        delete task.acceptanceCriteria;
         didChange = true;
       }
 

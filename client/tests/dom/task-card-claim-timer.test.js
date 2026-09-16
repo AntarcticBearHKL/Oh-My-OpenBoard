@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { mountToBody } from './setup.js';
-import { BLOCKED_COLUMN_ID, FIXED_COLUMNS, IN_PROGRESS_COLUMN_ID } from '../../src/modules/constants.js';
+import { IN_PROGRESS_COLUMN_ID } from '../../src/modules/constants.js';
 
 vi.mock('../../src/modules/dialog.js', () => ({ confirmDialog: vi.fn() }));
 vi.mock('../../src/modules/tasks.js', () => ({ deleteTask: vi.fn() }));
@@ -12,7 +12,7 @@ vi.mock('../../src/modules/storage.js', () => ({
 }));
 
 const { createTaskElement } = await import('../../src/modules/task-card.js');
-const { startClaimTicker, stopClaimTicker } = await import('../../src/modules/claim-timer.js');
+const { startClaimTicker, stopClaimTicker, refreshClaimTimers } = await import('../../src/modules/claim-timer.js');
 
 const NOW = new Date('2026-06-01T12:00:00.000Z');
 const MINUTE = 60000;
@@ -20,10 +20,7 @@ const MINUTE = 60000;
 const baseTask = {
   id: 'task-1',
   title: 'Ship the release',
-  priority: 'none',
-  dueDate: '',
-  column: IN_PROGRESS_COLUMN_ID,
-  labels: []
+  column: IN_PROGRESS_COLUMN_ID
 };
 
 function ago(ms) {
@@ -34,6 +31,18 @@ function render(task) {
   const element = createTaskElement(task, {});
   mountToBody(element);
   return element;
+}
+
+function mountChip(startMs, endMs) {
+  const chip = document.createElement('span');
+  chip.className = 'task-claim-timer';
+  chip.dataset.claimStart = String(startMs);
+  if (endMs !== undefined) chip.dataset.claimEnd = String(endMs);
+  const elapsed = document.createElement('span');
+  elapsed.className = 'task-claim-elapsed';
+  chip.appendChild(elapsed);
+  document.body.appendChild(chip);
+  return chip;
 }
 
 function setHidden(value) {
@@ -51,131 +60,60 @@ afterEach(() => {
   delete document.hidden;
 });
 
-test('renders the claim chip with claimant and elapsed time for a claimed task', () => {
+test('the card renders no claimant or elapsed chip for a claimed in-progress task', () => {
   const element = render({ ...baseTask, claimedBy: 'agent-7', claimedAt: ago(4 * MINUTE) });
-  const chip = element.querySelector('.task-claim-timer');
 
-  expect(chip).not.toBeNull();
-  expect(chip.textContent).toContain('agent-7');
-  expect(chip.textContent).toContain('4m');
-  expect(chip.querySelector('.task-assignee').textContent).toBe('AG');
-  expect(chip.querySelector('.task-claim-name').textContent).toBe('agent-7');
-  expect(chip.querySelector('.task-claim-elapsed').textContent).toBe('4m');
-  expect(chip.getAttribute('data-claim-start')).toBe(String(NOW.getTime() - 4 * MINUTE));
-  expect(chip.getAttribute('data-claim-end')).toBeNull();
-});
-
-test('shows no claim chip for an unclaimed task', () => {
-  const element = render(baseTask);
   expect(element.querySelector('.task-claim-timer')).toBeNull();
+  expect(element.querySelector('.task-assignee')).toBeNull();
+  expect(element.querySelector('.task-claim-elapsed')).toBeNull();
 });
 
-test('shows no claim chip in a column without a timing rule', () => {
-  const element = render({
-    ...baseTask,
-    column: FIXED_COLUMNS[0].id,
-    claimedBy: 'agent-7',
-    claimedAt: ago(10 * MINUTE)
-  });
-  expect(element.querySelector('.task-claim-timer')).toBeNull();
-});
+test('the shared tick refreshes the elapsed text of any claim chip in the DOM', () => {
+  const chip = mountChip(NOW.getTime() - (4 * MINUTE + 40_000));
 
-test('keeps the plain assignee initials chip when there is no claim timing', () => {
-  const element = render({ ...baseTask, assignee: 'Ada Lovelace' });
-  const assignee = element.querySelector('.task-assignee');
-
-  expect(assignee).not.toBeNull();
-  expect(assignee.textContent).toBe('AL');
-  expect(assignee.getAttribute('title')).toBe('Assignee: Ada Lovelace');
-  expect(element.querySelector('.task-claim-timer')).toBeNull();
-});
-
-test('falls back to the assignee as claimant when claimedBy is empty', () => {
-  const element = render({
-    ...baseTask,
-    assignee: 'Ada Lovelace',
-    columnHistory: [{ column: IN_PROGRESS_COLUMN_ID, at: ago(10 * MINUTE) }]
-  });
-  const chip = element.querySelector('.task-claim-timer');
-
-  expect(chip.querySelector('.task-assignee').textContent).toBe('AL');
-  expect(chip.querySelector('.task-claim-name').textContent).toBe('Ada Lovelace');
-  expect(chip.querySelector('.task-claim-elapsed').textContent).toBe('10m');
-  expect(chip.getAttribute('title')).toBe('Assignee: Ada Lovelace');
-});
-
-test('the shared tick updates only the elapsed text', () => {
-  const element = render({ ...baseTask, claimedBy: 'agent-7', claimedAt: ago(4 * MINUTE + 40_000) });
-  const chip = element.querySelector('.task-claim-timer');
-  const taskCountBefore = document.querySelectorAll('.task').length;
-
+  refreshClaimTimers();
   expect(chip.querySelector('.task-claim-elapsed').textContent).toBe('4m');
 
   startClaimTicker();
   vi.advanceTimersByTime(30 * 1000);
 
   expect(chip.querySelector('.task-claim-elapsed').textContent).toBe('5m');
-  expect(chip.querySelector('.task-claim-name').textContent).toBe('agent-7');
-  expect(element.querySelector('.task-claim-timer')).toBe(chip);
-  expect(document.querySelectorAll('.task').length).toBe(taskCountBefore);
 });
 
 test('the tick skips hidden documents and catches up when visible again', () => {
-  const element = render({ ...baseTask, claimedBy: 'agent-7', claimedAt: ago(4 * MINUTE + 40_000) });
-  const elapsed = element.querySelector('.task-claim-elapsed');
+  const chip = mountChip(NOW.getTime() - (4 * MINUTE + 40_000));
 
   startClaimTicker();
   setHidden(true);
   vi.advanceTimersByTime(60 * 1000);
-  expect(elapsed.textContent).toBe('4m');
+  expect(chip.querySelector('.task-claim-elapsed').textContent).toBe('');
 
   setHidden(false);
   document.dispatchEvent(new Event('visibilitychange'));
-  expect(elapsed.textContent).toBe('5m');
+  expect(chip.querySelector('.task-claim-elapsed').textContent).toBe('5m');
 });
 
 test('starting the ticker twice does not leave extra intervals behind', () => {
-  const element = render({ ...baseTask, claimedBy: 'agent-7', claimedAt: ago(4 * MINUTE + 40_000) });
-  const elapsed = element.querySelector('.task-claim-elapsed');
+  const chip = mountChip(NOW.getTime() - (4 * MINUTE + 40_000));
 
   startClaimTicker();
   startClaimTicker();
   stopClaimTicker();
   vi.advanceTimersByTime(30 * 1000);
-  expect(elapsed.textContent).toBe('4m');
+  expect(chip.querySelector('.task-claim-elapsed').textContent).toBe('');
 
   startClaimTicker();
   vi.advanceTimersByTime(30 * 1000);
-  expect(elapsed.textContent).toBe('5m');
+  expect(chip.querySelector('.task-claim-elapsed').textContent).toBe('5m');
 });
 
-test('freezes the elapsed time for a blocked task', () => {
-  const element = render({
-    ...baseTask,
-    column: BLOCKED_COLUMN_ID,
-    claimedBy: 'agent-7',
-    claimedAt: ago(2 * 60 * MINUTE),
-    blockedAt: ago(60 * MINUTE)
-  });
-  const chip = element.querySelector('.task-claim-timer');
+test('a frozen end time is left alone by the tick', () => {
+  const chip = mountChip(NOW.getTime() - (3 * 60 * MINUTE), NOW.getTime() - 60 * MINUTE);
 
-  expect(chip.querySelector('.task-claim-elapsed').textContent).toBe('1h 00m');
-  expect(chip.getAttribute('data-claim-end')).toBe(String(NOW.getTime() - 60 * MINUTE));
+  refreshClaimTimers();
+  expect(chip.querySelector('.task-claim-elapsed').textContent).toBe('2h 00m');
 
   startClaimTicker();
   vi.advanceTimersByTime(30 * 1000);
-  expect(chip.querySelector('.task-claim-elapsed').textContent).toBe('1h 00m');
-});
-
-test('freezes the elapsed time for a finished task at doneDate', () => {
-  const element = render({
-    ...baseTask,
-    column: 'done-column',
-    claimedBy: 'agent-7',
-    claimedAt: ago(3 * 60 * MINUTE),
-    doneDate: ago(60 * MINUTE)
-  });
-  const chip = element.querySelector('.task-claim-timer');
-
   expect(chip.querySelector('.task-claim-elapsed').textContent).toBe('2h 00m');
 });

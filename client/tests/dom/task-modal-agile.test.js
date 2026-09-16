@@ -6,8 +6,6 @@ const mocks = vi.hoisted(() => ({
   addTask: vi.fn(),
   updateTask: vi.fn(),
   setTaskBlockedReason: vi.fn(),
-  addAnnotation: vi.fn(),
-  removeAnnotation: vi.fn(() => true),
   isTaskLocked: vi.fn(() => false),
   promptDialog: vi.fn(async () => null),
   loadTasks: vi.fn(() => []),
@@ -21,8 +19,6 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../../src/modules/tasks.js', () => ({
   addTask: mocks.addTask,
   setTaskBlockedReason: mocks.setTaskBlockedReason,
-  addAnnotation: mocks.addAnnotation,
-  removeAnnotation: mocks.removeAnnotation,
   isTaskLocked: mocks.isTaskLocked
 }));
 
@@ -87,12 +83,6 @@ const FIXTURE = `
         </div>
       </section>
       <div id="task-lock-notice" class="task-lock-notice hidden" role="status"></div>
-      <section id="task-annotations-fieldset" class="task-annotations hidden">
-        <span id="task-annotations-count" class="annotations-count hidden"></span>
-        <ul id="task-annotations-list" class="annotations-list"></ul>
-        <input type="text" id="task-annotation-input">
-        <button type="button" id="task-annotation-add-btn" class="btn-small">Add</button>
-      </section>
       <form id="task-form" novalidate>
         <div class="task-form-columns">
           <div class="task-form-column-left">
@@ -116,12 +106,12 @@ const FIXTURE = `
             </div>
           </div>
           <div class="task-form-column-right">
-            <fieldset class="form-group" id="task-acceptance-fieldset">
-              <legend>Acceptance criteria <span id="task-acceptance-progress" hidden></span></legend>
-              <ul id="task-acceptance-list"></ul>
-              <div class="task-acceptance-add-row">
-                <input type="text" id="task-acceptance-input">
-                <button type="button" id="task-acceptance-add-btn">Add</button>
+            <fieldset class="form-group" id="task-key-points-fieldset">
+              <legend>Key points</legend>
+              <ul id="task-key-points-list"></ul>
+              <div class="task-key-point-add-row">
+                <input type="text" id="task-key-point-input">
+                <button type="button" id="task-key-point-add-btn">+</button>
               </div>
             </fieldset>
             <fieldset class="form-group" id="task-comments-fieldset">
@@ -183,41 +173,40 @@ test('add form saves title, description, type, estimate and relationships throug
   expect(description).toBe('What the agent should do');
   expect(fields.type).toBe('bug');
   expect(fields.estimate).toBe(5);
-  expect(fields.acceptanceCriteria).toEqual([]);
+  expect(fields.keyPoints).toEqual([]);
   expect(fields.comments).toEqual([]);
   expect(fields.relationships).toEqual([]);
-  expect(Object.keys(fields).sort()).toEqual(['acceptanceCriteria', 'comments', 'estimate', 'relationships', 'type']);
+  expect(Object.keys(fields).sort()).toEqual(['comments', 'estimate', 'keyPoints', 'relationships', 'type']);
 });
 
-test('the acceptance editor adds, toggles and removes items and reports done/total', () => {
+test('the key points editor appends and removes items', () => {
   initializeTaskModalHandlers(() => {});
   showModal();
   document.getElementById('task-title').value = 'Checklist task';
 
-  const acceptanceInput = document.getElementById('task-acceptance-input');
-  acceptanceInput.value = 'First criterion';
-  fireEvent.keyDown(acceptanceInput, { key: 'Enter' });
-  acceptanceInput.value = 'Second criterion';
-  fireEvent.click(document.getElementById('task-acceptance-add-btn'));
+  const keyPointInput = document.getElementById('task-key-point-input');
+  keyPointInput.value = 'First key point';
+  fireEvent.keyDown(keyPointInput, { key: 'Enter' });
+  keyPointInput.value = 'Second key point';
+  fireEvent.click(document.getElementById('task-key-point-add-btn'));
 
-  let items = document.querySelectorAll('#task-acceptance-list .acceptance-item');
+  let items = document.querySelectorAll('#task-key-points-list .key-point-item');
   expect(items).toHaveLength(2);
-  expect(document.getElementById('task-acceptance-progress').textContent).toBe('0 / 2');
+  expect(items[0].querySelector('.key-point-text').textContent).toBe('First key point');
+  expect(items[1].querySelector('.key-point-text').textContent).toBe('Second key point');
+  expect(items[0].querySelector('input[type="checkbox"]')).toBeNull();
 
-  fireEvent.click(items[0].querySelector('input[type="checkbox"]'));
-  expect(document.getElementById('task-acceptance-progress').textContent).toBe('1 / 2');
-  expect(items[0].classList.contains('acceptance-item--done')).toBe(true);
-
-  fireEvent.click(items[1].querySelector('.acceptance-remove-btn'));
-  items = document.querySelectorAll('#task-acceptance-list .acceptance-item');
+  fireEvent.click(items[1].querySelector('.key-point-remove-btn'));
+  items = document.querySelectorAll('#task-key-points-list .key-point-item');
   expect(items).toHaveLength(1);
-  expect(document.getElementById('task-acceptance-progress').textContent).toBe('1 / 1');
 
   fireEvent.submit(document.getElementById('task-form'));
 
   const fields = mocks.addTask.mock.calls[0][2];
-  expect(fields.acceptanceCriteria).toHaveLength(1);
-  expect(fields.acceptanceCriteria[0]).toMatchObject({ text: 'First criterion', done: true });
+  expect(fields.keyPoints).toHaveLength(1);
+  expect(fields.keyPoints[0]).toMatchObject({ text: 'First key point' });
+  expect(fields.keyPoints[0].at).toBeTruthy();
+  expect(fields.keyPoints[0].done).toBeUndefined();
 });
 
 test('a comment written in the dialog renders in the thread with author and time', () => {
@@ -274,7 +263,7 @@ test('editing a task saves the slim payload through updateTask', async () => {
       type: 'task',
       estimate: 2,
       relationships: [],
-      acceptanceCriteria: [],
+      keyPoints: [],
       comments: []
     }
   ]);

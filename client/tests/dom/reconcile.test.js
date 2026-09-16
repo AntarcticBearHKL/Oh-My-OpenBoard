@@ -50,7 +50,6 @@ function mountStandardBoard() {
       <article class="task-column" data-column="todo">
         <header class="column-header">
           <h2 id="column-title-todo">To Do</h2>
-          <span class="task-counter" data-column-id="todo">1</span>
         </header>
         <ul class="tasks">
           <li class="task" data-task-id="t1"></li>
@@ -59,7 +58,6 @@ function mountStandardBoard() {
       <article class="task-column" data-column="done">
         <header class="column-header">
           <h2 id="column-title-done">Done</h2>
-          <span class="task-counter" data-column-id="done">0</span>
         </header>
         <ul class="tasks"></ul>
       </article>
@@ -87,29 +85,16 @@ test('reconcileBoard moves a dragged task card into its new column, preserving t
   expect(document.querySelector('[data-column="todo"]')).toBe(todoArticleBefore);
 });
 
-test('reconcileBoard updates each column task counter to match state', async () => {
-  mocks.tasks = [{ id: 't1', column: 'done', order: 1, title: 'Ship it' }];
-  mountStandardBoard();
-
-  const { reconcileBoard } = await import('../../src/modules/render.js');
-  reconcileBoard();
-
-  expect(document.querySelector('.task-counter[data-column-id="todo"]').textContent).toBe('0');
-  expect(document.querySelector('.task-counter[data-column-id="done"]').textContent).toBe('1');
-});
-
-test('reconcileBoard leaves a legacy collapsed column title untouched and updates its counter', async () => {
+test('reconcileBoard leaves a legacy collapsed column title untouched', async () => {
   mocks.tasks = [{ id: 't1', column: 'done', order: 1, title: 'Ship it' }];
   mountToBody(`
     <div id="board-container" data-view-mode="columns">
       <article class="task-column" data-column="todo">
-        <header class="column-header"><h2 id="column-title-todo">To Do</h2>
-          <span class="task-counter" data-column-id="todo">1</span></header>
+        <header class="column-header"><h2 id="column-title-todo">To Do</h2></header>
         <ul class="tasks"><li class="task" data-task-id="t1"></li></ul>
       </article>
       <article class="task-column is-collapsed" data-column="done">
-        <header class="column-header"><h2 id="column-title-done">Done (0)</h2>
-          <span class="task-counter hidden" data-column-id="done">0</span></header>
+        <header class="column-header"><h2 id="column-title-done">Done (0)</h2></header>
         <ul class="tasks hidden"></ul>
       </article>
     </div>
@@ -118,9 +103,7 @@ test('reconcileBoard leaves a legacy collapsed column title untouched and update
   const { reconcileBoard } = await import('../../src/modules/render.js');
   reconcileBoard();
 
-  // Column titles are static now; the counter badge carries the count.
   expect(document.querySelector('#column-title-done').textContent).toBe('Done (0)');
-  expect(document.querySelector('.task-counter[data-column-id="done"]').textContent).toBe('1');
 });
 
 test('a data change inside a drag-reconcile window patches in place instead of rebuilding', async () => {
@@ -157,7 +140,6 @@ test('reconcileBoard respects the active board filter, like a full render', asyn
     // Only the matching task is rendered; the filtered-out one is not created.
     expect(doneList.querySelector('[data-task-id="t1"]')).not.toBeNull();
     expect(doneList.querySelector('[data-task-id="t2"]')).toBeNull();
-    expect(document.querySelector('.task-counter[data-column-id="done"]').textContent).toBe('1');
   } finally {
     setBoardFilterQuery('');
   }
@@ -202,17 +184,18 @@ test('reconcileBoard virtualizes an overfull Done column instead of rendering ev
   const doneList = document.querySelector('[data-column="done"] .tasks');
   expect(doneList.querySelectorAll('.task').length).toBe(DONE_BATCH);
   expect(doneList.querySelector('.show-more-btn')).not.toBeNull();
-  // Counter always reflects the true total, not the rendered slice.
-  expect(document.querySelector('.task-counter[data-column-id="done"]').textContent).toBe('60');
 });
 
-test('reconcileBoard renders a new card with acceptance progress and the notes indicator', async () => {
+test('reconcileBoard renders a new card with only title, description and key points', async () => {
   mocks.tasks = [{
     id: 't2',
     column: 'todo',
     order: 1,
     title: 'Ship it',
-    acceptanceCriteria: [{ id: 'ac1', text: 'Works', done: true }],
+    description: 'With care',
+    type: 'bug',
+    estimate: 5,
+    keyPoints: [{ id: 'kp1', text: 'Works', at: '2026-01-01T00:00:00.000Z' }],
     comments: [{ id: 'c1', author: 'Ada', text: 'Any update?', at: '2026-01-01T10:00:00.000Z' }]
   }];
   mountStandardBoard();
@@ -222,8 +205,12 @@ test('reconcileBoard renders a new card with acceptance progress and the notes i
 
   const card = document.querySelector('[data-task-id="t2"]');
   expect(card).not.toBeNull();
-  expect(card.querySelector('.task-acceptance-progress').textContent).toContain('1/1');
-  expect(card.querySelector('.task-notes')).not.toBeNull();
+  expect(card.querySelector('.task-title').textContent).toBe('Ship it');
+  expect(card.querySelector('.task-description-preview').textContent).toBe('With care');
+  expect(card.querySelector('.task-key-point').textContent).toBe('Works');
+  expect(card.querySelector('.task-type')).toBeNull();
+  expect(card.querySelector('.task-estimate')).toBeNull();
+  expect(card.querySelector('.task-notes')).toBeNull();
   expect(card.querySelector('.task-priority')).toBeNull();
   expect(card.querySelector('.task-date')).toBeNull();
 });

@@ -31,7 +31,6 @@ client/             Frontend app (the main product)
     kanban.js       Entry point — initialises storage, renders board
     index.html      Main board page
     reports.html    Analytics page
-    calendar.html   Calendar view (no data source at present — reads a removed due date)
     activity.html   Board event log page
   tests/
     unit/           Vitest pure-unit tests

@@ -485,19 +485,6 @@
   background: var(--relationship-remove-bg-hover);
 }
 
-/* ==========================================================================
-   Acceptance criteria in task modal
-   ========================================================================== */
-
-.task-acceptance-add-row {
-  margin-top: 6px;
-}
-
-.task-acceptance-add-row input {
-  width: 100%;
-  box-sizing: border-box;
-}
-
 .field-progress-legend {
   font-size: var(--text-rem-075);
   color: var(--text-muted);

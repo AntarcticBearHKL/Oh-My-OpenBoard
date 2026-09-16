@@ -1,11 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import {
   MAX_WIP_LIMIT,
-  formatWipCount,
   getWipLimit,
   getWipState,
-  normalizeWipLimit,
-  wipCounterLabel
+  normalizeWipLimit
 } from '../../src/modules/wip-limit.js';
 
 const todo = { id: 'c1', name: 'Todo', wipLimit: 5 };
@@ -71,16 +69,6 @@ describe('getWipState', () => {
   test('an unlimited or Done column is never at or over', () => {
     expect(getWipState(999, unlimited)).toBe('under');
     expect(getWipState(999, done)).toBe('under');
-  });
-});
-
-
-describe('wipCounterLabel', () => {
-  test('carries the state without relying on colour', () => {
-    expect(wipCounterLabel(3, unlimited)).toBe('3 tasks');
-    expect(wipCounterLabel(3, todo)).toBe('3 of 5 tasks');
-    expect(wipCounterLabel(5, todo)).toBe('5 of 5 tasks, at limit');
-    expect(wipCounterLabel(6, todo)).toBe('6 of 5 tasks, over limit');
   });
 });
 

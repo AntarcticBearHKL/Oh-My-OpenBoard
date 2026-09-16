@@ -31,7 +31,7 @@ beforeEach(() => {
   showEditModal.mockClear();
 });
 
-test('renders a single compact row without card chrome', () => {
+test('renders a single compact row with the title and no card chrome', () => {
   const element = render(baseTask);
 
   expect(element.tagName).toBe('LI');
@@ -55,63 +55,67 @@ test('omits the description preview when there is no description', () => {
   expect(element.querySelector('.task-description-preview')).toBeNull();
 });
 
-test('no longer renders a priority chip, a due date or a label area', () => {
+test('renders the key points list in order', () => {
   const element = render({
     ...baseTask,
-    priority: 'high',
-    dueDate: '2026-05-10',
-    labels: ['l1'],
-    subTasks: [{ id: 's1', completed: true }]
-  });
-
-  const meta = element.querySelector('.task-meta');
-  expect(meta.querySelector('.task-priority')).toBeNull();
-  expect(meta.querySelector('.task-date')).toBeNull();
-  expect(meta.querySelector('.task-labels')).toBeNull();
-  expect(meta.querySelector('.task-label')).toBeNull();
-  expect(meta.querySelector('.task-subtasks-row')).toBeNull();
-  expect(element.querySelector('.task-age')).toBeNull();
-});
-
-test('shows acceptance progress as done over total', () => {
-  const element = render({
-    ...baseTask,
-    acceptanceCriteria: [
-      { id: 'ac1', text: 'One', done: true },
-      { id: 'ac2', text: 'Two', done: false },
-      { id: 'ac3', text: 'Three', done: true }
+    keyPoints: [
+      { id: 'kp1', text: 'Works offline', at: '2026-01-01T00:00:00.000Z' },
+      { id: 'kp2', text: 'Syncs on reconnect', at: '2026-01-02T00:00:00.000Z' }
     ]
   });
 
-  const progress = element.querySelector('.task-acceptance-progress');
-  expect(progress).not.toBeNull();
-  expect(progress.textContent).toContain('2/3');
-  expect(progress.getAttribute('aria-label')).toBe('Acceptance criteria: 2/3 done');
+  const items = [...element.querySelectorAll('.task-key-points .task-key-point')];
+  expect(items.map((item) => item.textContent)).toEqual(['Works offline', 'Syncs on reconnect']);
 });
 
-test('omits acceptance progress when there are no criteria', () => {
-  const element = render({ ...baseTask, acceptanceCriteria: [] });
-  expect(element.querySelector('.task-acceptance-progress')).toBeNull();
+test('omits the key points list when there are none', () => {
+  const element = render({ ...baseTask, keyPoints: [] });
+  expect(element.querySelector('.task-key-points')).toBeNull();
 });
 
-test('shows a notes indicator when comments exist', () => {
+test('shows needsDigest and isRework as quiet markers when set', () => {
+  const element = render({ ...baseTask, needsDigest: true, isRework: true });
+  const signal = element.querySelector('.task-signal');
+
+  expect(signal).not.toBeNull();
+  expect(signal.textContent).toContain('Needs digest');
+  expect(signal.textContent).toContain('Rework');
+  expect(signal.getAttribute('title')).toBe('Needs digest · Rework');
+});
+
+test('omits the signal marker when neither flag is set', () => {
+  const element = render(baseTask);
+  expect(element.querySelector('.task-signal')).toBeNull();
+});
+
+test('renders nothing else: no type, estimate, key, assignee, timer, notes or status chip', () => {
   const element = render({
     ...baseTask,
-    comments: [
-      { id: 'c1', author: 'Ada', text: 'Any update?', at: '2026-01-01T10:00:00.000Z' },
-      { id: 'c2', author: 'agent-7', text: 'Working on it', at: '2026-01-01T11:00:00.000Z' }
-    ]
+    key: 'DB-12',
+    type: 'bug',
+    estimate: 5,
+    assignee: 'Ada Lovelace',
+    claimedBy: 'agent-7',
+    claimedAt: '2026-01-01T00:00:00.000Z',
+    doneDate: '2026-01-02T00:00:00.000Z',
+    blockedReason: 'Waiting',
+    comments: [{ id: 'c1', author: 'Ada', text: 'Any update?', at: '2026-01-01T10:00:00.000Z' }]
   });
 
-  const notes = element.querySelector('.task-notes');
-  expect(notes).not.toBeNull();
-  expect(notes.textContent).toContain('2');
-  expect(notes.getAttribute('aria-label')).toBe('Notes: 2 comments');
-});
-
-test('omits the notes indicator without comments', () => {
-  const element = render({ ...baseTask, comments: [] });
-  expect(element.querySelector('.task-notes')).toBeNull();
+  [
+    '.task-meta',
+    '.task-key',
+    '.task-type',
+    '.task-estimate',
+    '.task-assignee',
+    '.task-claim-timer',
+    '.task-blocked',
+    '.task-notes',
+    '.task-acceptance-progress',
+    '.task-summary-chip'
+  ].forEach((selector) => {
+    expect(element.querySelector(selector), selector).toBeNull();
+  });
 });
 
 test('clicking the title opens the task editor', () => {

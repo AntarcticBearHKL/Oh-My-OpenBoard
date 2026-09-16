@@ -8,9 +8,8 @@ import {
   initializeFullpageHandlers
 } from './task-modal-wiring-controls.js';
 import {
-  initializeAcceptanceHandlers,
-  initializeCommentHandlers,
-  initializeAnnotationHandlers
+  initializeKeyPointHandlers,
+  initializeCommentHandlers
 } from './task-modal-wiring-agile.js';
 import { initializeSubmitHandler } from './task-modal-wiring-submit.js';
 
@@ -22,9 +21,8 @@ export function initializeTaskModalHandlers(setupModalCloseHandlers) {
   initializeRelationshipHandlers();
   initializeRelationshipOutsideClickHandlers();
   initializeFullpageHandlers();
-  initializeAcceptanceHandlers();
+  initializeKeyPointHandlers();
   initializeCommentHandlers();
-  initializeAnnotationHandlers();
   initializeSubmitHandler();
   setupModalCloseHandlers('task-modal', hideModal);
 }

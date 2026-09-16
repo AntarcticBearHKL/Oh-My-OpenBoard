@@ -1,34 +1,32 @@
-// Wire the task modal acceptance, comment and annotation inputs.
+// Wire the task modal key-point and comment inputs.
 
 import { $id } from './dom.js';
 import { generateUUID } from './utils.js';
 import { state } from './task-modal-state.js';
-import { renderAcceptanceCriteriaList } from './task-modal-status.js';
+import { renderKeyPointsList } from './task-modal-status.js';
 import { renderCommentsList, saveCommentAuthor } from './task-modal-agile-fields.js';
-import { addAnnotationFromInput } from './task-modal-annotations.js';
 
-export function initializeAcceptanceHandlers() {
-  const acceptanceInput = $id('task-acceptance-input');
-  acceptanceInput?.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter') return;
-    e.preventDefault();
-    const text = acceptanceInput.value.trim();
-    if (!text) return;
-    state.selectedTaskAcceptanceCriteria.push({ id: generateUUID(), text, done: false });
-    acceptanceInput.value = '';
-    renderAcceptanceCriteriaList();
-  });
+export function initializeKeyPointHandlers() {
+  const keyPointInput = $id('task-key-point-input');
 
-  $id('task-acceptance-add-btn')?.addEventListener('click', () => {
-    const text = (acceptanceInput?.value || '').trim();
+  function appendKeyPoint() {
+    const text = (keyPointInput?.value || '').trim();
     if (!text) {
-      acceptanceInput?.focus();
+      keyPointInput?.focus();
       return;
     }
-    state.selectedTaskAcceptanceCriteria.push({ id: generateUUID(), text, done: false });
-    acceptanceInput.value = '';
-    renderAcceptanceCriteriaList();
+    state.selectedTaskKeyPoints.push({ id: generateUUID(), text, at: new Date().toISOString() });
+    if (keyPointInput) keyPointInput.value = '';
+    renderKeyPointsList();
+  }
+
+  keyPointInput?.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    appendKeyPoint();
   });
+
+  $id('task-key-point-add-btn')?.addEventListener('click', appendKeyPoint);
 }
 
 export function initializeCommentHandlers() {
@@ -50,14 +48,5 @@ export function initializeCommentHandlers() {
     if (e.key !== 'Enter') return;
     e.preventDefault();
     addCommentFromInputs();
-  });
-}
-
-export function initializeAnnotationHandlers() {
-  $id('task-annotation-add-btn')?.addEventListener('click', addAnnotationFromInput);
-  $id('task-annotation-input')?.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter') return;
-    e.preventDefault();
-    addAnnotationFromInput();
   });
 }

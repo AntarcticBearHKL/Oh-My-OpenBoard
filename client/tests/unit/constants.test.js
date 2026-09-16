@@ -4,6 +4,7 @@ import {
   BLOCKED_COLUMN_ID,
   DONE_COLUMN_ID,
   FIXED_COLUMNS,
+  HIL_COLUMN_ID,
   IN_PROGRESS_COLUMN_ID,
   DEFAULT_COLUMN_COLOR,
   MAX_LABEL_NAME_LENGTH,
@@ -11,12 +12,13 @@ import {
   matchesKey
 } from '../../src/modules/constants.js';
 
-test('the board has four fixed columns in workflow order', () => {
-  expect(FIXED_COLUMNS.map((column) => column.name)).toEqual(['Backlog', 'In Progress', 'Blocked', 'Finished']);
+test('the board has five fixed columns with HIL in position two', () => {
+  expect(FIXED_COLUMNS.map((column) => column.name)).toEqual(['Backlog', 'HIL', 'In Progress', 'Blocked', 'Finished']);
   expect(FIXED_COLUMNS[0].id).toBe(BACKLOG_COLUMN_ID);
-  expect(FIXED_COLUMNS[1].id).toBe(IN_PROGRESS_COLUMN_ID);
-  expect(FIXED_COLUMNS[2].id).toBe(BLOCKED_COLUMN_ID);
-  expect(FIXED_COLUMNS[3].role).toBe('done');
+  expect(FIXED_COLUMNS[1].id).toBe(HIL_COLUMN_ID);
+  expect(FIXED_COLUMNS[2].id).toBe(IN_PROGRESS_COLUMN_ID);
+  expect(FIXED_COLUMNS[3].id).toBe(BLOCKED_COLUMN_ID);
+  expect(FIXED_COLUMNS[4].role).toBe('done');
 });
 
 test('DONE_COLUMN_ID is done', () => {

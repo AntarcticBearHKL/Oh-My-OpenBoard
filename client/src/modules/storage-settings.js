@@ -6,26 +6,6 @@ import { state, safeParseObject, DEFAULT_BOARD_ID } from './storage-state.js';
 
 // ── Settings ───────────────────────────────────────────────────────────────────
 
-export function loadColumnSummaries() {
-  const summaries = loadSettings()?.columnSummaries;
-  return summaries && typeof summaries === 'object' && !Array.isArray(summaries) ? summaries : {};
-}
-
-export function saveColumnSummary(columnId, text, by = 'human') {
-  const id = typeof columnId === 'string' ? columnId : '';
-  if (!id) return false;
-
-  const settings = loadSettings();
-  const summaries = { ...(settings.columnSummaries || {}) };
-  const trimmed = String(text || '').trim();
-
-  if (trimmed) summaries[id] = { text: trimmed, at: new Date().toISOString(), by };
-  else delete summaries[id];
-
-  saveSettings({ ...settings, columnSummaries: summaries });
-  return true;
-}
-
 export function loadSettings() {
   ensureBoardsInitialized();
   const boardId = getActiveBoardId() || DEFAULT_BOARD_ID;

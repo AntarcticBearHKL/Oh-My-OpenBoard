@@ -22,12 +22,12 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 | Spec | Purpose |
 |---|---|
 | `docs/spec/board-ui.md` | Main board layout, column/card rendering, drag-drop, mobile behavior |
-| `docs/spec/tasks.md` | Task CRUD, acceptance criteria, comments, claim timing, card display rules |
+| `docs/spec/tasks.md` | Task CRUD, key points, the digest workflow, comments, claim timing, card display rules |
 | `docs/spec/columns.md` | Fixed columns, column UI, WIP limits, Finished column invariants |
 | `docs/spec/labels.md` | Label management, groups, color constraints, and their use by swim lanes |
 | `docs/spec/settings.md` | Per-board settings fields and persistence |
 | `docs/spec/relationships.md` | Task relationship types, bidirectional sync rules |
-| `docs/spec/sub-tasks.md` | Retired sub-task model — acceptance criteria replaced it |
+| `docs/spec/sub-tasks.md` | Retired sub-task model — key points replaced it |
 | `docs/spec/swimlanes.md` | Swim lane grouping modes, collapse state, lane-aware drag-drop |
 | `docs/spec/import-export.md` | Board JSON export/import format and ID-remapping rules |
 | `docs/spec/sync.md` | "Go Online" auth flow: backend health probe, login modal, session management (event-sourced sync itself lives in `backend-storage-pb.md`) |
@@ -38,7 +38,6 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 | Spec | Purpose |
 |---|---|
 | `docs/spec/reports.md` | Reports page: lead time, completions, cumulative flow (ECharts) |
-| `docs/spec/calendar.md` | Calendar view: task-by-due-date rendering (currently has no data source — see the note in that file) |
 
 ### Testing
 
@@ -60,7 +59,7 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 - Minimal to no dependencies:
   - `lucide` for tree-shaken icons via `src/modules/icons.js`
   - `sortablejs` for task and column drag and drop
-  - `echarts` for reports and calendar visualizations only
+  - `echarts` for reports visualizations only
 - Storage: browser **IndexedDB** via the `idb` wrapper (migrated from localStorage)
 - Data persistence: JSON import/export to local disk
 - No server, no frameworks
@@ -74,7 +73,6 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 
 - `src/kanban.js` / `src/index.html` - main board UI, wires handlers, calls `renderBoard()`
 - `src/reports.html` - reports page (ECharts)
-- `src/calendar.html` - calendar page (ECharts)
 - `src/impressum.html` - impressum/imprint page
 
 **Every entry point must call `await initStorage()` before accessing any storage functions.**
@@ -96,7 +94,6 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 - `src/modules/settings.js` - per-board settings modal and persistence
 - `src/modules/labels.js` - label management UI
 - `src/modules/dateutils.js` - date formatting helpers
-- `src/modules/calendar.js` - calendar page rendering
 - `src/modules/reports.js` - reports page rendering
 - `src/modules/accordion.js` - reusable collapsible accordion component
 - `src/modules/importexport.js` - board JSON export/import normalization
@@ -178,8 +175,8 @@ The app uses CSS custom properties and `html[data-theme]` for theming.
 
 ## Default Data
 
-- Fixed columns: `Backlog`, `In Progress`, `Blocked`, `Finished`
-- Backlog holds everything not started; In Progress is what an agent is actively working; Blocked is work an agent could not finish and that needs a human decision or is stuck on a resource conflict; Finished is completed work
+- Fixed columns: `Backlog`, `HIL`, `In Progress`, `Blocked`, `Finished`
+- Backlog holds work the agent proposed; HIL is the human's hand-entry point; In Progress is what an agent is actively working; Blocked is work an agent could not finish and that needs a human decision or is stuck on a resource conflict; Finished is completed work
 - Default labels: `Task`, `Meeting`, `Email`, `Idea`, `Goal`
 - The default board is created with the fixed columns and default labels, and no tasks
 

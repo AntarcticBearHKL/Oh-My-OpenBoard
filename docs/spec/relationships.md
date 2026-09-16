@@ -61,7 +61,7 @@ Each task stores its relationships as an array on the task object:
 
 ### Relationships Fieldset
 
-- The task edit modal includes a "Relationships" fieldset in the right form column, below the acceptance-criteria and comments fieldsets.
+- The task edit modal includes a "Relationships" fieldset in the right form column, below the key-points and comments fieldsets.
 - The fieldset contains:
   - An active relationships list showing current relationships as badges
   - A type selector (`<select>`) with options: Prerequisite, Dependent, Related

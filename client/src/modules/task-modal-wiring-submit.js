@@ -20,7 +20,7 @@ export function initializeSubmitHandler() {
     const fields = {
       type: $id('task-type')?.value,
       estimate: normalizeEstimate($id('task-estimate')?.value),
-      acceptanceCriteria: state.selectedTaskAcceptanceCriteria,
+      keyPoints: state.selectedTaskKeyPoints,
       comments: state.selectedTaskComments,
       relationships: state.selectedTaskRelationships
     };

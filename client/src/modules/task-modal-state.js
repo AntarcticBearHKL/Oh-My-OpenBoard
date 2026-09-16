@@ -12,7 +12,6 @@ export const RELATIONSHIP_DESCRIPTIONS = {
 export const state = {
   editingTaskId: null,
   selectedTaskRelationships: [], // [{ type, targetTaskId }]
-  selectedTaskAcceptanceCriteria: [], // [{ id, text, done }]
-  selectedTaskComments: [], // [{ id, author, text, at }]
-  selectedTaskAnnotations: [] // [{ id, text, author, at }]
+  selectedTaskKeyPoints: [], // [{ id, text, at }]
+  selectedTaskComments: [] // [{ id, author, text, at }]
 };

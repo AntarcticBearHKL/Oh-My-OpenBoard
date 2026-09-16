@@ -3,7 +3,7 @@
 ## Export Behavior
 
 - Export combines the selected board's `boardName`, tasks, columns, labels, and settings into one JSON file
-- Exported tasks carry the current task model: title, description, type, estimate, assignee, parentId, acceptance criteria, comments, annotations, relationships, column, order, dates, blocked fields, claim fields, and swim lane assignment
+- Exported tasks carry the current task model: title, description, type, estimate, assignee, parentId, key points, comments, relationships, column, order, dates, blocked fields, claim fields, `needsDigest`/`isRework`, and swim lane assignment
 - Import/export actions are accessed from Manage Boards; the main toolbar does not provide separate import/export buttons
 - Board-management export can export a chosen board directly
 - Export writes metadata in `exportMeta` including `appVersion`, `schemaVersion`, and `exportedAt`
@@ -23,7 +23,8 @@
 - Imports reject schema mismatches such as malformed sections or task references to unknown imported columns
 - Unknown task column references are rejected with explicit manual-fix instructions (add the missing column ids in `columns[]` or remap `task.column` to an existing id)
 - Swim lane label references that cannot be resolved against the imported label list are cleared, and swim lane label IDs are remapped with the other IDs
-- An older export that still carries the removed task fields (`priority`, `dueDate`, task `labels`, `subTasks`, `attachments`, `customFields`) imports cleanly: those fields are dropped rather than rejected
+- An older export that still carries the removed task fields (`priority`, `dueDate`, task `labels`, `subTasks`, `attachments`, `customFields`, `annotations`) imports cleanly: those fields are dropped rather than rejected
+- An older export that still carries `acceptanceCriteria` imports cleanly: the entries are read into `keyPoints` with `text` kept and the old `done` flags dropped
 - Legacy imported IDs, including `done`, `todo`, slug label IDs, and prefixed board IDs, are remapped to UUIDs before persistence
 - Import rewrites task column references, column history entries, swim lane label IDs, and task relationship target IDs when IDs are remapped
 

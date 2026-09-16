@@ -9,12 +9,12 @@
   <!-- Kanban favicon (inline SVG data URI) -->
   <link rel="icon" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='2' y='3' width='6' height='18' rx='1.5' fill='%233b82f6'/%3E%3Crect x='9' y='3' width='6' height='12' rx='1.5' fill='%2360a5fa'/%3E%3Crect x='16' y='3' width='6' height='8' rx='1.5' fill='%2393c5fd'/%3E%3C/svg%3E">
   <script defer src="https://analytics.gomogi.com/script.js" data-website-id="4ebd005d-0f3f-4956-8100-a78c3d89dda8"></script>
-  <script type="module" crossorigin src="./assets/index-B6GVxvZY.js"></script>
+  <script type="module" crossorigin src="./assets/index-DE9TkKHT.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-DK3Fl9T5.js">
-  <link rel="modulepreload" crossorigin href="./assets/styles-CWb6SIeA.js">
+  <link rel="modulepreload" crossorigin href="./assets/styles-BIs7HBQj.js">
   <link rel="modulepreload" crossorigin href="./assets/vendor-CagdCKyi.js">
-  <link rel="modulepreload" crossorigin href="./assets/theme-CEpC5YLu.js">
-  <link rel="stylesheet" crossorigin href="./assets/styles-CccOJsAq.css">
+  <link rel="modulepreload" crossorigin href="./assets/theme-DRo51J1s.js">
+  <link rel="stylesheet" crossorigin href="./assets/styles-B4TX0TZr.css">
 </head>
 <body>
   <!-- Skip link for accessibility -->
@@ -199,23 +199,23 @@
             </div>
           </div>
           <div class="task-form-column-right">
-            <fieldset class="form-group" id="task-acceptance-fieldset">
+            <fieldset class="form-group" id="task-key-points-fieldset">
               <legend>
-                <span data-lucide="check-square" aria-hidden="true"></span>
-                Acceptance criteria
-                <span id="task-acceptance-progress" class="field-progress-legend" hidden></span>
+                <span data-lucide="list-checks" aria-hidden="true"></span>
+                Key points
               </legend>
-              <ul id="task-acceptance-list" class="acceptance-list" role="list" aria-label="Acceptance criteria"></ul>
-              <div class="task-acceptance-add-row">
+              <p class="form-help">The human writes key points here. The agent reads them and folds them into the description before starting work.</p>
+              <ul id="task-key-points-list" class="key-points-list" role="list" aria-label="Key points"></ul>
+              <div class="task-key-point-add-row">
                 <input
                   type="text"
-                  id="task-acceptance-input"
-                  placeholder="Add a criterion and press Enter…"
+                  id="task-key-point-input"
+                  placeholder="Add a key point and press Enter…"
                   autocomplete="off"
                   maxlength="200"
-                  aria-label="New acceptance criterion"
+                  aria-label="New key point"
                 >
-                <button type="button" id="task-acceptance-add-btn" class="btn-small" aria-label="Add acceptance criterion">Add</button>
+                <button type="button" id="task-key-point-add-btn" class="btn-small" aria-label="Add key point">+</button>
               </div>
             </fieldset>
             <fieldset class="form-group" id="task-comments-fieldset">
@@ -582,8 +582,8 @@
         <section>
           <h4>Tasks</h4>
           <ul>
-            <li><strong>Add:</strong> Use the <strong>Add task</strong> row in the <strong>Backlog</strong> column to add a task by hand; the other columns are driven by agents.</li>
-            <li><strong>Edit:</strong> Click a task row to edit details (title, description, type, estimate, acceptance criteria and notes).</li>
+            <li><strong>Add:</strong> Use the <strong>Add task</strong> control in the <strong>HIL</strong> column header to add a task by hand; Backlog and the other columns are driven by agents.</li>
+            <li><strong>Edit:</strong> Click a task row to edit details (title, description, key points and notes).</li>
             <li><strong>Move:</strong> Drag and drop between columns.</li>
           </ul>
         </section>
@@ -591,7 +591,7 @@
         <section>
           <h4>Columns</h4>
           <ul>
-            <li>The board has four fixed columns: Backlog, In Progress, Blocked, Finished.</li>
+            <li>The board has five fixed columns: Backlog, HIL, In Progress, Blocked, Finished.</li>
             <li>Each column scrolls independently, so long task lists stay manageable.</li>
           </ul>
         </section>

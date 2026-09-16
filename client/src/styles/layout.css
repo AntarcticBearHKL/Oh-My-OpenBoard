@@ -351,8 +351,47 @@ a.control-btn {
   font-weight: 700;
 }
 
-.board-list-item--root {
-  margin-top: var(--space-1);
+.board-group-prefix {
+  list-style: none;
+}
+
+.board-group-prefix-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  box-sizing: border-box;
+  padding: 3px var(--space-2) 3px var(--sidebar-name-inset);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.board-group-prefix-toggle:hover {
+  background-color: var(--sidebar-hover);
+  color: var(--text);
+}
+
+.board-group-prefix-toggle:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.board-group-prefix-toggle svg {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  stroke-width: 2;
+}
+
+.board-group.is-prefix-collapsed .board-list-item--finished-prefix {
+  display: none;
 }
 
 .board-group-name {
@@ -373,23 +412,6 @@ a.control-btn {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-}
-
-.board-group-rename-input {
-  flex: 1 1 auto;
-  min-width: 0;
-  padding: 2px 6px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--input-bg);
-  color: var(--text);
-  font-size: var(--text-sm);
-  font-family: inherit;
-}
-
-.board-group-rename-input:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--input-focus-ring);
 }
 
 .board-group-items {

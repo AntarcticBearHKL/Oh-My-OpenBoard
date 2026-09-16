@@ -86,7 +86,6 @@ Edit on your phone, see it on your laptop — within seconds. OpenAgile uses **e
 - **🚀 Blazing Fast & Simple**: Lightning-quick performance with a clean, intuitive interface
 - **🔍 Powerful Search**: Find tasks instantly by title or description
 - **📊 Productivity Reports**: Visualize your progress with Cumulative Flow Diagrams, weekly lead time, completion stats, same-day completions tracking, and an activity heatmap covering the last 365 days
-- **📅 Calendar View**: See tasks by due date on a monthly calendar with overdue highlighting (currently has no data source — the slimmed task model no longer carries due dates)
 - **💻 Local-First**: Works fully offline with no backend required — your data lives in your browser and never leaves your device unless you opt into **Real-Time Multi-Device Sync**
 - **🎨 Drag & Drop**: Effortlessly move tasks and columns with optimized performance (handles 300+ tasks)
 - **🏷️ Custom Labels & Colors**: Board-level labels with groups and colors feed swim lane grouping — label text automatically switches between black and white for readability

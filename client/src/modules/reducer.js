@@ -121,7 +121,9 @@ function applyBoardDeleted(state, event) {
 
 function applySettingsUpdated(state, event) {
   const fields = event.payload?.fields && typeof event.payload.fields === 'object' ? event.payload.fields : {};
-  return { ...state, settings: { ...state.settings, ...fields } };
+  const next = { ...state.settings, ...fields };
+  delete next.columnSummaries;
+  return { ...state, settings: next };
 }
 
 const handlers = {

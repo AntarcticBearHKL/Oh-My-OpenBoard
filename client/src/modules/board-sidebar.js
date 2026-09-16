@@ -1,10 +1,13 @@
 import { emit, on, DATA_CHANGED } from './events.js';
 import { renderIcons } from './icons.js';
+import { DONE_COLUMN_ID, isDoneColumn } from './constants.js';
 import {
   deleteBoard as deleteBoardById,
   ensureBoardsInitialized,
   getActiveBoardId,
   listBoards,
+  loadColumnsForBoard,
+  loadTasksForBoard,
   setActiveBoardId
 } from './storage.js';
 import { showBoardRenameModal } from './board-rename-modal.js';
@@ -12,12 +15,13 @@ import { createArmedDeleteButton } from './armed-delete-button.js';
 import {
   createGroup,
   deleteGroup,
+  ensureBoardsGrouped,
   initGroupSync,
   listGroups,
   pruneBoardGroups,
   readBoardGroupMap,
-  renameGroup,
-  toggleGroupCollapsed
+  toggleGroupCollapsed,
+  toggleGroupPrefixCollapsed
 } from './board-groups.js';
 
 function boardName(board) {
@@ -25,11 +29,11 @@ function boardName(board) {
   return name || 'Untitled board';
 }
 
-function findGroupElement(listEl, groupId) {
-  for (const el of listEl.querySelectorAll('.board-group')) {
-    if (el.dataset.groupId === groupId) return el;
-  }
-  return null;
+function isFinishedIteration(boardId) {
+  const tasks = loadTasksForBoard(boardId);
+  if (tasks.length === 0) return false;
+  const doneColumnId = loadColumnsForBoard(boardId).find(isDoneColumn)?.id || DONE_COLUMN_ID;
+  return tasks.every((task) => task.column === doneColumnId || task.column === DONE_COLUMN_ID);
 }
 
 export function initializeBoardSidebar() {
@@ -47,42 +51,6 @@ export function initializeBoardSidebar() {
     setActiveBoardId(boardId);
     syncSelect(boardId);
     emit(DATA_CHANGED);
-  };
-
-  const startGroupRename = (groupId) => {
-    const groupEl = findGroupElement(listEl, groupId);
-    const nameEl = groupEl?.querySelector('.board-group-name');
-    if (!nameEl) return;
-
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'board-group-rename-input';
-    input.value = nameEl.textContent;
-    input.maxLength = 60;
-    input.setAttribute('aria-label', 'Group name');
-
-    let settled = false;
-    const finish = (commit) => {
-      if (settled) return;
-      settled = true;
-      if (commit) renameGroup(groupId, input.value);
-      render();
-    };
-
-    input.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        finish(true);
-      } else if (event.key === 'Escape') {
-        event.preventDefault();
-        finish(false);
-      }
-    });
-    input.addEventListener('blur', () => finish(true));
-
-    nameEl.replaceWith(input);
-    input.focus();
-    input.select();
   };
 
   const buildBoardItem = (board, activeId) => {
@@ -149,9 +117,7 @@ export function initializeBoardSidebar() {
     const nameEl = document.createElement('span');
     nameEl.className = 'board-group-name';
     nameEl.textContent = group.name;
-    nameEl.title = isCollapsed
-      ? 'Click to expand, double-click to rename'
-      : 'Click to collapse, double-click to rename';
+    nameEl.title = isCollapsed ? 'Click to expand' : 'Click to collapse';
     nameEl.setAttribute('role', 'button');
     nameEl.tabIndex = 0;
     nameEl.setAttribute('aria-expanded', String(!isCollapsed));
@@ -160,17 +126,11 @@ export function initializeBoardSidebar() {
     nameEl.addEventListener('click', (event) => {
       event.stopPropagation();
       clearTimeout(pendingToggle);
-      // Deferred so a double-click can cancel the toggle before rename replaces this node.
+      // Deferred so a double-click collapses once instead of toggling twice.
       pendingToggle = setTimeout(() => {
         pendingToggle = null;
         if (nameEl.isConnected) toggle();
       }, 200);
-    });
-    nameEl.addEventListener('dblclick', (event) => {
-      event.stopPropagation();
-      clearTimeout(pendingToggle);
-      pendingToggle = null;
-      startGroupRename(group.id);
     });
     nameEl.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' || event.key === ' ') {
@@ -214,10 +174,47 @@ export function initializeBoardSidebar() {
     const items = document.createElement('ul');
     items.className = 'board-group-items';
     items.setAttribute('aria-label', `${group.name} iterations`);
-    boards.forEach((board) => items.appendChild(buildBoardItem(board, activeId)));
+
+    const finishedPrefix = [];
+    let reachedLiveIteration = false;
+    for (const board of boards) {
+      if (!reachedLiveIteration && isFinishedIteration(board.id)) finishedPrefix.push(board);
+      else reachedLiveIteration = true;
+    }
+    const hasFinishedPrefix = finishedPrefix.length > 0 && finishedPrefix.length < boards.length;
+    const isPrefixCollapsed = hasFinishedPrefix && group.prefixCollapsed === true;
+
+    if (hasFinishedPrefix) {
+      const prefixToggle = document.createElement('button');
+      prefixToggle.type = 'button';
+      prefixToggle.className = 'board-group-prefix-toggle';
+      prefixToggle.setAttribute('aria-expanded', String(!isPrefixCollapsed));
+      prefixToggle.setAttribute(
+        'aria-label',
+        `${isPrefixCollapsed ? 'Show' : 'Hide'} ${finishedPrefix.length} finished iteration${finishedPrefix.length === 1 ? '' : 's'} in ${group.name}`
+      );
+      prefixToggle.title = isPrefixCollapsed ? 'Show finished iterations' : 'Hide finished iterations';
+      prefixToggle.innerHTML = `<span data-lucide="${isPrefixCollapsed ? 'chevron-down' : 'chevron-up'}" aria-hidden="true"></span><span>${isPrefixCollapsed ? 'Show' : 'Hide'} ${finishedPrefix.length} finished</span>`;
+      prefixToggle.addEventListener('click', (event) => {
+        event.stopPropagation();
+        if (toggleGroupPrefixCollapsed(group.id)) render();
+      });
+
+      const prefixItem = document.createElement('li');
+      prefixItem.className = 'board-group-prefix';
+      prefixItem.appendChild(prefixToggle);
+      items.appendChild(prefixItem);
+    }
+
+    const finishedPrefixIds = new Set(finishedPrefix.map((board) => board.id));
+    boards.forEach((board) => {
+      const item = buildBoardItem(board, activeId);
+      if (finishedPrefixIds.has(board.id)) item.classList.add('board-list-item--finished-prefix');
+      items.appendChild(item);
+    });
 
     const groupEl = document.createElement('li');
-    groupEl.className = `board-group${isCollapsed ? ' is-collapsed' : ''}`;
+    groupEl.className = `board-group${isCollapsed ? ' is-collapsed' : ''}${isPrefixCollapsed ? ' is-prefix-collapsed' : ''}`;
     groupEl.dataset.groupId = group.id;
     groupEl.append(header, items);
     return groupEl;
@@ -227,29 +224,24 @@ export function initializeBoardSidebar() {
     ensureBoardsInitialized();
     const boards = listBoards();
     const activeId = getActiveBoardId();
+    const boardIds = boards.map((board) => board.id);
+
+    pruneBoardGroups(boardIds);
+    ensureBoardsGrouped(boardIds);
+
     const groups = listGroups();
     const boardGroupMap = readBoardGroupMap();
-
-    pruneBoardGroups(boards.map((board) => board.id));
-
     const knownGroupIds = new Set(groups.map((group) => group.id));
     const buckets = new Map(groups.map((group) => [group.id, []]));
-    const unassigned = [];
 
     for (const board of boards) {
       const groupId = boardGroupMap[board.id];
       if (groupId && knownGroupIds.has(groupId)) buckets.get(groupId).push(board);
-      else unassigned.push(board);
     }
 
     listEl.innerHTML = '';
     groups.forEach((group) => {
       listEl.appendChild(buildGroupElement(group, buckets.get(group.id) || [], activeId));
-    });
-    unassigned.forEach((board) => {
-      const item = buildBoardItem(board, activeId);
-      item.classList.add('board-list-item--root');
-      listEl.appendChild(item);
     });
 
     renderIcons();
@@ -259,8 +251,7 @@ export function initializeBoardSidebar() {
   on(DATA_CHANGED, render);
 
   document.getElementById('add-group-btn')?.addEventListener('click', () => {
-    const group = createGroup();
+    createGroup();
     render();
-    startGroupRename(group.id);
   });
 }

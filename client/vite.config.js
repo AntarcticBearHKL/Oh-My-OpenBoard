@@ -17,7 +17,6 @@ export default defineConfig({
       input: {
         index: 'src/index.html',
         reports: 'src/reports.html',
-        calendar: 'src/calendar.html',
         roadmap: 'src/roadmap.html',
         impressum: 'src/impressum.html'
       },

@@ -52,9 +52,6 @@ export function normalizeSettings(raw) {
   const swimLaneCollapsedKeys = normalizeStringKeys(obj.swimLaneCollapsedKeys);
   const swimLaneCellCollapsedKeys = normalizeStringKeys(obj.swimLaneCellCollapsedKeys);
   const swimLaneOrder = normalizeStringKeys(obj.swimLaneOrder);
-  const columnSummaries = obj.columnSummaries && typeof obj.columnSummaries === 'object' && !Array.isArray(obj.columnSummaries)
-    ? obj.columnSummaries
-    : {};
 
   return {
     showChangeDate,
@@ -64,7 +61,6 @@ export function normalizeSettings(raw) {
     swimLaneLabelGroup,
     swimLaneCollapsedKeys,
     swimLaneCellCollapsedKeys,
-    swimLaneOrder,
-    columnSummaries
+    swimLaneOrder
   };
 }

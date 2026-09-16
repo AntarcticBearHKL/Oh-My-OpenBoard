@@ -10,10 +10,11 @@ import {
   normalizeStringKeys,
 } from './normalize.js';
 import { normalizeWipLimit } from './wip-limit.js';
+import { normalizeKeyPoints } from './agile.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-const DROPPED_TASK_FIELDS = ['priority', 'dueDate', 'labels', 'subTasks', 'attachments', 'customFields'];
+const DROPPED_TASK_FIELDS = ['priority', 'dueDate', 'labels', 'subTasks', 'attachments', 'customFields', 'annotations', 'acceptanceCriteria'];
 
 function isUuid(value) {
   return typeof value === 'string' && UUID_RE.test(value.trim());
@@ -134,6 +135,7 @@ export function normalizeBoardModelIds({ board = null, columns = [], tasks = [],
       id,
       column,
       relationships,
+      keyPoints: normalizeKeyPoints(source.keyPoints ?? source.acceptanceCriteria),
       ...(columnHistory && columnHistory.length ? { columnHistory } : {}),
       ...(swimlaneLabelId ? { swimlaneLabelId } : (Object.prototype.hasOwnProperty.call(source, 'swimlaneLabelId') ? { swimlaneLabelId: '' } : {}))
     };

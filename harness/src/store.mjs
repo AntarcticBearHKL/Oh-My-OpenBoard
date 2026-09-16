@@ -25,13 +25,14 @@ export const DEFAULT_BOARD_ID = '00000000-0000-4000-8000-000000000001';
 
 export const STABLE_COLUMNS = [
   { id: '00000000-0000-4000-8000-000000000030', name: 'Backlog', color: '#3583ff', order: 1 },
-  { id: '00000000-0000-4000-8000-000000000031', name: 'In Progress', color: '#f59e0b', order: 2 },
-  { id: '00000000-0000-4000-8000-000000000032', name: 'Blocked', color: '#ef4444', order: 3 },
-  { id: '00000000-0000-4000-8000-000000000033', name: 'Finished', color: '#16a34a', order: 4, role: 'done' }
+  { id: '00000000-0000-4000-8000-000000000034', name: 'HIL', color: '#8b5cf6', order: 2 },
+  { id: '00000000-0000-4000-8000-000000000031', name: 'In Progress', color: '#f59e0b', order: 3 },
+  { id: '00000000-0000-4000-8000-000000000032', name: 'Blocked', color: '#ef4444', order: 4 },
+  { id: '00000000-0000-4000-8000-000000000033', name: 'Finished', color: '#16a34a', order: 5, role: 'done' }
 ];
 
-const IN_PROGRESS_COLUMN_ID = STABLE_COLUMNS[1].id;
-const BLOCKED_COLUMN_ID = STABLE_COLUMNS[2].id;
+const IN_PROGRESS_COLUMN_ID = STABLE_COLUMNS[2].id;
+const BLOCKED_COLUMN_ID = STABLE_COLUMNS[3].id;
 
 export const STABLE_LABELS = [
   { id: '00000000-0000-4000-8000-000000000020', name: 'Task', color: '#f59e0b', group: 'Activity' },
@@ -411,6 +412,28 @@ export function sweepStaleClaims(now = Date.now()) {
   return moved;
 }
 
+export function digestKeyPoints(taskId, pointIds) {
+  const found = findTask(taskId);
+  if (!found) throw new Error(`Task not found: ${taskId}`);
+  const { task, boardId } = found;
+  const keyPoints = Array.isArray(task.keyPoints) ? task.keyPoints : [];
+  const selected = Array.isArray(pointIds) && pointIds.length > 0 ? new Set(pointIds) : null;
+  const now = new Date().toISOString();
+  const digested = [];
+  const next = keyPoints.map((point) => {
+    const target = selected ? selected.has(point.id) : !point.digestedAt;
+    if (!target) return point;
+    digested.push(point.id);
+    return { ...point, digestedAt: now };
+  });
+  emit('task.updated', {
+    boardId,
+    entityId: taskId,
+    payload: { fields: { keyPoints: next, needsDigest: false, changeDate: now } }
+  });
+  return { taskId, digested };
+}
+
 export function getSeq() {
   return meta.seq;
 }
@@ -472,43 +495,46 @@ export function deleteBoard(boardId) {
   return { deleted: boardId };
 }
 
-const DEFAULT_SKILLS = [
+export const DEFAULT_SKILLS = [
   {
     name: '人与 subagent 的协作工作方式',
     description: '人与 AI subagent 在这块看板上如何分工与交接。',
     content: [
       '这块看板是「人 + 多个 AI subagent」共享的唯一事实来源。任务主要由 AI 填写与搬动，人负责看、定方向、下指令。',
       '',
+      '【职责分工——谁写什么】',
+      '- 描述（description）是 agent 的：立项时由 agent 写，之后由 agent 维护。',
+      '- 要点（keyPoints）是人的：人一次加一条，agent 只读，不得增删改。',
+      '- 评论（comments）是双向通道：人下指令，agent 在同一条评论串里回答。',
+      '',
       '【人的职责】',
-      '- 随时点开任务：看清它要干什么（描述、类型、估算、验收标准），以及人和 agent 的评论往来。',
-      '- 在任务的评论（comments）里写下自己的想法、决定和要 agent 做的事。评论是人跟 agent 沟通的通道，agent 会在同一条评论串里回复。',
-      '- 决定验收标准；最终「算不算完成」由人拍板，标准就是验收标准是否全部满足。',
-      '- 人一般不直接改 agent 写的内容，要改就写评论，或用 Backlog 列的 Add task 行手工建任务。',
+      '- 随时点开任务：看清它要干什么（描述、要点、评论往来）。',
+      '- 在评论（comments）里写下想法、决定和要 agent 做的事。',
+      '- 加要点：只在任务处于 Backlog 或 HIL 时能加（In Progress 是只读的）。',
+      '- 人只在 HIL 列手工建任务；其他列的任务由 agent 或流程产生。',
       '',
       '【AI / subagent 的职责】',
-      '- 动手前先读：get_task（含验收标准与评论）、list_tasks、list_skills。',
+      '- 动手前先读：get_task（含要点与评论）、list_tasks、list_skills。',
       '- 认领：claim_task 写明是哪个 subagent 在做；做完或中断时 release_task。',
-      '- 任务内容由 agent 维护：描述、验收标准、评论回复。评论里既有人的指令也有 agent 的答复，',
-      '  不要把人的话删掉。',
+      '- 描述由 agent 维护；人的要点不得删改，只能折进描述后标记已消化。',
       '- 卡住时移到 Blocked 并写 set_blocked_reason。',
-      '- 只有验收标准全部满足，才移入 Finished。',
-      '- 任何时候新增或移动 item，都要顺手刷新那一列的总结 set_column_summary。',
       '',
       '【任务字段（当前模型）】',
       '- 创建任务只需要标题和描述；类型（story/bug/task/spike）和估算（故事点）是仅有的两个规划字段。',
       '- 没有优先级、没有截止日期、没有标签、没有子任务。',
-      '- 验收标准（acceptanceCriteria）是「完成」的定义；评论（comments）是人给指令、agent 回答的地方。',
+      '- 要点（keyPoints）= 人写的一条条要求；描述（description）= agent 维护的完整说明。',
       '',
-      '【四列的语义（固定，不可增删）】',
-      '- Backlog：已立项、待认领。人在这里读需求、写评论。',
+      '【五列的语义（固定，不可增删）】',
+      '- Backlog：已立项、待认领。人在这里读需求、写评论、加要点。',
+      '- HIL：Human In The Loop，人手工建任务的地方；新任务从这里出发。',
       '- In Progress：已被某个 subagent 认领并在处理中 → 任务表单完全锁定（只读）。',
       '- Blocked：卡住了，必须写原因；连续两次日报仍卡住就升级。',
       '- Finished：已完成，是速度/完成点数的统计来源。',
       '',
       '【交接约定】',
       '- 同一时刻一个任务只应被一个 subagent 认领；已被别人认领的任务不要动。',
-      '- 交接前把进展写进 comments 并刷新列总结，让人不用逐个点开也知道发生了什么。',
-      '- 人写完评论后，agent 应把它当成新的输入，并用 add_comment 在评论里回应。'
+      '- 交接前把进展写进 comments，让人不用逐个点开也知道发生了什么。',
+      '- 人写完评论或加了要点后，agent 应把它当成新的输入，并用 add_comment 在评论里回应。'
     ].join('\n')
   },
   {
@@ -517,32 +543,34 @@ const DEFAULT_SKILLS = [
     content: [
       '这块看板是人（human）与 AI agent 之间共享的状态。',
       '',
-      '人负责：工作内容是什么、验收标准，以及最终「算不算完成」的拍板；人还在评论里给 agent 下指令。',
-      'agent 负责：动手前先通过 MCP 读看板；认领任务、保持任务内容最新；回答人的评论；记录卡住的原因；',
-      '用证据汇报进展。',
+      '人负责：工作方向、要点（keyPoints），以及最终「算不算完成」的拍板；人还在评论里给 agent 下指令。',
+      'agent 负责：动手前先通过 MCP 读看板；写并维护描述（description）；认领任务；回答人的评论；',
+      '记录卡住的原因；用证据汇报进展。',
       '',
       '协作规则：',
       '- 看板上没有的工作不要凭空开做：先用 create_task 建任务，再做。建任务只需要标题和描述——',
       '  没有优先级、没有截止日期、没有标签、没有子任务；类型和估算（故事点）是仅有的规划字段。',
+      '- 描述是 agent 的，要点是人的：agent 不得增删改 keyPoints，只能读。',
+      '- 动手前先消化：任务带 needsDigest 时，先把新要点折进描述，再用 digest_key_points 标记已消化。',
       '- 只有真的动了才移动任务：开始做时移到 In Progress，做不下去时移到 Blocked 并写原因，',
-      '  验收标准全部满足后才移到 Finished。',
+      '  主工作完成后才移到 Finished。',
+      '- 人只通过 HIL 列手工建任务；Backlog 与其余列由 agent 与流程驱动。',
       '- 与其建一个大任务，不如拆成带故事点（story points）的小任务。',
       '- 人写在任务评论（comments）里的指示必须回应：用 add_comment 在同一条评论串里答复，不要让人的话悬着。',
       '- 评审者需要知道的任何事，都写在任务的评论里。',
       '',
-      '【计时提醒】任务从 claim_task 那一刻开始计时，任何更新都会重置 5 分钟窗口；细则见「认领工作与列总结」。'
+      '【计时提醒】任务从 claim_task 那一刻开始计时，任何更新都会重置 5 分钟窗口；细则见「认领工作」。'
     ].join('\n')
   },
   {
-    name: '任务拆分与验收标准',
+    name: '任务拆分与要点',
     description: '如何把工作切到能一次做完的程度。',
     content: [
       '一个任务只需要标题和描述就能创建；没有优先级、没有截止日期、没有标签、没有子任务。类型（story/bug/task/spike）和估算（故事点）是仅有的两个规划字段。',
       '',
-      '验收标准（acceptanceCriteria）是「完成」的定义：一组可验证的短句清单（例如「X 对 Y 返回 200」），每条都可以勾选为完成。',
-      '只有全部满足，任务才能进入 Finished。写不出测试或检查方法的，就还不算验收标准。',
-      '需要拆步骤时，把它们写成验收标准，而不是子任务；用 set_acceptance_criteria 替换整份清单，',
-      '用 toggle_acceptance_criterion 勾选或取消一条。',
+      '要点（keyPoints）是人的输入，不是勾选清单：人一次加一条，agent 只读，不得增删改。',
+      '描述（description）是 agent 的：动手前先把任务上的要点折进描述，再用 digest_key_points 标记已消化。',
+      '只有 needsDigest 清掉之后，才算真正准备好开工。',
       '',
       '拆分规则：',
       '- 一个任务 = 一个结果，一天内可交付。',
@@ -560,7 +588,8 @@ const DEFAULT_SKILLS = [
       '规划流程：',
       '- 开始前先设好迭代日期（startDate/endDate）和一句话目标。',
       '- 只把近期速度（velocity）装得下的工作拉进迭代，其余留作未分配。',
-      '- 让四列保持如实：Backlog、In Progress、Blocked、Finished。',
+      '- 让五列保持如实：Backlog、HIL、In Progress、Blocked、Finished。',
+      '- 人只在 HIL 列手工建任务；Backlog 是 agent 立项的队列。',
       '',
       '读懂数字：',
       '- 速度 = 每个迭代完成的故事点（见 Reports）。',
@@ -569,8 +598,8 @@ const DEFAULT_SKILLS = [
     ].join('\n')
   },
   {
-    name: '认领工作与列总结',
-    description: 'subagent 的归属规则，以及给人看的列总结。',
+    name: '认领工作',
+    description: 'subagent 的归属规则。',
     content: [
       '这块看板是 subagent 级别的协作工具：subagent 认领任务、推进、然后交回。',
       '',
@@ -580,18 +609,18 @@ const DEFAULT_SKILLS = [
       '- 不要做没人认领的任务；已被别人认领的就别碰。',
       '',
       '【计时约定】',
-      '- 认领那一刻就开始计时：claim_task 会写入认领时间戳。卡片上会显示谁认领的、已经跑了多久。',
+      '- 认领那一刻就开始计时：claim_task 会写入认领时间戳；看门狗按它判断你是否还在线。',
       '- 如果预计还要超过约 5 分钟才能做完，agent 必须在到点前同步一次：任务上的任何更新都算同步',
-      '  （加评论、改描述、勾验收标准或重新认领），并重新开始 5 分钟窗口。',
+      '  （加评论、改描述、digest_key_points 或重新认领），并重新开始 5 分钟窗口。',
       '- 如果大约 5 分钟内没有任何同步，服务端会把任务移到 Blocked、记录原因，计时随即停止。',
-      '- 正常流程是由 agent 自己移动卡片：验收标准满足就移到 Finished；做不下去或需要人拍板就移到',
+      '- 正常流程是由 agent 自己移动卡片：主工作完成就移到 Finished；做不下去或需要人拍板就移到',
       '  Blocked 并写原因。移动卡片才是停止计时的方式，计时因此始终如实。',
-      '- 任务主要由 agent 用 create_task 创建；Backlog 列的 Add task 行也允许人手工建任务，其余列没有。',
+      '- 任务主要由 agent 用 create_task 创建（落在 Backlog）；人只能在 HIL 列手工建任务。',
       '',
-      '列总结：',
-      '- 每次新增或移动 item，都要顺手刷新所动那一列的总结（set_column_summary），用一两句平实的',
-      '  话说清：排着什么、在动什么、卡住什么以及为什么。',
-      '- 人靠点击列计数旁边的按钮来读它，所以要保持最新、具体——不要凑字数，也不要复述列名。',
+      '【要点与返工】',
+      '- 任务带 needsDigest 时先别开工：把人的要点折进描述，再 digest_key_points 标记已消化。',
+      '- 已 Finished 的任务若被人加了新要点，会自动回到 Backlog 并带上 isRework——按返工处理，',
+      '  消化新要点后再做。',
       '',
       '评论：',
       '- 评论（comments）是人给 agent 下指令、agent 回答的通道。动手前先读（get_task），人的话不要删。',

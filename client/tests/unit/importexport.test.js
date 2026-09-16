@@ -207,6 +207,35 @@ test('inspectImportPayload ignores the removed task fields from an older export'
   expect(preview.normalizedLabels[0].id).toMatch(UUID_RE);
 });
 
+test('inspectImportPayload reads legacy acceptanceCriteria into keyPoints', () => {
+  const preview = inspectImportPayload({
+    columns: [
+      { id: 'todo', name: 'Todo', color: '#3b82f6', order: 1 },
+      { id: 'done', name: 'Done', color: '#16a34a', order: 2 }
+    ],
+    tasks: [
+      {
+        id: 'task-1',
+        title: 'Legacy criteria',
+        column: 'todo',
+        acceptanceCriteria: [
+          { id: 'ac1', text: 'Works offline', done: true },
+          { id: 'ac2', text: 'Syncs', done: false }
+        ]
+      }
+    ],
+    labels: []
+  }, { name: 'legacy-criteria.json', size: 512 });
+
+  expect(preview.errors).toEqual([]);
+  const task = preview.normalizedTasks[0];
+  expect(task.acceptanceCriteria).toBeUndefined();
+  expect(task.keyPoints).toEqual([
+    { id: 'ac1', text: 'Works offline', at: expect.any(String) },
+    { id: 'ac2', text: 'Syncs', at: expect.any(String) }
+  ]);
+});
+
 test('buildImportConfirmationMessage includes summary details', () => {
   const message = buildImportConfirmationMessage({
     importedName: 'Security Review',

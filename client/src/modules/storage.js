@@ -36,7 +36,7 @@ import {
 export { listBoards, getBoardById, getActiveBoardName, mergeBoardsFromRemote, getActiveBoardId, setActiveBoardId, ensureBoardsInitialized } from './storage-boards.js';
 export { createBoard, renameBoard, updateBoardFields, deleteBoard } from './storage-board-mutations.js';
 export { getDoneColumnId, isDoneColumnId, loadColumns, saveColumns, loadTasks, saveTasks, loadLabels, saveLabels } from './storage-entities.js';
-export { loadColumnSummaries, saveColumnSummary, loadSettings, saveSettings } from './storage-settings.js';
+export { loadSettings, saveSettings } from './storage-settings.js';
 export { loadTasksForBoard, loadColumnsForBoard, loadLabelsForBoard, loadSettingsForBoard, loadDeletedTasksForBoard, loadDeletedColumnsForBoard, loadDeletedLabelsForBoard, purgeDeleted, saveColumnsForBoard, saveTasksForBoard, saveLabelsForBoard, saveSettingsForBoard } from './storage-cross-board.js';
 
 // ── Public initialisation ──────────────────────────────────────────────────────

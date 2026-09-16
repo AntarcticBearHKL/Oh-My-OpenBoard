@@ -182,14 +182,14 @@ test('loadColumns ensures Done column exists', () => {
   expect(doneColumn?.id).toMatch(UUID_RE);
 });
 
-test('saveColumns + loadColumns roundtrip locks to the four fixed columns', () => {
+test('saveColumns + loadColumns roundtrip locks to the five fixed columns', () => {
   createBoard('Roundtrip');
   saveColumns([
     { id: 'a', name: 'A', color: '#111111', order: 1, collapsed: false },
     { id: 'done', name: 'Done', color: '#222222', order: 2, collapsed: false }
   ]);
   const loaded = loadColumns();
-  expect(loaded.map((c) => c.name)).toEqual(['Backlog', 'In Progress', 'Blocked', 'Finished']);
+  expect(loaded.map((c) => c.name)).toEqual(['Backlog', 'HIL', 'In Progress', 'Blocked', 'Finished']);
 });
 
 test('loadTasks leaves legacy removed fields in stored data untouched', () => {

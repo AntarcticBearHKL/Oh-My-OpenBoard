@@ -4,7 +4,6 @@ import { deleteTask } from './tasks.js';
 import { showEditModal } from './modals.js';
 import { confirmDialog } from './dialog.js';
 import { h } from './dom.js';
-import { buildTaskMeta } from './task-card-meta.js';
 
 // Safely convert URLs in text to <a> elements. Returns a DocumentFragment.
 // Only http/https URLs are matched; DOM APIs prevent XSS.
@@ -35,6 +34,29 @@ export function linkifyText(text) {
   return frag;
 }
 
+function buildTaskSignal(task) {
+  const flags = [];
+  if (task.needsDigest === true) flags.push('Needs digest');
+  if (task.isRework === true) flags.push('Rework');
+  if (flags.length === 0) return null;
+  const label = flags.join(' · ');
+  return h('span', {
+    class: 'task-signal',
+    title: label,
+    'aria-label': label
+  }, label);
+}
+
+function buildKeyPointsList(task) {
+  const keyPoints = Array.isArray(task.keyPoints) ? task.keyPoints : [];
+  if (keyPoints.length === 0) return null;
+  const list = h('ul', { class: 'task-key-points', 'aria-label': 'Key points' });
+  keyPoints.forEach((point) => {
+    list.appendChild(h('li', { class: 'task-key-point' }, point.text));
+  });
+  return list;
+}
+
 export function createTaskElement(task, settings) {
   // Track pointer position to distinguish clicks from drag gestures.
   let pointerDownPos = null;
@@ -62,7 +84,6 @@ export function createTaskElement(task, settings) {
   const titleEl = h('span', { class: 'task-title' },
     (typeof task.title === 'string' && task.title.trim() !== '') ? task.title : legacyTitle
   );
-  const meta = buildTaskMeta(task, settings);
 
   const actions = h('div', { class: 'task-actions' });
 
@@ -87,19 +108,18 @@ export function createTaskElement(task, settings) {
 
   actions.appendChild(deleteBtn);
 
-  const taskKey = typeof task.key === 'string' ? task.key.trim() : '';
-
-  li.appendChild(h('div', { class: 'task-row' },
-    taskKey ? h('span', { class: 'task-key', title: `Key: ${taskKey}` }, taskKey) : null,
-    titleEl,
-    meta,
-    actions
-  ));
+  li.appendChild(h('div', { class: 'task-row' }, titleEl, actions));
 
   const description = typeof task.description === 'string' ? task.description.trim() : '';
   if (description) {
     li.appendChild(h('span', { class: 'task-description-preview', title: description }, description));
   }
+
+  const keyPointsList = buildKeyPointsList(task);
+  if (keyPointsList) li.appendChild(keyPointsList);
+
+  const signal = buildTaskSignal(task);
+  if (signal) li.appendChild(signal);
 
   return li;
 }

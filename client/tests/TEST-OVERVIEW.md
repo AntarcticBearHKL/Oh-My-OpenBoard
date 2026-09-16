@@ -4,10 +4,10 @@ Generated from test source. Do not edit by hand; run `npm run test:overview` fro
 
 ## Fast Scan
 
-- Test files: 57
-- Test cases: 480
+- Test files: 55
+- Test cases: 463
 - Unit files: 30
-- DOM integration files: 27
+- DOM integration files: 25
 - E2E files: 0
 
 ## How To Use This
@@ -26,8 +26,6 @@ These lists compare source/spec filenames against test file names and test title
 - `src/modules/armed-delete-button.js`
 - `src/modules/board-rename-modal.js`
 - `src/modules/board-serializer.js`
-- `src/modules/calendar-utils.js`
-- `src/modules/calendar.js`
 - `src/modules/column-element.js`
 - `src/modules/drag-session.js`
 - `src/modules/icons.js`
@@ -125,25 +123,29 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/unit/board-groups.test.js`
 - Type: Unit
-- Test count: 17
+- Test count: 21
 
-- `tests/unit/board-groups.test.js:23` group store > starts with no groups
-- `tests/unit/board-groups.test.js:27` group store > createGroup persists id, name, order and collapsed under openagile:groups
-- `tests/unit/board-groups.test.js:37` group store > createGroup appends in order
-- `tests/unit/board-groups.test.js:46` group store > createGroup falls back to a default name
-- `tests/unit/board-groups.test.js:50` group store > renameGroup trims and persists the new name
-- `tests/unit/board-groups.test.js:56` group store > renameGroup rejects unknown groups and empty names
-- `tests/unit/board-groups.test.js:63` group store > toggleGroupCollapsed flips and persists the collapsed flag
-- `tests/unit/board-groups.test.js:71` group store > setGroupCollapsed is a no-op for unknown groups
-- `tests/unit/board-groups.test.js:76` group store > deleteGroup removes the group and unassigns its boards
-- `tests/unit/board-groups.test.js:86` group store > deleteGroup ignores unknown ids
-- `tests/unit/board-groups.test.js:90` group store > listGroups ignores malformed records and sorts by order
-- `tests/unit/board-groups.test.js:103` group store > listGroups survives invalid JSON
-- `tests/unit/board-groups.test.js:110` board → group mapping > assignBoardToGroup persists the mapping under openagile:boardGroup
-- `tests/unit/board-groups.test.js:118` board → group mapping > assignBoardToGroup with a null group removes the mapping (Ungrouped)
-- `tests/unit/board-groups.test.js:127` board → group mapping > assignBoardToGroup falls back to Ungrouped for unknown group ids
-- `tests/unit/board-groups.test.js:132` board → group mapping > getGroupIdForBoard returns null for unknown boards
-- `tests/unit/board-groups.test.js:137` board → group mapping > pruneBoardGroups drops mappings for boards that no longer exist
+- `tests/unit/board-groups.test.js:25` group store > starts with no groups
+- `tests/unit/board-groups.test.js:29` group store > createGroup persists a derived name, order, collapsed and prefixCollapsed under openagile:groups
+- `tests/unit/board-groups.test.js:40` group store > createGroup names each new group after its order
+- `tests/unit/board-groups.test.js:49` group store > listGroups derives names from the stored order, not a stored name
+- `tests/unit/board-groups.test.js:61` group store > toggleGroupCollapsed flips and persists the collapsed flag
+- `tests/unit/board-groups.test.js:69` group store > setGroupCollapsed is a no-op for unknown groups
+- `tests/unit/board-groups.test.js:74` group store > toggleGroupPrefixCollapsed flips and persists the prefix flag
+- `tests/unit/board-groups.test.js:83` group store > setGroupPrefixCollapsed is a no-op for unknown groups
+- `tests/unit/board-groups.test.js:88` group store > deleteGroup removes the group and unassigns its boards
+- `tests/unit/board-groups.test.js:98` group store > deleteGroup ignores unknown ids
+- `tests/unit/board-groups.test.js:102` group store > deleteGroup re-derives the names and order of the groups that remain
+- `tests/unit/board-groups.test.js:114` group store > ensureBoardsGrouped attaches ungrouped boards to the last group
+- `tests/unit/board-groups.test.js:122` group store > ensureBoardsGrouped creates a group when none exists
+- `tests/unit/board-groups.test.js:130` group store > ensureBoardsGrouped ignores boards that are already grouped
+- `tests/unit/board-groups.test.js:139` group store > listGroups ignores malformed records and sorts by order
+- `tests/unit/board-groups.test.js:152` group store > listGroups survives invalid JSON
+- `tests/unit/board-groups.test.js:159` board → group mapping > assignBoardToGroup persists the mapping under openagile:boardGroup
+- `tests/unit/board-groups.test.js:167` board → group mapping > assignBoardToGroup with a null group removes the mapping (Ungrouped)
+- `tests/unit/board-groups.test.js:176` board → group mapping > assignBoardToGroup falls back to Ungrouped for unknown group ids
+- `tests/unit/board-groups.test.js:181` board → group mapping > getGroupIdForBoard returns null for unknown boards
+- `tests/unit/board-groups.test.js:186` board → group mapping > pruneBoardGroups drops mappings for boards that no longer exist
 
 ### Claim Timer
 
@@ -558,20 +560,19 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/unit/wip-limit.test.js`
 - Type: Unit
-- Test count: 12
+- Test count: 11
 
-- `tests/unit/wip-limit.test.js:17` normalizeWipLimit > coerces anything that is not a positive integer to unlimited
-- `tests/unit/wip-limit.test.js:28` normalizeWipLimit > accepts numeric strings and floors fractions
-- `tests/unit/wip-limit.test.js:34` normalizeWipLimit > caps at MAX_WIP_LIMIT
-- `tests/unit/wip-limit.test.js:40` getWipLimit > reads the column limit
-- `tests/unit/wip-limit.test.js:45` getWipLimit > Done is exempt in both role and legacy-id form
-- `tests/unit/wip-limit.test.js:50` getWipLimit > tolerates a missing column
-- `tests/unit/wip-limit.test.js:57` getWipState > under below the limit
-- `tests/unit/wip-limit.test.js:62` getWipState > at exactly the limit
-- `tests/unit/wip-limit.test.js:66` getWipState > over above the limit
-- `tests/unit/wip-limit.test.js:71` getWipState > an unlimited or Done column is never at or over
-- `tests/unit/wip-limit.test.js:79` wipCounterLabel > carries the state without relying on colour
-- `tests/unit/wip-limit.test.js:88` import boundary > normalizeBoardModelIds coerces an untrusted wipLimit
+- `tests/unit/wip-limit.test.js:15` normalizeWipLimit > coerces anything that is not a positive integer to unlimited
+- `tests/unit/wip-limit.test.js:26` normalizeWipLimit > accepts numeric strings and floors fractions
+- `tests/unit/wip-limit.test.js:32` normalizeWipLimit > caps at MAX_WIP_LIMIT
+- `tests/unit/wip-limit.test.js:38` getWipLimit > reads the column limit
+- `tests/unit/wip-limit.test.js:43` getWipLimit > Done is exempt in both role and legacy-id form
+- `tests/unit/wip-limit.test.js:48` getWipLimit > tolerates a missing column
+- `tests/unit/wip-limit.test.js:55` getWipState > under below the limit
+- `tests/unit/wip-limit.test.js:60` getWipState > at exactly the limit
+- `tests/unit/wip-limit.test.js:64` getWipState > over above the limit
+- `tests/unit/wip-limit.test.js:69` getWipState > an unlimited or Done column is never at or over
+- `tests/unit/wip-limit.test.js:76` import boundary > normalizeBoardModelIds coerces an untrusted wipLimit
 
 ## DOM Integration Tests
 
@@ -604,33 +605,36 @@ These lists compare source/spec filenames against test file names and test title
 - Type: DOM Integration
 - Test count: 8
 
-- `tests/dom/board-create-modal.test.js:267` board create modal > opening from a group's New iteration control shows the iteration wording and an empty name
-- `tests/dom/board-create-modal.test.js:278` board create modal > opening as a plain board shows the Create New Board wording
-- `tests/dom/board-create-modal.test.js:286` board create modal > submitting a whitespace-only name alerts and creates nothing
-- `tests/dom/board-create-modal.test.js:302` board create modal > a successful submit creates the board, activates it, hides the modal and dispatches kanban:boards-changed
-- `tests/dom/board-create-modal.test.js:326` board create modal > a successful submit opened from a group assigns the board to that group
-- `tests/dom/board-create-modal.test.js:337` board create modal > the create dialog markup has no template picker
-- `tests/dom/board-create-modal.test.js:354` Backlog manual add > the Backlog add-task control opens the full task modal for that column
-- `tests/dom/board-create-modal.test.js:398` Backlog manual add > columns other than Backlog expose no manual add-task control
+- `tests/dom/board-create-modal.test.js:263` board create modal > opening from a group's New iteration control shows the iteration wording and an empty name
+- `tests/dom/board-create-modal.test.js:274` board create modal > opening as a plain board shows the Create New Board wording
+- `tests/dom/board-create-modal.test.js:282` board create modal > submitting a whitespace-only name alerts and creates nothing
+- `tests/dom/board-create-modal.test.js:298` board create modal > a successful submit creates the board, activates it, hides the modal and dispatches kanban:boards-changed
+- `tests/dom/board-create-modal.test.js:322` board create modal > a successful submit opened from a group assigns the board to that group
+- `tests/dom/board-create-modal.test.js:333` board create modal > the create dialog markup has no template picker
+- `tests/dom/board-create-modal.test.js:350` Backlog manual add > the Backlog add-task control opens the full task modal for that column
+- `tests/dom/board-create-modal.test.js:394` Backlog manual add > columns other than Backlog expose no manual add-task control
 
 ### Board Sidebar
 
 - Path: `tests/dom/board-sidebar.test.js`
 - Type: DOM Integration
-- Test count: 12
+- Test count: 15
 
-- `tests/dom/board-sidebar.test.js:74` sidebar group tree > renders stored groups
-- `tests/dom/board-sidebar.test.js:86` sidebar group tree > nests each board under its group and renders unmapped boards at the root
-- `tests/dom/board-sidebar.test.js:102` sidebar group tree > marks the active iteration
-- `tests/dom/board-sidebar.test.js:111` sidebar group tree > clicking an iteration switches the active board and emits DATA_CHANGED
-- `tests/dom/board-sidebar.test.js:122` sidebar group tree > the chevron collapses a group and persists the state
-- `tests/dom/board-sidebar.test.js:137` sidebar group tree > clicking a group name toggles collapse and updates both aria-expanded states
-- `tests/dom/board-sidebar.test.js:162` sidebar group tree > Enter and Space on the focused group name toggle collapse immediately
-- `tests/dom/board-sidebar.test.js:179` sidebar group tree > #add-group-btn creates a group and starts inline rename
-- `tests/dom/board-sidebar.test.js:193` sidebar group tree > double-clicking a group name opens inline rename
-- `tests/dom/board-sidebar.test.js:202` sidebar group tree > double-clicking a group name renames it instead of toggling collapse
-- `tests/dom/board-sidebar.test.js:224` sidebar group tree > deleting a group takes its iterations with it
-- `tests/dom/board-sidebar.test.js:243` sidebar group tree > deleting an iteration needs two clicks
+- `tests/dom/board-sidebar.test.js:83` sidebar group tree > renders group names derived from their order
+- `tests/dom/board-sidebar.test.js:95` sidebar group tree > a board without a group is placed in the last group on render
+- `tests/dom/board-sidebar.test.js:113` sidebar group tree > creates a group for existing boards when none exists
+- `tests/dom/board-sidebar.test.js:123` sidebar group tree > marks the active iteration
+- `tests/dom/board-sidebar.test.js:131` sidebar group tree > clicking an iteration switches the active board and emits DATA_CHANGED
+- `tests/dom/board-sidebar.test.js:144` sidebar group tree > the chevron collapses a group and persists the state
+- `tests/dom/board-sidebar.test.js:157` sidebar group tree > clicking a group name toggles collapse and updates both aria-expanded states
+- `tests/dom/board-sidebar.test.js:181` sidebar group tree > Enter and Space on the focused group name toggle collapse immediately
+- `tests/dom/board-sidebar.test.js:197` sidebar group tree > #add-group-btn creates a group with a derived name and no rename input
+- `tests/dom/board-sidebar.test.js:209` sidebar group tree > double-clicking a group name does not open a rename input
+- `tests/dom/board-sidebar.test.js:220` sidebar group tree > deleting a group takes its iterations with it and renames the rest
+- `tests/dom/board-sidebar.test.js:240` sidebar group tree > deleting an iteration needs two clicks
+- `tests/dom/board-sidebar.test.js:251` sidebar group tree > the finished prefix gets one collapse control that hides only the prefix
+- `tests/dom/board-sidebar.test.js:296` sidebar group tree > a group with an unfinished first iteration shows no prefix control
+- `tests/dom/board-sidebar.test.js:309` sidebar group tree > a group whose iterations are all finished shows no prefix control
 
 ### Boards Quick Switch
 
@@ -658,22 +662,6 @@ These lists compare source/spec filenames against test file names and test title
 
 - `tests/dom/boards-select-refresh.test.js:50` #board-select refresh on DATA_CHANGED > rebuilds the dropdown when a remote board.created adds a board
 - `tests/dom/boards-select-refresh.test.js:65` #board-select refresh on DATA_CHANGED > updates an option label when a board is renamed remotely
-
-### Column Summary
-
-- Path: `tests/dom/column-summary.test.js`
-- Type: DOM Integration
-- Test count: 9
-
-- `tests/dom/column-summary.test.js:43` column header renders the summary button next to the task counter
-- `tests/dom/column-summary.test.js:53` summary button opens a full-screen dialog with the stored summary and metadata
-- `tests/dom/column-summary.test.js:80` summary dialog shows the empty state when the column has no summary
-- `tests/dom/column-summary.test.js:89` summary dialog closes on Escape and the close control, and restores the trigger state
-- `tests/dom/column-summary.test.js:104` summary dialog closes on a backdrop click but stays open on a panel click
-- `tests/dom/column-summary.test.js:115` clicking the summary button again closes the dialog
-- `tests/dom/column-summary.test.js:126` the edit affordance saves a human override through saveColumnSummary
-- `tests/dom/column-summary.test.js:139` the column still renders its add-task row and task list
-- `tests/dom/column-summary.test.js:148` clicking the add-task row opens the create-task modal for the column
 
 ### Dragdrop
 
@@ -803,17 +791,16 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/dom/reconcile.test.js`
 - Type: DOM Integration
-- Test count: 9
+- Test count: 8
 
-- `tests/dom/reconcile.test.js:70` reconcileBoard moves a dragged task card into its new column, preserving the node
-- `tests/dom/reconcile.test.js:90` reconcileBoard updates each column task counter to match state
-- `tests/dom/reconcile.test.js:101` reconcileBoard leaves a legacy collapsed column title untouched and updates its counter
-- `tests/dom/reconcile.test.js:126` a data change inside a drag-reconcile window patches in place instead of rebuilding
-- `tests/dom/reconcile.test.js:143` reconcileBoard respects the active board filter, like a full render
-- `tests/dom/reconcile.test.js:166` reconcileBoard defers to a full rebuild when swimlane mode is on
-- `tests/dom/reconcile.test.js:179` reconcileBoard defers to a full rebuild when the column set changed
-- `tests/dom/reconcile.test.js:192` reconcileBoard virtualizes an overfull Done column instead of rendering every card
-- `tests/dom/reconcile.test.js:209` reconcileBoard renders a new card with acceptance progress and the notes indicator
+- `tests/dom/reconcile.test.js:68` reconcileBoard moves a dragged task card into its new column, preserving the node
+- `tests/dom/reconcile.test.js:88` reconcileBoard leaves a legacy collapsed column title untouched
+- `tests/dom/reconcile.test.js:109` a data change inside a drag-reconcile window patches in place instead of rebuilding
+- `tests/dom/reconcile.test.js:126` reconcileBoard respects the active board filter, like a full render
+- `tests/dom/reconcile.test.js:148` reconcileBoard defers to a full rebuild when swimlane mode is on
+- `tests/dom/reconcile.test.js:161` reconcileBoard defers to a full rebuild when the column set changed
+- `tests/dom/reconcile.test.js:174` reconcileBoard virtualizes an overfull Done column instead of rendering every card
+- `tests/dom/reconcile.test.js:189` reconcileBoard renders a new card with acceptance progress and the notes indicator
 
 ### Settings Ui
 
@@ -896,26 +883,11 @@ These lists compare source/spec filenames against test file names and test title
 - Type: DOM Integration
 - Test count: 5
 
-- `tests/dom/task-modal-agile.test.js:169` add form saves title, description, type, estimate and relationships through addTask
-- `tests/dom/task-modal-agile.test.js:192` the acceptance editor adds, toggles and removes items and reports done/total
-- `tests/dom/task-modal-agile.test.js:223` a comment written in the dialog renders in the thread with author and time
-- `tests/dom/task-modal-agile.test.js:245` the agent reply shows up in the same thread when the dialog reopens
-- `tests/dom/task-modal-agile.test.js:267` editing a task saves the slim payload through updateTask
-
-### Task Modal Annotations
-
-- Path: `tests/dom/task-modal-annotations.test.js`
-- Type: DOM Integration
-- Test count: 8
-
-- `tests/dom/task-modal-annotations.test.js:198` edit modal renders the stored annotations with text, author and time
-- `tests/dom/task-modal-annotations.test.js:211` adding an annotation calls addAnnotation and appends it to the list
-- `tests/dom/task-modal-annotations.test.js:233` pressing Enter in the annotation input adds the annotation
-- `tests/dom/task-modal-annotations.test.js:252` removing an annotation calls removeAnnotation and drops the entry
-- `tests/dom/task-modal-annotations.test.js:264` edit modal leads with the key, the read-only column and the claimant
-- `tests/dom/task-modal-annotations.test.js:280` edit modal no longer offers priority, due date, labels, sub-tasks, attachments, custom fields or a column selector
-- `tests/dom/task-modal-annotations.test.js:299` an In Progress task is fully read-only, including annotations
-- `tests/dom/task-modal-annotations.test.js:337` add mode hides the summary, claim chip and annotations sections
+- `tests/dom/task-modal-agile.test.js:159` add form saves title, description, type, estimate and relationships through addTask
+- `tests/dom/task-modal-agile.test.js:182` the acceptance editor adds, toggles and removes items and reports done/total
+- `tests/dom/task-modal-agile.test.js:213` a comment written in the dialog renders in the thread with author and time
+- `tests/dom/task-modal-agile.test.js:235` the agent reply shows up in the same thread when the dialog reopens
+- `tests/dom/task-modal-agile.test.js:257` editing a task saves the slim payload through updateTask
 
 ### Task Row Agile
 
@@ -956,12 +928,7 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/dom/wip-limit.test.js`
 - Type: DOM Integration
-- Test count: 7
+- Test count: 2
 
-- `tests/dom/wip-limit.test.js:20` applyWipCounter > renders a bare count for an unlimited column
-- `tests/dom/wip-limit.test.js:28` applyWipCounter > renders count with the limit in its own span
-- `tests/dom/wip-limit.test.js:36` applyWipCounter > re-applying replaces rather than appends
-- `tests/dom/wip-limit.test.js:46` syncColumnWip > drives data-wip through under, at and over
-- `tests/dom/wip-limit.test.js:59` syncColumnWip > pulses only on the transition into over-limit
-- `tests/dom/wip-limit.test.js:72` syncColumnWip > staying over-limit does not re-pulse
-- `tests/dom/wip-limit.test.js:84` syncColumnWip > an unlimited column stays under at any count
+- `tests/dom/wip-limit.test.js:17` syncColumnWip > drives data-wip through under, at and over
+- `tests/dom/wip-limit.test.js:30` syncColumnWip > an unlimited column stays under at any count

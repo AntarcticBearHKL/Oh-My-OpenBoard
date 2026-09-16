@@ -1,5 +1,5 @@
 import {
-  normalizeAcceptanceCriteria,
+  normalizeKeyPoints,
   normalizeComments,
   normalizeEstimate,
   normalizeTaskType
@@ -15,7 +15,7 @@ export function normalizeAgileFields(fields = {}) {
     estimate: normalizeEstimate(source.estimate),
     assignee: (source.assignee ?? '').toString().trim(),
     parentId: parentId || null,
-    acceptanceCriteria: normalizeAcceptanceCriteria(source.acceptanceCriteria),
+    keyPoints: normalizeKeyPoints(source.keyPoints ?? source.acceptanceCriteria),
     comments: normalizeComments(source.comments)
   };
 }

@@ -6,13 +6,15 @@ import {
   assignBoardToGroup,
   createGroup,
   deleteGroup,
+  ensureBoardsGrouped,
   getGroupIdForBoard,
   listGroups,
   pruneBoardGroups,
   readBoardGroupMap,
-  renameGroup,
   setGroupCollapsed,
-  toggleGroupCollapsed
+  setGroupPrefixCollapsed,
+  toggleGroupCollapsed,
+  toggleGroupPrefixCollapsed
 } from '../../src/modules/board-groups.js';
 
 beforeEach(() => {
@@ -24,44 +26,40 @@ describe('group store', () => {
     expect(listGroups()).toEqual([]);
   });
 
-  test('createGroup persists id, name, order and collapsed under openagile:groups', () => {
-    const group = createGroup('Sprint 1');
+  test('createGroup persists a derived name, order, collapsed and prefixCollapsed under openagile:groups', () => {
+    const group = createGroup();
 
     expect(group.id).toBeTruthy();
-    expect(group.name).toBe('Sprint 1');
+    expect(group.name).toBe('Iterations 1');
     expect(group.order).toBe(1);
     expect(group.collapsed).toBe(false);
+    expect(group.prefixCollapsed).toBe(false);
     expect(JSON.parse(localStorage.getItem(GROUPS_KEY))).toEqual([group]);
   });
 
-  test('createGroup appends in order', () => {
-    createGroup('First');
-    createGroup('Second');
+  test('createGroup names each new group after its order', () => {
+    createGroup();
+    createGroup();
 
     const groups = listGroups();
-    expect(groups.map((group) => group.name)).toEqual(['First', 'Second']);
+    expect(groups.map((group) => group.name)).toEqual(['Iterations 1', 'Iterations 2']);
     expect(groups.map((group) => group.order)).toEqual([1, 2]);
   });
 
-  test('createGroup falls back to a default name', () => {
-    expect(createGroup('   ').name).toBe('New Group');
-  });
+  test('listGroups derives names from the stored order, not a stored name', () => {
+    localStorage.setItem(GROUPS_KEY, JSON.stringify([
+      { id: 'a', name: 'Hand typed', order: 2, collapsed: false },
+      { id: 'b', name: 'Also typed', order: 1, collapsed: true }
+    ]));
 
-  test('renameGroup trims and persists the new name', () => {
-    const group = createGroup('Old');
-    expect(renameGroup(group.id, '  Renamed  ')).toBe(true);
-    expect(listGroups()[0].name).toBe('Renamed');
-  });
-
-  test('renameGroup rejects unknown groups and empty names', () => {
-    const group = createGroup('Old');
-    expect(renameGroup('missing', 'Nope')).toBe(false);
-    expect(renameGroup(group.id, '   ')).toBe(false);
-    expect(listGroups()[0].name).toBe('Old');
+    const groups = listGroups();
+    expect(groups.map((group) => group.id)).toEqual(['b', 'a']);
+    expect(groups.map((group) => group.name)).toEqual(['Iterations 1', 'Iterations 2']);
+    expect(groups.map((group) => group.order)).toEqual([1, 2]);
   });
 
   test('toggleGroupCollapsed flips and persists the collapsed flag', () => {
-    const group = createGroup('Sprint');
+    const group = createGroup();
     expect(toggleGroupCollapsed(group.id)).toBe(true);
     expect(listGroups()[0].collapsed).toBe(true);
     expect(toggleGroupCollapsed(group.id)).toBe(true);
@@ -73,8 +71,22 @@ describe('group store', () => {
     expect(listGroups()).toEqual([]);
   });
 
+  test('toggleGroupPrefixCollapsed flips and persists the prefix flag', () => {
+    const group = createGroup();
+    expect(group.prefixCollapsed).toBe(false);
+    expect(toggleGroupPrefixCollapsed(group.id)).toBe(true);
+    expect(listGroups()[0].prefixCollapsed).toBe(true);
+    expect(toggleGroupPrefixCollapsed(group.id)).toBe(true);
+    expect(listGroups()[0].prefixCollapsed).toBe(false);
+  });
+
+  test('setGroupPrefixCollapsed is a no-op for unknown groups', () => {
+    expect(setGroupPrefixCollapsed('missing', true)).toBe(false);
+    expect(listGroups()).toEqual([]);
+  });
+
   test('deleteGroup removes the group and unassigns its boards', () => {
-    const group = createGroup('Sprint');
+    const group = createGroup();
     assignBoardToGroup('board-1', group.id);
     assignBoardToGroup('board-2', group.id);
 
@@ -85,6 +97,43 @@ describe('group store', () => {
 
   test('deleteGroup ignores unknown ids', () => {
     expect(deleteGroup('missing')).toBe(false);
+  });
+
+  test('deleteGroup re-derives the names and order of the groups that remain', () => {
+    createGroup();
+    const middle = createGroup();
+    createGroup();
+
+    expect(deleteGroup(middle.id)).toBe(true);
+
+    const groups = listGroups();
+    expect(groups.map((group) => group.name)).toEqual(['Iterations 1', 'Iterations 2']);
+    expect(groups.map((group) => group.order)).toEqual([1, 2]);
+  });
+
+  test('ensureBoardsGrouped attaches ungrouped boards to the last group', () => {
+    createGroup();
+    const last = createGroup();
+
+    expect(ensureBoardsGrouped(['board-1', 'board-2'])).toBe(last.id);
+    expect(readBoardGroupMap()).toEqual({ 'board-1': last.id, 'board-2': last.id });
+  });
+
+  test('ensureBoardsGrouped creates a group when none exists', () => {
+    const targetId = ensureBoardsGrouped(['board-1', 'board-2']);
+
+    expect(listGroups()).toHaveLength(1);
+    expect(listGroups()[0].name).toBe('Iterations 1');
+    expect(readBoardGroupMap()).toEqual({ 'board-1': targetId, 'board-2': targetId });
+  });
+
+  test('ensureBoardsGrouped ignores boards that are already grouped', () => {
+    const group = createGroup();
+    assignBoardToGroup('board-1', group.id);
+
+    expect(ensureBoardsGrouped(['board-1'])).toBeNull();
+    expect(readBoardGroupMap()).toEqual({ 'board-1': group.id });
+    expect(listGroups()).toHaveLength(1);
   });
 
   test('listGroups ignores malformed records and sorts by order', () => {
@@ -108,7 +157,7 @@ describe('group store', () => {
 
 describe('board → group mapping', () => {
   test('assignBoardToGroup persists the mapping under openagile:boardGroup', () => {
-    const group = createGroup('Sprint');
+    const group = createGroup();
     expect(assignBoardToGroup('board-1', group.id)).toBe(true);
 
     expect(JSON.parse(localStorage.getItem(BOARD_GROUP_KEY))).toEqual({ 'board-1': group.id });
@@ -116,7 +165,7 @@ describe('board → group mapping', () => {
   });
 
   test('assignBoardToGroup with a null group removes the mapping (Ungrouped)', () => {
-    const group = createGroup('Sprint');
+    const group = createGroup();
     assignBoardToGroup('board-1', group.id);
     assignBoardToGroup('board-1', null);
 
@@ -135,7 +184,7 @@ describe('board → group mapping', () => {
   });
 
   test('pruneBoardGroups drops mappings for boards that no longer exist', () => {
-    const group = createGroup('Sprint');
+    const group = createGroup();
     assignBoardToGroup('board-1', group.id);
     assignBoardToGroup('board-2', group.id);
 

@@ -22,14 +22,13 @@
   estimate: number | null,
   assignee: "agent or human name",
   parentId: "uuid" | null,
-  acceptanceCriteria: [
-    { id: "uuid", text: "criterion text", done: boolean }
+  keyPoints: [
+    { id: "uuid", text: "point text", at: "YYYY-MM-DDTHH:MM:SSZ", digestedAt: "YYYY-MM-DDTHH:MM:SSZ" }
   ],
+  needsDigest: boolean,
+  isRework: boolean,
   comments: [
     { id: "uuid", author: "You", text: "note text", at: "YYYY-MM-DDTHH:MM:SSZ" }
-  ],
-  annotations: [
-    { id: "uuid", text: "note text", author: "human", at: "YYYY-MM-DDTHH:MM:SSZ" }
   ],
   claimedBy: "agent-id",
   claimedAt: "YYYY-MM-DDTHH:MM:SSZ",
@@ -56,9 +55,11 @@
 
 - `title` is the only required field; a task needs only a title and a description to be created
 - `type` is one of `story`, `bug`, `task`, `spike` and defaults to `task`; `estimate` is a whole number of story points or `null` when unestimated — these two are the only planning fields
-- `acceptanceCriteria` is the definition of done: each entry is `{ id, text, done }`, and the task is only Finished when every criterion is done
+- `keyPoints` are the human's input and the agent may only read them: each entry is `{ id, text, at }`, `text` is required, and there is no done flag. `digestedAt` is stamped by `digest_key_points` once the agent folds the point into the description
+- `needsDigest` is set when the human appends a key point while the task is in Backlog or HIL, and cleared by `digest_key_points`; it means the agent must fold the points into the description before starting work
+- `isRework` is set when the human appends a key point to a Finished task; the task returns to Backlog, the move is emitted like any other move, and the agent must digest the new points before redoing the work
+- Legacy `acceptanceCriteria` arrays are read as key points: `text` is kept and the old `done` flags are dropped
 - `comments` is the thread the human writes and the agent answers; each entry is `{ id, author, text, at }`
-- `annotations` holds the human's quick notes to the subagent; each entry is `{ id, text, author, at }`
 - `assignee` is who the task is assigned to; `claim_task` sets it when empty, and `claimedBy`/`claimedAt` record the claim (releasing keeps `claimedAt` so the claim duration stays derivable)
 - `creationDate` is kept in storage for lead time and velocity, but is never shown in the UI
 - `changeDate` updates on task save and on column changes; it drives the five-minute claim sync window
@@ -69,7 +70,7 @@
 - `key` is the per-board `PREFIX-N` identifier shown on the card and used by relationship search
 - `relationships` defaults to `[]`; each entry stores a `type` (`prerequisite`, `dependent`, or `related`) and the UUID `targetTaskId` of the linked task; both sides of a relationship are always stored (bidirectional)
 - `deleted` marks internal tombstones/deleted records; normal read functions filter `deleted: true`
-- The task carries no `priority`, `dueDate`, task `labels`, `subTasks`, `attachments`, or `customFields`; older exported files that still carry them are read with those fields dropped on import
+- The task carries no `priority`, `dueDate`, task `labels`, `subTasks`, `attachments`, `customFields`, or `annotations`; older exported files that still carry them are read with those fields dropped on import
 - The task no longer carries an inline `activityLog` — the audit-trail feature was removed (issue #110); mutation history now lives in the event stream (see [ADR-0004](../adr/0004-event-sourced-sync.md))
 
 ## Column Model
@@ -97,10 +98,11 @@
 
 ### Fixed Columns
 
-The board always has exactly four columns — `Backlog`, `In Progress`, `Blocked`, `Finished` — with
-fixed ids and order:
+The board always has exactly five columns — `Backlog`, `HIL`, `In Progress`, `Blocked`, `Finished` —
+with fixed ids and order:
 
-- Backlog holds everything not started
+- Backlog holds work the agent proposed; the agent's queue
+- HIL (Human In The Loop) is the human's entry point and the only column where a human can add a task by hand
 - In Progress is what an agent is actively working; tasks there are read-only
 - Blocked is work an agent could not finish and that needs a human decision, or work stuck on a resource conflict
 - Finished is completed work; it carries `role: "done"` and is the source for completion and cycle-time statistics
@@ -156,7 +158,6 @@ Key persisted fields include:
 
 - `showChangeDate`
 - `locale`
-- `columnSummaries`
 - `swimLanesEnabled`
 - `swimLaneGroupBy`
 - `swimLaneLabelGroup`

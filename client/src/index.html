@@ -165,22 +165,6 @@
 
       <div id="task-lock-notice" class="task-lock-notice hidden" role="status"></div>
 
-      <section id="task-annotations-fieldset" class="task-annotations hidden" aria-labelledby="task-annotations-title">
-        <div>
-          <h4 id="task-annotations-title" class="task-annotations-title">
-            <span data-lucide="message-square" aria-hidden="true"></span>
-            Annotations
-            <span id="task-annotations-count" class="annotations-count hidden"></span>
-          </h4>
-          <p class="task-annotations-hint">Your channel to the subagent &mdash; saved immediately.</p>
-        </div>
-        <ul id="task-annotations-list" class="annotations-list" role="list" aria-label="Human annotations"></ul>
-        <div class="task-annotation-add-row">
-          <input type="text" id="task-annotation-input" placeholder="Write an annotation…" autocomplete="off" maxlength="500" aria-label="New annotation">
-          <button type="button" id="task-annotation-add-btn" class="btn-small">Add</button>
-        </div>
-      </section>
-
       <form id="task-form" novalidate>
         <div class="task-form-columns">
           <div class="task-form-column-left">
@@ -210,23 +194,23 @@
             </div>
           </div>
           <div class="task-form-column-right">
-            <fieldset class="form-group" id="task-acceptance-fieldset">
+            <fieldset class="form-group" id="task-key-points-fieldset">
               <legend>
-                <span data-lucide="check-square" aria-hidden="true"></span>
-                Acceptance criteria
-                <span id="task-acceptance-progress" class="field-progress-legend" hidden></span>
+                <span data-lucide="list-checks" aria-hidden="true"></span>
+                Key points
               </legend>
-              <ul id="task-acceptance-list" class="acceptance-list" role="list" aria-label="Acceptance criteria"></ul>
-              <div class="task-acceptance-add-row">
+              <p class="form-help">The human writes key points here. The agent reads them and folds them into the description before starting work.</p>
+              <ul id="task-key-points-list" class="key-points-list" role="list" aria-label="Key points"></ul>
+              <div class="task-key-point-add-row">
                 <input
                   type="text"
-                  id="task-acceptance-input"
-                  placeholder="Add a criterion and press Enter…"
+                  id="task-key-point-input"
+                  placeholder="Add a key point and press Enter…"
                   autocomplete="off"
                   maxlength="200"
-                  aria-label="New acceptance criterion"
+                  aria-label="New key point"
                 >
-                <button type="button" id="task-acceptance-add-btn" class="btn-small" aria-label="Add acceptance criterion">Add</button>
+                <button type="button" id="task-key-point-add-btn" class="btn-small" aria-label="Add key point">+</button>
               </div>
             </fieldset>
             <fieldset class="form-group" id="task-comments-fieldset">
@@ -593,8 +577,8 @@
         <section>
           <h4>Tasks</h4>
           <ul>
-            <li><strong>Add:</strong> Use the <strong>Add task</strong> row in the <strong>Backlog</strong> column to add a task by hand; the other columns are driven by agents.</li>
-            <li><strong>Edit:</strong> Click a task row to edit details (title, description, type, estimate, acceptance criteria and notes).</li>
+            <li><strong>Add:</strong> Use the <strong>Add task</strong> control in the <strong>HIL</strong> column header to add a task by hand; Backlog and the other columns are driven by agents.</li>
+            <li><strong>Edit:</strong> Click a task row to edit details (title, description, key points and notes).</li>
             <li><strong>Move:</strong> Drag and drop between columns.</li>
           </ul>
         </section>
@@ -602,7 +586,7 @@
         <section>
           <h4>Columns</h4>
           <ul>
-            <li>The board has four fixed columns: Backlog, In Progress, Blocked, Finished.</li>
+            <li>The board has five fixed columns: Backlog, HIL, In Progress, Blocked, Finished.</li>
             <li>Each column scrolls independently, so long task lists stay manageable.</li>
           </ul>
         </section>

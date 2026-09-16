@@ -3,7 +3,7 @@
 import { formatTimestamp } from './dateutils.js';
 import { $id, h } from './dom.js';
 import { state, COMMENT_AUTHOR_KEY } from './task-modal-state.js';
-import { renderAcceptanceCriteriaList } from './task-modal-status.js';
+import { renderKeyPointsList } from './task-modal-status.js';
 
 function loadCommentAuthor() {
   try {
@@ -59,7 +59,7 @@ export function renderCommentsList() {
 }
 
 export function renderAgileFields() {
-  renderAcceptanceCriteriaList();
+  renderKeyPointsList();
   renderCommentsList();
 
   const commentAuthor = $id('task-comment-author');
@@ -67,15 +67,14 @@ export function renderAgileFields() {
 }
 
 export function resetAgileState() {
-  state.selectedTaskAcceptanceCriteria = [];
+  state.selectedTaskKeyPoints = [];
   state.selectedTaskComments = [];
 }
 
 export function clearAgileInputs() {
   [
-    'task-acceptance-input',
-    'task-comment-input',
-    'task-annotation-input'
+    'task-key-point-input',
+    'task-comment-input'
   ].forEach((id) => {
     const el = $id(id);
     if (el) el.value = '';
