@@ -61,14 +61,8 @@ export function defaultSettings() {
     : 'en-US';
 
   return {
-    showPriority: true,
-    showDueDate: true,
-    showAge: true,
     showChangeDate: false,
     locale,
-    defaultPriority: 'none',
-    countdownUrgentThreshold: 3,
-    countdownWarningThreshold: 10,
     swimLanesEnabled: false,
     swimLaneGroupBy: 'label',
     swimLaneLabelGroup: '',

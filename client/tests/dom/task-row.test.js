@@ -14,10 +14,8 @@ vi.mock('../../src/modules/storage.js', () => ({
 const { createTaskElement } = await import('../../src/modules/task-card.js');
 const { showEditModal } = await import('../../src/modules/modals.js');
 
-const TODAY = new Date('2026-05-17T00:00:00Z');
-
-function render(task, settings = {}, labelsMap = new Map()) {
-  const element = createTaskElement(task, settings, labelsMap, TODAY);
+function render(task, settings = {}) {
+  const element = createTaskElement(task, settings);
   mountToBody(element);
   return element;
 }
@@ -25,11 +23,8 @@ function render(task, settings = {}, labelsMap = new Map()) {
 const baseTask = {
   id: 'task-1',
   title: 'Ship the release',
-  description: 'Long description that should not render in a row',
-  priority: 'high',
-  dueDate: '2026-05-10',
-  column: 'todo',
-  labels: []
+  description: '',
+  column: 'todo'
 };
 
 beforeEach(() => {
@@ -45,40 +40,78 @@ test('renders a single compact row without card chrome', () => {
   expect(element.querySelector('.task-title').textContent).toBe('Ship the release');
   expect(element.querySelector('.task-header')).toBeNull();
   expect(element.querySelector('.task-footer')).toBeNull();
-  expect(element.querySelector('.task-description')).toBeNull();
 });
 
-test('orders the meta cluster priority, due date, labels, sub-task progress', () => {
+test('renders a one-line description preview when a description is present', () => {
+  const element = render({ ...baseTask, description: 'Short summary for the human' });
+  const preview = element.querySelector('.task-description-preview');
+
+  expect(preview).not.toBeNull();
+  expect(preview.textContent).toBe('Short summary for the human');
+});
+
+test('omits the description preview when there is no description', () => {
+  const element = render(baseTask);
+  expect(element.querySelector('.task-description-preview')).toBeNull();
+});
+
+test('no longer renders a priority chip, a due date or a label area', () => {
   const element = render({
     ...baseTask,
+    priority: 'high',
+    dueDate: '2026-05-10',
     labels: ['l1'],
-    subTasks: [{ id: 's1', completed: true }, { id: 's2', completed: false }]
-  }, {}, new Map([['l1', { id: 'l1', name: 'Backend', color: '#3b82f6' }]]));
+    subTasks: [{ id: 's1', completed: true }]
+  });
 
   const meta = element.querySelector('.task-meta');
-  const order = Array.from(meta.children).map((child) => child.className);
-
-  expect(order[0]).toContain('task-priority');
-  expect(order[1]).toContain('task-date');
-  expect(order[2]).toContain('task-labels');
-  expect(order[3]).toContain('task-subtasks-row');
-  expect(meta.querySelector('.task-label').textContent).toBe('Backend');
-  expect(meta.querySelector('.task-subtasks-row').textContent).toContain('1/2 Done');
+  expect(meta.querySelector('.task-priority')).toBeNull();
+  expect(meta.querySelector('.task-date')).toBeNull();
+  expect(meta.querySelector('.task-labels')).toBeNull();
+  expect(meta.querySelector('.task-label')).toBeNull();
+  expect(meta.querySelector('.task-subtasks-row')).toBeNull();
+  expect(element.querySelector('.task-age')).toBeNull();
 });
 
-test('shows an overdue countdown for a past due date', () => {
-  const element = render(baseTask);
-  const date = element.querySelector('.task-date');
+test('shows acceptance progress as done over total', () => {
+  const element = render({
+    ...baseTask,
+    acceptanceCriteria: [
+      { id: 'ac1', text: 'One', done: true },
+      { id: 'ac2', text: 'Two', done: false },
+      { id: 'ac3', text: 'Three', done: true }
+    ]
+  });
 
-  expect(date.textContent).toContain('overdue');
-  expect(date.classList.contains('countdown-urgent')).toBe(true);
+  const progress = element.querySelector('.task-acceptance-progress');
+  expect(progress).not.toBeNull();
+  expect(progress.textContent).toContain('2/3');
+  expect(progress.getAttribute('aria-label')).toBe('Acceptance criteria: 2/3 done');
 });
 
-test('respects the showPriority and showDueDate settings', () => {
-  const element = render(baseTask, { showPriority: false, showDueDate: false });
+test('omits acceptance progress when there are no criteria', () => {
+  const element = render({ ...baseTask, acceptanceCriteria: [] });
+  expect(element.querySelector('.task-acceptance-progress')).toBeNull();
+});
 
-  expect(element.querySelector('.task-priority')).toBeNull();
-  expect(element.querySelector('.task-date')).toBeNull();
+test('shows a notes indicator when comments exist', () => {
+  const element = render({
+    ...baseTask,
+    comments: [
+      { id: 'c1', author: 'Ada', text: 'Any update?', at: '2026-01-01T10:00:00.000Z' },
+      { id: 'c2', author: 'agent-7', text: 'Working on it', at: '2026-01-01T11:00:00.000Z' }
+    ]
+  });
+
+  const notes = element.querySelector('.task-notes');
+  expect(notes).not.toBeNull();
+  expect(notes.textContent).toContain('2');
+  expect(notes.getAttribute('aria-label')).toBe('Notes: 2 comments');
+});
+
+test('omits the notes indicator without comments', () => {
+  const element = render({ ...baseTask, comments: [] });
+  expect(element.querySelector('.task-notes')).toBeNull();
 });
 
 test('clicking the title opens the task editor', () => {

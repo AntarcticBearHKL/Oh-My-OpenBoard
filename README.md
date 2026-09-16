@@ -130,10 +130,10 @@ Get up and running in minutes!
 3. Export your data anytime for backup.
 
 ### For Developers: Host Your Own
-The repository includes a pre-built static site in `dist/`. Simply upload it to any web host.
+Build the static site from source and upload it to any web host.
 
-1. Copy the `dist/` folder.
-2. Upload to your web host (e.g., [Hetzner](https://www.hetzner.com/de/webhosting), Netlify, Vercel).
+1. Build the client: `cd client && npm install && npm run build` — the built site is written to `client/dist/`.
+2. Upload the `client/dist/` folder to your web host (e.g., [Hetzner](https://www.hetzner.com/de/webhosting), Netlify, Vercel).
 3. Done! Your OpenAgile achieved and the Kanban board is live.
 
 ## 🛠️ Development

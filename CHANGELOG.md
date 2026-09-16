@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Template picker in the New Iteration / Create New Board dialog and the built-in board templates it offered. New boards and iterations are always created blank now.
 - Adding tasks by hand from the In Progress, Blocked and Finished columns. Tasks are created by agents through the API; those columns no longer offer an Add task row (board and swimlane view); the Backlog column keeps one.
 - The notifications feature: the top-right notification control, its dialog and the supporting code, styles and storage.
+- The stale prebuilt output directory at the repository root. The build has written to client/dist for a long time, and the old directory still carried code for features that no longer exist.
 
 ### Fixed
 

@@ -1,12 +1,9 @@
 import Sortable from 'sortablejs';
-import { PRIORITIES } from './constants.js';
 import { loadSettings, saveSettings } from './storage.js';
 import {
   NO_GROUP_LANE_KEY,
   NO_GROUP_LANE_LABEL,
-  PRIORITY_LANE_LABELS,
   SWIMLANE_GROUP_BY_LABEL_GROUP,
-  SWIMLANE_GROUP_BY_PRIORITY,
   getLabelsForSelectedGroup,
   normalizeGroupBy
 } from './swimlane-lane-model.js';
@@ -15,14 +12,6 @@ let laneOrderSortable = null;
 
 export function getAvailableLanes(groupByMode, labels, selectedLabelGroup) {
   const normalizedGroupBy = normalizeGroupBy(groupByMode);
-
-  if (normalizedGroupBy === SWIMLANE_GROUP_BY_PRIORITY) {
-    return PRIORITIES.map((key) => ({
-      key,
-      name: PRIORITY_LANE_LABELS[key],
-      color: null
-    }));
-  }
 
   if (normalizedGroupBy === SWIMLANE_GROUP_BY_LABEL_GROUP) {
     const groupLabels = getLabelsForSelectedGroup(labels, selectedLabelGroup);

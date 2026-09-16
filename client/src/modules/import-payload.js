@@ -136,24 +136,9 @@ export function inspectImportPayload(data, file = null) {
     }
   }
 
-  let tasksWithKnownLabels = normalizedTasks;
-  if (normalizedLabels) {
-    const labelIds = new Set(normalizedLabels.map((label) => label.id));
-    let removedLabelRefs = 0;
-    tasksWithKnownLabels = normalizedTasks.map((task) => {
-      const nextLabels = task.labels.filter((labelId) => labelIds.has(labelId));
-      removedLabelRefs += task.labels.length - nextLabels.length;
-      return nextLabels.length === task.labels.length ? task : { ...task, labels: nextLabels };
-    });
-
-    if (removedLabelRefs > 0) {
-      warnings.push(`Removed ${removedLabelRefs} label reference${removedLabelRefs === 1 ? '' : 's'} that did not exist in the imported label list.`);
-    }
-  }
-
   const normalizedBoard = normalizeBoardModelIds({
     columns: normalizedColumns || undefined,
-    tasks: tasksWithKnownLabels,
+    tasks: normalizedTasks,
     labels: normalizedLabels || undefined,
     settings: normalizedSettings || undefined
   });
@@ -176,7 +161,7 @@ export function inspectImportPayload(data, file = null) {
     normalizedLabels: finalLabels,
     normalizedSettings: finalSettings,
     summary: {
-      tasks: tasksWithKnownLabels.length,
+      tasks: normalizedTasks.length,
       columns: columnCount,
       labels: labelCount,
       includesSettings: Boolean(normalizedSettings)

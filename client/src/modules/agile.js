@@ -50,34 +50,6 @@ export function normalizeComments(value) {
     .filter((entry) => entry.text);
 }
 
-export function normalizeAttachments(value) {
-  if (!Array.isArray(value)) return [];
-  return value
-    .filter((entry) => entry && typeof entry === 'object')
-    .map((entry) => {
-      const attachment = {
-        id: (entry.id ?? '').toString().trim() || generateUUID(),
-        name: (entry.name ?? '').toString().trim(),
-        url: (entry.url ?? '').toString().trim()
-      };
-      if (Number.isFinite(entry.size)) attachment.size = entry.size;
-      if (typeof entry.type === 'string' && entry.type.trim()) attachment.type = entry.type.trim();
-      return attachment;
-    })
-    .filter((entry) => entry.name && entry.url);
-}
-
-export function normalizeCustomFields(value) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
-  const out = {};
-  for (const [rawKey, rawValue] of Object.entries(value)) {
-    const key = rawKey.trim();
-    if (!key || rawValue === undefined) continue;
-    out[key] = rawValue;
-  }
-  return out;
-}
-
 /**
  * Board-name → key prefix. Mirrors the server: strip non-alphanumerics, then
  * use the first letter of every word when there are 2+, otherwise the first

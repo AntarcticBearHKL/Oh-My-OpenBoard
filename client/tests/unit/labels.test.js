@@ -101,15 +101,14 @@ test('deleteLabel removes label from labels list', () => {
   expect(loadLabels().length).toBe(0);
 });
 
-test('deleteLabel removes label ID from all tasks', () => {
+test('deleteLabel leaves task records untouched', () => {
   const { label } = addLabel('Bug', '#ff0000');
   saveTasks([
-    { id: 't1', title: 'Task 1', column: 'todo', labels: [label.id, 'other-label'] }
+    { id: 't1', title: 'Task 1', column: 'todo' }
   ]);
   deleteLabel(label.id);
   const tasks = loadTasks();
-  expect(tasks[0].labels.includes(label.id)).toBe(false);
-  expect(tasks[0].labels.includes('other-label')).toBe(true);
+  expect(tasks[0].title).toBe('Task 1');
 });
 
 // ── soft-delete labels ──────────────────────────────────────────────

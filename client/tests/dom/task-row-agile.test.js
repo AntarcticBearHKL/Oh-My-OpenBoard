@@ -12,19 +12,14 @@ vi.mock('../../src/modules/storage.js', () => ({
 
 const { createTaskElement } = await import('../../src/modules/task-card.js');
 
-const TODAY = new Date('2026-06-01T00:00:00Z');
-
 const baseTask = {
   id: 'task-1',
   title: 'Ship the release',
-  priority: 'high',
-  dueDate: '',
-  column: 'todo',
-  labels: []
+  column: 'todo'
 };
 
 function render(task, settings = {}) {
-  const element = createTaskElement(task, settings, new Map(), TODAY);
+  const element = createTaskElement(task, settings);
   mountToBody(element);
   return element;
 }
@@ -89,46 +84,14 @@ test('omits the blocked indicator without a reason', () => {
   expect(element.querySelector('.task-blocked')).toBeNull();
 });
 
-test('shows task age in days since creation', () => {
+test('never renders a task age badge even when creationDate is set', () => {
   const element = render({ ...baseTask, creationDate: '2026-05-20T00:00:00Z' });
-  expect(element.querySelector('.task-age').textContent).toBe('12d');
-});
-
-test('flags a stale task with a warning dot outside the done column', () => {
-  const element = render({
-    ...baseTask,
-    creationDate: '2026-04-01T00:00:00Z',
-    changeDate: '2026-05-10T00:00:00Z'
-  });
-
-  expect(element.classList.contains('task-stale')).toBe(true);
-  expect(element.querySelector('.task-stale-dot')).not.toBeNull();
-  expect(element.querySelector('.task-age').classList.contains('task-age--stale')).toBe(true);
-});
-
-test('does not flag a recently updated task as stale', () => {
-  const element = render({
-    ...baseTask,
-    creationDate: '2026-05-01T00:00:00Z',
-    changeDate: '2026-05-28T00:00:00Z'
-  });
-
-  expect(element.classList.contains('task-stale')).toBe(false);
+  expect(element.querySelector('.task-age')).toBeNull();
   expect(element.querySelector('.task-stale-dot')).toBeNull();
-});
-
-test('does not flag tasks in the done column as stale', () => {
-  const element = render({
-    ...baseTask,
-    column: 'archived',
-    creationDate: '2026-01-01T00:00:00Z',
-    changeDate: '2026-01-02T00:00:00Z'
-  });
-
   expect(element.classList.contains('task-stale')).toBe(false);
 });
 
-test('hides the age when the showAge setting is off', () => {
+test('ignores the showAge setting because the age badge is gone', () => {
   const element = render({ ...baseTask, creationDate: '2026-05-20T00:00:00Z' }, { showAge: false });
   expect(element.querySelector('.task-age')).toBeNull();
 });

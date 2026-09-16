@@ -10,7 +10,6 @@ import { createColumnElement } from './column-element.js';
 import { renderSwimlaneBoard } from './swimlane-renderer.js';
 import { syncColumnWip } from './wip-limit.js';
 import { selectVisibleTasks, buildShowMoreButton, selectColumnRenderPlan } from './board-filters.js';
-import { syncMovedTaskDueDate } from './task-card-meta.js';
 
 // Depth of the current drag-reconcile window. While open (> 0), a projected
 // DATA_CHANGED patches the board in place via reconcileBoard() instead of the
@@ -42,7 +41,7 @@ on(DATA_CHANGED, (event) => {
   renderBoard();
 });
 
-function renderStandardBoard(container, sortedColumns, visibleTasks, settings, labelsMap, today) {
+function renderStandardBoard(container, sortedColumns, visibleTasks, settings) {
   sortedColumns.forEach(column => {
     const columnEl = createColumnElement(column);
     container.appendChild(columnEl);
@@ -52,7 +51,7 @@ function renderStandardBoard(container, sortedColumns, visibleTasks, settings, l
     const { columnTasks, tasksToRender, remaining } = selectColumnRenderPlan(column.id, visibleTasks);
 
     tasksToRender.forEach(task => {
-      tasksList.appendChild(createTaskElement(task, settings, labelsMap, today));
+      tasksList.appendChild(createTaskElement(task, settings));
     });
 
     if (remaining > 0) {
@@ -60,19 +59,6 @@ function renderStandardBoard(container, sortedColumns, visibleTasks, settings, l
     }
 
     syncColumnWip(columnEl, columnTasks.length, column);
-  });
-}
-
-// Update the column select dropdown
-function updateColumnSelect() {
-  const columns = loadColumns();
-  const select = document.getElementById('task-column');
-  select.innerHTML = '';
-  columns.forEach(col => {
-    const option = document.createElement('option');
-    option.value = col.id;
-    option.textContent = col.name;
-    select.appendChild(option);
   });
 }
 
@@ -96,9 +82,7 @@ export function reconcileBoard() {
 
   const columns = loadColumns();
   const tasks = loadTasks();
-  const labels = loadLabels();
-  const labelsMap = new Map(labels.map((l) => [l.id, l]));
-  const visibleTasks = selectVisibleTasks(tasks, labels);
+  const visibleTasks = selectVisibleTasks(tasks);
 
   // Structural changes (a column added or removed) need a rebuild — the DOM
   // has no node to patch. A pure task move never changes the column set.
@@ -112,9 +96,6 @@ export function reconcileBoard() {
   ) {
     return false;
   }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
 
   // Index every card currently on the board by task id, so a task that changed
   // column is re-parented (node kept alive) rather than removed and recreated.
@@ -140,14 +121,10 @@ export function reconcileBoard() {
       let card = existingCards.get(task.id);
       const reused = card !== undefined;
       if (!reused) {
-        card = createTaskElement(task, settings, labelsMap, today);
+        card = createTaskElement(task, settings);
       }
       // appendChild moves an already-attached node to the correct position.
       tasksList.appendChild(card);
-      // A reused card keeps its old due-date markup; patch it in place so a
-      // move across the Done boundary updates the countdown without recreating
-      // (and detaching) the node. Freshly created cards are already correct.
-      if (reused) syncMovedTaskDueDate(task.id, column.id, tasks);
       usedIds.add(task.id);
     });
 
@@ -184,11 +161,7 @@ export function renderBoard() {
   const settings = loadSettings();
   syncSwimLaneControls(settings);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const labelsMap = new Map(labels.map(l => [l.id, l]));
-  const visibleTasks = selectVisibleTasks(tasks, labels);
+  const visibleTasks = selectVisibleTasks(tasks);
   const container = document.getElementById('board-container');
   container.innerHTML = '';
   container.dataset.viewMode = settings.swimLanesEnabled === true ? 'swimlanes' : 'columns';
@@ -199,13 +172,12 @@ export function renderBoard() {
   const sortedColumns = [...columns].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
   if (settings.swimLanesEnabled === true) {
-    renderSwimlaneBoard(container, sortedColumns, visibleTasks, labels, settings, labelsMap, today);
+    renderSwimlaneBoard(container, sortedColumns, visibleTasks, labels, settings);
   } else {
-    renderStandardBoard(container, sortedColumns, visibleTasks, settings, labelsMap, today);
+    renderStandardBoard(container, sortedColumns, visibleTasks, settings);
   }
 
   initDragDrop();
-  updateColumnSelect();
   renderIcons();
 
   performance.mark('openagile:board-render:full');

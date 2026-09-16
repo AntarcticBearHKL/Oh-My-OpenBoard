@@ -176,6 +176,7 @@
   flex: 0 0 auto;
   padding: var(--space-1) var(--space-1) var(--space-2);
   border-top: 1px solid var(--row-divider);
+  background: color-mix(in srgb, var(--column-accent) 6%, transparent);
 }
 
 .add-task-row-btn {
@@ -184,34 +185,42 @@
   align-items: center;
   gap: var(--space-2);
   width: 100%;
-  padding: 6px var(--space-2);
-  border: none;
+  padding: 5px var(--space-2);
+  border: 1px dashed var(--column-accent-hover);
   border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--text-muted);
+  background: color-mix(in srgb, var(--column-accent) 8%, transparent);
+  color: var(--text);
   font-family: inherit;
   font-size: var(--text-md);
+  font-weight: 600;
   text-align: left;
   cursor: pointer;
-  transition: background-color var(--transition-fast), color var(--transition-fast);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
 }
 
 .add-task-row-btn svg {
-  width: 14px;
-  height: 14px;
-  stroke: currentColor;
+  width: 16px;
+  height: 16px;
+  stroke: var(--column-accent-hover);
   stroke-width: 2;
   flex: 0 0 auto;
 }
 
 .add-task-row-btn:hover {
-  background-color: var(--row-hover);
+  background-color: color-mix(in srgb, var(--column-accent) 22%, transparent);
+  border-style: solid;
   color: var(--text);
+}
+
+.add-task-row-btn:active {
+  background-color: color-mix(in srgb, var(--column-accent) 32%, transparent);
+  border-color: var(--column-accent-hover);
+  border-style: solid;
 }
 
 .add-task-row-btn:focus-visible {
   outline: 2px solid var(--color-primary);
-  outline-offset: -2px;
+  outline-offset: 2px;
 }
 
 /* Custom scrollbar */
@@ -269,6 +278,7 @@
 .swimlane-column-header {
   --column-accent: var(--column-accent-default);
   --column-accent-muted: color-mix(in srgb, var(--column-accent) 32%, var(--text-faint));
+  --column-accent-hover: color-mix(in srgb, var(--column-accent) 60%, var(--text));
   position: relative;
   z-index: 6;
   display: flex;
@@ -532,21 +542,34 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
   width: 24px;
   height: 24px;
   padding: 0;
   border-radius: var(--radius-sm);
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-muted);
+  border: 1px dashed var(--column-accent-hover);
+  background: color-mix(in srgb, var(--column-accent) 8%, transparent);
+  color: var(--column-accent-hover);
   cursor: pointer;
   flex: 0 0 auto;
   margin-left: auto;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
 }
 
 .swimlane-cell-add-btn:hover {
-  background: var(--item-hover);
-  color: var(--text);
+  background: color-mix(in srgb, var(--column-accent) 22%, transparent);
+  border-style: solid;
+  color: var(--column-accent-hover);
+}
+
+.swimlane-cell-add-btn:active {
+  background: color-mix(in srgb, var(--column-accent) 32%, transparent);
+  border-style: solid;
+}
+
+.swimlane-cell-add-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .swimlane-cell-add-btn svg {

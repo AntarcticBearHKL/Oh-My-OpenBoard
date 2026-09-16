@@ -10,6 +10,7 @@ import {
   createBoard,
   initStorage,
   saveColumns,
+  saveLabels,
   saveSettings,
   saveTasks,
   loadTasks,
@@ -69,14 +70,14 @@ function clone(value) {
 
 test('updateTask relationship change replays the inverse on the target task', async () => {
   const seed = [
-    { id: 'task-a', title: 'A', column: 'todo', labels: [], relationships: [], subTasks: [], columnHistory: [] },
-    { id: 'task-b', title: 'B', column: 'todo', labels: [], relationships: [], subTasks: [], columnHistory: [] }
+    { id: 'task-a', title: 'A', column: 'todo', relationships: [], columnHistory: [] },
+    { id: 'task-b', title: 'B', column: 'todo', relationships: [], columnHistory: [] }
   ];
   saveTasks(clone(seed));
   await _flushPersistsForTesting();
 
   const events = await collectEvents(() => {
-    updateTask('task-a', 'A', '', 'none', '', 'todo', [], [{ type: 'related', targetTaskId: 'task-b' }]);
+    updateTask('task-a', 'A', '', { relationships: [{ type: 'related', targetTaskId: 'task-b' }] });
   });
 
   const replayed = applyEvents(createProjectionState({ tasks: clone(seed) }), events);
@@ -86,14 +87,14 @@ test('updateTask relationship change replays the inverse on the target task', as
 test('addTask replays the sibling reorder in the column', async () => {
   saveColumns(clone(COLUMNS));
   const seed = [
-    { id: 'task-a', title: 'A', column: 'todo', order: 1, labels: [], relationships: [], subTasks: [], columnHistory: [] },
-    { id: 'task-b', title: 'B', column: 'todo', order: 2, labels: [], relationships: [], subTasks: [], columnHistory: [] }
+    { id: 'task-a', title: 'A', column: 'todo', order: 1, relationships: [], columnHistory: [] },
+    { id: 'task-b', title: 'B', column: 'todo', order: 2, relationships: [], columnHistory: [] }
   ];
   saveTasks(clone(seed));
   await _flushPersistsForTesting();
 
   const events = await collectEvents(() => {
-    addTask('New', '', 'none', '', 'todo');
+    addTask('New', '');
   });
 
   const replayed = applyEvents(createProjectionState({ tasks: clone(seed), columns: clone(COLUMNS) }), events);
@@ -107,13 +108,13 @@ function donePresenceById(tasks) {
 test('moving a task into and out of the done column replays its doneDate', async () => {
   saveColumns(clone(COLUMNS));
   const seed = [
-    { id: 'task-a', title: 'A', column: 'todo', order: 1, labels: [], relationships: [], subTasks: [], columnHistory: [] }
+    { id: 'task-a', title: 'A', column: 'todo', order: 1, relationships: [], columnHistory: [] }
   ];
   saveTasks(clone(seed));
   await _flushPersistsForTesting();
 
   const toDone = await collectEvents(() => {
-    updateTask('task-a', 'A', '', 'none', '', DONE_COLUMN_ID, []);
+    updateTask('task-a', 'A', '', { column: DONE_COLUMN_ID });
   });
   let replayed = applyEvents(createProjectionState({ tasks: clone(seed), columns: clone(COLUMNS) }), toDone);
   expect(donePresenceById(replayed.tasks)).toEqual(donePresenceById(loadTasks()));
@@ -121,25 +122,26 @@ test('moving a task into and out of the done column replays its doneDate', async
 
   const afterDone = clone(loadTasks());
   const toTodo = await collectEvents(() => {
-    updateTask('task-a', 'A', '', 'none', '', 'todo', []);
+    updateTask('task-a', 'A', '', { column: 'todo' });
   });
   replayed = applyEvents(createProjectionState({ tasks: afterDone, columns: clone(COLUMNS) }), toTodo);
   expect(donePresenceById(replayed.tasks)).toEqual(donePresenceById(loadTasks()));
   expect(replayed.tasks[0].doneDate).toBeFalsy();
 });
 
-test('swimlane drag across priority lanes replays the priority reassignment', async () => {
+test('swimlane drag across label lanes replays the lane reassignment', async () => {
   saveColumns(clone(COLUMNS));
-  saveSettings({ swimLanesEnabled: true, swimLaneGroupBy: 'priority' });
+  saveLabels([{ id: 'label-a', name: 'Project A', color: '#2563eb', group: '' }]);
+  saveSettings({ swimLanesEnabled: true, swimLaneGroupBy: 'label' });
   const seed = [
-    { id: 'task-a', title: 'A', column: 'todo', order: 1, priority: 'none', labels: [], relationships: [], subTasks: [], columnHistory: [] }
+    { id: 'task-a', title: 'A', column: 'todo', order: 1, relationships: [], columnHistory: [], swimlaneLabelId: '' }
   ];
   saveTasks(clone(seed));
   await _flushPersistsForTesting();
 
   const item = { dataset: { taskId: 'task-a' } };
-  const from = { dataset: { laneKey: 'none' }, closest: () => ({ dataset: { column: 'todo' } }) };
-  const to = { dataset: { laneKey: 'high' }, closest: () => ({ dataset: { column: 'todo' } }) };
+  const from = { dataset: { laneKey: '' }, closest: () => ({ dataset: { column: 'todo' } }) };
+  const to = { dataset: { laneKey: 'label-a' }, closest: () => ({ dataset: { column: 'todo' } }) };
   const originalDocument = globalThis.document;
 
   const events = await collectEvents(() => {
@@ -154,6 +156,6 @@ test('swimlane drag across priority lanes replays the priority reassignment', as
   const replayed = applyEvents(createProjectionState({ tasks: clone(seed), columns: clone(COLUMNS) }), events);
   const replayedTask = replayed.tasks.find((task) => task.id === 'task-a');
   const liveTask = loadTasks().find((task) => task.id === 'task-a');
-  expect(replayedTask.priority).toBe(liveTask.priority);
-  expect(liveTask.priority).toBe('high');
+  expect(replayedTask.swimlaneLabelId).toBe(liveTask.swimlaneLabelId);
+  expect(liveTask.swimlaneLabelId).toBe('label-a');
 });

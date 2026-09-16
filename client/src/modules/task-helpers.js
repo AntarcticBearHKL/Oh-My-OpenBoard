@@ -1,8 +1,6 @@
 import {
   normalizeAcceptanceCriteria,
-  normalizeAttachments,
   normalizeComments,
-  normalizeCustomFields,
   normalizeEstimate,
   normalizeTaskType
 } from './agile.js';
@@ -18,9 +16,7 @@ export function normalizeAgileFields(fields = {}) {
     assignee: (source.assignee ?? '').toString().trim(),
     parentId: parentId || null,
     acceptanceCriteria: normalizeAcceptanceCriteria(source.acceptanceCriteria),
-    comments: normalizeComments(source.comments),
-    attachments: normalizeAttachments(source.attachments),
-    customFields: normalizeCustomFields(source.customFields)
+    comments: normalizeComments(source.comments)
   };
 }
 
@@ -50,12 +46,6 @@ export function reorderColumnTasks(tasks, columnId, pinnedTaskId = null) {
       ? { ...task, order: nextOrder }
       : task;
   });
-}
-
-export function normalizeDueDate(value) {
-  const date = (value || '').toString().trim();
-  // Expecting YYYY-MM-DD from <input type="date">; keep empty if unset.
-  return date;
 }
 
 export function relationshipKey(relationship) {

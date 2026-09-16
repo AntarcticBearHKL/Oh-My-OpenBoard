@@ -8,9 +8,7 @@ import {
   isTaskStale,
   nextTaskKey,
   normalizeAcceptanceCriteria,
-  normalizeAttachments,
   normalizeComments,
-  normalizeCustomFields,
   normalizeEstimate,
   normalizeTaskType,
   taskAgeDays
@@ -101,48 +99,6 @@ test('normalizeComments stamps a missing timestamp and drops empty text', () => 
 
   expect(result).toHaveLength(1);
   expect(Number.isNaN(new Date(result[0].at).getTime())).toBe(false);
-});
-
-// ── normalizeAttachments ────────────────────────────────────────────
-
-test('normalizeAttachments keeps name, url and optional metadata', () => {
-  const result = normalizeAttachments([
-    { id: 'at1', name: 'Spec', url: 'https://example.com/spec.pdf', size: 1234, type: 'pdf' }
-  ]);
-
-  expect(result[0]).toEqual({
-    id: 'at1',
-    name: 'Spec',
-    url: 'https://example.com/spec.pdf',
-    size: 1234,
-    type: 'pdf'
-  });
-});
-
-test('normalizeAttachments omits missing size/type and filters incomplete entries', () => {
-  const result = normalizeAttachments([
-    { name: 'Doc', url: 'https://example.com/doc' },
-    { name: 'No URL' },
-    { url: 'https://example.com/nameless' }
-  ]);
-
-  expect(result).toHaveLength(1);
-  expect(result[0].size).toBeUndefined();
-  expect(result[0].type).toBeUndefined();
-});
-
-// ── normalizeCustomFields ───────────────────────────────────────────
-
-test('normalizeCustomFields trims keys and preserves values', () => {
-  const result = normalizeCustomFields({ ' Sprint ': '12', Points: 3, Flag: true });
-
-  expect(result).toEqual({ Sprint: '12', Points: 3, Flag: true });
-});
-
-test('normalizeCustomFields drops empty keys and non-objects', () => {
-  expect(normalizeCustomFields({ '   ': 'x', Ok: 'y' })).toEqual({ Ok: 'y' });
-  expect(normalizeCustomFields(null)).toEqual({});
-  expect(normalizeCustomFields(['a'])).toEqual({});
 });
 
 // ── boardKeyPrefix / nextTaskKey ────────────────────────────────────

@@ -1,16 +1,18 @@
 import { generateUUID } from './utils.js';
-import { IN_PROGRESS_COLUMN_ID } from './constants.js';
-import { getActiveBoardId, getActiveBoardName, isDoneColumnId, loadTasks } from './storage.js';
-import { normalizePriority, normalizeRelationships, normalizeSubTasks } from './normalize.js';
+import { BACKLOG_COLUMN_ID, IN_PROGRESS_COLUMN_ID } from './constants.js';
+import { getActiveBoardId, getActiveBoardName, loadTasks } from './storage.js';
+import { normalizeRelationships } from './normalize.js';
 import { nextTaskKey } from './agile.js';
-import { normalizeAgileFields, normalizeDueDate, reorderColumnTasks, syncRelationshipInverses } from './task-helpers.js';
+import { normalizeAgileFields, reorderColumnTasks, syncRelationshipInverses } from './task-helpers.js';
 import { scheduleDomainEvent } from './event-sourcing/emitter.js';
 
-// Add a new task
-export function addTask(title, description, priority, dueDate, columnName, labels = [], relationships = [], subTasks = [], extraFields = {}) {
+// Add a new task. Board-created tasks always land in Backlog — the dialog never
+// asks for a column.
+export function addTask(title, description, extraFields = {}) {
   if (!title || title.trim() === '') return;
 
   const tasks = loadTasks();
+  const columnName = BACKLOG_COLUMN_ID;
   // Insert new tasks at the top of the column.
   // Normalize the column's existing task orders so they start at 2 (leaving 1 for the new task).
   const columnTasks = tasks
@@ -30,34 +32,28 @@ export function addTask(title, description, priority, dueDate, columnName, label
   });
 
   const nowIso = new Date().toISOString();
-  const normalizedRelationships = normalizeRelationships(relationships);
-  const agileFields = normalizeAgileFields(extraFields);
+  const source = extraFields && typeof extraFields === 'object' ? extraFields : {};
+  const normalizedRelationships = normalizeRelationships(source.relationships);
+  const agileFields = normalizeAgileFields(source);
   let newTask = {
     id: generateUUID(),
     key: nextTaskKey(getActiveBoardName(), tasks),
     title: title.trim(),
     description: (description || '').toString().trim(),
-    priority: normalizePriority(priority),
-    dueDate: normalizeDueDate(dueDate),
     column: columnName,
     order: 1,
-    labels: [...labels],
     relationships: normalizedRelationships,
-    subTasks: normalizeSubTasks(subTasks),
     type: agileFields.type,
     estimate: agileFields.estimate,
     assignee: agileFields.assignee,
     parentId: agileFields.parentId,
     acceptanceCriteria: agileFields.acceptanceCriteria,
     comments: agileFields.comments,
-    attachments: agileFields.attachments,
-    customFields: agileFields.customFields,
     blockedReason: '',
     blockedAt: null,
     creationDate: nowIso,
     changeDate: nowIso,
-    columnHistory: [{ column: columnName, at: nowIso }],
-    ...(isDoneColumnId(columnName) ? { doneDate: nowIso } : {})
+    columnHistory: [{ column: columnName, at: nowIso }]
   };
 
   updatedTasks.push(newTask);

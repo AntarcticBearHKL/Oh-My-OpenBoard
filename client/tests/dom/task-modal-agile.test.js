@@ -1,7 +1,6 @@
 import { beforeEach, expect, test, vi } from 'vitest';
 import { fireEvent, waitFor } from '@testing-library/dom';
 import { mountToBody } from './setup.js';
-import { BLOCKED_COLUMN_ID } from '../../src/modules/constants.js';
 
 const mocks = vi.hoisted(() => ({
   addTask: vi.fn(),
@@ -52,7 +51,8 @@ vi.mock('../../src/modules/events.js', () => ({
 }));
 
 vi.mock('../../src/modules/dialog.js', () => ({
-  promptDialog: mocks.promptDialog
+  promptDialog: mocks.promptDialog,
+  confirmDialog: vi.fn()
 }));
 
 vi.mock('../../src/modules/render.js', () => ({
@@ -72,12 +72,27 @@ const FIXTURE = `
     <div class="modal-backdrop" data-close-modal></div>
     <article class="modal-content">
       <header class="modal-header-row">
+        <span id="task-modal-key" class="task-modal-key hidden"></span>
         <h3 id="task-modal-title">Add New Task</h3>
         <div class="modal-header-actions">
           <button id="task-fullpage-btn" type="button" class="btn-small hidden"></button>
           <button id="task-close-btn" type="button" class="btn-small"></button>
         </div>
       </header>
+      <section id="task-summary" class="task-summary hidden">
+        <span id="task-summary-column" class="task-summary-chip hidden"></span>
+        <div id="task-claim-chip" class="task-claim-chip hidden">
+          <span id="task-claim-agent"></span>
+          <span id="task-claim-time"></span>
+        </div>
+      </section>
+      <div id="task-lock-notice" class="task-lock-notice hidden" role="status"></div>
+      <section id="task-annotations-fieldset" class="task-annotations hidden">
+        <span id="task-annotations-count" class="annotations-count hidden"></span>
+        <ul id="task-annotations-list" class="annotations-list"></ul>
+        <input type="text" id="task-annotation-input">
+        <button type="button" id="task-annotation-add-btn" class="btn-small">Add</button>
+      </section>
       <form id="task-form" novalidate>
         <div class="task-form-columns">
           <div class="task-form-column-left">
@@ -86,24 +101,6 @@ const FIXTURE = `
               <label for="task-description">Description</label>
               <textarea id="task-description"></textarea>
               <div id="task-description-links" hidden></div>
-            </div>
-            <div class="form-group">
-              <label for="task-priority">Priority</label>
-              <select id="task-priority">
-                <option value="urgent">Urgent</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-                <option value="none" selected>None</option>
-              </select>
-            </div>
-            <div class="form-group"><label for="task-due-date">Due Date</label><input id="task-due-date" type="date"></div>
-            <div class="form-group">
-              <label for="task-column">Column</label>
-              <select id="task-column">
-                <option value="todo">To Do</option>
-                <option value="${BLOCKED_COLUMN_ID}">Blocked</option>
-              </select>
             </div>
             <div class="task-form-grid">
               <div class="form-group">
@@ -117,19 +114,24 @@ const FIXTURE = `
               </div>
               <div class="form-group"><label for="task-estimate">Estimate</label><input id="task-estimate" type="number"></div>
             </div>
-            <div class="form-group"><label for="task-assignee">Assignee</label><input id="task-assignee" type="text"></div>
-            <div class="form-group">
-              <label for="task-parent">Parent (Epic)</label>
-              <select id="task-parent"><option value="">None</option></select>
-            </div>
           </div>
           <div class="task-form-column-right">
-            <fieldset class="form-group">
-              <legend>Labels</legend>
-              <div id="task-active-labels"></div>
-              <input type="text" id="task-label-search">
-              <button id="task-add-label-btn" type="button"></button>
-              <div id="task-labels-selection"></div>
+            <fieldset class="form-group" id="task-acceptance-fieldset">
+              <legend>Acceptance criteria <span id="task-acceptance-progress" hidden></span></legend>
+              <ul id="task-acceptance-list"></ul>
+              <div class="task-acceptance-add-row">
+                <input type="text" id="task-acceptance-input">
+                <button type="button" id="task-acceptance-add-btn">Add</button>
+              </div>
+            </fieldset>
+            <fieldset class="form-group" id="task-comments-fieldset">
+              <legend>Notes to the agent <span id="task-comments-count" hidden></span></legend>
+              <ul id="task-comments-list"></ul>
+              <div class="task-comment-add-row">
+                <input type="text" id="task-comment-author">
+                <input type="text" id="task-comment-input">
+                <button type="button" id="task-comment-add-btn">Add</button>
+              </div>
             </fieldset>
             <fieldset class="form-group" id="task-relationships-fieldset">
               <legend>Relationships</legend>
@@ -138,43 +140,6 @@ const FIXTURE = `
               <div class="rel-type-tooltip" id="rel-type-tooltip"></div>
               <input type="text" id="task-relationship-search">
               <div id="task-relationship-results" hidden></div>
-            </fieldset>
-            <fieldset class="form-group" id="task-subtasks-fieldset">
-              <legend>Sub-tasks <span id="task-subtasks-progress-legend" hidden></span></legend>
-              <ul id="task-subtasks-list"></ul>
-              <input type="text" id="task-subtask-input">
-            </fieldset>
-            <fieldset class="form-group" id="task-acceptance-fieldset">
-              <legend>Acceptance criteria <span id="task-acceptance-progress" hidden></span></legend>
-              <ul id="task-acceptance-list"></ul>
-              <input type="text" id="task-acceptance-input">
-            </fieldset>
-            <fieldset class="form-group" id="task-comments-fieldset">
-              <legend>Comments <span id="task-comments-count" hidden></span></legend>
-              <ul id="task-comments-list"></ul>
-              <div class="task-comment-add-row">
-                <input type="text" id="task-comment-author">
-                <input type="text" id="task-comment-input">
-                <button type="button" id="task-comment-add-btn">Add</button>
-              </div>
-            </fieldset>
-            <fieldset class="form-group" id="task-attachments-fieldset">
-              <legend>Attachments</legend>
-              <ul id="task-attachments-list"></ul>
-              <div class="task-attachment-add-row">
-                <input type="text" id="task-attachment-name">
-                <input type="url" id="task-attachment-url">
-                <button type="button" id="task-attachment-add-btn">Add</button>
-              </div>
-            </fieldset>
-            <fieldset class="form-group" id="task-custom-fields-fieldset">
-              <legend>Custom fields</legend>
-              <ul id="task-custom-fields-list"></ul>
-              <div class="task-custom-field-add-row">
-                <input type="text" id="task-custom-field-key">
-                <input type="text" id="task-custom-field-value">
-                <button type="button" id="task-custom-field-add-btn">Add</button>
-              </div>
             </fieldset>
           </div>
         </div>
@@ -201,116 +166,133 @@ beforeEach(() => {
   localStorage.clear();
 });
 
-test('add form saves agile fields through addTask', () => {
+test('add form saves title, description, type, estimate and relationships through addTask', () => {
   initializeTaskModalHandlers(() => {});
-  showModal('todo');
+  showModal();
 
   document.getElementById('task-title').value = 'New task';
+  document.getElementById('task-description').value = 'What the agent should do';
   document.getElementById('task-type').value = 'bug';
   document.getElementById('task-estimate').value = '5';
-  document.getElementById('task-assignee').value = 'Ada Lovelace';
-
-  const acceptanceInput = document.getElementById('task-acceptance-input');
-  acceptanceInput.value = 'Works offline';
-  fireEvent.keyDown(acceptanceInput, { key: 'Enter' });
-
-  document.getElementById('task-comment-author').value = 'Ada';
-  document.getElementById('task-comment-input').value = 'First comment';
-  fireEvent.click(document.getElementById('task-comment-add-btn'));
-
-  document.getElementById('task-attachment-name').value = 'Spec';
-  document.getElementById('task-attachment-url').value = 'https://example.com/spec.pdf';
-  fireEvent.click(document.getElementById('task-attachment-add-btn'));
-
-  document.getElementById('task-custom-field-key').value = 'Sprint';
-  document.getElementById('task-custom-field-value').value = '12';
-  fireEvent.click(document.getElementById('task-custom-field-add-btn'));
 
   fireEvent.submit(document.getElementById('task-form'));
 
   expect(mocks.addTask).toHaveBeenCalledTimes(1);
-  const call = mocks.addTask.mock.calls[0];
-  expect(call[0]).toBe('New task');
-
-  const extra = call[8];
-  expect(extra.type).toBe('bug');
-  expect(extra.estimate).toBe(5);
-  expect(extra.assignee).toBe('Ada Lovelace');
-  expect(extra.acceptanceCriteria).toHaveLength(1);
-  expect(extra.acceptanceCriteria[0]).toMatchObject({ text: 'Works offline', done: false });
-  expect(extra.comments[0]).toMatchObject({ author: 'Ada', text: 'First comment' });
-  expect(extra.attachments[0]).toMatchObject({ name: 'Spec', url: 'https://example.com/spec.pdf' });
-  expect(extra.customFields).toEqual({ Sprint: '12' });
+  const [title, description, fields] = mocks.addTask.mock.calls[0];
+  expect(title).toBe('New task');
+  expect(description).toBe('What the agent should do');
+  expect(fields.type).toBe('bug');
+  expect(fields.estimate).toBe(5);
+  expect(fields.acceptanceCriteria).toEqual([]);
+  expect(fields.comments).toEqual([]);
+  expect(fields.relationships).toEqual([]);
+  expect(Object.keys(fields).sort()).toEqual(['acceptanceCriteria', 'comments', 'estimate', 'relationships', 'type']);
 });
 
-test('acceptance criteria can be toggled and removed before saving', () => {
+test('the acceptance editor adds, toggles and removes items and reports done/total', () => {
   initializeTaskModalHandlers(() => {});
-  showModal('todo');
+  showModal();
   document.getElementById('task-title').value = 'Checklist task';
 
   const acceptanceInput = document.getElementById('task-acceptance-input');
   acceptanceInput.value = 'First criterion';
   fireEvent.keyDown(acceptanceInput, { key: 'Enter' });
   acceptanceInput.value = 'Second criterion';
-  fireEvent.keyDown(acceptanceInput, { key: 'Enter' });
+  fireEvent.click(document.getElementById('task-acceptance-add-btn'));
 
-  const items = document.querySelectorAll('#task-acceptance-list .acceptance-item');
+  let items = document.querySelectorAll('#task-acceptance-list .acceptance-item');
   expect(items).toHaveLength(2);
+  expect(document.getElementById('task-acceptance-progress').textContent).toBe('0 / 2');
 
   fireEvent.click(items[0].querySelector('input[type="checkbox"]'));
+  expect(document.getElementById('task-acceptance-progress').textContent).toBe('1 / 2');
+  expect(items[0].classList.contains('acceptance-item--done')).toBe(true);
+
   fireEvent.click(items[1].querySelector('.acceptance-remove-btn'));
+  items = document.querySelectorAll('#task-acceptance-list .acceptance-item');
+  expect(items).toHaveLength(1);
+  expect(document.getElementById('task-acceptance-progress').textContent).toBe('1 / 1');
 
   fireEvent.submit(document.getElementById('task-form'));
 
-  const extra = mocks.addTask.mock.calls[0][8];
-  expect(extra.acceptanceCriteria).toHaveLength(1);
-  expect(extra.acceptanceCriteria[0]).toMatchObject({ text: 'First criterion', done: true });
+  const fields = mocks.addTask.mock.calls[0][2];
+  expect(fields.acceptanceCriteria).toHaveLength(1);
+  expect(fields.acceptanceCriteria[0]).toMatchObject({ text: 'First criterion', done: true });
 });
 
-test('editing a task into Blocked prompts for and stores a reason', async () => {
+test('a comment written in the dialog renders in the thread with author and time', () => {
+  initializeTaskModalHandlers(() => {});
+  showModal();
+  document.getElementById('task-title').value = 'Notes task';
+
+  document.getElementById('task-comment-author').value = 'Ada';
+  document.getElementById('task-comment-input').value = 'Please answer this';
+  fireEvent.click(document.getElementById('task-comment-add-btn'));
+
+  const items = document.querySelectorAll('#task-comments-list .comment-item');
+  expect(items).toHaveLength(1);
+  expect(items[0].querySelector('.comment-author').textContent).toBe('Ada');
+  expect(items[0].querySelector('.comment-text').textContent).toBe('Please answer this');
+  expect(items[0].querySelector('.comment-at').textContent).not.toBe('');
+  expect(document.getElementById('task-comments-count').textContent).toBe('1');
+
+  fireEvent.submit(document.getElementById('task-form'));
+  const fields = mocks.addTask.mock.calls[0][2];
+  expect(fields.comments).toHaveLength(1);
+  expect(fields.comments[0]).toMatchObject({ author: 'Ada', text: 'Please answer this' });
+});
+
+test('the agent reply shows up in the same thread when the dialog reopens', () => {
   mocks.loadTasks.mockReturnValue([
     {
       id: 't1',
-      title: 'Blocked soon',
+      title: 'Answered task',
       column: 'todo',
-      priority: 'none',
-      labels: [],
-      subTasks: [],
-      relationships: [],
-      creationDate: '2026-01-01T00:00:00.000Z',
-      changeDate: '2026-01-01T00:00:00.000Z'
+      comments: [
+        { id: 'c1', author: 'Ada', text: 'Any update?', at: '2026-01-01T10:00:00.000Z' },
+        { id: 'c2', author: 'agent-7', text: 'Shipped in build 42', at: '2026-01-01T11:00:00.000Z' }
+      ]
     }
   ]);
-  mocks.promptDialog.mockResolvedValueOnce('Waiting on design');
   initializeTaskModalHandlers(() => {});
   showEditModal('t1');
 
-  document.getElementById('task-column').value = BLOCKED_COLUMN_ID;
-  fireEvent.submit(document.getElementById('task-form'));
-
-  await waitFor(() => expect(mocks.setTaskBlockedReason).toHaveBeenCalledWith('t1', 'Waiting on design'));
-  expect(mocks.updateTask).toHaveBeenCalledTimes(1);
-  expect(mocks.promptDialog).toHaveBeenCalledTimes(1);
+  const items = document.querySelectorAll('#task-comments-list .comment-item');
+  expect(items).toHaveLength(2);
+  expect(items[0].querySelector('.comment-author').textContent).toBe('Ada');
+  expect(items[1].querySelector('.comment-author').textContent).toBe('agent-7');
+  expect(items[1].querySelector('.comment-text').textContent).toBe('Shipped in build 42');
 });
 
-test('a normal edit does not prompt for a blocked reason', async () => {
+test('editing a task saves the slim payload through updateTask', async () => {
   mocks.loadTasks.mockReturnValue([
     {
       id: 't1',
       title: 'Fine task',
+      description: 'old',
       column: 'todo',
-      priority: 'none',
-      labels: [],
-      subTasks: [],
-      relationships: []
+      type: 'task',
+      estimate: 2,
+      relationships: [],
+      acceptanceCriteria: [],
+      comments: []
     }
   ]);
   initializeTaskModalHandlers(() => {});
   showEditModal('t1');
 
+  document.getElementById('task-title').value = 'Renamed task';
+  document.getElementById('task-type').value = 'spike';
+  document.getElementById('task-estimate').value = '8';
   fireEvent.submit(document.getElementById('task-form'));
 
   await waitFor(() => expect(mocks.updateTask).toHaveBeenCalledTimes(1));
+  const [taskId, title, , fields] = mocks.updateTask.mock.calls[0];
+  expect(taskId).toBe('t1');
+  expect(title).toBe('Renamed task');
+  expect(fields.type).toBe('spike');
+  expect(fields.estimate).toBe(8);
+  expect(fields.column).toBeUndefined();
   expect(mocks.promptDialog).not.toHaveBeenCalled();
   expect(mocks.setTaskBlockedReason).not.toHaveBeenCalled();
 });

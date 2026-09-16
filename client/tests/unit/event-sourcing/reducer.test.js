@@ -139,26 +139,19 @@ test('label events create update and tombstone labels', () => {
   expect(deleted.labels).toEqual([{ id: 'label-a', name: 'Feature', color: '#ff0000', group: 'Type', deleted: true }]);
 });
 
-test('label task membership events update task label refs', () => {
+test('unknown removed event types leave the model untouched', () => {
   const state = createProjectionState({
-    tasks: [{ id: 'task-a', title: 'Task', labels: [], column: 'todo', columnHistory: [] }]
+    tasks: [{ id: 'task-a', title: 'Task', column: 'todo', columnHistory: [] }]
   });
 
-  const added = applyEvent(state, event({
+  const ignored = applyEvent(state, event({
     id: 'label-add',
     type: 'label.added_to_task',
     entity_id: 'task-a',
     payload: { label_id: 'label-a' }
   }));
-  const removed = applyEvent(added, event({
-    id: 'label-remove',
-    type: 'label.removed_from_task',
-    entity_id: 'task-a',
-    payload: { label_id: 'label-a' }
-  }));
 
-  expect(added.tasks[0].labels).toEqual(['label-a']);
-  expect(removed.tasks[0].labels).toEqual([]);
+  expect(ignored.tasks).toEqual(state.tasks);
 });
 
 test('column events create update delete and reorder columns', () => {
@@ -187,22 +180,12 @@ test('settings.updated folds board settings', () => {
   expect(boardSettings.settings).toEqual({ showPriority: false });
 });
 
-test('subtask and relationship events update embedded task collections', () => {
+test('relationship events update embedded task collections', () => {
   const state = createProjectionState({
-    tasks: [{ id: 'task-a', title: 'Task', subTasks: [], relationships: [], column: 'todo', columnHistory: [] }]
+    tasks: [{ id: 'task-a', title: 'Task', relationships: [], column: 'todo', columnHistory: [] }]
   });
 
-  const withSubtask = applyEvent(state, event({
-    id: 'subtask-add',
-    type: 'subtask.added',
-    payload: { subtask: { id: 'sub-a', text: 'Check', completed: false } }
-  }));
-  const toggled = applyEvent(withSubtask, event({
-    id: 'subtask-toggle',
-    type: 'subtask.toggled',
-    payload: { subtask_id: 'sub-a', completed: true }
-  }));
-  const withRelationship = applyEvent(toggled, event({
+  const withRelationship = applyEvent(state, event({
     id: 'relationship-add',
     type: 'relationship.added',
     payload: { relationship: { type: 'related', targetTaskId: 'task-b' } }
@@ -213,7 +196,20 @@ test('subtask and relationship events update embedded task collections', () => {
     payload: { targetTaskId: 'task-b', relationship_type: 'related' }
   }));
 
-  expect(toggled.tasks[0].subTasks).toEqual([{ id: 'sub-a', text: 'Check', completed: true }]);
   expect(withRelationship.tasks[0].relationships).toEqual([{ type: 'related', targetTaskId: 'task-b' }]);
   expect(withoutRelationship.tasks[0].relationships).toEqual([]);
+});
+
+test('subtask events are no longer applied to tasks', () => {
+  const state = createProjectionState({
+    tasks: [{ id: 'task-a', title: 'Task', column: 'todo', columnHistory: [] }]
+  });
+
+  const next = applyEvent(state, event({
+    id: 'subtask-add',
+    type: 'subtask.added',
+    payload: { subtask: { id: 'sub-a', text: 'Check', completed: false } }
+  }));
+
+  expect(next.tasks[0].subTasks).toBeUndefined();
 });

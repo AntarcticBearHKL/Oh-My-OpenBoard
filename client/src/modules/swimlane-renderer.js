@@ -82,7 +82,7 @@ export function createSwimlaneLaneHeader(lane, activeTaskCount, hiddenDoneCount,
   }, toggleBtn, main);
 }
 
-export function createSwimlaneCell(column, lane, tasksInCell, visibleTasks, settings, labelsMap, today, cellCollapsed) {
+export function createSwimlaneCell(column, lane, tasksInCell, visibleTasks, settings, cellCollapsed) {
   const isColumnCollapsed = column?.collapsed === true;
   const isDone = isPermanentDoneColumn(column);
   const isCollapsed = cellCollapsed === true;
@@ -143,12 +143,13 @@ export function createSwimlaneCell(column, lane, tasksInCell, visibleTasks, sett
     role: 'list',
     'aria-label': `Tasks in ${lane.value}, ${column.name}`
   });
-  visibleTasks.forEach((task) => tasksList.appendChild(createTaskElement(task, settings, labelsMap, today)));
+  visibleTasks.forEach((task) => tasksList.appendChild(createTaskElement(task, settings)));
   cell.appendChild(tasksList);
   return cell;
 }
 
-export function renderSwimlaneBoard(container, sortedColumns, visibleTasks, labels, settings, labelsMap, today) {
+export function renderSwimlaneBoard(container, sortedColumns, visibleTasks, labels, settings) {
+  const labelsMap = new Map((Array.isArray(labels) ? labels : []).map((label) => [label.id, label]));
   const lanes = groupTasksBySwimLane(visibleTasks, settings.swimLaneGroupBy, labels, settings.swimLaneLabelGroup, settings.swimLaneOrder);
   const grid = buildBoardGrid(sortedColumns, lanes, visibleTasks, settings.swimLaneGroupBy, labels, settings.swimLaneLabelGroup);
 
@@ -189,7 +190,7 @@ export function renderSwimlaneBoard(container, sortedColumns, visibleTasks, labe
         : column?.collapsed === true
           ? tasksInCell
           : cellCollapsed ? [] : getVisibleTasksForLane(tasksInCell, column.id);
-      cellsWrapper.appendChild(createSwimlaneCell(column, lane, tasksInCell, visibleTasksInCell, settings, labelsMap, today, cellCollapsed));
+      cellsWrapper.appendChild(createSwimlaneCell(column, lane, tasksInCell, visibleTasksInCell, settings, cellCollapsed));
     });
 
     board.appendChild(h('section', {

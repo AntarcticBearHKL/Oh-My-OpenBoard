@@ -13,6 +13,8 @@ import { normalizeWipLimit } from './wip-limit.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+const DROPPED_TASK_FIELDS = ['priority', 'dueDate', 'labels', 'subTasks', 'attachments', 'customFields'];
+
 function isUuid(value) {
   return typeof value === 'string' && UUID_RE.test(value.trim());
 }
@@ -110,9 +112,6 @@ export function normalizeBoardModelIds({ board = null, columns = [], tasks = [],
     const source = task && typeof task === 'object' ? task : {};
     const id = remapId(source.id || `__task_${index}`, taskIdMap);
     const column = remapReference(source.column, columnIdMap, fallbackColumnId);
-    const labels = Array.isArray(source.labels)
-      ? source.labels.map((labelId) => remapReference(labelId, labelIdMap, '')).filter(Boolean)
-      : [];
     const columnHistory = Array.isArray(source.columnHistory)
       ? source.columnHistory
           .map((entry) => {
@@ -130,15 +129,19 @@ export function normalizeBoardModelIds({ board = null, columns = [], tasks = [],
       .filter((relationship) => relationship.targetTaskId);
     const swimlaneLabelId = remapReference(source.swimlaneLabelId, labelIdMap, '');
 
-    return {
+    const next = {
       ...source,
       id,
       column,
-      labels,
       relationships,
       ...(columnHistory && columnHistory.length ? { columnHistory } : {}),
       ...(swimlaneLabelId ? { swimlaneLabelId } : (Object.prototype.hasOwnProperty.call(source, 'swimlaneLabelId') ? { swimlaneLabelId: '' } : {}))
     };
+
+    for (const field of DROPPED_TASK_FIELDS) {
+      delete next[field];
+    }
+    return next;
   });
 
   const nextSettings = settings && typeof settings === 'object' && !Array.isArray(settings)

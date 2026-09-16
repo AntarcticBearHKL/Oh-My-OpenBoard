@@ -1,26 +1,28 @@
 import { getActiveBoardId, isDoneColumnId, loadColumns, loadTasks } from './storage.js';
-import { normalizePriority, normalizeRelationships, normalizeSubTasks } from './normalize.js';
+import { normalizeRelationships } from './normalize.js';
 import {
   isBlockedColumnId,
   normalizeAcceptanceCriteria,
-  normalizeAttachments,
   normalizeComments,
-  normalizeCustomFields,
   normalizeEstimate,
   normalizeTaskType
 } from './agile.js';
-import { RELATIONSHIP_INVERSE, normalizeAgileFields, normalizeDueDate, relationshipKey, sameJson, syncRelationshipInverses } from './task-helpers.js';
+import { RELATIONSHIP_INVERSE, relationshipKey, sameJson, syncRelationshipInverses } from './task-helpers.js';
 import { scheduleDomainEvent } from './event-sourcing/emitter.js';
 
-// Update an existing task
-export function updateTask(taskId, title, description, priority, dueDate, columnName, labels = [], relationships = [], subTasks = [], extraFields = undefined) {
+// Update an existing task. The task dialog edits title, description, type,
+// estimate, acceptance criteria and comments; a column move is only honoured
+// when the caller passes `column` explicitly.
+export function updateTask(taskId, title, description, extraFields = undefined) {
   if (!title || title.trim() === '') return;
-  
+
   const tasks = loadTasks();
   const taskIndex = tasks.findIndex(t => t.id === taskId);
   if (taskIndex !== -1) {
+    const source = extraFields && typeof extraFields === 'object' ? extraFields : null;
     const prevColumn = tasks[taskIndex].column;
-    const nextColumn = columnName;
+    const requestedColumn = typeof source?.column === 'string' && source.column.trim() ? source.column.trim() : '';
+    const nextColumn = requestedColumn || prevColumn;
     const nowIso = new Date().toISOString();
 
     // Ensure we have a baseline history entry before appending transitions.
@@ -31,35 +33,36 @@ export function updateTask(taskId, title, description, priority, dueDate, column
     }
 
     const oldRelationships = Array.isArray(tasks[taskIndex].relationships) ? tasks[taskIndex].relationships : [];
-    const newRelationships = normalizeRelationships(relationships);
+    const newRelationships = normalizeRelationships(source?.relationships ?? oldRelationships);
 
     const previousTask = { ...tasks[taskIndex] };
     const nextTitle = title.trim();
     const nextDescription = (description || '').toString().trim();
-    const nextPriority = normalizePriority(priority);
-    const nextDueDate = normalizeDueDate(dueDate);
-    const nextSubTasks = normalizeSubTasks(subTasks);
-    const agileFields = extraFields === undefined ? null : normalizeAgileFields(extraFields);
-    if (agileFields && agileFields.parentId === taskId) agileFields.parentId = null;
+    const has = (key) => source !== null && Object.prototype.hasOwnProperty.call(source, key);
     const changedFields = {};
 
     tasks[taskIndex].title = nextTitle;
     tasks[taskIndex].description = nextDescription;
-    tasks[taskIndex].priority = nextPriority;
-    tasks[taskIndex].dueDate = nextDueDate;
     tasks[taskIndex].column = nextColumn;
-    tasks[taskIndex].labels = [...labels];
     tasks[taskIndex].relationships = newRelationships;
-    tasks[taskIndex].subTasks = nextSubTasks;
-    if (agileFields) {
-      tasks[taskIndex].type = agileFields.type;
-      tasks[taskIndex].estimate = agileFields.estimate;
-      tasks[taskIndex].assignee = agileFields.assignee;
-      tasks[taskIndex].parentId = agileFields.parentId;
-      tasks[taskIndex].acceptanceCriteria = agileFields.acceptanceCriteria;
-      tasks[taskIndex].comments = agileFields.comments;
-      tasks[taskIndex].attachments = agileFields.attachments;
-      tasks[taskIndex].customFields = agileFields.customFields;
+    if (has('type')) {
+      tasks[taskIndex].type = normalizeTaskType(source.type);
+    }
+    if (has('estimate')) {
+      tasks[taskIndex].estimate = normalizeEstimate(source.estimate);
+    }
+    if (has('assignee')) {
+      tasks[taskIndex].assignee = (source.assignee ?? '').toString().trim();
+    }
+    if (has('parentId')) {
+      const requestedParentId = (source.parentId ?? '').toString().trim();
+      tasks[taskIndex].parentId = requestedParentId && requestedParentId !== taskId ? requestedParentId : null;
+    }
+    if (has('acceptanceCriteria')) {
+      tasks[taskIndex].acceptanceCriteria = normalizeAcceptanceCriteria(source.acceptanceCriteria);
+    }
+    if (has('comments')) {
+      tasks[taskIndex].comments = normalizeComments(source.comments);
     }
 
     syncRelationshipInverses(tasks, taskId, oldRelationships, newRelationships, nowIso);
@@ -74,41 +77,27 @@ export function updateTask(taskId, title, description, priority, dueDate, column
     if ((previousTask.description || '') !== nextDescription) {
       changedFields.description = nextDescription;
     }
-    if (normalizePriority(previousTask.priority) !== nextPriority) {
-      changedFields.priority = nextPriority;
+    if (has('type') && normalizeTaskType(previousTask.type) !== tasks[taskIndex].type) {
+      changedFields.type = tasks[taskIndex].type;
     }
-    if (normalizeDueDate(previousTask.dueDate) !== nextDueDate) {
-      changedFields.dueDate = nextDueDate;
+    if (has('estimate') && normalizeEstimate(previousTask.estimate) !== tasks[taskIndex].estimate) {
+      changedFields.estimate = tasks[taskIndex].estimate;
     }
-    if (agileFields) {
-      if (normalizeTaskType(previousTask.type) !== agileFields.type) {
-        changedFields.type = agileFields.type;
-      }
-      if (normalizeEstimate(previousTask.estimate) !== agileFields.estimate) {
-        changedFields.estimate = agileFields.estimate;
-      }
-      if ((previousTask.assignee ?? '').toString().trim() !== agileFields.assignee) {
-        changedFields.assignee = agileFields.assignee;
-      }
+    if (has('assignee') && (previousTask.assignee ?? '').toString().trim() !== tasks[taskIndex].assignee) {
+      changedFields.assignee = tasks[taskIndex].assignee;
+    }
+    if (has('parentId')) {
       const previousParentId = (previousTask.parentId ?? '').toString().trim() || null;
-      if (previousParentId !== agileFields.parentId) {
-        changedFields.parentId = agileFields.parentId;
-      }
-      if (!sameJson(normalizeAcceptanceCriteria(previousTask.acceptanceCriteria), agileFields.acceptanceCriteria)) {
-        changedFields.acceptanceCriteria = agileFields.acceptanceCriteria;
-      }
-      if (!sameJson(normalizeComments(previousTask.comments), agileFields.comments)) {
-        changedFields.comments = agileFields.comments;
-      }
-      if (!sameJson(normalizeAttachments(previousTask.attachments), agileFields.attachments)) {
-        changedFields.attachments = agileFields.attachments;
-      }
-      if (!sameJson(normalizeCustomFields(previousTask.customFields), agileFields.customFields)) {
-        changedFields.customFields = agileFields.customFields;
+      if (previousParentId !== tasks[taskIndex].parentId) {
+        changedFields.parentId = tasks[taskIndex].parentId;
       }
     }
-    const previousLabels = Array.isArray(previousTask.labels) ? previousTask.labels : [];
-    const nextLabels = Array.isArray(labels) ? labels : [];
+    if (has('acceptanceCriteria') && !sameJson(normalizeAcceptanceCriteria(previousTask.acceptanceCriteria), tasks[taskIndex].acceptanceCriteria)) {
+      changedFields.acceptanceCriteria = tasks[taskIndex].acceptanceCriteria;
+    }
+    if (has('comments') && !sameJson(normalizeComments(previousTask.comments), tasks[taskIndex].comments)) {
+      changedFields.comments = tasks[taskIndex].comments;
+    }
     const previousRelationshipKeys = new Set(oldRelationships.map(relationshipKey));
     const nextRelationshipKeys = new Set(newRelationships.map(relationshipKey));
 
@@ -148,16 +137,6 @@ export function updateTask(taskId, title, description, priority, dueDate, column
         }
       });
     }
-    nextLabels
-      .filter((labelId) => !previousLabels.includes(labelId))
-      .forEach((labelId) => {
-        scheduleDomainEvent({ type: 'label.added_to_task', boardId, entityId: taskId, payload: { label_id: labelId } });
-      });
-    previousLabels
-      .filter((labelId) => !nextLabels.includes(labelId))
-      .forEach((labelId) => {
-        scheduleDomainEvent({ type: 'label.removed_from_task', boardId, entityId: taskId, payload: { label_id: labelId } });
-      });
     newRelationships
       .filter((relationship) => !previousRelationshipKeys.has(relationshipKey(relationship)))
       .forEach((relationship) => {
@@ -192,27 +171,6 @@ export function updateTask(taskId, title, description, priority, dueDate, column
             payload: { targetTaskId: taskId, relationship_type: inverseType }
           });
         }
-      });
-    const previousSubTasks = normalizeSubTasks(previousTask.subTasks);
-    const previousSubTasksById = new Map(previousSubTasks.map((subtask) => [subtask.id, subtask]));
-    const nextSubTasksById = new Map(nextSubTasks.map((subtask) => [subtask.id, subtask]));
-    nextSubTasks.forEach((subtask) => {
-      const previous = previousSubTasksById.get(subtask.id);
-      if (!previous) {
-        scheduleDomainEvent({ type: 'subtask.added', boardId, entityId: taskId, payload: { subtask } });
-        return;
-      }
-      if (previous.completed !== subtask.completed) {
-        scheduleDomainEvent({ type: 'subtask.toggled', boardId, entityId: taskId, payload: { subtask_id: subtask.id, completed: subtask.completed === true } });
-      }
-      if ((previous.title || '') !== (subtask.title || '')) {
-        scheduleDomainEvent({ type: 'subtask.text_changed', boardId, entityId: taskId, payload: { subtask_id: subtask.id, title: subtask.title || '' } });
-      }
-    });
-    previousSubTasks
-      .filter((subtask) => !nextSubTasksById.has(subtask.id))
-      .forEach((subtask) => {
-        scheduleDomainEvent({ type: 'subtask.removed', boardId, entityId: taskId, payload: { subtask_id: subtask.id } });
       });
   }
 }

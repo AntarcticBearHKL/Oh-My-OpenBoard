@@ -1,24 +1,12 @@
-import { PRIORITIES } from './constants.js';
-
 export const SWIMLANE_GROUP_BY_LABEL = 'label';
 export const SWIMLANE_GROUP_BY_LABEL_GROUP = 'label-group';
-export const SWIMLANE_GROUP_BY_PRIORITY = 'priority';
 export const NO_GROUP_LANE_KEY = '__no-group__';
 export const NO_GROUP_LANE_LABEL = 'No Group';
 export const SWIMLANE_HIDDEN_DONE_COLUMN_ID = 'done';
 
-export const PRIORITY_LANE_LABELS = {
-  urgent: 'Urgent',
-  high: 'High',
-  medium: 'Medium',
-  low: 'Low',
-  none: 'None'
-};
-
 const SWIMLANE_GROUP_BY_VALUES = new Set([
   SWIMLANE_GROUP_BY_LABEL,
-  SWIMLANE_GROUP_BY_LABEL_GROUP,
-  SWIMLANE_GROUP_BY_PRIORITY
+  SWIMLANE_GROUP_BY_LABEL_GROUP
 ]);
 
 export function normalizeSelectedLabelGroup(value) {
@@ -41,20 +29,6 @@ export function normalizeCollapsedLaneKeys(keys) {
       seen.add(key);
       return true;
     });
-}
-
-export function normalizePriorityLaneKey(value) {
-  const normalized = (value || '').toString().trim().toLowerCase();
-  return PRIORITIES.includes(normalized) ? normalized : 'none';
-}
-
-export function getPriorityLaneDescriptor(value) {
-  const key = normalizePriorityLaneKey(value);
-  return {
-    key,
-    value: PRIORITY_LANE_LABELS[key],
-    isDefault: key === 'none'
-  };
 }
 
 export function normalizeLabelCollection(labels) {
@@ -113,19 +87,7 @@ export function getSelectedGroupLaneLabel(task, labels, selectedLabelGroup) {
     }
   }
 
-  const labelIds = getTaskLabelIds(task);
-  for (const labelId of labelIds) {
-    const label = labels.get(labelId);
-    if (label && normalizeSelectedLabelGroup(label.group) === group) {
-      return label;
-    }
-  }
-
   return null;
-}
-
-export function getTaskLabelIds(task) {
-  return Array.isArray(task?.labels) ? task.labels.filter((value) => typeof value === 'string' && value.trim()) : [];
 }
 
 export function getExplicitLaneValue(task, groupBy) {
@@ -133,45 +95,14 @@ export function getExplicitLaneValue(task, groupBy) {
     return typeof task?.swimlaneLabelId === 'string' ? task.swimlaneLabelId.trim() : null;
   }
 
-  if (groupBy === SWIMLANE_GROUP_BY_PRIORITY) {
-    return normalizePriorityLaneKey(task?.priority);
+  if (groupBy === SWIMLANE_GROUP_BY_LABEL_GROUP) {
+    return typeof task?.swimlaneLabelGroup === 'string' ? task.swimlaneLabelGroup.trim() : null;
   }
 
-  return typeof task?.swimlaneLabelGroup === 'string' ? task.swimlaneLabelGroup.trim() : null;
+  return null;
 }
 
-export function getFallbackLaneDescriptor(task, groupBy, labels) {
-  if (groupBy === SWIMLANE_GROUP_BY_PRIORITY) {
-    return getPriorityLaneDescriptor(task?.priority);
-  }
-
-  const labelIds = getTaskLabelIds(task);
-
-  if (groupBy === SWIMLANE_GROUP_BY_LABEL) {
-    for (const labelId of labelIds) {
-      const label = labels.get(labelId);
-      if (!label) continue;
-      return {
-        key: label.id,
-        value: label.name,
-        isDefault: false
-      };
-    }
-  }
-
-  if (groupBy === SWIMLANE_GROUP_BY_LABEL_GROUP) {
-    for (const labelId of labelIds) {
-      const label = labels.get(labelId);
-      const group = (label?.group || '').toString().trim();
-      if (!group) continue;
-      return {
-        key: group,
-        value: group,
-        isDefault: false
-      };
-    }
-  }
-
+export function getFallbackLaneDescriptor() {
   return {
     key: NO_GROUP_LANE_KEY,
     value: NO_GROUP_LANE_LABEL,

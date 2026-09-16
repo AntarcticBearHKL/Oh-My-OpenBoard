@@ -68,13 +68,6 @@
         </a></span> 
         </button>
 
-        <button id="show-calendar-btn" class="control-btn" type="button" aria-pressed="false" aria-label="Show Calendar">
-          <span data-lucide="calendar-days" aria-hidden="true"></span>
-          <span><a class="control-btn" href="./calendar.html">
-          View Calendar
-        </a></span>
-        </button>
-
         <button id="show-roadmap-btn" class="control-btn" type="button" aria-pressed="false" aria-label="Show Roadmap">
           <span data-lucide="git-branch" aria-hidden="true"></span>
           <span><a class="control-btn" href="./roadmap.html">
@@ -161,10 +154,6 @@
 
       <section id="task-summary" class="task-summary hidden" aria-label="Task summary">
         <div class="task-summary-badges">
-          <span id="task-summary-type" class="task-type task-type--task"></span>
-          <span id="task-summary-estimate" class="task-summary-chip hidden"></span>
-          <span id="task-summary-priority" class="task-priority priority-none"></span>
-          <span id="task-summary-due" class="task-summary-chip hidden"></span>
           <span id="task-summary-column" class="task-summary-chip hidden"></span>
         </div>
         <div id="task-claim-chip" class="task-claim-chip hidden">
@@ -204,27 +193,6 @@
               <textarea id="task-description" rows="3" placeholder="Enter task description..."></textarea>
               <div id="task-description-links" class="description-links" hidden aria-label="Links in description"></div>
             </div>
-            <div class="form-group">
-              <label for="task-priority">Priority</label>
-              <select id="task-priority">
-                <option value="urgent">Urgent</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-                <option value="none" selected>None</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="task-due-date">Due Date</label>
-              <input id="task-due-date" type="date">
-            </div>
-            <div class="form-group">
-              <label for="task-column">Column</label>
-              <select id="task-column" aria-describedby="task-column-help">
-                <!-- Options populated dynamically -->
-              </select>
-              <span id="task-column-help" class="sr-only">Select which column to place this task in</span>
-            </div>
             <div class="task-form-grid">
               <div class="form-group">
                 <label for="task-type">Type</label>
@@ -240,30 +208,39 @@
                 <input id="task-estimate" type="number" min="0" step="1" inputmode="numeric" placeholder="—" aria-label="Story point estimate">
               </div>
             </div>
-            <div class="form-group">
-              <label for="task-assignee">Assignee</label>
-              <input id="task-assignee" type="text" maxlength="80" autocomplete="off" placeholder="Unassigned">
-            </div>
-            <div class="form-group">
-              <label for="task-parent">Parent (Epic)</label>
-              <select id="task-parent">
-                <option value="">None</option>
-                <!-- Options populated dynamically -->
-              </select>
-            </div>
           </div>
           <div class="task-form-column-right">
-            <fieldset class="form-group">
-              <legend>Labels</legend>
-              <div id="task-active-labels" class="active-labels" role="list" aria-label="Selected labels"></div>
-              <div class="task-label-search-row">
-                <input type="text" id="task-label-search" placeholder="Search labels…" autocomplete="off" aria-label="Filter available labels">
-                <button id="task-add-label-btn" type="button" class="icon-btn" aria-label="Add a new label" title="Add label">
-                  <span data-lucide="plus" aria-hidden="true"></span>
-                </button>
+            <fieldset class="form-group" id="task-acceptance-fieldset">
+              <legend>
+                <span data-lucide="check-square" aria-hidden="true"></span>
+                Acceptance criteria
+                <span id="task-acceptance-progress" class="field-progress-legend" hidden></span>
+              </legend>
+              <ul id="task-acceptance-list" class="acceptance-list" role="list" aria-label="Acceptance criteria"></ul>
+              <div class="task-acceptance-add-row">
+                <input
+                  type="text"
+                  id="task-acceptance-input"
+                  placeholder="Add a criterion and press Enter…"
+                  autocomplete="off"
+                  maxlength="200"
+                  aria-label="New acceptance criterion"
+                >
+                <button type="button" id="task-acceptance-add-btn" class="btn-small" aria-label="Add acceptance criterion">Add</button>
               </div>
-              <div id="task-labels-selection" role="listbox" aria-label="Available labels">
-                <!-- Labels populated dynamically -->
+            </fieldset>
+            <fieldset class="form-group" id="task-comments-fieldset">
+              <legend>
+                <span data-lucide="message-square" aria-hidden="true"></span>
+                Notes to the agent
+                <span id="task-comments-count" class="field-progress-legend" hidden></span>
+              </legend>
+              <p class="form-help">Write what the agent should know or answer; the agent replies in the same thread.</p>
+              <ul id="task-comments-list" class="comments-list" role="list" aria-label="Comments"></ul>
+              <div class="task-comment-add-row">
+                <input type="text" id="task-comment-author" placeholder="You" autocomplete="off" maxlength="60" aria-label="Comment author">
+                <input type="text" id="task-comment-input" placeholder="Add a note…" autocomplete="off" maxlength="500" aria-label="New comment">
+                <button type="button" id="task-comment-add-btn" class="btn-small" aria-label="Add comment">Add</button>
               </div>
             </fieldset>
             <fieldset class="form-group" id="task-relationships-fieldset">
@@ -286,79 +263,6 @@
                 <input type="text" id="task-relationship-search" placeholder="Search by #id or title…" autocomplete="off" aria-label="Search tasks to link">
               </div>
               <div id="task-relationship-results" class="relationship-results" role="listbox" aria-label="Task search results" hidden></div>
-            </fieldset>
-            <fieldset class="form-group" id="task-subtasks-fieldset">
-              <legend>
-                <span data-lucide="list-checks" aria-hidden="true"></span>
-                Sub-tasks
-                <span id="task-subtasks-progress-legend" class="subtasks-progress-legend" hidden></span>
-              </legend>
-              <ul id="task-subtasks-list" class="subtasks-list" role="list" aria-label="Sub-tasks"></ul>
-              <div class="task-subtask-add-row">
-                <input
-                  type="text"
-                  id="task-subtask-input"
-                  placeholder="Add a sub-task and press Enter…"
-                  autocomplete="off"
-                  maxlength="200"
-                  aria-label="New sub-task title"
-                >
-              </div>
-            </fieldset>
-            <fieldset class="form-group" id="task-acceptance-fieldset">
-              <legend>
-                <span data-lucide="check-square" aria-hidden="true"></span>
-                Acceptance criteria
-                <span id="task-acceptance-progress" class="subtasks-progress-legend" hidden></span>
-              </legend>
-              <ul id="task-acceptance-list" class="acceptance-list" role="list" aria-label="Acceptance criteria"></ul>
-              <div class="task-subtask-add-row">
-                <input
-                  type="text"
-                  id="task-acceptance-input"
-                  placeholder="Add a criterion and press Enter…"
-                  autocomplete="off"
-                  maxlength="200"
-                  aria-label="New acceptance criterion"
-                >
-              </div>
-            </fieldset>
-            <fieldset class="form-group" id="task-comments-fieldset">
-              <legend>
-                <span data-lucide="message-square" aria-hidden="true"></span>
-                Comments
-                <span id="task-comments-count" class="subtasks-progress-legend" hidden></span>
-              </legend>
-              <ul id="task-comments-list" class="comments-list" role="list" aria-label="Comments"></ul>
-              <div class="task-comment-add-row">
-                <input type="text" id="task-comment-author" placeholder="You" autocomplete="off" maxlength="60" aria-label="Comment author">
-                <input type="text" id="task-comment-input" placeholder="Add a comment…" autocomplete="off" maxlength="500" aria-label="New comment">
-                <button type="button" id="task-comment-add-btn" class="btn-small" aria-label="Add comment">Add</button>
-              </div>
-            </fieldset>
-            <fieldset class="form-group" id="task-attachments-fieldset">
-              <legend>
-                <span data-lucide="paperclip" aria-hidden="true"></span>
-                Attachments
-              </legend>
-              <ul id="task-attachments-list" class="attachments-list" role="list" aria-label="Attachments"></ul>
-              <div class="task-attachment-add-row">
-                <input type="text" id="task-attachment-name" placeholder="Name" autocomplete="off" maxlength="80" aria-label="Attachment name">
-                <input type="url" id="task-attachment-url" placeholder="https://…" autocomplete="off" aria-label="Attachment URL">
-                <button type="button" id="task-attachment-add-btn" class="btn-small" aria-label="Add attachment">Add</button>
-              </div>
-            </fieldset>
-            <fieldset class="form-group" id="task-custom-fields-fieldset">
-              <legend>
-                <span data-lucide="settings-2" aria-hidden="true"></span>
-                Custom fields
-              </legend>
-              <ul id="task-custom-fields-list" class="custom-fields-list" role="list" aria-label="Custom fields"></ul>
-              <div class="task-custom-field-add-row">
-                <input type="text" id="task-custom-field-key" placeholder="Field" autocomplete="off" maxlength="60" aria-label="Custom field name">
-                <input type="text" id="task-custom-field-value" placeholder="Value" autocomplete="off" maxlength="200" aria-label="Custom field value">
-                <button type="button" id="task-custom-field-add-btn" class="btn-small" aria-label="Add custom field">Add</button>
-              </div>
             </fieldset>
           </div>
         </div>
@@ -484,52 +388,6 @@
           </div>
           <div class="form-group checkbox-group">
             <label>
-              <input id="settings-show-priority" type="checkbox">
-              Show task priority
-            </label>
-          </div>
-          <div class="form-group checkbox-group">
-            <label>
-              <input id="settings-show-due-date" type="checkbox">
-              Show task due date
-            </label>
-          </div>
-          <div class="form-group">
-            <label for="settings-countdown-urgent-threshold">Countdown: urgent threshold (days)</label>
-            <input
-              id="settings-countdown-urgent-threshold"
-              type="number"
-              min="1"
-              max="365"
-              step="1"
-              inputmode="numeric"
-              aria-label="Days until due date to show countdown in red (urgent)"
-              title="Tasks due within this many days show in red"
-            >
-            <small class="form-help">Tasks due within this many days show in <span style="font-weight:800; color:var(--color-danger)">red</span></small>
-          </div>
-          <div class="form-group">
-            <label for="settings-countdown-warning-threshold">Countdown: warning threshold (days)</label>
-            <input
-              id="settings-countdown-warning-threshold"
-              type="number"
-              min="1"
-              max="365"
-              step="1"
-              inputmode="numeric"
-              aria-label="Days until due date to show countdown in amber (warning)"
-              title="Tasks due within this many days show in amber (must be > urgent threshold)"
-            >
-            <small class="form-help">Tasks due within this many days show in <span style="font-weight:800; color:var(--color-warning)">amber</span> (must be ≥ urgent threshold)</small>
-          </div>
-          <div class="form-group checkbox-group">
-            <label>
-              <input id="settings-show-age" type="checkbox">
-              Show task age
-            </label>
-          </div>
-          <div class="form-group checkbox-group">
-            <label>
               <input id="settings-show-change-date" type="checkbox">
               Show updated date/time
             </label>
@@ -537,16 +395,6 @@
           <div class="form-group">
             <label for="settings-locale">Locale</label>
             <select id="settings-locale" aria-label="Select locale"></select>
-          </div>
-          <div class="form-group">
-            <label for="settings-default-priority">Default task priority</label>
-            <select id="settings-default-priority" aria-label="Select default task priority">
-              <option value="urgent">Urgent</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-              <option value="none" selected>None</option>
-            </select>
           </div>
         </section>
         <section class="settings-section" aria-labelledby="settings-swimlanes-title">
@@ -565,7 +413,6 @@
             <select id="settings-swimlane-group-by" aria-label="Group swim lanes by">
               <option value="label">Label</option>
               <option value="label-group">Label Group</option>
-              <option value="priority">Priority</option>
             </select>
           </div>
           <div id="settings-swimlane-label-group-field" class="form-group" hidden>
@@ -747,7 +594,7 @@
           <h4>Tasks</h4>
           <ul>
             <li><strong>Add:</strong> Use the <strong>Add task</strong> row in the <strong>Backlog</strong> column to add a task by hand; the other columns are driven by agents.</li>
-            <li><strong>Edit:</strong> Click a task row to edit details (title, description, priority, due date, labels).</li>
+            <li><strong>Edit:</strong> Click a task row to edit details (title, description, type, estimate, acceptance criteria and notes).</li>
             <li><strong>Move:</strong> Drag and drop between columns.</li>
           </ul>
         </section>
@@ -772,7 +619,7 @@
         <section>
           <h4>Settings</h4>
           <ul>
-            <li>Open <strong>Settings</strong> from the controls menu to customize what shows on cards (e.g., priority, due dates) and your preferences.</li>
+            <li>Open <strong>Settings</strong> from the controls menu to customize board preferences (locale, updated date/time, swim lanes).</li>
           </ul>
         </section>
 

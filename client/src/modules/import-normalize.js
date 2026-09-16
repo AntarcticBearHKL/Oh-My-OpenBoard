@@ -1,4 +1,4 @@
-import { normalizePriority, isHexColor, normalizeDueDate, normalizeSubTasks } from './normalize.js';
+import { isHexColor } from './normalize.js';
 import { DONE_COLUMN_ID } from './constants.js';
 
 export function normalizeImportedTasks(tasks, doneColumnIds = new Set([DONE_COLUMN_ID])) {
@@ -9,15 +9,8 @@ export function normalizeImportedTasks(tasks, doneColumnIds = new Set([DONE_COLU
     const legacyText = typeof t?.text === 'string' ? t.text : String(t?.text ?? '');
     const title = typeof t?.title === 'string' ? t.title : legacyText;
     const description = typeof t?.description === 'string' ? t.description : String(t?.description ?? '');
-    const priority = normalizePriority(t?.priority);
-    const dueDateRaw =
-      typeof t?.dueDate === 'string'
-        ? t.dueDate
-        : (typeof t?.['due-date'] === 'string' ? t['due-date'] : String(t?.dueDate ?? t?.['due-date'] ?? ''));
-    const dueDate = normalizeDueDate(dueDateRaw);
     const column = typeof t?.column === 'string' ? t.column : String(t?.column ?? '');
 
-    const labels = Array.isArray(t?.labels) ? t.labels.map((l) => (typeof l === 'string' ? l : String(l))) : [];
     const order = Number.isFinite(t?.order) ? t.order : undefined;
     const creationDate = typeof t?.creationDate === 'string' ? t.creationDate : undefined;
     const changeDate =
@@ -48,10 +41,7 @@ export function normalizeImportedTasks(tasks, doneColumnIds = new Set([DONE_COLU
       id: id.trim(),
       title: title.trim(),
       description: description.trim(),
-      priority,
-      dueDate: dueDate.trim(),
       column: column.trim(),
-      subTasks: normalizeSubTasks(t?.subTasks),
       ...(order !== undefined ? { order } : {}),
       ...(creationDate ? { creationDate } : {}),
       ...(typeof changeDate === 'string' && changeDate.trim() ? { changeDate: changeDate.trim() } : {}),
@@ -59,8 +49,7 @@ export function normalizeImportedTasks(tasks, doneColumnIds = new Set([DONE_COLU
       relationships: Array.isArray(t?.relationships) ? t.relationships : [],
       ...(columnHistory && columnHistory.length ? { columnHistory } : {}),
       ...(swimlaneLabelId !== undefined ? { swimlaneLabelId } : {}),
-      ...(swimlaneLabelGroup !== undefined ? { swimlaneLabelGroup } : {}),
-      labels
+      ...(swimlaneLabelGroup !== undefined ? { swimlaneLabelGroup } : {})
     };
   });
 
@@ -115,15 +104,10 @@ export function normalizeImportedLabels(labels) {
 export function normalizeImportedSettings(settings) {
   if (!settings || typeof settings !== 'object' || Array.isArray(settings)) return null;
 
-  const showPriority = settings.showPriority !== false;
-  const showDueDate = settings.showDueDate !== false;
-  const showAge = settings.showAge !== false;
   const showChangeDate = settings.showChangeDate !== false;
   const locale = typeof settings.locale === 'string' && settings.locale.trim() ? settings.locale.trim() : undefined;
-  const defaultPriorityRaw = typeof settings.defaultPriority === 'string' ? settings.defaultPriority : undefined;
-  const defaultPriority = defaultPriorityRaw ? normalizePriority(defaultPriorityRaw) : undefined;
   const swimLanesEnabled = settings.swimLanesEnabled === true;
-  const swimLaneGroupBy = ['label', 'label-group', 'priority'].includes(settings.swimLaneGroupBy)
+  const swimLaneGroupBy = ['label', 'label-group'].includes(settings.swimLaneGroupBy)
     ? settings.swimLaneGroupBy
     : 'label';
   const swimLaneLabelGroup = typeof settings.swimLaneLabelGroup === 'string' ? settings.swimLaneLabelGroup.trim() : '';
@@ -143,12 +127,8 @@ export function normalizeImportedSettings(settings) {
         .map((entry) => entry.trim())
     : [];
   return {
-    showPriority,
-    showDueDate,
-    showAge,
     showChangeDate,
     ...(locale ? { locale } : {})
-    ,...(defaultPriority ? { defaultPriority } : {})
     ,swimLanesEnabled
     ,swimLaneGroupBy
     ,swimLaneLabelGroup

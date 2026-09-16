@@ -35,7 +35,7 @@ export function linkifyText(text) {
   return frag;
 }
 
-export function createTaskElement(task, settings, labelsMap = null, today = null) {
+export function createTaskElement(task, settings) {
   // Track pointer position to distinguish clicks from drag gestures.
   let pointerDownPos = null;
   const li = h('li', {
@@ -62,8 +62,7 @@ export function createTaskElement(task, settings, labelsMap = null, today = null
   const titleEl = h('span', { class: 'task-title' },
     (typeof task.title === 'string' && task.title.trim() !== '') ? task.title : legacyTitle
   );
-  const { meta, staleTask } = buildTaskMeta(task, settings, labelsMap, today);
-  if (staleTask) li.classList.add('task-stale');
+  const meta = buildTaskMeta(task, settings);
 
   const actions = h('div', { class: 'task-actions' });
 
@@ -96,5 +95,11 @@ export function createTaskElement(task, settings, labelsMap = null, today = null
     meta,
     actions
   ));
+
+  const description = typeof task.description === 'string' ? task.description.trim() : '';
+  if (description) {
+    li.appendChild(h('span', { class: 'task-description-preview', title: description }, description));
+  }
+
   return li;
 }

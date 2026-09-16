@@ -1,5 +1,4 @@
 import {
-  normalizePriority as sharedNormalizePriority,
   isHexColor,
   defaultColumnColor,
   normalizeStringKeys,
@@ -7,7 +6,7 @@ import {
 import { DONE_COLUMN_ROLE, FIXED_COLUMNS, isDoneColumn } from './constants.js';
 import { defaultSettings } from './storage-defaults.js';
 
-const ALLOWED_SWIMLANE_GROUP_BY = new Set(['label', 'label-group', 'priority']);
+const ALLOWED_SWIMLANE_GROUP_BY = new Set(['label', 'label-group']);
 
 export function normalizeColumn(c) {
   const color = isHexColor(c?.color) ? c.color.trim() : defaultColumnColor(c?.id);
@@ -33,10 +32,6 @@ export function ensureFixedColumns(columns) {
   });
 }
 
-export function normalizePriority(value) {
-  return sharedNormalizePriority(value);
-}
-
 function normalizeSwimLaneGroupBy(value) {
   const normalized = (value || '').toString().trim().toLowerCase();
   return ALLOWED_SWIMLANE_GROUP_BY.has(normalized) ? normalized : 'label';
@@ -49,22 +44,7 @@ function normalizeSwimLaneLabelGroup(value) {
 export function normalizeSettings(raw) {
   const obj = raw && typeof raw === 'object' ? raw : {};
   const locale = typeof obj.locale === 'string' && obj.locale.trim() ? obj.locale.trim() : defaultSettings().locale;
-  const showPriority = obj.showPriority !== false;
-  const showDueDate = obj.showDueDate !== false;
-  const showAge = obj.showAge !== false;
   const showChangeDate = obj.showChangeDate !== false;
-  const priority = (obj.defaultPriority || '').toString().trim().toLowerCase();
-  const defaultPriority = normalizePriority(priority);
-
-  const rawUrgentThreshold = Number.parseInt((obj.countdownUrgentThreshold ?? '').toString(), 10);
-  const countdownUrgentThreshold = Number.isFinite(rawUrgentThreshold)
-    ? Math.min(365, Math.max(1, rawUrgentThreshold))
-    : 3;
-
-  const rawWarningThreshold = Number.parseInt((obj.countdownWarningThreshold ?? '').toString(), 10);
-  const countdownWarningThreshold = Number.isFinite(rawWarningThreshold)
-    ? Math.min(365, Math.max(countdownUrgentThreshold, rawWarningThreshold))
-    : 10;
 
   const swimLanesEnabled = obj.swimLanesEnabled === true;
   const swimLaneGroupBy = normalizeSwimLaneGroupBy(obj.swimLaneGroupBy);
@@ -77,14 +57,8 @@ export function normalizeSettings(raw) {
     : {};
 
   return {
-    showPriority,
-    showDueDate,
-    showAge,
     showChangeDate,
     locale,
-    defaultPriority,
-    countdownUrgentThreshold,
-    countdownWarningThreshold,
     swimLanesEnabled,
     swimLaneGroupBy,
     swimLaneLabelGroup,

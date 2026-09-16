@@ -1,6 +1,6 @@
 import { generateUUID } from './utils.js';
 import { MAX_LABEL_NAME_LENGTH } from './constants.js';
-import { getActiveBoardId, loadLabels, loadTasks } from './storage.js';
+import { getActiveBoardId, loadLabels } from './storage.js';
 import { scheduleDomainEvent } from './event-sourcing/emitter.js';
 
 
@@ -107,20 +107,8 @@ export function updateLabel(labelId, name, color, group = '') {
 // Delete a label
 export function deleteLabel(labelId) {
   const boardId = getActiveBoardId();
-  const liveTasks = loadTasks();
 
-  // The label.removed_from_task events clean the label off each task and
   // label.deleted soft-deletes the label; the reducer is the sole writer (ADR-0005).
-  liveTasks
-    .filter((task) => task.labels?.includes(labelId))
-    .forEach((task) => {
-      scheduleDomainEvent({
-        type: 'label.removed_from_task',
-        boardId,
-        entityId: task.id,
-        payload: { label_id: labelId }
-      });
-    });
   scheduleDomainEvent({
     type: 'label.deleted',
     boardId,

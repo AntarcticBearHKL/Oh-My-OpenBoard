@@ -121,7 +121,7 @@ async function boot() {
 
   // Snapshot first (idempotent hydration), then tail strictly after snapshot.seq
   // so there is no replay gap and no duplicate application. This avoids full-log
-  // replay, which is unsafe because `subtask.added` is not idempotent.
+  // replay, which is unsafe for non-idempotent events.
   try {
     const snapshot = await getJson(snapshotUrl);
     if (Number.isFinite(snapshot?.seq)) {

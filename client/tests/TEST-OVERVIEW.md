@@ -4,10 +4,10 @@ Generated from test source. Do not edit by hand; run `npm run test:overview` fro
 
 ## Fast Scan
 
-- Test files: 54
-- Test cases: 484
-- Unit files: 29
-- DOM integration files: 25
+- Test files: 57
+- Test cases: 521
+- Unit files: 30
+- DOM integration files: 27
 - E2E files: 0
 
 ## How To Use This
@@ -46,7 +46,6 @@ These lists compare source/spec filenames against test file names and test title
 - `src/modules/reports-main.js`
 - `src/modules/reports-utils.js`
 - `src/modules/reports-velocity.js`
-- `src/modules/reports.js`
 - `src/modules/roadmap.js`
 - `src/modules/spotlight.js`
 - `src/modules/storage-board-mutations.js`
@@ -93,31 +92,31 @@ These lists compare source/spec filenames against test file names and test title
 - Type: Unit
 - Test count: 25
 
-- `tests/unit/agile.test.js:20` normalizeTaskType accepts the four agile types
-- `tests/unit/agile.test.js:27` normalizeTaskType is case-insensitive and trims
-- `tests/unit/agile.test.js:32` normalizeTaskType falls back to task for invalid values
-- `tests/unit/agile.test.js:41` normalizeEstimate keeps finite numbers including zero
-- `tests/unit/agile.test.js:48` normalizeEstimate returns null for empty or invalid values
-- `tests/unit/agile.test.js:58` normalizeAcceptanceCriteria keeps entries and coerces done
-- `tests/unit/agile.test.js:69` normalizeAcceptanceCriteria generates missing ids and drops empty text
-- `tests/unit/agile.test.js:82` normalizeAcceptanceCriteria returns [] for non-arrays
-- `tests/unit/agile.test.js:89` normalizeComments defaults the author to You and preserves timestamps
-- `tests/unit/agile.test.js:98` normalizeComments stamps a missing timestamp and drops empty text
-- `tests/unit/agile.test.js:107` normalizeAttachments keeps name, url and optional metadata
-- `tests/unit/agile.test.js:121` normalizeAttachments omits missing size/type and filters incomplete entries
-- `tests/unit/agile.test.js:135` normalizeCustomFields trims keys and preserves values
-- `tests/unit/agile.test.js:141` normalizeCustomFields drops empty keys and non-objects
-- `tests/unit/agile.test.js:149` boardKeyPrefix uses initials for multi-word names
-- `tests/unit/agile.test.js:155` boardKeyPrefix uses the first three chars for single-word names
-- `tests/unit/agile.test.js:161` boardKeyPrefix strips non-alphanumerics and falls back to BRD
-- `tests/unit/agile.test.js:169` nextTaskKey starts at 1 for a fresh board
-- `tests/unit/agile.test.js:173` nextTaskKey increments past the highest matching suffix
-- `tests/unit/agile.test.js:178` nextTaskKey ignores malformed or foreign keys
+- `tests/unit/agile.test.js:21` normalizeTaskType accepts the four agile types
+- `tests/unit/agile.test.js:28` normalizeTaskType is case-insensitive and trims
+- `tests/unit/agile.test.js:33` normalizeTaskType falls back to task for invalid values
+- `tests/unit/agile.test.js:42` normalizeEstimate keeps finite numbers including zero
+- `tests/unit/agile.test.js:49` normalizeEstimate returns null for empty or invalid values
+- `tests/unit/agile.test.js:59` normalizeAcceptanceCriteria keeps entries and coerces done
+- `tests/unit/agile.test.js:70` normalizeAcceptanceCriteria generates missing ids and drops empty text
+- `tests/unit/agile.test.js:83` normalizeAcceptanceCriteria returns [] for non-arrays
+- `tests/unit/agile.test.js:90` normalizeComments defaults the author to You and preserves timestamps
+- `tests/unit/agile.test.js:99` normalizeComments stamps a missing timestamp and drops empty text
+- `tests/unit/agile.test.js:108` normalizeAttachments keeps name, url and optional metadata
+- `tests/unit/agile.test.js:122` normalizeAttachments omits missing size/type and filters incomplete entries
+- `tests/unit/agile.test.js:136` normalizeCustomFields trims keys and preserves values
+- `tests/unit/agile.test.js:142` normalizeCustomFields drops empty keys and non-objects
+- `tests/unit/agile.test.js:150` boardKeyPrefix uses initials for multi-word names
+- `tests/unit/agile.test.js:156` boardKeyPrefix uses the first three chars for single-word names
+- `tests/unit/agile.test.js:162` boardKeyPrefix strips non-alphanumerics and falls back to BRD
+- `tests/unit/agile.test.js:170` nextTaskKey starts at 1 for a fresh board
+- `tests/unit/agile.test.js:174` nextTaskKey increments past the highest matching suffix
+- `tests/unit/agile.test.js:179` nextTaskKey ignores malformed or foreign keys
 - `tests/unit/agile.test.js:186` isBlockedColumnId matches the Blocked column by id
-- `tests/unit/agile.test.js:202` taskAgeDays counts whole days since creationDate
-- `tests/unit/agile.test.js:207` taskAgeDays returns null without a valid creationDate
-- `tests/unit/agile.test.js:212` isTaskStale flags tasks unchanged for more than 14 days
-- `tests/unit/agile.test.js:218` isTaskStale falls back to creationDate and ignores missing dates
+- `tests/unit/agile.test.js:203` taskAgeDays counts whole days since creationDate
+- `tests/unit/agile.test.js:208` taskAgeDays returns null without a valid creationDate
+- `tests/unit/agile.test.js:213` isTaskStale flags tasks unchanged for more than 14 days
+- `tests/unit/agile.test.js:219` isTaskStale falls back to creationDate and ignores missing dates
 
 ### Backend Event Schema
 
@@ -151,6 +150,26 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/unit/board-groups.test.js:132` board → group mapping > getGroupIdForBoard returns null for unknown boards
 - `tests/unit/board-groups.test.js:137` board → group mapping > pruneBoardGroups drops mappings for boards that no longer exist
 
+### Claim Timer
+
+- Path: `tests/unit/claim-timer.test.js`
+- Type: Unit
+- Test count: 13
+
+- `tests/unit/claim-timer.test.js:14` counts from claimedAt while the task is In Progress
+- `tests/unit/claim-timer.test.js:19` freezes at doneDate in the done column
+- `tests/unit/claim-timer.test.js:24` detects the legacy done column id by default
+- `tests/unit/claim-timer.test.js:29` freezes at blockedAt in the Blocked column
+- `tests/unit/claim-timer.test.js:34` returns null outside the timing columns
+- `tests/unit/claim-timer.test.js:39` falls back to the first In Progress entry in columnHistory when claimedAt is missing
+- `tests/unit/claim-timer.test.js:52` returns null when neither claimedAt nor an In Progress history entry exists
+- `tests/unit/claim-timer.test.js:58` returns null when the claim start cannot be derived
+- `tests/unit/claim-timer.test.js:63` returns null for negative durations
+- `tests/unit/claim-timer.test.js:71` treats an unparseable claimedAt as missing and falls back to history
+- `tests/unit/claim-timer.test.js:80` returns null for invalid end timestamps
+- `tests/unit/claim-timer.test.js:95` accepts a millisecond timestamp for now
+- `tests/unit/claim-timer.test.js:100` claimTiming reports live windows for In Progress and frozen windows otherwise
+
 ### Columns
 
 - Path: `tests/unit/columns.test.js`
@@ -182,27 +201,32 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/unit/dateutils.test.js`
 - Type: Unit
-- Test count: 19
+- Test count: 24
 
-- `tests/unit/dateutils.test.js:13` calculateDaysUntilDue returns 0 when due today
-- `tests/unit/dateutils.test.js:17` calculateDaysUntilDue returns 1 when due tomorrow
-- `tests/unit/dateutils.test.js:21` calculateDaysUntilDue returns negative when overdue
-- `tests/unit/dateutils.test.js:25` calculateDaysUntilDue returns positive for future date
-- `tests/unit/dateutils.test.js:29` calculateDaysUntilDue returns null for empty string
-- `tests/unit/dateutils.test.js:33` calculateDaysUntilDue returns null for invalid date
-- `tests/unit/dateutils.test.js:40` formatCountdown returns empty string for null
-- `tests/unit/dateutils.test.js:44` formatCountdown returns today for 0 days
-- `tests/unit/dateutils.test.js:48` formatCountdown returns tomorrow for 1 day
-- `tests/unit/dateutils.test.js:52` formatCountdown returns day count for 2-29 days
-- `tests/unit/dateutils.test.js:57` formatCountdown returns months and days for 30+ days
-- `tests/unit/dateutils.test.js:64` formatCountdown returns overdue with singular day
-- `tests/unit/dateutils.test.js:68` formatCountdown returns overdue with plural days
-- `tests/unit/dateutils.test.js:72` formatCountdown returns overdue with months
-- `tests/unit/dateutils.test.js:79` getCountdownClassName returns countdown-none for null
-- `tests/unit/dateutils.test.js:83` getCountdownClassName returns countdown-urgent within threshold
-- `tests/unit/dateutils.test.js:89` getCountdownClassName returns countdown-warning within threshold
-- `tests/unit/dateutils.test.js:94` getCountdownClassName returns countdown-normal beyond thresholds
-- `tests/unit/dateutils.test.js:99` getCountdownClassName respects custom thresholds
+- `tests/unit/dateutils.test.js:14` calculateDaysUntilDue returns 0 when due today
+- `tests/unit/dateutils.test.js:18` calculateDaysUntilDue returns 1 when due tomorrow
+- `tests/unit/dateutils.test.js:22` calculateDaysUntilDue returns negative when overdue
+- `tests/unit/dateutils.test.js:26` calculateDaysUntilDue returns positive for future date
+- `tests/unit/dateutils.test.js:30` calculateDaysUntilDue returns null for empty string
+- `tests/unit/dateutils.test.js:34` calculateDaysUntilDue returns null for invalid date
+- `tests/unit/dateutils.test.js:41` formatCountdown returns empty string for null
+- `tests/unit/dateutils.test.js:45` formatCountdown returns today for 0 days
+- `tests/unit/dateutils.test.js:49` formatCountdown returns tomorrow for 1 day
+- `tests/unit/dateutils.test.js:53` formatCountdown returns day count for 2-29 days
+- `tests/unit/dateutils.test.js:58` formatCountdown returns months and days for 30+ days
+- `tests/unit/dateutils.test.js:65` formatCountdown returns overdue with singular day
+- `tests/unit/dateutils.test.js:69` formatCountdown returns overdue with plural days
+- `tests/unit/dateutils.test.js:73` formatCountdown returns overdue with months
+- `tests/unit/dateutils.test.js:80` getCountdownClassName returns countdown-none for null
+- `tests/unit/dateutils.test.js:84` getCountdownClassName returns countdown-urgent within threshold
+- `tests/unit/dateutils.test.js:90` getCountdownClassName returns countdown-warning within threshold
+- `tests/unit/dateutils.test.js:95` getCountdownClassName returns countdown-normal beyond thresholds
+- `tests/unit/dateutils.test.js:100` getCountdownClassName respects custom thresholds
+- `tests/unit/dateutils.test.js:108` formatElapsedDuration returns empty string for invalid or negative values
+- `tests/unit/dateutils.test.js:115` formatElapsedDuration shows under a minute
+- `tests/unit/dateutils.test.js:120` formatElapsedDuration shows whole minutes under an hour
+- `tests/unit/dateutils.test.js:126` formatElapsedDuration shows hours with zero-padded minutes
+- `tests/unit/dateutils.test.js:132` formatElapsedDuration shows days with remaining hours
 
 ### Backfill
 
@@ -619,6 +643,21 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/dom/authsync.test.js:135` register flow > shows confirm-email message after successful registration
 - `tests/dom/authsync.test.js:154` register flow > does not call loginUser after registerUser
 
+### Board Create Modal
+
+- Path: `tests/dom/board-create-modal.test.js`
+- Type: DOM Integration
+- Test count: 8
+
+- `tests/dom/board-create-modal.test.js:267` board create modal > opening from a group's New iteration control shows the iteration wording and an empty name
+- `tests/dom/board-create-modal.test.js:278` board create modal > opening as a plain board shows the Create New Board wording
+- `tests/dom/board-create-modal.test.js:286` board create modal > submitting a whitespace-only name alerts and creates nothing
+- `tests/dom/board-create-modal.test.js:302` board create modal > a successful submit creates the board, activates it, hides the modal and dispatches kanban:boards-changed
+- `tests/dom/board-create-modal.test.js:326` board create modal > a successful submit opened from a group assigns the board to that group
+- `tests/dom/board-create-modal.test.js:337` board create modal > the create dialog markup has no template picker
+- `tests/dom/board-create-modal.test.js:354` Backlog manual add > the Backlog add-task control opens the full task modal for that column
+- `tests/dom/board-create-modal.test.js:398` Backlog manual add > columns other than Backlog expose no manual add-task control
+
 ### Board Sidebar
 
 - Path: `tests/dom/board-sidebar.test.js`
@@ -669,16 +708,17 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/dom/column-summary.test.js`
 - Type: DOM Integration
-- Test count: 8
+- Test count: 9
 
-- `tests/dom/column-summary.test.js:40` column header renders the summary button next to the task counter
-- `tests/dom/column-summary.test.js:50` summary button opens a full-screen dialog with the stored summary and metadata
-- `tests/dom/column-summary.test.js:77` summary dialog shows the empty state when the column has no summary
-- `tests/dom/column-summary.test.js:86` summary dialog closes on Escape and the close control, and restores the trigger state
-- `tests/dom/column-summary.test.js:101` summary dialog closes on a backdrop click but stays open on a panel click
-- `tests/dom/column-summary.test.js:112` clicking the summary button again closes the dialog
-- `tests/dom/column-summary.test.js:123` the edit affordance saves a human override through saveColumnSummary
-- `tests/dom/column-summary.test.js:136` the column still renders its task list without an add-task row
+- `tests/dom/column-summary.test.js:43` column header renders the summary button next to the task counter
+- `tests/dom/column-summary.test.js:53` summary button opens a full-screen dialog with the stored summary and metadata
+- `tests/dom/column-summary.test.js:80` summary dialog shows the empty state when the column has no summary
+- `tests/dom/column-summary.test.js:89` summary dialog closes on Escape and the close control, and restores the trigger state
+- `tests/dom/column-summary.test.js:104` summary dialog closes on a backdrop click but stays open on a panel click
+- `tests/dom/column-summary.test.js:115` clicking the summary button again closes the dialog
+- `tests/dom/column-summary.test.js:126` the edit affordance saves a human override through saveColumnSummary
+- `tests/dom/column-summary.test.js:139` the column still renders its add-task row and task list
+- `tests/dom/column-summary.test.js:148` clicking the add-task row opens the create-task modal for the column
 
 ### Dragdrop
 
@@ -847,6 +887,23 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/dom/skills-modal.test.js:226` skills modal > Escape closes the modal
 - `tests/dom/skills-modal.test.js:235` skills modal > re-renders when DATA_CHANGED is emitted
 
+### Task Card Claim Timer
+
+- Path: `tests/dom/task-card-claim-timer.test.js`
+- Type: DOM Integration
+- Test count: 10
+
+- `tests/dom/task-card-claim-timer.test.js:54` renders the claim chip with claimant and elapsed time for a claimed task
+- `tests/dom/task-card-claim-timer.test.js:68` shows no claim chip for an unclaimed task
+- `tests/dom/task-card-claim-timer.test.js:73` shows no claim chip in a column without a timing rule
+- `tests/dom/task-card-claim-timer.test.js:83` keeps the plain assignee initials chip when there is no claim timing
+- `tests/dom/task-card-claim-timer.test.js:93` falls back to the assignee as claimant when claimedBy is empty
+- `tests/dom/task-card-claim-timer.test.js:107` the shared tick updates only the elapsed text
+- `tests/dom/task-card-claim-timer.test.js:123` the tick skips hidden documents and catches up when visible again
+- `tests/dom/task-card-claim-timer.test.js:137` starting the ticker twice does not leave extra intervals behind
+- `tests/dom/task-card-claim-timer.test.js:152` freezes the elapsed time for a blocked task
+- `tests/dom/task-card-claim-timer.test.js:170` freezes the elapsed time for a finished task at doneDate
+
 ### Task Card Delete
 
 - Path: `tests/dom/task-card-delete.test.js`
@@ -884,10 +941,10 @@ These lists compare source/spec filenames against test file names and test title
 - Type: DOM Integration
 - Test count: 4
 
-- `tests/dom/task-modal-agile.test.js:203` add form saves agile fields through addTask
-- `tests/dom/task-modal-agile.test.js:245` acceptance criteria can be toggled and removed before saving
-- `tests/dom/task-modal-agile.test.js:269` editing a task into Blocked prompts for and stores a reason
-- `tests/dom/task-modal-agile.test.js:295` a normal edit does not prompt for a blocked reason
+- `tests/dom/task-modal-agile.test.js:204` add form saves agile fields through addTask
+- `tests/dom/task-modal-agile.test.js:246` acceptance criteria can be toggled and removed before saving
+- `tests/dom/task-modal-agile.test.js:270` editing a task into Blocked prompts for and stores a reason
+- `tests/dom/task-modal-agile.test.js:296` a normal edit does not prompt for a blocked reason
 
 ### Task Modal Annotations
 

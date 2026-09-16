@@ -148,7 +148,7 @@ test('saveLabels persists to IDB and survives a session reset', async () => {
 test('saveSettings persists to IDB and survives a session reset', async () => {
   await initStorage();
   ensureBoardsInitialized();
-  saveSettings({ swimLanesEnabled: true, showAge: false });
+  saveSettings({ swimLanesEnabled: true, showChangeDate: true });
 
   await _flushPersistsForTesting();
   const boardId = getActiveBoardId();
@@ -158,7 +158,7 @@ test('saveSettings persists to IDB and survives a session reset', async () => {
   setActiveBoardId(boardId);
   const settings = loadSettings();
   expect(settings.swimLanesEnabled).toBe(true);
-  expect(settings.showAge).toBe(false);
+  expect(settings.showChangeDate).toBe(true);
 });
 
 test('createBoard persists board list and per-board defaults across sessions', async () => {
@@ -319,7 +319,7 @@ test('migrates legacy done id to a UUID done role and rewrites task references',
   expect(task?.id).toMatch(UUID_RE);
   expect(task?.column).toBe(doneColumn.id);
   expect(task?.columnHistory?.[0]?.column).toBe(doneColumn.id);
-  expect(task?.labels).toEqual([label.id]);
+  expect(task?.labels).toBeUndefined();
 });
 
 test('migration cleans up localStorage after completing', async () => {

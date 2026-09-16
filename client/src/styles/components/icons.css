@@ -33,12 +33,31 @@
 }
 
 /* Add task button (swimlane headers) */
+.add-task-btn-icon {
+  padding: 3px;
+  border: 1px dashed var(--column-accent-hover);
+  background-color: color-mix(in srgb, var(--column-accent) 8%, transparent);
+  opacity: 1;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
 .add-task-btn-icon:hover {
-  background-color: var(--primary-soft);
+  background-color: color-mix(in srgb, var(--column-accent) 22%, transparent);
+  border-style: solid;
+}
+
+.add-task-btn-icon:active {
+  background-color: color-mix(in srgb, var(--column-accent) 32%, transparent);
+  border-style: solid;
+}
+
+.add-task-btn-icon:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .add-task-btn-icon svg {
-  stroke: var(--color-primary);
+  stroke: var(--column-accent-hover);
 }
 
 /* Delete task button */

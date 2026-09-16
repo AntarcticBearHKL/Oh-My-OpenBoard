@@ -31,7 +31,7 @@ function ago(ms) {
 }
 
 function render(task) {
-  const element = createTaskElement(task, {}, new Map(), NOW);
+  const element = createTaskElement(task, {});
   mountToBody(element);
   return element;
 }

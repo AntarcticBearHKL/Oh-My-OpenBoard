@@ -19,44 +19,25 @@ export function growDoneVisibleCount() {
   doneVisibleCount += DONE_LOAD_MORE_SIZE;
 }
 
-function taskMatchesFilter(task, queryLower, labelsById) {
+function taskMatchesFilter(task, queryLower) {
   if (!queryLower) return true;
 
   const legacyTitle = typeof task?.text === 'string' ? task.text : '';
   const title = (typeof task?.title === 'string' && task.title.trim() !== '') ? task.title : legacyTitle;
   const description = typeof task?.description === 'string' ? task.description : '';
-  const priority = typeof task?.priority === 'string' ? task.priority : '';
 
   if (title.toLowerCase().includes(queryLower)) return true;
   if (description.toLowerCase().includes(queryLower)) return true;
-  if (priority.toLowerCase().includes(queryLower)) return true;
-
-  const labelIds = Array.isArray(task?.labels) ? task.labels : [];
-  for (const id of labelIds) {
-    const label = labelsById.get(id);
-    if (!label) continue;
-    if (label.name.includes(queryLower)) return true;
-    if (label.group.includes(queryLower)) return true;
-  }
 
   return false;
 }
 
 // Apply the active board filter. Shared by the full rebuild and the reconcile
 // adapter so both show and count exactly the same tasks under a filter.
-export function selectVisibleTasks(tasks, labels) {
+export function selectVisibleTasks(tasks) {
   const queryLower = (boardFilterQuery || '').toString().trim().toLowerCase();
   if (!queryLower) return tasks;
-  const labelsById = new Map(
-    labels.map((l) => [
-      l.id,
-      {
-        name: (l.name || '').toString().trim().toLowerCase(),
-        group: (l.group || '').toString().trim().toLowerCase(),
-      },
-    ])
-  );
-  return tasks.filter((t) => taskMatchesFilter(t, queryLower, labelsById));
+  return tasks.filter((t) => taskMatchesFilter(t, queryLower));
 }
 
 // The Done-column "Show more" control. Shared by the full rebuild and the

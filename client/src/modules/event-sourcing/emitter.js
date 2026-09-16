@@ -10,9 +10,7 @@ export const DOMAIN_EVENT_TYPES = new Set([
   'board.created', 'board.updated', 'board.deleted',
   'column.created', 'column.updated',
   'label.created', 'label.updated', 'label.deleted',
-  'label.added_to_task', 'label.removed_from_task',
   'task.created', 'task.updated', 'task.moved', 'task.deleted',
-  'subtask.added', 'subtask.toggled', 'subtask.text_changed', 'subtask.removed',
   'relationship.added', 'relationship.removed',
   'settings.updated'
 ]);

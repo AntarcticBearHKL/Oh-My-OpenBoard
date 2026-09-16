@@ -1,16 +1,11 @@
 // Thin facade — delegates to per-modal sub-modules.
-// Keeps shared utilities (setupModalCloseHandlers, Escape handler, help modal)
-// and wires cross-modal coordination (task-modal ↔ labels-modal).
+// Keeps shared utilities (setupModalCloseHandlers, Escape handler, help modal).
 
 import { showModal, showEditModal, hideModal as hideTaskModal,
-  initializeTaskModalHandlers, updateTaskLabelsSelection,
-  getSelectedTaskLabels, setSelectedTaskLabels,
-  getReturnToTaskModalFlag, setReturnToTaskModalFlag,
-  getSelectCreatedLabelFlag, setSelectCreatedLabelFlag,
-  restoreTaskModalAfterLabelsManager } from './task-modal.js';
+  initializeTaskModalHandlers } from './task-modal.js';
 import { showLabelsModal, hideLabelsModal,
   initializeLabelsModalHandlers } from './labels-modal.js';
-import { hideLabelModal, setTaskModalState } from './label-edit-modal.js';
+import { hideLabelModal } from './label-edit-modal.js';
 import { hideBoardsModal,
   initializeBoardsModalHandlers, showBoardsModal } from './boards-modal.js';
 import { hideBoardRenameModal } from './board-rename-modal.js';
@@ -42,21 +37,6 @@ function hideHelpModal() {
   const modal = $id('help-modal');
   modal.classList.add('hidden');
 }
-
-// ── Cross-modal coordination ────────────────────────────────────────
-// Wire the task-modal state into labels-modal so it can auto-select
-// newly created labels and return to the task editor.
-
-setTaskModalState({
-  getSelectedTaskLabels,
-  setSelectedTaskLabels,
-  getReturnToTaskModalFlag,
-  setReturnToTaskModalFlag,
-  getSelectCreatedLabelFlag,
-  setSelectCreatedLabelFlag,
-  updateTaskLabelsSelection,
-  restoreTaskModalAfterLabelsManager
-});
 
 // ── Master initializer ──────────────────────────────────────────────
 

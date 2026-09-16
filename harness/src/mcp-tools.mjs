@@ -61,14 +61,15 @@ function resolveColumn(boardId, ref) {
   throw new Error(`Column not found: ${ref}`);
 }
 
-function resolveLabel(boardId, ref) {
-  const labels = getLabels(boardId);
-  const byId = labels.find((l) => l.id === ref);
-  if (byId) return byId;
-  const lower = String(ref).toLowerCase();
-  const byName = labels.find((l) => String(l.name).toLowerCase() === lower);
-  if (byName) return byName;
-  throw new Error(`Label not found: ${ref}`);
+const BACKLOG_COLUMN_ID = '00000000-0000-4000-8000-000000000030';
+
+function resolveBacklogColumn(boardId) {
+  const columns = getColumns(boardId);
+  if (columns.length === 0) throw new Error(`Board ${boardId} has no columns`);
+  return columns.find((c) => c.id === BACKLOG_COLUMN_ID)
+    || columns.find((c) => String(c.name).toLowerCase() === 'backlog')
+    || columns.find((c) => !isDoneColumn(c))
+    || columns[0];
 }
 
 function findTaskOrThrow(taskId) {
@@ -279,7 +280,7 @@ export function registerTools(server) {
     const tasks = getTasks(bid)
       .slice()
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-      .map((t) => ({ id: t.id, title: t.title, column: t.column, priority: t.priority, dueDate: t.dueDate || '', labels: t.labels || [] }));
+      .map((t) => ({ id: t.id, key: t.key || '', title: t.title, column: t.column, type: t.type || 'task', estimate: Number.isFinite(t.estimate) ? t.estimate : null }));
     return ok({ board, columns, labels, tasks, settings: getSettings(bid) });
   });
 
@@ -297,40 +298,35 @@ export function registerTools(server) {
 
   server.registerTool('list_tasks', {
     title: 'List tasks',
-    description: 'List tasks, optionally filtered by column (id or name), priority, label (id or name), or a text search over title/description.',
+    description: 'List tasks, optionally filtered by column (id or name) or a text search over title/description.',
     inputSchema: {
       boardId: z.string().optional(),
       column: z.string().optional(),
-      priority: z.enum(['urgent', 'high', 'medium', 'low', 'none']).optional(),
-      label: z.string().optional(),
       search: z.string().optional()
     }
-  }, async ({ boardId, column, priority, label, search }) => {
+  }, async ({ boardId, column, search }) => {
     const bid = resolveBoard(boardId);
     const columnId = column ? resolveColumn(bid, column).id : null;
-    const labelId = label ? resolveLabel(bid, label).id : null;
     const needle = search ? String(search).toLowerCase() : null;
     const columnsById = new Map(getColumns(bid).map((c) => [c.id, c.name]));
     const tasks = getTasks(bid)
       .filter((t) => (columnId ? t.column === columnId : true))
-      .filter((t) => (priority ? (t.priority || 'none') === priority : true))
-      .filter((t) => (labelId ? (t.labels || []).includes(labelId) : true))
       .filter((t) => (needle ? `${t.title || ''} ${t.description || ''}`.toLowerCase().includes(needle) : true))
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
       .map((t) => ({
         id: t.id, key: t.key || '', title: t.title, description: t.description || '',
         column: t.column, columnName: columnsById.get(t.column) || '',
-        priority: t.priority || 'none', dueDate: t.dueDate || '',
         type: t.type || 'task', estimate: Number.isFinite(t.estimate) ? t.estimate : null,
         claimedBy: t.claimedBy || '', assignee: t.assignee || '',
-        labels: t.labels || [], subTasks: t.subTasks || [], relationships: t.relationships || []
+        acceptanceCriteria: t.acceptanceCriteria || [], comments: t.comments || [],
+        relationships: t.relationships || []
       }));
     return ok(tasks);
   });
 
   server.registerTool('get_task', {
     title: 'Get task',
-    description: 'Get a single task by id, including subtasks and relationships.',
+    description: 'Get a single task by id, including acceptance criteria, comments and relationships.',
     inputSchema: { taskId: z.string() }
   }, async ({ taskId }) => {
     const { task, boardId } = findTaskOrThrow(taskId);
@@ -342,26 +338,21 @@ export function registerTools(server) {
 
   server.registerTool('create_task', {
     title: 'Create task',
-    description: 'Create a task. Supports type, story-point estimate, assignee, parent (epic) and acceptance criteria.',
+    description: 'Create a task in Backlog. Supports type, story-point estimate, assignee, parent (epic) and acceptance criteria.',
     inputSchema: {
       title: z.string().describe('Task title'),
       description: z.string().optional(),
-      column: z.string().optional(),
-      priority: z.enum(['urgent', 'high', 'medium', 'low', 'none']).optional(),
       type: z.enum(['story', 'bug', 'task', 'spike']).optional(),
       estimate: z.number().optional().describe('Story points'),
       assignee: z.string().optional(),
       parentId: z.string().optional().describe('Parent / epic task id'),
       acceptanceCriteria: z.array(z.string()).optional(),
-      labels: z.array(z.string()).optional(),
-      dueDate: z.string().optional().describe('ISO date, e.g. 2026-09-30'),
       boardId: z.string().optional()
     }
-  }, async ({ title, description = '', column, priority = 'none', type = 'task', estimate = null, assignee = '', parentId = '', acceptanceCriteria = [], labels = [], dueDate = '', boardId }) => {
+  }, async ({ title, description = '', type = 'task', estimate = null, assignee = '', parentId = '', acceptanceCriteria = [], boardId }) => {
     const bid = resolveBoard(boardId);
     if (!title || !String(title).trim()) throw new Error('title is required');
-    const targetColumn = resolveColumn(bid, column);
-    const labelIds = labels.map((ref) => resolveLabel(bid, ref).id);
+    const backlogColumn = resolveBacklogColumn(bid);
     const tasks = getTasks(bid);
     const now = new Date().toISOString();
     const id = randomUUID();
@@ -370,62 +361,50 @@ export function registerTools(server) {
       key: nextTaskKey(bid, tasks),
       title: String(title).trim(),
       description,
-      priority,
       type,
       estimate: Number.isFinite(estimate) ? estimate : null,
       assignee,
       parentId: parentId || null,
       acceptanceCriteria: acceptanceCriteria.map((text) => ({ id: randomUUID(), text: String(text), done: false })),
-      dueDate,
-      column: targetColumn.id,
-      order: maxOrder(targetColumn.id, tasks) + 1,
-      labels: labelIds,
+      column: backlogColumn.id,
+      order: maxOrder(backlogColumn.id, tasks) + 1,
       creationDate: now,
       changeDate: now,
-      columnHistory: [{ column: targetColumn.id, at: now }],
-      subTasks: [],
+      columnHistory: [{ column: backlogColumn.id, at: now }],
       comments: [],
-      attachments: [],
-      customFields: {}
+      blockedReason: '',
+      blockedAt: null
     };
     emit('task.created', { boardId: bid, entityId: id, payload: { task }, actor: AGENT });
-    return ok({ id, key: task.key, boardId: bid, column: targetColumn.id, columnName: targetColumn.name, task });
+    return ok({ id, key: task.key, boardId: bid, column: backlogColumn.id, columnName: backlogColumn.name, task });
   });
 
   server.registerTool('update_task', {
     title: 'Update task',
-    description: 'Update task fields: title, description, priority, type, estimate, assignee, parentId, dueDate, blockedReason, customFields or labels.',
+    description: 'Update task fields: title, description, type, estimate, assignee, parentId or blockedReason.',
     inputSchema: {
       taskId: z.string(),
       title: z.string().optional(),
       description: z.string().optional(),
-      priority: z.enum(['urgent', 'high', 'medium', 'low', 'none']).optional(),
       type: z.enum(['story', 'bug', 'task', 'spike']).optional(),
       estimate: z.number().nullable().optional(),
       assignee: z.string().optional(),
       parentId: z.string().nullable().optional(),
-      dueDate: z.string().optional(),
-      blockedReason: z.string().optional(),
-      customFields: z.record(z.string(), z.any()).optional(),
-      labels: z.array(z.string()).optional()
+      blockedReason: z.string().optional()
     }
-  }, async ({ taskId, title, description, priority, type, estimate, assignee, parentId, dueDate, blockedReason, customFields, labels }) => {
+  }, async ({ taskId, title, description, type, estimate, assignee, parentId, blockedReason }) => {
     const { boardId } = findTaskOrThrow(taskId);
     const fields = {};
     if (title !== undefined) fields.title = title;
     if (description !== undefined) fields.description = description;
-    if (priority !== undefined) fields.priority = priority;
     if (type !== undefined) fields.type = type;
     if (estimate !== undefined) fields.estimate = estimate;
     if (assignee !== undefined) fields.assignee = assignee;
     if (parentId !== undefined) fields.parentId = parentId || null;
-    if (dueDate !== undefined) fields.dueDate = dueDate;
     if (blockedReason !== undefined) {
       fields.blockedReason = blockedReason;
       fields.blockedAt = blockedReason ? new Date().toISOString() : null;
     }
-    if (customFields !== undefined) fields.customFields = customFields;
-    if (labels !== undefined) fields.labels = labels.map((ref) => resolveLabel(boardId, ref).id);
     if (Object.keys(fields).length === 0) throw new Error('No fields to update');
     fields.changeDate = new Date().toISOString();
     emit('task.updated', { boardId, entityId: taskId, payload: { fields }, actor: AGENT });
@@ -475,50 +454,6 @@ export function registerTools(server) {
     return ok({ deleted: taskId });
   });
 
-  // ── Subtasks ────────────────────────────────────────────────────────────────
-
-  server.registerTool('add_subtask', {
-    title: 'Add subtask',
-    description: 'Add a subtask to a task.',
-    inputSchema: { taskId: z.string(), title: z.string() }
-  }, async ({ taskId, title }) => {
-    const { boardId } = findTaskOrThrow(taskId);
-    const id = randomUUID();
-    const subtask = { id, title: String(title), completed: false };
-    emit('subtask.added', { boardId, entityId: taskId, payload: { subtask }, actor: AGENT });
-    return ok(subtask);
-  });
-
-  server.registerTool('toggle_subtask', {
-    title: 'Toggle subtask',
-    description: 'Mark a subtask complete or incomplete.',
-    inputSchema: { taskId: z.string(), subtaskId: z.string(), completed: z.boolean() }
-  }, async ({ taskId, subtaskId, completed }) => {
-    const { boardId } = findTaskOrThrow(taskId);
-    emit('subtask.toggled', { boardId, entityId: taskId, payload: { subtask_id: subtaskId, completed: completed === true }, actor: AGENT });
-    return ok({ taskId, subtaskId, completed: completed === true });
-  });
-
-  server.registerTool('update_subtask', {
-    title: 'Update subtask title',
-    description: 'Rename a subtask.',
-    inputSchema: { taskId: z.string(), subtaskId: z.string(), title: z.string() }
-  }, async ({ taskId, subtaskId, title }) => {
-    const { boardId } = findTaskOrThrow(taskId);
-    emit('subtask.text_changed', { boardId, entityId: taskId, payload: { subtask_id: subtaskId, title }, actor: AGENT });
-    return ok({ taskId, subtaskId, title });
-  });
-
-  server.registerTool('remove_subtask', {
-    title: 'Remove subtask',
-    description: 'Remove a subtask from a task.',
-    inputSchema: { taskId: z.string(), subtaskId: z.string() }
-  }, async ({ taskId, subtaskId }) => {
-    const { boardId } = findTaskOrThrow(taskId);
-    emit('subtask.removed', { boardId, entityId: taskId, payload: { subtask_id: subtaskId }, actor: AGENT });
-    return ok({ removed: subtaskId });
-  });
-
   // ── Labels ──────────────────────────────────────────────────────────────────
 
   server.registerTool('create_label', {
@@ -536,28 +471,6 @@ export function registerTools(server) {
     const label = { id, name: String(name), color, group };
     emit('label.created', { boardId: bid, entityId: id, payload: { label }, actor: AGENT });
     return ok(label);
-  });
-
-  server.registerTool('add_label_to_task', {
-    title: 'Add label to task',
-    description: 'Attach a label (id or name) to a task.',
-    inputSchema: { taskId: z.string(), label: z.string() }
-  }, async ({ taskId, label }) => {
-    const { boardId } = findTaskOrThrow(taskId);
-    const resolved = resolveLabel(boardId, label);
-    emit('label.added_to_task', { boardId, entityId: taskId, payload: { label_id: resolved.id }, actor: AGENT });
-    return ok({ taskId, labelId: resolved.id, labelName: resolved.name });
-  });
-
-  server.registerTool('remove_label_from_task', {
-    title: 'Remove label from task',
-    description: 'Detach a label (id or name) from a task.',
-    inputSchema: { taskId: z.string(), label: z.string() }
-  }, async ({ taskId, label }) => {
-    const { boardId } = findTaskOrThrow(taskId);
-    const resolved = resolveLabel(boardId, label);
-    emit('label.removed_from_task', { boardId, entityId: taskId, payload: { label_id: resolved.id }, actor: AGENT });
-    return ok({ taskId, labelId: resolved.id });
   });
 
   // ── Columns ─────────────────────────────────────────────────────────────────
@@ -639,35 +552,6 @@ export function registerTools(server) {
     const comments = (Array.isArray(task.comments) ? task.comments : []).filter((comment) => comment.id !== commentId);
     emit('task.updated', { boardId, entityId: taskId, payload: { fields: { comments, changeDate: new Date().toISOString() } }, actor: AGENT });
     return ok({ removed: commentId });
-  });
-
-  server.registerTool('add_attachment', {
-    title: 'Add attachment',
-    description: 'Attach a link/file reference to a task.',
-    inputSchema: {
-      taskId: z.string(),
-      name: z.string(),
-      url: z.string(),
-      size: z.number().optional(),
-      type: z.string().optional()
-    }
-  }, async ({ taskId, name, url, size = null, type = '' }) => {
-    const { task, boardId } = findTaskOrThrow(taskId);
-    const attachment = { id: randomUUID(), name: String(name), url: String(url), size, type };
-    const attachments = [...(Array.isArray(task.attachments) ? task.attachments : []), attachment];
-    emit('task.updated', { boardId, entityId: taskId, payload: { fields: { attachments, changeDate: new Date().toISOString() } }, actor: AGENT });
-    return ok(attachment);
-  });
-
-  server.registerTool('remove_attachment', {
-    title: 'Remove attachment',
-    description: 'Remove an attachment from a task.',
-    inputSchema: { taskId: z.string(), attachmentId: z.string() }
-  }, async ({ taskId, attachmentId }) => {
-    const { task, boardId } = findTaskOrThrow(taskId);
-    const attachments = (Array.isArray(task.attachments) ? task.attachments : []).filter((entry) => entry.id !== attachmentId);
-    emit('task.updated', { boardId, entityId: taskId, payload: { fields: { attachments, changeDate: new Date().toISOString() } }, actor: AGENT });
-    return ok({ removed: attachmentId });
   });
 
   server.registerTool('set_blocked_reason', {
@@ -838,28 +722,6 @@ export function registerTools(server) {
     return ok(list);
   });
 
-  server.registerTool('reorder_subtasks', {
-    title: 'Reorder subtasks',
-    description: 'Reorder a task subtasks. Pass the full array of subtask ids in the new order.',
-    inputSchema: { taskId: z.string(), order: z.array(z.string()) }
-  }, async ({ taskId, order }) => {
-    const { task, boardId } = findTaskOrThrow(taskId);
-    const existing = Array.isArray(task.subTasks) ? task.subTasks : [];
-    const byId = new Map(existing.map((entry) => [entry.id, entry]));
-    const next = [];
-    for (const id of (Array.isArray(order) ? order : [])) {
-      if (byId.has(id)) { next.push(byId.get(id)); byId.delete(id); }
-    }
-    for (const entry of existing) if (byId.has(entry.id)) next.push(entry);
-    emit('task.updated', {
-      boardId,
-      entityId: taskId,
-      payload: { fields: { subTasks: next, changeDate: new Date().toISOString() } },
-      actor: AGENT
-    });
-    return ok(next.map((entry) => entry.id));
-  });
-
   server.registerTool('claim_task', {
     title: 'Claim task',
     description: 'Claim a task for the current subagent: records claimedBy/claimedAt and sets the assignee when empty.',
@@ -1027,7 +889,7 @@ export function registerTools(server) {
 
   server.registerTool('update_settings', {
     title: 'Update board settings',
-    description: 'Merge fields into a board settings object (e.g. showPriority, showDueDate, swimLanesEnabled).',
+    description: 'Merge fields into a board settings object (e.g. showChangeDate, swimLanesEnabled).',
     inputSchema: {
       boardId: z.string().optional(),
       fields: z.record(z.string(), z.any())

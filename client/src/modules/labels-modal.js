@@ -7,7 +7,7 @@ import { renderIcons } from './icons.js';
 import { createAccordionSection } from './accordion.js';
 import { labelTextColor } from './utils.js';
 import { $id, h } from './dom.js';
-import { showLabelModal, getTaskModalState, initializeLabelEditModalHandlers } from './label-edit-modal.js';
+import { showLabelModal, initializeLabelEditModalHandlers } from './label-edit-modal.js';
 
 function getLabelsManagerSearchQuery() {
   const input = $id('labels-search');
@@ -89,11 +89,7 @@ export function showLabelsModal() {
   if (input) input.value = '';
   renderLabelsList();
   $id('labels-modal').classList.remove('hidden');
-
-  const returnFlag = getTaskModalState()?.getReturnToTaskModalFlag();
-  if (!returnFlag) {
-    $id('labels-search')?.focus();
-  }
+  $id('labels-search')?.focus();
 }
 
 function hideLabelsModal() {
@@ -101,11 +97,6 @@ function hideLabelsModal() {
 
   const input = $id('labels-search');
   if (input) input.value = '';
-
-  const state = getTaskModalState();
-  if (state?.getReturnToTaskModalFlag()) {
-    state.restoreTaskModalAfterLabelsManager();
-  }
 }
 
 export function initializeLabelsModalHandlers(setupModalCloseHandlers) {
@@ -115,18 +106,8 @@ export function initializeLabelsModalHandlers(setupModalCloseHandlers) {
   $id('add-label-btn').addEventListener('click', () => showLabelModal());
   setupModalCloseHandlers('labels-modal', hideLabelsModal);
 
-  // Listen for open-label-modal events from task-modal
-  document.addEventListener('kanban:open-label-modal', (e) => {
-    const detail = e.detail || {};
-    showLabelModal(null, {
-      openedFromTaskEditor: !!detail.openedFromTaskEditor,
-      initialName: detail.initialName || ''
-    });
-  });
-
   initializeLabelEditModalHandlers(setupModalCloseHandlers, {
-    refreshLabelsList: renderLabelsList,
-    hideLabelsManager: hideLabelsModal
+    refreshLabelsList: renderLabelsList
   });
 }
 

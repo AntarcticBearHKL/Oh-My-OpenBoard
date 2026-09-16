@@ -66,47 +66,42 @@ test('updateTask emits one task.updated event with HLC entity id and minimal fie
 });
 
 
-test('label mutations emit label entity and task membership events', async () => {
-  saveTasks([{ id: 'task-a', title: 'Task', column: 'todo', labels: [] }]);
+test('label mutations emit label entity events only', async () => {
+  saveTasks([{ id: 'task-a', title: 'Task', column: 'todo' }]);
 
   const addEvents = await collectEvents(() => {
     addLabel('Bug', '#ff0000', 'Type');
   });
   const labelId = addEvents[0].entity_id;
-  const updateEvents = await collectEvents(() => {
-    updateTask('task-a', 'Task', '', 'none', '', 'todo', [labelId]);
-  });
   const deleteEvents = await collectEvents(() => {
     deleteLabel(labelId);
   });
 
   expect(addEvents.map((event) => event.type)).toEqual(['label.created']);
-  expect(updateEvents.map((event) => event.type)).toContain('label.added_to_task');
-  expect(deleteEvents.map((event) => event.type)).toEqual(['label.removed_from_task', 'label.deleted']);
+  expect(deleteEvents.map((event) => event.type)).toEqual(['label.deleted']);
 });
 
-test('updateTask emits collection-op and move events for non-scalar changes', async () => {
+test('updateTask emits relationship and move events for non-scalar changes', async () => {
   saveColumns([
     { id: 'todo', name: 'To Do', color: '#3b82f6', order: 1 },
     { id: 'doing', name: 'Doing', color: '#f59e0b', order: 2 }
   ]);
   saveTasks([
-    { id: 'task-a', title: 'Task', column: 'todo', labels: [], relationships: [], subTasks: [], columnHistory: [] },
-    { id: 'task-b', title: 'Other', column: 'todo', labels: [], relationships: [], subTasks: [], columnHistory: [] }
+    { id: 'task-a', title: 'Task', column: 'todo', relationships: [], columnHistory: [] },
+    { id: 'task-b', title: 'Other', column: 'todo', relationships: [], columnHistory: [] }
   ]);
 
   const events = await collectEvents(() => {
-    updateTask('task-a', 'Task', '', 'none', '', 'doing', ['label-a'], [{ type: 'related', targetTaskId: 'task-b' }], [
-      { id: 'sub-a', title: 'Check', completed: false }
-    ]);
+    updateTask('task-a', 'Task', '', {
+      column: 'doing',
+      relationships: [{ type: 'related', targetTaskId: 'task-b' }]
+    });
   });
 
   expect(events.map((event) => event.type)).toEqual([
     'task.moved',
-    'label.added_to_task',
     'relationship.added',
-    'relationship.added',
-    'subtask.added'
+    'relationship.added'
   ]);
   // The forward link is emitted for task-a and its inverse for task-b, so the
   // bidirectional relationship replays from events alone (ADR-0005).

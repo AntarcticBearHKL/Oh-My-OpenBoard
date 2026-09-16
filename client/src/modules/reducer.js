@@ -18,8 +18,6 @@ function cloneState(state) {
     boards: [...state.boards],
     tasks: state.tasks.map((task) => ({
       ...task,
-      ...(Array.isArray(task.labels) ? { labels: [...task.labels] } : {}),
-      ...(Array.isArray(task.subTasks) ? { subTasks: task.subTasks.map((subtask) => ({ ...subtask })) } : {}),
       ...(Array.isArray(task.relationships) ? { relationships: task.relationships.map((relationship) => ({ ...relationship })) } : {}),
       ...(Array.isArray(task.columnHistory) ? { columnHistory: [...task.columnHistory] } : {})
     })),
@@ -39,45 +37,6 @@ function updateTaskById(state, taskId, updater) {
   };
 }
 
-function applySubtaskAdded(state, event) {
-  const subtask = event.payload?.subtask;
-  if (!subtask || typeof subtask !== 'object') return state;
-  return updateTaskById(state, event.entity_id, (task) => ({
-    ...task,
-    subTasks: [...(Array.isArray(task.subTasks) ? task.subTasks : []), { ...subtask }]
-  }));
-}
-
-function applySubtaskRemoved(state, event) {
-  const subtaskId = event.payload?.subtask_id;
-  return updateTaskById(state, event.entity_id, (task) => ({
-    ...task,
-    subTasks: (Array.isArray(task.subTasks) ? task.subTasks : []).filter((subtask) => subtask.id !== subtaskId)
-  }));
-}
-
-function applySubtaskToggled(state, event) {
-  const subtaskId = event.payload?.subtask_id;
-  const completed = event.payload?.completed === true;
-  return updateTaskById(state, event.entity_id, (task) => ({
-    ...task,
-    subTasks: (Array.isArray(task.subTasks) ? task.subTasks : []).map((subtask) => (
-      subtask.id === subtaskId ? { ...subtask, completed } : subtask
-    ))
-  }));
-}
-
-function applySubtaskTextChanged(state, event) {
-  const subtaskId = event.payload?.subtask_id;
-  const title = typeof event.payload?.title === 'string' ? event.payload.title : '';
-  return updateTaskById(state, event.entity_id, (task) => ({
-    ...task,
-    subTasks: (Array.isArray(task.subTasks) ? task.subTasks : []).map((subtask) => (
-      subtask.id === subtaskId ? { ...subtask, title } : subtask
-    ))
-  }));
-}
-
 function applyRelationshipAdded(state, event) {
   const relationship = event.payload?.relationship;
   if (!relationship || typeof relationship !== 'object') return state;
@@ -95,23 +54,6 @@ function applyRelationshipRemoved(state, event) {
     ...task,
     relationships: (Array.isArray(task.relationships) ? task.relationships : [])
       .filter((entry) => !(entry.targetTaskId === targetTaskId && entry.type === relationshipType))
-  }));
-}
-
-function applyLabelAddedToTask(state, event) {
-  const labelId = event.payload?.label_id;
-  if (typeof labelId !== 'string' || !labelId) return state;
-  return updateTaskById(state, event.entity_id, (task) => {
-    const labels = Array.isArray(task.labels) ? task.labels : [];
-    return labels.includes(labelId) ? task : { ...task, labels: [...labels, labelId] };
-  });
-}
-
-function applyLabelRemovedFromTask(state, event) {
-  const labelId = event.payload?.label_id;
-  return updateTaskById(state, event.entity_id, (task) => ({
-    ...task,
-    labels: (Array.isArray(task.labels) ? task.labels : []).filter((id) => id !== labelId)
   }));
 }
 
@@ -187,14 +129,8 @@ const handlers = {
   'task.updated': applyTaskUpdated,
   'task.moved': applyTaskMoved,
   'task.deleted': applyTaskDeleted,
-  'subtask.added': applySubtaskAdded,
-  'subtask.removed': applySubtaskRemoved,
-  'subtask.toggled': applySubtaskToggled,
-  'subtask.text_changed': applySubtaskTextChanged,
   'relationship.added': applyRelationshipAdded,
   'relationship.removed': applyRelationshipRemoved,
-  'label.added_to_task': applyLabelAddedToTask,
-  'label.removed_from_task': applyLabelRemovedFromTask,
   'label.created': applyLabelCreated,
   'label.updated': applyLabelUpdated,
   'label.deleted': applyLabelDeleted,

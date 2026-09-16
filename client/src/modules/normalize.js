@@ -1,15 +1,6 @@
 // Shared normalizers and validators — eliminates duplication across modules.
 
-import { PRIORITY_SET, DEFAULT_PRIORITY, DEFAULT_COLUMN_COLOR, DONE_COLUMN_ID } from './constants.js';
-
-/**
- * Validate and normalize a priority value.
- * Returns DEFAULT_PRIORITY ('none') for invalid values.
- */
-export function normalizePriority(value) {
-  const v = (value || '').toString().trim().toLowerCase();
-  return PRIORITY_SET.has(v) ? v : DEFAULT_PRIORITY;
-}
+import { DEFAULT_COLUMN_COLOR, DONE_COLUMN_ID } from './constants.js';
 
 /**
  * Check whether a string is a valid hex color (#abc or #aabbcc).
@@ -31,16 +22,6 @@ export function normalizeHexColor(value, fallback = DEFAULT_COLUMN_COLOR) {
 export function boardDisplayName(board) {
   const name = typeof board?.name === 'string' ? board.name.trim() : '';
   return name || 'Untitled board';
-}
-
-/**
- * Normalize a due date value.
- * Strips ISO time portion if present.
- */
-export function normalizeDueDate(value) {
-  const v = (value || '').toString().trim();
-  if (v.length >= 10 && v.includes('T')) return v.slice(0, 10);
-  return v;
 }
 
 export function normalizeActivityLog(input) {
@@ -87,27 +68,6 @@ export function normalizeRelationships(value) {
     seen.add(targetTaskId);
     return true;
   });
-}
-
-/**
- * Normalize a subTasks array.
- * Filters entries with missing id or title, coerces types.
- */
-export function normalizeSubTasks(value) {
-  if (!Array.isArray(value)) return [];
-  return value
-    .filter((entry) => {
-      if (!entry || typeof entry !== 'object') return false;
-      const id = (entry.id || '').toString().trim();
-      const title = (entry.title || '').toString().trim();
-      return id && title;
-    })
-    .map((entry, index) => ({
-      id: entry.id.toString().trim(),
-      title: entry.title.toString().trim(),
-      completed: entry.completed === true,
-      order: Number.isFinite(entry.order) ? entry.order : index + 1
-    }));
 }
 
 /**

@@ -1,6 +1,5 @@
 import { getActiveBoardId, isDoneColumnId, loadColumns, loadLabels, loadSettings, loadTasks } from './storage.js';
 import { isBlockedColumnId } from './agile.js';
-import { normalizePriority } from './normalize.js';
 import { applySwimLaneAssignment } from './swimlanes.js';
 import { reorderColumnTasks } from './task-helpers.js';
 import { scheduleDomainEvent } from './event-sourcing/emitter.js';
@@ -184,18 +183,12 @@ export function updateTaskPositionsFromDrop(evt, options = {}) {
     }
   });
 
-  // A swimlane drag reassigns the moved task's lane-defining fields (labels,
-  // priority, swimlane markers). task.moved only carries column/order, so emit
-  // the field changes too — otherwise they would not replay from events (ADR-0005).
+  // A swimlane drag reassigns the moved task's lane markers. task.moved only
+  // carries column/order, so emit the field changes too — otherwise they would
+  // not replay from events (ADR-0005).
   if (isSwimlaneView) {
     const movedFinal = finalTasks.find((task) => task.id === movedTaskId);
     const fields = {};
-    if (JSON.stringify(movedTask.labels || []) !== JSON.stringify(movedFinal.labels || [])) {
-      fields.labels = movedFinal.labels;
-    }
-    if (normalizePriority(movedTask.priority) !== normalizePriority(movedFinal.priority)) {
-      fields.priority = movedFinal.priority;
-    }
     if ((movedTask.swimlaneLabelId || '') !== (movedFinal.swimlaneLabelId || '')) {
       fields.swimlaneLabelId = movedFinal.swimlaneLabelId || '';
     }

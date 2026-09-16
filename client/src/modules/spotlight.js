@@ -1,5 +1,5 @@
 import { renderIcons } from './icons.js';
-import { loadColumns, loadLabels, loadTasks } from './storage.js';
+import { loadColumns, loadTasks } from './storage.js';
 import { showEditModal } from './modals.js';
 
 const MAX_RESULTS = 20;
@@ -11,30 +11,22 @@ let listEl = null;
 let results = [];
 let activeIndex = 0;
 
-function labelMap() {
-  return new Map(loadLabels().map((label) => [label.id, label]));
-}
-
 function columnMap() {
   return new Map(loadColumns().map((column) => [column.id, column]));
 }
 
-function scoreTask(task, labels, columns, query) {
+function scoreTask(task, columns, query) {
   const title = String(task.title || '').toLowerCase();
   const key = String(task.key || '').toLowerCase();
   const assignee = String(task.assignee || '').toLowerCase();
   const description = String(task.description || '').toLowerCase();
   const columnName = String(columns.get(task.column)?.name || '').toLowerCase();
-  const labelNames = (task.labels || [])
-    .map((id) => String(labels.get(id)?.name || '').toLowerCase())
-    .join(' ');
 
   if (key === query) return 100;
   if (title.startsWith(query)) return 90;
   if (key.startsWith(query)) return 80;
   if (title.includes(query)) return 70;
   if (assignee.startsWith(query)) return 60;
-  if (labelNames.includes(query)) return 50;
   if (columnName.includes(query)) return 40;
   if (assignee.includes(query)) return 35;
   if (description.includes(query)) return 20;
@@ -44,10 +36,9 @@ function scoreTask(task, labels, columns, query) {
 function search(query) {
   const needle = query.trim().toLowerCase();
   if (!needle) return [];
-  const labels = labelMap();
   const columns = columnMap();
   return loadTasks()
-    .map((task) => ({ task, score: scoreTask(task, labels, columns, needle) }))
+    .map((task) => ({ task, score: scoreTask(task, columns, needle) }))
     .filter((entry) => entry.score >= 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, MAX_RESULTS)
@@ -83,7 +74,6 @@ function renderResults(query) {
     return;
   }
 
-  const labels = labelMap();
   const columns = columnMap();
 
   results.forEach((task, index) => {
@@ -104,9 +94,7 @@ function renderResults(query) {
     meta.className = 'spotlight-meta';
     meta.textContent = [
       columns.get(task.column)?.name,
-      String(task.priority || '').toUpperCase(),
-      task.assignee,
-      ...(task.labels || []).map((id) => labels.get(id)?.name)
+      task.assignee
     ].filter(Boolean).join(' · ');
 
     item.append(key, title, meta);
@@ -161,7 +149,7 @@ function buildOverlay() {
   input.id = 'spotlight-input';
   input.type = 'text';
   input.autocomplete = 'off';
-  input.placeholder = 'Search tasks by name, key, assignee or label…';
+  input.placeholder = 'Search tasks by name, key, column or assignee…';
   input.setAttribute('aria-label', 'Search tasks');
   input.setAttribute('aria-controls', 'spotlight-results');
 

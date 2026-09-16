@@ -45,7 +45,7 @@ function renderTask() {
     column: 'todo',
     labels: []
   };
-  const element = createTaskElement(task, {}, new Map(), new Date('2026-05-17T00:00:00Z'));
+  const element = createTaskElement(task, {});
   document.body.appendChild(element);
   return element;
 }

@@ -1,10 +1,10 @@
 import { nowIso } from './utils.js';
 import { DONE_COLUMN_ID, isDoneColumn } from './constants.js';
-import { normalizeRelationships, normalizeSubTasks } from './normalize.js';
+import { normalizeRelationships } from './normalize.js';
 import { scheduleReadModelPersist } from './idb-store.js';
 import { ensureBoardsInitialized, getActiveBoardId } from './storage-boards.js';
 import { defaultColumns, defaultLabels } from './storage-defaults.js';
-import { normalizeColumn, ensureFixedColumns, normalizePriority } from './storage-normalize.js';
+import { normalizeColumn, ensureFixedColumns } from './storage-normalize.js';
 import {
   state,
   taskCacheByBoard,
@@ -74,15 +74,7 @@ export function loadTasks() {
       // the projection is now the sole writer of state (ADR-0005), those edits
       // must not leak back into the read model and double-apply with events.
       if (Array.isArray(task.columnHistory)) task.columnHistory = task.columnHistory.map((e) => ({ ...e }));
-      if (Array.isArray(task.subTasks)) task.subTasks = task.subTasks.map((s) => ({ ...s }));
-      if (Array.isArray(task.labels)) task.labels = [...task.labels];
       if (Array.isArray(task.relationships)) task.relationships = task.relationships.map((r) => ({ ...r }));
-
-      const nextPriority = normalizePriority(task.priority);
-      if (task.priority !== nextPriority) {
-        task.priority = nextPriority;
-        didChange = true;
-      }
 
       const isDone = isDoneColumnId(task.column);
       const hasDoneDate = typeof task.doneDate === 'string' && task.doneDate.trim() !== '';
@@ -136,12 +128,6 @@ export function loadTasks() {
       const nextRelationships = normalizeRelationships(task.relationships);
       if (JSON.stringify(task.relationships) !== JSON.stringify(nextRelationships)) {
         task.relationships = nextRelationships;
-        didChange = true;
-      }
-
-      const nextSubTasks = normalizeSubTasks(task.subTasks);
-      if (JSON.stringify(task.subTasks) !== JSON.stringify(nextSubTasks)) {
-        task.subTasks = nextSubTasks;
         didChange = true;
       }
 

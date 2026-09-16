@@ -192,14 +192,14 @@ test('saveColumns + loadColumns roundtrip locks to the four fixed columns', () =
   expect(loaded.map((c) => c.name)).toEqual(['Backlog', 'In Progress', 'Blocked', 'Finished']);
 });
 
-test('loadTasks normalizes priority on load', () => {
-  createBoard('Priority Test');
+test('loadTasks leaves legacy removed fields in stored data untouched', () => {
+  createBoard('Legacy Test');
   saveTasks([
     { id: 't1', title: 'Test', priority: 'INVALID', column: 'todo' }
   ]);
   const tasks = loadTasks();
   const task = tasks.find(t => t.id === 't1');
-  expect(task.priority).toBe('none');
+  expect(task.title).toBe('Test');
 });
 
 test('loadTasks adds doneDate to tasks in Done column that lack it', () => {
@@ -246,10 +246,9 @@ test('loadLabels adds empty group to labels missing it', () => {
 test('loadSettings returns defaults on fresh board', () => {
   createBoard('Settings Test');
   const settings = loadSettings();
-  expect(settings.showPriority).toBe(true);
+  expect(settings.showChangeDate).toBe(false);
   expect(settings.swimLanesEnabled).toBe(false);
   expect(settings.swimLaneGroupBy).toBe('label');
-  expect(settings.defaultPriority).toBe('none');
 });
 
 test('loadSettings normalizes invalid swimLaneGroupBy', () => {
@@ -259,11 +258,11 @@ test('loadSettings normalizes invalid swimLaneGroupBy', () => {
   expect(settings.swimLaneGroupBy).toBe('label');
 });
 
-test('loadSettings clamps countdownWarningThreshold to be >= urgentThreshold', () => {
-  createBoard('Threshold Test');
-  saveSettings({ countdownUrgentThreshold: 10, countdownWarningThreshold: 5 });
+test('loadSettings drops the legacy priority swimLaneGroupBy', () => {
+  createBoard('Priority Group By Test');
+  saveSettings({ swimLaneGroupBy: 'priority' });
   const settings = loadSettings();
-  expect(settings.countdownWarningThreshold >= settings.countdownUrgentThreshold).toBe(true);
+  expect(settings.swimLaneGroupBy).toBe('label');
 });
 
 

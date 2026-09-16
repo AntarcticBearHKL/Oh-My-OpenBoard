@@ -82,10 +82,6 @@ const FIXTURE = `
       </header>
       <section id="task-summary" class="task-summary hidden" aria-label="Task summary">
         <div class="task-summary-badges">
-          <span id="task-summary-type" class="task-type task-type--task"></span>
-          <span id="task-summary-estimate" class="task-summary-chip hidden"></span>
-          <span id="task-summary-priority" class="task-priority priority-none"></span>
-          <span id="task-summary-due" class="task-summary-chip hidden"></span>
           <span id="task-summary-column" class="task-summary-chip hidden"></span>
         </div>
         <div id="task-claim-chip" class="task-claim-chip hidden">
@@ -114,24 +110,6 @@ const FIXTURE = `
               <textarea id="task-description"></textarea>
               <div id="task-description-links" hidden></div>
             </div>
-            <div class="form-group">
-              <label for="task-priority">Priority</label>
-              <select id="task-priority">
-                <option value="urgent">Urgent</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-                <option value="none" selected>None</option>
-              </select>
-            </div>
-            <div class="form-group"><label for="task-due-date">Due Date</label><input id="task-due-date" type="date"></div>
-            <div class="form-group">
-              <label for="task-column">Column</label>
-              <select id="task-column">
-                <option value="todo">To Do</option>
-                <option value="inprogress">In Progress</option>
-              </select>
-            </div>
             <div class="task-form-grid">
               <div class="form-group">
                 <label for="task-type">Type</label>
@@ -144,19 +122,24 @@ const FIXTURE = `
               </div>
               <div class="form-group"><label for="task-estimate">Estimate</label><input id="task-estimate" type="number"></div>
             </div>
-            <div class="form-group"><label for="task-assignee">Assignee</label><input id="task-assignee" type="text"></div>
-            <div class="form-group">
-              <label for="task-parent">Parent (Epic)</label>
-              <select id="task-parent"><option value="">None</option></select>
-            </div>
           </div>
           <div class="task-form-column-right">
-            <fieldset class="form-group">
-              <legend>Labels</legend>
-              <div id="task-active-labels"></div>
-              <input type="text" id="task-label-search">
-              <button id="task-add-label-btn" type="button"></button>
-              <div id="task-labels-selection"></div>
+            <fieldset class="form-group" id="task-acceptance-fieldset">
+              <legend>Acceptance criteria <span id="task-acceptance-progress" hidden></span></legend>
+              <ul id="task-acceptance-list"></ul>
+              <div class="task-acceptance-add-row">
+                <input type="text" id="task-acceptance-input">
+                <button type="button" id="task-acceptance-add-btn">Add</button>
+              </div>
+            </fieldset>
+            <fieldset class="form-group" id="task-comments-fieldset">
+              <legend>Notes to the agent <span id="task-comments-count" hidden></span></legend>
+              <ul id="task-comments-list"></ul>
+              <div class="task-comment-add-row">
+                <input type="text" id="task-comment-author">
+                <input type="text" id="task-comment-input">
+                <button type="button" id="task-comment-add-btn">Add</button>
+              </div>
             </fieldset>
             <fieldset class="form-group" id="task-relationships-fieldset">
               <legend>Relationships</legend>
@@ -165,43 +148,6 @@ const FIXTURE = `
               <div class="rel-type-tooltip" id="rel-type-tooltip"></div>
               <input type="text" id="task-relationship-search">
               <div id="task-relationship-results" hidden></div>
-            </fieldset>
-            <fieldset class="form-group" id="task-subtasks-fieldset">
-              <legend>Sub-tasks <span id="task-subtasks-progress-legend" hidden></span></legend>
-              <ul id="task-subtasks-list"></ul>
-              <input type="text" id="task-subtask-input">
-            </fieldset>
-            <fieldset class="form-group" id="task-acceptance-fieldset">
-              <legend>Acceptance criteria <span id="task-acceptance-progress" hidden></span></legend>
-              <ul id="task-acceptance-list"></ul>
-              <input type="text" id="task-acceptance-input">
-            </fieldset>
-            <fieldset class="form-group" id="task-comments-fieldset">
-              <legend>Comments <span id="task-comments-count" hidden></span></legend>
-              <ul id="task-comments-list"></ul>
-              <div class="task-comment-add-row">
-                <input type="text" id="task-comment-author">
-                <input type="text" id="task-comment-input">
-                <button type="button" id="task-comment-add-btn">Add</button>
-              </div>
-            </fieldset>
-            <fieldset class="form-group" id="task-attachments-fieldset">
-              <legend>Attachments</legend>
-              <ul id="task-attachments-list"></ul>
-              <div class="task-attachment-add-row">
-                <input type="text" id="task-attachment-name">
-                <input type="url" id="task-attachment-url">
-                <button type="button" id="task-attachment-add-btn">Add</button>
-              </div>
-            </fieldset>
-            <fieldset class="form-group" id="task-custom-fields-fieldset">
-              <legend>Custom fields</legend>
-              <ul id="task-custom-fields-list"></ul>
-              <div class="task-custom-field-add-row">
-                <input type="text" id="task-custom-field-key">
-                <input type="text" id="task-custom-field-value">
-                <button type="button" id="task-custom-field-add-btn">Add</button>
-              </div>
             </fieldset>
           </div>
         </div>
@@ -220,18 +166,12 @@ const TASK = {
   title: 'Wire the annotation channel',
   description: 'Agent-authored description',
   column: 'todo',
-  priority: 'high',
-  dueDate: '2026-02-01',
   type: 'bug',
   estimate: 5,
   assignee: 'agent-7',
-  labels: [],
-  subTasks: [],
   relationships: [],
   acceptanceCriteria: [],
   comments: [],
-  attachments: [],
-  customFields: {},
   annotations: [
     { id: 'a1', text: 'Check the API contract', author: 'human', at: '2026-01-02T10:00:00.000Z' }
   ],
@@ -321,7 +261,7 @@ test('removing an annotation calls removeAnnotation and drops the entry', () => 
   expect(document.querySelector('#task-annotations-list .annotations-empty')).not.toBeNull();
 });
 
-test('edit modal leads with key, type, estimate, priority, due date and column', () => {
+test('edit modal leads with the key, the read-only column and the claimant', () => {
   mocks.loadTasks.mockReturnValue([TASK]);
   initializeTaskModalHandlers(() => {});
   showEditModal('t1');
@@ -330,14 +270,30 @@ test('edit modal leads with key, type, estimate, priority, due date and column',
   expect(key.textContent).toBe('OA-7');
   expect(key.classList.contains('hidden')).toBe(false);
 
-  const type = document.getElementById('task-summary-type');
-  expect(type.textContent).toBe('Bug');
-  expect(type.classList.contains('task-type--bug')).toBe(true);
-  expect(document.getElementById('task-summary-estimate').textContent).toBe('5 pts');
-  expect(document.getElementById('task-summary-priority').textContent).toBe('high');
-  expect(document.getElementById('task-summary-due').textContent).toContain('Due');
-  expect(document.getElementById('task-summary-column').textContent).toBe('In To Do');
   expect(document.getElementById('task-summary').classList.contains('hidden')).toBe(false);
+  expect(document.getElementById('task-summary-column').textContent).toBe('In To Do');
+  expect(document.getElementById('task-claim-chip').classList.contains('hidden')).toBe(false);
+  expect(document.getElementById('task-claim-agent').textContent).toBe('agent-7');
+  expect(document.getElementById('task-claim-time').textContent).not.toBe('');
+});
+
+test('edit modal no longer offers priority, due date, labels, sub-tasks, attachments, custom fields or a column selector', () => {
+  mocks.loadTasks.mockReturnValue([TASK]);
+  initializeTaskModalHandlers(() => {});
+  showEditModal('t1');
+
+  [
+    'task-priority',
+    'task-due-date',
+    'task-column',
+    'task-label-search',
+    'task-subtasks-list',
+    'task-attachments-list',
+    'task-custom-fields-list',
+    'task-parent'
+  ].forEach((id) => {
+    expect(document.getElementById(id), id).toBeNull();
+  });
 });
 
 test('an In Progress task is fully read-only, including annotations', () => {
@@ -357,15 +313,9 @@ test('an In Progress task is fully read-only, including annotations', () => {
     'task-description',
     'task-type',
     'task-estimate',
-    'task-assignee',
-    'task-priority',
-    'task-due-date',
-    'task-label-search',
-    'task-subtask-input',
     'task-acceptance-input',
+    'task-acceptance-add-btn',
     'task-comment-input',
-    'task-attachment-url',
-    'task-custom-field-key',
     'task-submit-btn',
     'task-annotation-input',
     'task-annotation-add-btn'
@@ -386,7 +336,7 @@ test('an In Progress task is fully read-only, including annotations', () => {
 
 test('add mode hides the summary, claim chip and annotations sections', () => {
   initializeTaskModalHandlers(() => {});
-  showModal('todo');
+  showModal();
 
   expect(document.getElementById('task-summary').classList.contains('hidden')).toBe(true);
   expect(document.getElementById('task-annotations-fieldset').classList.contains('hidden')).toBe(true);

@@ -36,7 +36,7 @@ beforeEach(() => {
   ];
   mocks.tasks = [];
   mocks.labels = [];
-  mocks.settings = { swimLanesEnabled: false, showDueDate: true };
+  mocks.settings = { swimLanesEnabled: false };
   mocks.isDoneColumnId.mockClear();
 });
 
@@ -53,7 +53,7 @@ function mountStandardBoard() {
           <span class="task-counter" data-column-id="todo">1</span>
         </header>
         <ul class="tasks">
-          <li class="task" data-task-id="t1"><span class="task-date"></span></li>
+          <li class="task" data-task-id="t1"></li>
         </ul>
       </article>
       <article class="task-column" data-column="done">
@@ -105,7 +105,7 @@ test('reconcileBoard leaves a legacy collapsed column title untouched and update
       <article class="task-column" data-column="todo">
         <header class="column-header"><h2 id="column-title-todo">To Do</h2>
           <span class="task-counter" data-column-id="todo">1</span></header>
-        <ul class="tasks"><li class="task" data-task-id="t1"><span class="task-date"></span></li></ul>
+        <ul class="tasks"><li class="task" data-task-id="t1"></li></ul>
       </article>
       <article class="task-column is-collapsed" data-column="done">
         <header class="column-header"><h2 id="column-title-done">Done (0)</h2>
@@ -206,20 +206,24 @@ test('reconcileBoard virtualizes an overfull Done column instead of rendering ev
   expect(document.querySelector('.task-counter[data-column-id="done"]').textContent).toBe('60');
 });
 
-test('reconcileBoard patches a card due-date in place when it lands in Done', async () => {
-  mocks.tasks = [{ id: 't1', column: 'done', order: 1, title: 'Ship it', dueDate: '2026-08-15' }];
+test('reconcileBoard renders a new card with acceptance progress and the notes indicator', async () => {
+  mocks.tasks = [{
+    id: 't2',
+    column: 'todo',
+    order: 1,
+    title: 'Ship it',
+    acceptanceCriteria: [{ id: 'ac1', text: 'Works', done: true }],
+    comments: [{ id: 'c1', author: 'Ada', text: 'Any update?', at: '2026-01-01T10:00:00.000Z' }]
+  }];
   mountStandardBoard();
-
-  const card = document.querySelector('[data-task-id="t1"]');
-  const dateEl = card.querySelector('.task-date');
 
   const { reconcileBoard } = await import('../../src/modules/render.js');
   reconcileBoard();
 
-  // Same nodes — patched, not recreated.
-  expect(document.querySelector('[data-task-id="t1"]')).toBe(card);
-  expect(card.querySelector('.task-date')).toBe(dateEl);
-  // Done tasks show the raw due date with no countdown urgency.
-  expect(dateEl.textContent).toMatch(/^Due /);
-  expect(dateEl.classList.contains('countdown-none')).toBe(true);
+  const card = document.querySelector('[data-task-id="t2"]');
+  expect(card).not.toBeNull();
+  expect(card.querySelector('.task-acceptance-progress').textContent).toContain('1/1');
+  expect(card.querySelector('.task-notes')).not.toBeNull();
+  expect(card.querySelector('.task-priority')).toBeNull();
+  expect(card.querySelector('.task-date')).toBeNull();
 });

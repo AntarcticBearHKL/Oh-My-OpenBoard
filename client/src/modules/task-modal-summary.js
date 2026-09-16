@@ -1,8 +1,6 @@
-// Task summary chips (type/estimate/priority/due/column/claim) for the modal.
+// Read-only claim summary for the task modal.
 
 import { loadColumns } from './storage.js';
-import { normalizePriority } from './normalize.js';
-import { normalizeTaskType, normalizeEstimate, TASK_TYPE_LABELS } from './agile.js';
 import { $id } from './dom.js';
 
 function formatRelativeTime(value) {
@@ -17,40 +15,7 @@ function formatRelativeTime(value) {
   if (days < 30) return `${days}d ago`;
   return parsed.toLocaleDateString();
 }
-function setSummaryType(value) {
-  const el = $id('task-summary-type');
-  if (!el) return;
-  const type = normalizeTaskType(value);
-  el.textContent = TASK_TYPE_LABELS[type];
-  el.className = `task-type task-type--${type}`;
-}
-function setSummaryEstimate(value) {
-  const el = $id('task-summary-estimate');
-  if (!el) return;
-  const estimate = normalizeEstimate(value);
-  el.textContent = estimate === null ? '' : `${estimate} pt${estimate === 1 ? '' : 's'}`;
-  el.classList.toggle('hidden', estimate === null);
-}
-function setSummaryPriority(value) {
-  const el = $id('task-summary-priority');
-  if (!el) return;
-  const priority = normalizePriority(value);
-  el.textContent = priority === 'none' ? 'No priority' : priority;
-  el.className = `task-priority priority-${priority}`;
-}
-function setSummaryDue(value) {
-  const el = $id('task-summary-due');
-  if (!el) return;
-  const raw = (value || '').toString().trim();
-  if (!raw) {
-    el.textContent = '';
-    el.classList.add('hidden');
-    return;
-  }
-  const parsed = new Date(raw.includes('T') ? raw : `${raw}T00:00:00`);
-  el.textContent = Number.isNaN(parsed.getTime()) ? raw : `Due ${parsed.toLocaleDateString()}`;
-  el.classList.remove('hidden');
-}
+
 function setSummaryColumn(columnId) {
   const el = $id('task-summary-column');
   if (!el) return;
@@ -67,6 +32,7 @@ function setSummaryColumn(columnId) {
   el.setAttribute('aria-label', `Column: ${name}`);
   el.classList.remove('hidden');
 }
+
 export function updateTaskSummary(task) {
   const summary = $id('task-summary');
   if (!summary) return;
@@ -79,10 +45,6 @@ export function updateTaskSummary(task) {
     keyEl.classList.toggle('hidden', !key);
   }
 
-  setSummaryType(task.type);
-  setSummaryEstimate(task.estimate);
-  setSummaryPriority(task.priority);
-  setSummaryDue(task.dueDate);
   setSummaryColumn(task.column);
 
   const claimChip = $id('task-claim-chip');
@@ -94,12 +56,4 @@ export function updateTaskSummary(task) {
     claimAgent.textContent = claimedBy;
     claimTime.textContent = claimedBy ? formatRelativeTime(task.claimedAt) : '';
   }
-}
-export function syncSummaryFromForm() {
-  if ($id('task-summary')?.classList.contains('hidden')) return;
-  setSummaryType($id('task-type')?.value);
-  setSummaryEstimate($id('task-estimate')?.value);
-  setSummaryPriority($id('task-priority')?.value);
-  setSummaryDue($id('task-due-date')?.value);
-  setSummaryColumn($id('task-column')?.value);
 }

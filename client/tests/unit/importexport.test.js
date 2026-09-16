@@ -99,7 +99,6 @@ test('inspectImportPayload remaps legacy model ids to UUIDs while preserving ref
   expect(label.id).toMatch(UUID_RE);
   expect(task.column).toBe(doneColumn.id);
   expect(task.columnHistory[0].column).toBe(doneColumn.id);
-  expect(task.labels).toEqual([label.id]);
 });
 
 test('inspectImportPayload rejects files above the size limit', () => {
@@ -171,24 +170,41 @@ test('inspectImportPayload remaps swimlane settings that reference labels and co
   expect(preview.normalizedSettings.swimLaneCellCollapsedKeys).toEqual([`${label.id}::${todoColumn.id}`]);
 });
 
-test('inspectImportPayload removes unknown label references and warns', () => {
+test('inspectImportPayload ignores the removed task fields from an older export', () => {
   const preview = inspectImportPayload({
     columns: [
       { id: 'todo', name: 'Todo', color: '#3b82f6', order: 1 },
       { id: 'done', name: 'Done', color: '#16a34a', order: 2 }
     ],
     tasks: [
-      { id: 'task-1', title: 'Task 1', column: 'todo', labels: ['known', 'unknown'], priority: 'none' }
+      {
+        id: 'task-1',
+        title: 'Legacy task',
+        column: 'todo',
+        priority: 'urgent',
+        dueDate: '2026-01-01',
+        labels: ['known', 'unknown'],
+        subTasks: [{ id: 'st1', title: 'Step', completed: true, order: 1 }],
+        attachments: [{ id: 'at1', name: 'Spec', url: 'https://example.com/spec.pdf' }],
+        customFields: { Sprint: '12' }
+      }
     ],
     labels: [
       { id: 'known', name: 'Known', color: '#ff0000' }
     ]
-  }, { name: 'labels.json', size: 128 });
+  }, { name: 'older-export.json', size: 512 });
 
   expect(preview.errors).toEqual([]);
-  expect(preview.normalizedTasks[0].labels).toEqual([preview.normalizedLabels[0].id]);
+  const task = preview.normalizedTasks[0];
+  expect(task.title).toBe('Legacy task');
+  expect(task.id).toMatch(UUID_RE);
+  expect(task.priority).toBeUndefined();
+  expect(task.dueDate).toBeUndefined();
+  expect(task.labels).toBeUndefined();
+  expect(task.subTasks).toBeUndefined();
+  expect(task.attachments).toBeUndefined();
+  expect(task.customFields).toBeUndefined();
   expect(preview.normalizedLabels[0].id).toMatch(UUID_RE);
-  expect(preview.warnings.join(' ')).toMatch(/Removed 1 label reference/i);
 });
 
 test('buildImportConfirmationMessage includes summary details', () => {

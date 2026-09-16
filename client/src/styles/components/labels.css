@@ -486,98 +486,19 @@
 }
 
 /* ==========================================================================
-   Sub-tasks in task modal
+   Acceptance criteria in task modal
    ========================================================================== */
 
-.subtasks-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.subtask-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 6px;
-  border-radius: var(--radius-sm);
-  background: var(--surface-muted);
-  min-width: 0;
-  overflow: hidden;
-}
-
-.subtask-drag-handle {
-  cursor: grab;
-  color: var(--text-muted);
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-}
-
-.subtask-drag-handle:active {
-  cursor: grabbing;
-}
-
-.subtask-item input[type="checkbox"] {
-  flex-shrink: 0;
-  cursor: pointer;
-}
-
-.subtask-title {
-  flex: 1;
-  min-width: 0;
-  font-size: var(--text-rem-0775);
-  cursor: pointer;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.subtask-item.subtask-completed .subtask-title {
-  text-decoration: line-through;
-  color: var(--text-muted);
-}
-
-.subtask-delete-btn {
-  flex-shrink: 0;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-muted);
-  padding: 2px;
-  display: flex;
-  align-items: center;
-  border-radius: var(--radius-sm);
-}
-
-.subtask-delete-btn:hover {
-  color: var(--color-danger);
-  background: var(--color-danger-bg);
-}
-
-.subtask-inline-input {
-  flex: 1;
-  font-size: var(--text-rem-0875);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 1px 4px;
-  background: var(--input-bg);
-  color: var(--text);
-}
-
-.task-subtask-add-row {
+.task-acceptance-add-row {
   margin-top: 6px;
 }
 
-.task-subtask-add-row input {
+.task-acceptance-add-row input {
   width: 100%;
   box-sizing: border-box;
 }
 
-.subtasks-progress-legend {
+.field-progress-legend {
   font-size: var(--text-rem-075);
   color: var(--text-muted);
   font-weight: normal;

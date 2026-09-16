@@ -6,7 +6,7 @@ import {
 } from './storage.js';
 
 import { getActiveBoardName, listBoards, loadTasksForBoard, loadColumnsForBoard, loadLabelsForBoard, loadSettingsForBoard } from './storage.js';
-import { normalizePriority, isHexColor, boardDisplayName, normalizeDueDate, normalizeSubTasks } from './normalize.js';
+import { isHexColor, boardDisplayName } from './normalize.js';
 import { DONE_COLUMN_ID } from './constants.js';
 import { alertDialog } from './dialog.js';
 import { inspectImportPayload } from './import-payload.js';
@@ -28,20 +28,14 @@ function buildExportMeta() {
   };
 }
 
-// normalizePriority, isHexColor imported from normalize.js
-
 function normalizeSettingsForExport(settings) {
   const obj = settings && typeof settings === 'object' && !Array.isArray(settings) ? settings : {};
-  const showPriority = obj.showPriority !== false;
-  const showDueDate = obj.showDueDate !== false;
-  const showAge = obj.showAge !== false;
   const showChangeDate = obj.showChangeDate !== false;
   const locale = typeof obj.locale === 'string' && obj.locale.trim()
     ? obj.locale.trim()
     : (typeof navigator !== 'undefined' && typeof navigator.language === 'string' ? navigator.language : 'en-US');
-  const defaultPriority = normalizePriority(obj.defaultPriority);
   const swimLanesEnabled = obj.swimLanesEnabled === true;
-  const swimLaneGroupBy = ['label', 'label-group', 'priority'].includes(obj.swimLaneGroupBy)
+  const swimLaneGroupBy = ['label', 'label-group'].includes(obj.swimLaneGroupBy)
     ? obj.swimLaneGroupBy
     : 'label';
   const swimLaneLabelGroup = typeof obj.swimLaneLabelGroup === 'string' ? obj.swimLaneLabelGroup.trim() : '';
@@ -61,12 +55,8 @@ function normalizeSettingsForExport(settings) {
         .map((entry) => entry.trim())
     : [];
   return {
-    showPriority,
-    showDueDate,
-    showAge,
     showChangeDate,
     locale,
-    defaultPriority,
     swimLanesEnabled,
     swimLaneGroupBy,
     swimLaneLabelGroup,
@@ -76,13 +66,10 @@ function normalizeSettingsForExport(settings) {
   };
 }
 
-// normalizeDueDate imported from normalize.js as normalizeDueDateFn
-
 function normalizeTaskForExport(task, doneColumnIds = new Set([DONE_COLUMN_ID])) {
   const legacyTitle = typeof task?.text === 'string' ? task.text : '';
   const title = typeof task?.title === 'string' ? task.title : legacyTitle;
   const description = typeof task?.description === 'string' ? task.description : '';
-  const dueDate = normalizeDueDate(task?.dueDate ?? task?.['due-date']);
   const changeDate =
     typeof task?.changeDate === 'string'
       ? task.changeDate
@@ -102,21 +89,38 @@ function normalizeTaskForExport(task, doneColumnIds = new Set([DONE_COLUMN_ID]))
         .filter(Boolean)
     : undefined;
 
-  return {
-    ...task,
+  const exported = {
+    id: typeof task?.id === 'string' ? task.id : String(task?.id ?? ''),
+    key: typeof task?.key === 'string' ? task.key : undefined,
     title: title.toString().trim(),
     description: description.toString().trim(),
-    priority: normalizePriority(task?.priority),
-    dueDate,
-    subTasks: normalizeSubTasks(task?.subTasks),
-    ...(typeof changeDate === 'string' ? { changeDate: changeDate.toString().trim() } : {}),
-    ...(isDone && doneDate ? { doneDate } : { doneDate: undefined }),
-    ...(columnHistory && columnHistory.length ? { columnHistory } : { columnHistory: undefined }),
-    ...(typeof task?.swimlaneLabelId === 'string' ? { swimlaneLabelId: task.swimlaneLabelId } : {}),
-    ...(typeof task?.swimlaneLabelGroup === 'string' ? { swimlaneLabelGroup: task.swimlaneLabelGroup } : {}),
-    // Avoid exporting the legacy field name.
-    changedDate: undefined
+    type: typeof task?.type === 'string' ? task.type : undefined,
+    estimate: Number.isFinite(task?.estimate) ? task.estimate : (task?.estimate === null ? null : undefined),
+    assignee: typeof task?.assignee === 'string' ? task.assignee : undefined,
+    parentId: typeof task?.parentId === 'string' ? task.parentId : undefined,
+    acceptanceCriteria: Array.isArray(task?.acceptanceCriteria) ? task.acceptanceCriteria : undefined,
+    comments: Array.isArray(task?.comments) ? task.comments : undefined,
+    annotations: Array.isArray(task?.annotations) ? task.annotations : undefined,
+    relationships: Array.isArray(task?.relationships) ? task.relationships : undefined,
+    column: typeof task?.column === 'string' ? task.column : undefined,
+    order: Number.isFinite(task?.order) ? task.order : undefined,
+    creationDate: typeof task?.creationDate === 'string' ? task.creationDate : undefined,
+    changeDate: typeof changeDate === 'string' ? changeDate.toString().trim() : undefined,
+    columnHistory: columnHistory && columnHistory.length ? columnHistory : undefined,
+    doneDate: isDone && doneDate ? doneDate : undefined,
+    blockedReason: typeof task?.blockedReason === 'string' ? task.blockedReason : undefined,
+    blockedAt: typeof task?.blockedAt === 'string' ? task.blockedAt : undefined,
+    claimedBy: typeof task?.claimedBy === 'string' ? task.claimedBy : undefined,
+    claimedAt: typeof task?.claimedAt === 'string' ? task.claimedAt : undefined,
+    swimlaneLabelId: typeof task?.swimlaneLabelId === 'string' ? task.swimlaneLabelId : undefined,
+    swimlaneLabelGroup: typeof task?.swimlaneLabelGroup === 'string' ? task.swimlaneLabelGroup : undefined,
+    deleted: task?.deleted === true ? true : undefined
   };
+
+  for (const field of Object.keys(exported)) {
+    if (exported[field] === undefined) delete exported[field];
+  }
+  return exported;
 }
 
 // Export tasks and columns to JSON file

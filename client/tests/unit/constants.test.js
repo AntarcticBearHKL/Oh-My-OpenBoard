@@ -1,40 +1,22 @@
 import { test, expect } from 'vitest';
 import {
+  BACKLOG_COLUMN_ID,
+  BLOCKED_COLUMN_ID,
   DONE_COLUMN_ID,
-  PRIORITIES,
-  PRIORITY_SET,
-  PRIORITY_ORDER,
-  DEFAULT_PRIORITY,
+  FIXED_COLUMNS,
+  IN_PROGRESS_COLUMN_ID,
   DEFAULT_COLUMN_COLOR,
   MAX_LABEL_NAME_LENGTH,
   DEFAULT_APP_KEYBINDINGS,
   matchesKey
 } from '../../src/modules/constants.js';
 
-test('PRIORITIES contains 5 values in correct order', () => {
-  expect(PRIORITIES).toEqual(['urgent', 'high', 'medium', 'low', 'none']);
-});
-
-test('PRIORITY_SET contains all expected priorities and rejects unknown values', () => {
-  expect(PRIORITY_SET.has('urgent')).toBe(true);
-  expect(PRIORITY_SET.has('high')).toBe(true);
-  expect(PRIORITY_SET.has('medium')).toBe(true);
-  expect(PRIORITY_SET.has('low')).toBe(true);
-  expect(PRIORITY_SET.has('none')).toBe(true);
-  expect(PRIORITY_SET.has('invalid')).toBe(false);
-  expect(PRIORITY_SET.has('')).toBe(false);
-});
-
-test('PRIORITY_ORDER maps priorities to ascending numeric rank', () => {
-  expect(PRIORITY_ORDER.urgent).toBe(0);
-  expect(PRIORITY_ORDER.high).toBe(1);
-  expect(PRIORITY_ORDER.medium).toBe(2);
-  expect(PRIORITY_ORDER.low).toBe(3);
-  expect(PRIORITY_ORDER.none).toBe(4);
-});
-
-test('DEFAULT_PRIORITY is none', () => {
-  expect(DEFAULT_PRIORITY).toBe('none');
+test('the board has four fixed columns in workflow order', () => {
+  expect(FIXED_COLUMNS.map((column) => column.name)).toEqual(['Backlog', 'In Progress', 'Blocked', 'Finished']);
+  expect(FIXED_COLUMNS[0].id).toBe(BACKLOG_COLUMN_ID);
+  expect(FIXED_COLUMNS[1].id).toBe(IN_PROGRESS_COLUMN_ID);
+  expect(FIXED_COLUMNS[2].id).toBe(BLOCKED_COLUMN_ID);
+  expect(FIXED_COLUMNS[3].role).toBe('done');
 });
 
 test('DONE_COLUMN_ID is done', () => {

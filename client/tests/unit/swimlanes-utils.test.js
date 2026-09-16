@@ -4,15 +4,12 @@ import {
   NO_GROUP_LANE_LABEL,
   SWIMLANE_GROUP_BY_LABEL,
   SWIMLANE_GROUP_BY_LABEL_GROUP,
-  SWIMLANE_GROUP_BY_PRIORITY,
   SWIMLANE_HIDDEN_DONE_COLUMN_ID
 } from '../../src/modules/swimlane-lane-model.js';
 import {
   buildBoardGrid,
   getVisibleTasksForLane,
-  getSwimLaneValue,
-  groupTasksBySwimLane,
-  moveTask
+  groupTasksBySwimLane
 } from '../../src/modules/swimlanes.js';
 
 const labels = [
@@ -27,14 +24,11 @@ const columns = [
   { id: 'done', name: 'Done', order: 3 }
 ];
 
-
-
-
 test('groupTasksBySwimLane groups tasks into distinct lanes plus No Group', () => {
   const tasks = [
-    { id: 't1', column: 'todo', order: 1, labels: ['label-a'] },
-    { id: 't2', column: 'inprogress', order: 1, labels: ['label-b'] },
-    { id: 't3', column: 'done', order: 1, labels: [] }
+    { id: 't1', column: 'todo', order: 1, swimlaneLabelId: 'label-a' },
+    { id: 't2', column: 'inprogress', order: 1, swimlaneLabelId: 'label-b' },
+    { id: 't3', column: 'done', order: 1 }
   ];
 
   const grouped = groupTasksBySwimLane(tasks, SWIMLANE_GROUP_BY_LABEL, labels);
@@ -44,22 +38,19 @@ test('groupTasksBySwimLane groups tasks into distinct lanes plus No Group', () =
   expect(grouped.find((lane) => lane.value === NO_GROUP_LANE_LABEL)?.tasks.map((task) => task.id)).toEqual(['t3']);
 });
 
-test('groupTasksBySwimLane sorts priority lanes in workflow order', () => {
+test('groupTasksBySwimLane ignores tasks whose lane marker is unknown', () => {
   const tasks = [
-    { id: 't1', column: 'todo', order: 1, priority: 'low' },
-    { id: 't2', column: 'todo', order: 2, priority: 'urgent' },
-    { id: 't3', column: 'todo', order: 3, priority: 'medium' },
-    { id: 't4', column: 'todo', order: 4, priority: 'none' }
+    { id: 't1', column: 'todo', order: 1, swimlaneLabelId: 'missing-label' }
   ];
 
-  const grouped = groupTasksBySwimLane(tasks, SWIMLANE_GROUP_BY_PRIORITY, labels);
-  expect(grouped.map((lane) => lane.value)).toEqual(['Urgent', 'Medium', 'Low', 'None']);
+  const grouped = groupTasksBySwimLane(tasks, SWIMLANE_GROUP_BY_LABEL, labels);
+  expect(grouped.map((lane) => lane.value)).toEqual([NO_GROUP_LANE_LABEL]);
 });
 
 test('groupTasksBySwimLane includes one lane per label in the selected group', () => {
   const tasks = [
-    { id: 't1', column: 'todo', order: 1, labels: ['label-a'] },
-    { id: 't2', column: 'done', order: 1, labels: [] }
+    { id: 't1', column: 'todo', order: 1, swimlaneLabelId: 'label-a' },
+    { id: 't2', column: 'done', order: 1 }
   ];
 
   const grouped = groupTasksBySwimLane(tasks, SWIMLANE_GROUP_BY_LABEL_GROUP, labels, 'Projects');
@@ -69,9 +60,9 @@ test('groupTasksBySwimLane includes one lane per label in the selected group', (
 
 test('buildBoardGrid places tasks into the correct lane and column cells', () => {
   const tasks = [
-    { id: 't1', column: 'todo', order: 1, labels: ['label-a'] },
-    { id: 't2', column: 'inprogress', order: 2, labels: ['label-a'] },
-    { id: 't3', column: 'done', order: 1, labels: [] }
+    { id: 't1', column: 'todo', order: 1, swimlaneLabelId: 'label-a' },
+    { id: 't2', column: 'inprogress', order: 2, swimlaneLabelId: 'label-a' },
+    { id: 't3', column: 'done', order: 1 }
   ];
   const lanes = groupTasksBySwimLane(tasks, SWIMLANE_GROUP_BY_LABEL, labels);
   const grid = buildBoardGrid(columns, lanes, tasks, SWIMLANE_GROUP_BY_LABEL, labels);
@@ -86,12 +77,9 @@ test('buildBoardGrid places tasks into the correct lane and column cells', () =>
 });
 
 test('getVisibleTasksForLane hides done-column tasks but keeps active columns visible', () => {
-  const todoTasks = [{ id: 't1', column: 'todo', order: 1, labels: ['label-a'] }];
-  const doneTasks = [{ id: 't2', column: 'done', order: 1, labels: [] }];
+  const todoTasks = [{ id: 't1', column: 'todo', order: 1, swimlaneLabelId: 'label-a' }];
+  const doneTasks = [{ id: 't2', column: 'done', order: 1 }];
 
   expect(getVisibleTasksForLane(todoTasks, 'todo').map((task) => task.id)).toEqual(['t1']);
   expect(getVisibleTasksForLane(doneTasks, SWIMLANE_HIDDEN_DONE_COLUMN_ID)).toEqual([]);
 });
-
-
-

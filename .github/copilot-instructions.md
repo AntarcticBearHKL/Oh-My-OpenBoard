@@ -2,14 +2,14 @@
 
 ## Big picture
 - This is a **local-first, no-backend** kanban app: all state lives in **browser `localStorage`** and the UI is plain DOM.
-- Build tooling is **Vite** with **`src/` as the Vite root** and output to `dist/`.
-  - Edit source files in `src/` (do **not** hand-edit `dist/`).
+- Build tooling is **Vite** with **`src/` as the Vite root** and output to `client/dist/`.
+  - Edit source files in `src/` (do **not** hand-edit `client/dist/`).
 - Specification entrypoint is `docs/specification-kanban.md`, and canonical feature/data specs live in `docs/spec/` (**always keep the relevant spec files updated** as features change).
 - Changelog is in `CHANGELOG.md` (**always update** the **[Unreleased]** section following **Keep a Changelog** whenever behavior/UI/data changes).
 
 ## Dev workflows
 - Dev server: `npm run dev` (Vite opens `http://localhost:3000`).
-- Production build: `npm run build` (writes `dist/`).
+- Production build: `npm run build` (writes `client/dist/`).
 - Preview build: `npm run preview`.
 - When deploying under a sub-path, adjust `base` in `vite.config.js`.
 

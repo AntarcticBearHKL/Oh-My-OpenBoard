@@ -7,17 +7,6 @@ import { $id, h } from './dom.js';
 let editingLabelId = null;
 let hasShownLabelMaxLengthAlert = false;
 
-// These are coordinated with task-modal.js
-let taskModalState = null;
-
-export function setTaskModalState(state) {
-  taskModalState = state;
-}
-
-export function getTaskModalState() {
-  return taskModalState;
-}
-
 const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 
 function isValidHexColor(value) {
@@ -42,13 +31,9 @@ function populateLabelGroupSuggestions() {
   groups.forEach(g => datalist.appendChild(h('option', { value: g })));
 }
 
-export function showLabelModal(labelId = null, { openedFromTaskEditor = false, initialName = '' } = {}) {
+export function showLabelModal(labelId = null, { initialName = '' } = {}) {
   editingLabelId = labelId;
   hasShownLabelMaxLengthAlert = false;
-
-  if (taskModalState) {
-    taskModalState.setSelectCreatedLabelFlag(!!openedFromTaskEditor);
-  }
 
   const modal = $id('label-modal');
   const modalTitle = $id('label-modal-title');
@@ -84,12 +69,9 @@ export function showLabelModal(labelId = null, { openedFromTaskEditor = false, i
 export function hideLabelModal() {
   $id('label-modal').classList.add('hidden');
   editingLabelId = null;
-  if (taskModalState) {
-    taskModalState.setSelectCreatedLabelFlag(false);
-  }
 }
 
-export function initializeLabelEditModalHandlers(setupModalCloseHandlers, { refreshLabelsList, hideLabelsManager }) {
+export function initializeLabelEditModalHandlers(setupModalCloseHandlers, { refreshLabelsList }) {
   const labelNameInput = $id('label-name');
   labelNameInput?.addEventListener('beforeinput', (e) => {
     if (!e || typeof e.data !== 'string' || e.data.length === 0) return;
@@ -174,7 +156,6 @@ export function initializeLabelEditModalHandlers(setupModalCloseHandlers, { refr
     }
 
     const group = ($id('label-group')?.value || '').trim();
-    const wasCreating = !editingLabelId;
 
     const result = editingLabelId
       ? updateLabel(editingLabelId, trimmedName, color, group)
@@ -197,25 +178,8 @@ export function initializeLabelEditModalHandlers(setupModalCloseHandlers, { refr
       return;
     }
 
-    // If the label was created from within the task editor, auto-select it.
-    if (wasCreating && taskModalState?.getSelectCreatedLabelFlag() && result?.label?.id) {
-      const selectedLabels = taskModalState.getSelectedTaskLabels();
-      if (!selectedLabels.includes(result.label.id)) {
-        selectedLabels.push(result.label.id);
-        taskModalState.setSelectedTaskLabels(selectedLabels);
-      }
-      const labelSearch = $id('task-label-search');
-      if (labelSearch) labelSearch.value = '';
-      taskModalState.updateTaskLabelsSelection();
-      labelSearch?.focus();
-    }
-
     hideLabelModal();
     refreshLabelsList();
-
-    if (taskModalState?.getReturnToTaskModalFlag() && wasCreating) {
-      hideLabelsManager();
-    }
   });
 
   setupModalCloseHandlers('label-modal', hideLabelModal);

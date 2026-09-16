@@ -167,7 +167,7 @@ fieldset.form-group legend {
 
 .form-actions {
   display: flex;
-  gap: 10px;
+  gap: var(--space-3);
   justify-content: flex-end;
   margin-top: 20px;
 }

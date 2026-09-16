@@ -96,26 +96,6 @@
   flex: 0 0 auto;
 }
 
-/* Compact label chips inside a row — the only meta that may shrink */
-.task-meta .task-labels {
-  display: inline-flex;
-  flex: 0 1 auto;
-  flex-wrap: nowrap;
-  gap: 3px;
-  overflow: hidden;
-  max-width: 160px;
-}
-
-.task-meta .task-label {
-  padding: 1px 6px;
-  border-radius: var(--radius-pill);
-  font-size: var(--text-xs);
-  line-height: 1.5;
-  max-width: 90px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 /* Relationship indicator */
 .task-relationships-row {
   display: inline-flex;
@@ -130,27 +110,6 @@
   width: 12px;
   height: 12px;
   flex-shrink: 0;
-}
-
-/* Due date countdown styling */
-.task-date { white-space: nowrap; }
-
-.task-date.countdown-urgent {
-  color: var(--color-danger);
-  font-weight: 600;
-}
-
-.task-date.countdown-warning {
-  color: var(--color-warning);
-  font-weight: 600;
-}
-
-.task-date.countdown-normal {
-  color: var(--text-muted);
-}
-
-.task-date.countdown-none {
-  color: var(--text-muted);
 }
 
 /* Task actions — delete stays hidden until the row is hovered/focused */
@@ -175,82 +134,6 @@
   .task .delete-task-btn {
     opacity: 0.6;
   }
-}
-
-/* Priority badge – shared base for task rows */
-.task-priority {
-  border-radius: var(--radius-sm);
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: var(--text-2xs);
-  letter-spacing: 0.03em;
-  white-space: nowrap;
-}
-
-.task-priority {
-  padding: 2px 6px;
-}
-
-/* A "none" chip carries no information — keep dense rows quiet */
-.task-row .task-priority.priority-none {
-  display: none;
-}
-
-.priority-high {
-  background-color: var(--priority-high-bg);
-  color: var(--priority-high-fg);
-}
-
-.priority-urgent {
-  background-color: var(--priority-urgent-bg);
-  color: var(--priority-urgent-fg);
-}
-
-.priority-medium {
-  background-color: var(--priority-medium-bg);
-  color: var(--priority-medium-fg);
-}
-
-.priority-low {
-  background-color: var(--priority-low-bg);
-  color: var(--priority-low-fg);
-}
-
-.priority-none {
-  background-color: var(--priority-none-bg);
-  color: var(--priority-none-fg);
-}
-
-/* Sub-tasks donut progress — inline in the meta cluster */
-.task-subtasks-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-}
-
-.subtasks-donut {
-  flex-shrink: 0;
-}
-
-.subtasks-donut-bg {
-  fill: none;
-  stroke: var(--border);
-  stroke-width: 2;
-}
-
-.subtasks-donut-fill {
-  fill: none;
-  stroke: var(--color-primary, oklch(0.205 0 0));
-  stroke-width: 2;
-  stroke-linecap: round;
-  transform: rotate(-90deg);
-  transform-origin: center;
-  transition: stroke-dashoffset 0.3s;
-}
-
-.subtasks-donut-fill.subtasks-donut-complete {
-  stroke: var(--color-success, oklch(0.55 0.13 152));
 }
 
 /* ==========================================================================
@@ -362,21 +245,49 @@
   height: 13px;
 }
 
-.task-age {
+.task-acceptance-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   font-size: var(--text-xs);
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
 
-.task-age--stale {
-  color: var(--stale-fg);
-  font-weight: 600;
+.task-acceptance-progress [data-lucide],
+.task-acceptance-progress svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
 }
 
-.task-stale-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: var(--radius-pill);
-  background-color: var(--stale-fg);
-  opacity: 0.85;
+.task-acceptance-progress--complete {
+  color: var(--color-success, oklch(0.55 0.13 152));
+}
+
+.task-notes {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.task-notes [data-lucide],
+.task-notes svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.task-description-preview {
+  display: block;
+  padding: 0 var(--space-2) 6px var(--space-3);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  color: var(--text-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
