@@ -5,7 +5,7 @@
 
 > Labels help you group work into swim lanes without changing your workflow columns.
 
-Use **columns** to track workflow state (Backlog → HIL → In Progress → Blocked → Finished) and use **labels** for categories like type, area, context, and activity. With **label groups**, you can keep labels organized and easy to scan.
+Use **columns** to track workflow state (Backlog → Human In The Loop → In Progress → Blocked → Finished) and use **labels** for categories like type, area, context, and activity. With **label groups**, you can keep labels organized and easy to scan.
 
 **🚀 [Use it LIVE here](https://mdiener21.github.io/openagile/) and see labels in action!**
 
@@ -28,7 +28,7 @@ Import creates a **new board** from the JSON and switches to it.
 
 ## ✅ Labels vs Columns (fast rules)
 
-- **Columns = state**: Backlog / HIL / In Progress / Blocked / Finished — the five fixed columns.
+- **Columns = state**: Backlog / Human In The Loop / In Progress / Blocked / Finished — the five fixed columns.
 - **Labels = category**: Use labels to answer “what kind of work is this?” or “where does it belong?”
 - **Description and notes = the agent surface**: the description is the agent's write-up and the notes list is your input; there is no type or estimate field.
 
@@ -82,7 +82,7 @@ These are starter sets. Keep them small and grow them as needed
 - Follow Up
 - Review
 
-Tip: workflow state lives in the fixed columns (Backlog, HIL, In Progress, Blocked, Finished) — keep labels for grouping.
+Tip: workflow state lives in the fixed columns (Backlog, Human In The Loop, In Progress, Blocked, Finished) — keep labels for grouping.
 
 ---
 

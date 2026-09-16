@@ -11,7 +11,7 @@ OpenAgile a personal + AI Agent Kanban Boards adapt to any workflow. Below, expl
 
 ## ✅ Best Practices for Creating Boards
 
-- **Model workflow state as columns**: The board's columns are fixed — **Backlog → HIL → In Progress → Blocked → Finished** — and represent the *status* of work.
+- **Model workflow state as columns**: The board's columns are fixed — **Backlog → Human In The Loop → In Progress → Blocked → Finished** — and represent the *status* of work.
 - **Plan in the description**: There is no priority, due date, type or estimate field any more; write what matters into the description (the agent's surface) or add a note to the agent.
 - **Use labels for “what it is,” not “where it is”**: Good label examples include *type* (Bug, Feature), *area* (Finance, HR), *context* (Home, Work), or *activity* (Email, Meeting, Meeting-Prep, Task). Labels feed swim lane grouping.
 - **Avoid labels like “Blocked”, “Won/Lost”, “Backlog”, “New Lead”**: These read as states — use the fixed columns for state instead of labels.
@@ -38,7 +38,7 @@ Jumpstart with these pre-built boards:
 The board always shows these five fixed columns:
 
 - **Backlog** — work the agent proposed
-- **HIL** — Human In The Loop; the human's hand-entry point
+- **Human In The Loop** — the human's hand-entry point
 - **In Progress** — what an agent is actively working; read-only
 - **Blocked** — stuck, needs a human decision or a resource conflict resolved
 - **Finished** — completed work

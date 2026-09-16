@@ -7,7 +7,7 @@ This file is the canonical user-facing text for the in-app **Help** modal.
 
 ## Quick start
 
-- Add a task by hand with the **Add task** control in the **HIL** column.
+- Add a task by hand with the **Add task** control in the **Human In The Loop** column.
 - Drag and drop tasks between the five fixed columns to update status.
 - The description belongs to the agent; the notes to the agent are your input, and appending one asks the agent to fold it into the description before starting work.
 
@@ -53,7 +53,7 @@ All controls are in the header menu (ellipsis **⋮**).
 
 ## Tasks
 
-- **Add**: use the **Add task** control in the **HIL** column to add a task by hand; the other columns are driven by agents. Import/export is in **Manage Boards**.
+- **Add**: use the **Add task** control in the **Human In The Loop** column to add a task by hand; the other columns are driven by agents. Import/export is in **Manage Boards**.
 - **Edit**: click a task card to edit its title, description and notes to the agent.
 - **Move**: drag and drop tasks between the five fixed columns.
 - **Delete**: click the task **trash** button and confirm.
@@ -66,7 +66,7 @@ All controls are in the header menu (ellipsis **⋮**).
 
 ### Columns
 
-- The board has exactly five fixed columns: Backlog, HIL, In Progress, Blocked, Finished.
+- The board has exactly five fixed columns: Backlog, Human In The Loop, In Progress, Blocked, Finished.
 - Each column scrolls independently, so long task lists stay manageable.
 - Columns cannot be added, edited, deleted, or reordered from the board.
 - A task in In Progress is read-only while an agent works it.

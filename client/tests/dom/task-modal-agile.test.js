@@ -293,7 +293,7 @@ test('editing a task saves the slim payload through updateTask', async () => {
   expect(mocks.setTaskBlockedReason).not.toHaveBeenCalled();
 });
 
-test('a task outside HIL shows the agent title and description as content and only the notes stay interactive', () => {
+test('a task outside Human In The Loop shows the agent title and description as content and only the notes stay interactive', () => {
   initializeTaskModalHandlers(() => {});
 
   for (const column of [BACKLOG_COLUMN_ID, BLOCKED_COLUMN_ID, FINISHED_COLUMN_ID]) {
@@ -312,7 +312,7 @@ test('a task outside HIL shows the agent title and description as content and on
   }
 });
 
-test('a HIL task keeps the title and the description editable', () => {
+test('a Human In The Loop task keeps the title and the description editable', () => {
   loadTaskAt(HIL_COLUMN_ID);
   initializeTaskModalHandlers(() => {});
   showEditModal('t1');

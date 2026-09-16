@@ -5,7 +5,7 @@ Generated from test source. Do not edit by hand; run `npm run test:overview` fro
 ## Fast Scan
 
 - Test files: 54
-- Test cases: 455
+- Test cases: 476
 - Unit files: 30
 - DOM integration files: 24
 - E2E files: 0
@@ -28,7 +28,6 @@ These lists compare source/spec filenames against test file names and test title
 - `src/modules/board-serializer.js`
 - `src/modules/column-element.js`
 - `src/modules/drag-session.js`
-- `src/modules/icons.js`
 - `src/modules/idb-store.js`
 - `src/modules/import-board.js`
 - `src/modules/import-normalize.js`
@@ -62,6 +61,7 @@ These lists compare source/spec filenames against test file names and test title
 - `src/modules/swimlane-order.js`
 - `src/modules/swimlane-renderer.js`
 - `src/modules/task-helpers.js`
+- `src/modules/task-modal-access.js`
 - `src/modules/task-modal-chrome.js`
 - `src/modules/task-modal-form.js`
 - `src/modules/task-modal-state.js`
@@ -120,29 +120,35 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/unit/board-groups.test.js`
 - Type: Unit
-- Test count: 21
+- Test count: 27
 
-- `tests/unit/board-groups.test.js:25` group store > starts with no groups
-- `tests/unit/board-groups.test.js:29` group store > createGroup persists a derived name, order, collapsed and prefixCollapsed under openagile:groups
-- `tests/unit/board-groups.test.js:40` group store > createGroup names each new group after its order
-- `tests/unit/board-groups.test.js:49` group store > listGroups derives names from the stored order, not a stored name
-- `tests/unit/board-groups.test.js:61` group store > toggleGroupCollapsed flips and persists the collapsed flag
-- `tests/unit/board-groups.test.js:69` group store > setGroupCollapsed is a no-op for unknown groups
-- `tests/unit/board-groups.test.js:74` group store > toggleGroupPrefixCollapsed flips and persists the prefix flag
-- `tests/unit/board-groups.test.js:83` group store > setGroupPrefixCollapsed is a no-op for unknown groups
-- `tests/unit/board-groups.test.js:88` group store > deleteGroup removes the group and unassigns its boards
-- `tests/unit/board-groups.test.js:98` group store > deleteGroup ignores unknown ids
-- `tests/unit/board-groups.test.js:102` group store > deleteGroup re-derives the names and order of the groups that remain
-- `tests/unit/board-groups.test.js:114` group store > ensureBoardsGrouped attaches ungrouped boards to the last group
-- `tests/unit/board-groups.test.js:122` group store > ensureBoardsGrouped creates a group when none exists
-- `tests/unit/board-groups.test.js:130` group store > ensureBoardsGrouped ignores boards that are already grouped
-- `tests/unit/board-groups.test.js:139` group store > listGroups ignores malformed records and sorts by order
-- `tests/unit/board-groups.test.js:152` group store > listGroups survives invalid JSON
-- `tests/unit/board-groups.test.js:159` board → group mapping > assignBoardToGroup persists the mapping under openagile:boardGroup
-- `tests/unit/board-groups.test.js:167` board → group mapping > assignBoardToGroup with a null group removes the mapping (Ungrouped)
-- `tests/unit/board-groups.test.js:176` board → group mapping > assignBoardToGroup falls back to Ungrouped for unknown group ids
-- `tests/unit/board-groups.test.js:181` board → group mapping > getGroupIdForBoard returns null for unknown boards
-- `tests/unit/board-groups.test.js:186` board → group mapping > pruneBoardGroups drops mappings for boards that no longer exist
+- `tests/unit/board-groups.test.js:28` group store > starts with no groups
+- `tests/unit/board-groups.test.js:32` group store > createGroup persists the given name, order, collapsed and prefixCollapsed under openagile:groups
+- `tests/unit/board-groups.test.js:43` group store > createGroup falls back to New Group when the name is blank
+- `tests/unit/board-groups.test.js:52` group store > renameGroup changes the stored name without touching the order
+- `tests/unit/board-groups.test.js:63` group store > renameGroup rejects blank names and unknown ids
+- `tests/unit/board-groups.test.js:71` group store > listGroups keeps stored names, sorts by order, and falls back to Untitled group
+- `tests/unit/board-groups.test.js:82` group store > toggleGroupCollapsed flips and persists the collapsed flag
+- `tests/unit/board-groups.test.js:90` group store > setGroupCollapsed is a no-op for unknown groups
+- `tests/unit/board-groups.test.js:95` group store > toggleGroupPrefixCollapsed flips and persists the prefix flag
+- `tests/unit/board-groups.test.js:104` group store > setGroupPrefixCollapsed is a no-op for unknown groups
+- `tests/unit/board-groups.test.js:109` group store > deleteGroup removes the group and unassigns its boards
+- `tests/unit/board-groups.test.js:119` group store > deleteGroup ignores unknown ids
+- `tests/unit/board-groups.test.js:123` group store > deleteGroup keeps the names and order of the groups that remain
+- `tests/unit/board-groups.test.js:135` group store > ensureBoardsGrouped attaches ungrouped boards to the last group
+- `tests/unit/board-groups.test.js:143` group store > ensureBoardsGrouped creates a group when none exists
+- `tests/unit/board-groups.test.js:151` group store > iterationLabel numbers from one
+- `tests/unit/board-groups.test.js:156` group store > nextIterationName counts the boards already in the target group
+- `tests/unit/board-groups.test.js:164` group store > nextIterationName targets the last group when no group is given
+- `tests/unit/board-groups.test.js:172` group store > nextIterationName starts at Iteration 1 with no groups
+- `tests/unit/board-groups.test.js:177` group store > ensureBoardsGrouped ignores boards that are already grouped
+- `tests/unit/board-groups.test.js:186` group store > listGroups ignores malformed records and sorts by order
+- `tests/unit/board-groups.test.js:199` group store > listGroups survives invalid JSON
+- `tests/unit/board-groups.test.js:206` board → group mapping > assignBoardToGroup persists the mapping under openagile:boardGroup
+- `tests/unit/board-groups.test.js:214` board → group mapping > assignBoardToGroup with a null group removes the mapping (Ungrouped)
+- `tests/unit/board-groups.test.js:223` board → group mapping > assignBoardToGroup falls back to Ungrouped for unknown group ids
+- `tests/unit/board-groups.test.js:228` board → group mapping > getGroupIdForBoard returns null for unknown boards
+- `tests/unit/board-groups.test.js:233` board → group mapping > pruneBoardGroups drops mappings for boards that no longer exist
 
 ### Claim Timer
 
@@ -171,7 +177,7 @@ These lists compare source/spec filenames against test file names and test title
 - Test count: 6
 
 - `tests/unit/columns.test.js:12` columns are locked to the five fixed columns
-- `tests/unit/columns.test.js:17` an existing four-column board gains HIL without losing its tasks
+- `tests/unit/columns.test.js:17` an existing four-column board gains Human In The Loop without losing its tasks
 - `tests/unit/columns.test.js:33` toggleColumnCollapsed toggles from false to true
 - `tests/unit/columns.test.js:40` toggleColumnCollapsed toggles from true to false
 - `tests/unit/columns.test.js:47` toggleColumnCollapsed returns false for non-existent column
@@ -183,7 +189,7 @@ These lists compare source/spec filenames against test file names and test title
 - Type: Unit
 - Test count: 5
 
-- `tests/unit/constants.test.js:15` the board has five fixed columns with HIL in position two
+- `tests/unit/constants.test.js:15` the board has five fixed columns with Human In The Loop in position two
 - `tests/unit/constants.test.js:24` DONE_COLUMN_ID is done
 - `tests/unit/constants.test.js:28` DEFAULT_COLUMN_COLOR is a valid hex color
 - `tests/unit/constants.test.js:32` MAX_LABEL_NAME_LENGTH is a positive integer
@@ -497,9 +503,9 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/unit/tasks.test.js`
 - Type: Unit
-- Test count: 37
+- Test count: 38
 
-- `tests/unit/tasks.test.js:21` addTask creates the task in HIL with order 1
+- `tests/unit/tasks.test.js:21` addTask creates the task in Human In The Loop with order 1
 - `tests/unit/tasks.test.js:31` addTask with only title, description, type and estimate keeps the slim model
 - `tests/unit/tasks.test.js:45` addTask bumps existing task orders in the same column
 - `tests/unit/tasks.test.js:55` addTask does nothing for empty title
@@ -527,15 +533,16 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/unit/tasks.test.js:334` updateTask leaves assignee and parentId untouched when the payload omits them
 - `tests/unit/tasks.test.js:347` updateTask replaces key points and comments wholesale
 - `tests/unit/tasks.test.js:367` appending a key point in Backlog sets needsDigest
-- `tests/unit/tasks.test.js:386` appending a key point in HIL sets needsDigest
-- `tests/unit/tasks.test.js:399` appending a key point to a Finished task returns it to Backlog with isRework
-- `tests/unit/tasks.test.js:417` re-saving unchanged key points does not re-flag or move a Finished task
-- `tests/unit/tasks.test.js:437` a stored legacy acceptanceCriteria array is read as key points
-- `tests/unit/tasks.test.js:475` updateTaskPositionsFromDrop flags and records a move into Blocked
-- `tests/unit/tasks.test.js:493` updateTaskPositionsFromDrop leaves the reason empty when none is provided
-- `tests/unit/tasks.test.js:504` updateTaskPositionsFromDrop clears blocked fields when leaving Blocked
-- `tests/unit/tasks.test.js:527` setTaskBlockedReason stores a trimmed reason and clears on empty
-- `tests/unit/tasks.test.js:542` setTaskBlockedReason returns false for a missing task
+- `tests/unit/tasks.test.js:386` appending a key point in Human In The Loop sets needsDigest
+- `tests/unit/tasks.test.js:399` appending a key point in Blocked sets needsDigest without moving the task
+- `tests/unit/tasks.test.js:417` appending a key point to a Finished task returns it to Backlog with isRework
+- `tests/unit/tasks.test.js:435` re-saving unchanged key points does not re-flag or move a Finished task
+- `tests/unit/tasks.test.js:455` a stored legacy acceptanceCriteria array is read as key points
+- `tests/unit/tasks.test.js:493` updateTaskPositionsFromDrop flags and records a move into Blocked
+- `tests/unit/tasks.test.js:511` updateTaskPositionsFromDrop leaves the reason empty when none is provided
+- `tests/unit/tasks.test.js:522` updateTaskPositionsFromDrop clears blocked fields when leaving Blocked
+- `tests/unit/tasks.test.js:545` setTaskBlockedReason stores a trimmed reason and clears on empty
+- `tests/unit/tasks.test.js:560` setTaskBlockedReason returns false for a missing task
 
 ### Utils
 
@@ -607,38 +614,46 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/dom/board-create-modal.test.js`
 - Type: DOM Integration
-- Test count: 8
+- Test count: 5
 
-- `tests/dom/board-create-modal.test.js:178` board create modal > opening from a group's New iteration control shows the iteration wording and an empty name
-- `tests/dom/board-create-modal.test.js:189` board create modal > opening as a plain board shows the Create New Board wording
-- `tests/dom/board-create-modal.test.js:197` board create modal > submitting a whitespace-only name alerts and creates nothing
-- `tests/dom/board-create-modal.test.js:213` board create modal > a successful submit creates the board, activates it, hides the modal and dispatches kanban:boards-changed
-- `tests/dom/board-create-modal.test.js:237` board create modal > a successful submit opened from a group assigns the board to that group
-- `tests/dom/board-create-modal.test.js:248` board create modal > the create dialog markup has no template picker
-- `tests/dom/board-create-modal.test.js:265` HIL manual add > the HIL add-task control opens the full task modal for that column
-- `tests/dom/board-create-modal.test.js:301` HIL manual add > columns other than HIL expose no manual add-task control
+- `tests/dom/board-create-modal.test.js:176` board create modal > opening as a plain board shows the Create New Board wording
+- `tests/dom/board-create-modal.test.js:184` board create modal > a successful submit creates the board with a derived iteration name, activates it, hides the modal and dispatches kanban:boards-changed
+- `tests/dom/board-create-modal.test.js:208` board create modal > the create dialog asks for no board name and has no template picker
+- `tests/dom/board-create-modal.test.js:229` Human In The Loop manual add > the Human In The Loop add-task control opens the full task modal for that column
+- `tests/dom/board-create-modal.test.js:265` Human In The Loop manual add > columns other than Human In The Loop expose no manual add-task control
 
 ### Board Sidebar
 
 - Path: `tests/dom/board-sidebar.test.js`
 - Type: DOM Integration
-- Test count: 15
+- Test count: 26
 
-- `tests/dom/board-sidebar.test.js:83` sidebar group tree > renders group names derived from their order
-- `tests/dom/board-sidebar.test.js:95` sidebar group tree > a board without a group is placed in the last group on render
-- `tests/dom/board-sidebar.test.js:113` sidebar group tree > creates a group for existing boards when none exists
-- `tests/dom/board-sidebar.test.js:123` sidebar group tree > marks the active iteration
-- `tests/dom/board-sidebar.test.js:131` sidebar group tree > clicking an iteration switches the active board and emits DATA_CHANGED
-- `tests/dom/board-sidebar.test.js:144` sidebar group tree > the chevron collapses a group and persists the state
-- `tests/dom/board-sidebar.test.js:157` sidebar group tree > clicking a group name toggles collapse and updates both aria-expanded states
-- `tests/dom/board-sidebar.test.js:181` sidebar group tree > Enter and Space on the focused group name toggle collapse immediately
-- `tests/dom/board-sidebar.test.js:197` sidebar group tree > #add-group-btn creates a group with a derived name and no rename input
-- `tests/dom/board-sidebar.test.js:209` sidebar group tree > double-clicking a group name does not open a rename input
-- `tests/dom/board-sidebar.test.js:220` sidebar group tree > deleting a group takes its iterations with it and renames the rest
-- `tests/dom/board-sidebar.test.js:240` sidebar group tree > deleting an iteration needs two clicks
-- `tests/dom/board-sidebar.test.js:251` sidebar group tree > the finished prefix gets one collapse control that hides only the prefix
-- `tests/dom/board-sidebar.test.js:296` sidebar group tree > a group with an unfinished first iteration shows no prefix control
-- `tests/dom/board-sidebar.test.js:309` sidebar group tree > a group whose iterations are all finished shows no prefix control
+- `tests/dom/board-sidebar.test.js:96` sidebar group tree > renders the user-set group names
+- `tests/dom/board-sidebar.test.js:108` sidebar group tree > a board without a group is placed in the last group on render
+- `tests/dom/board-sidebar.test.js:124` sidebar group tree > creates a group for existing boards when none exists
+- `tests/dom/board-sidebar.test.js:134` sidebar group tree > marks the active iteration
+- `tests/dom/board-sidebar.test.js:142` sidebar group tree > clicking an iteration switches the active board and emits DATA_CHANGED
+- `tests/dom/board-sidebar.test.js:155` sidebar group tree > numbers a group in display order
+- `tests/dom/board-sidebar.test.js:172` sidebar group tree > renumbers after an iteration is created
+- `tests/dom/board-sidebar.test.js:187` sidebar group tree > renumbers after an iteration is deleted
+- `tests/dom/board-sidebar.test.js:210` sidebar group tree > renumbers both groups when an iteration moves between them
+- `tests/dom/board-sidebar.test.js:235` sidebar group tree > an iteration cannot be renamed by hand
+- `tests/dom/board-sidebar.test.js:255` sidebar group tree > the chevron collapses a group and persists the state
+- `tests/dom/board-sidebar.test.js:268` sidebar group tree > clicking a group name toggles collapse and updates both aria-expanded states
+- `tests/dom/board-sidebar.test.js:292` sidebar group tree > Enter and Space on the focused group name toggle collapse immediately
+- `tests/dom/board-sidebar.test.js:308` sidebar group tree > double-clicking a group name opens the rename input and Enter commits the name
+- `tests/dom/board-sidebar.test.js:327` sidebar group tree > Escape in the group rename input keeps the old name
+- `tests/dom/board-sidebar.test.js:340` sidebar group tree > #add-group-btn opens a name input without creating a group
+- `tests/dom/board-sidebar.test.js:356` sidebar group tree > committing the typed name creates the group with that name
+- `tests/dom/board-sidebar.test.js:373` sidebar group tree > committing an empty name creates nothing and keeps the input open
+- `tests/dom/board-sidebar.test.js:387` sidebar group tree > Escape cancels the new-group input and creates nothing
+- `tests/dom/board-sidebar.test.js:401` sidebar group tree > a group created from the add control is still renameable afterwards
+- `tests/dom/board-sidebar.test.js:418` sidebar group tree > a group's add control creates the next iteration immediately, with no dialog
+- `tests/dom/board-sidebar.test.js:438` sidebar group tree > deleting a group takes its iterations with it
+- `tests/dom/board-sidebar.test.js:458` sidebar group tree > deleting an iteration needs two clicks
+- `tests/dom/board-sidebar.test.js:469` sidebar group tree > the finished prefix gets one collapse control that hides only the prefix
+- `tests/dom/board-sidebar.test.js:514` sidebar group tree > a group with an unfinished first iteration shows no prefix control
+- `tests/dom/board-sidebar.test.js:527` sidebar group tree > a group whose iterations are all finished shows no prefix control
 
 ### Boards Quick Switch
 
@@ -880,30 +895,36 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/dom/task-modal-agile.test.js`
 - Type: DOM Integration
-- Test count: 5
+- Test count: 9
 
-- `tests/dom/task-modal-agile.test.js:135` the dialog renders the title, the description and the notes list and nothing else
-- `tests/dom/task-modal-agile.test.js:159` the add form saves the title, description and notes through addTask
-- `tests/dom/task-modal-agile.test.js:176` the notes list appends and removes items
-- `tests/dom/task-modal-agile.test.js:204` opening the edit dialog prefills the title, description and notes
-- `tests/dom/task-modal-agile.test.js:226` editing a task saves the slim payload through updateTask
+- `tests/dom/task-modal-agile.test.js:171` the dialog renders the title, the description and the notes list and nothing else
+- `tests/dom/task-modal-agile.test.js:195` the add form saves the title, description and notes through addTask
+- `tests/dom/task-modal-agile.test.js:212` the notes input appends one line per Enter press, clears itself and removes a line
+- `tests/dom/task-modal-agile.test.js:247` opening the edit dialog prefills the title, description and notes
+- `tests/dom/task-modal-agile.test.js:269` editing a task saves the slim payload through updateTask
+- `tests/dom/task-modal-agile.test.js:296` a task outside Human In The Loop shows the agent title and description as content and only the notes stay interactive
+- `tests/dom/task-modal-agile.test.js:315` a Human In The Loop task keeps the title and the description editable
+- `tests/dom/task-modal-agile.test.js:327` an In Progress task is view-only with the notes control visibly unavailable
+- `tests/dom/task-modal-agile.test.js:345` adding a note to a Backlog task saves the unchanged agent title and description
 
 ### Task Row
 
 - Path: `tests/dom/task-row.test.js`
 - Type: DOM Integration
-- Test count: 10
+- Test count: 12
 
-- `tests/dom/task-row.test.js:34` renders a single compact row with the title and no card chrome
-- `tests/dom/task-row.test.js:45` renders a one-line description preview when a description is present
-- `tests/dom/task-row.test.js:53` omits the description preview when there is no description
-- `tests/dom/task-row.test.js:58` renders the key points list in order
-- `tests/dom/task-row.test.js:71` omits the key points list when there are none
-- `tests/dom/task-row.test.js:76` shows needsDigest and isRework as quiet markers when set
-- `tests/dom/task-row.test.js:86` omits the signal marker when neither flag is set
-- `tests/dom/task-row.test.js:91` renders nothing else: no type, estimate, key, assignee, timer, notes or status chip
-- `tests/dom/task-row.test.js:121` clicking the title opens the task editor
-- `tests/dom/task-row.test.js:128` keeps the delete control inside the row actions
+- `tests/dom/task-row.test.js:43` renders a single compact row with the title and no card chrome
+- `tests/dom/task-row.test.js:54` renders a one-line description preview when a description is present
+- `tests/dom/task-row.test.js:62` omits the description preview when there is no description
+- `tests/dom/task-row.test.js:67` renders the key points list in order
+- `tests/dom/task-row.test.js:80` omits the key points list when there are none
+- `tests/dom/task-row.test.js:85` shows needsDigest and isRework as quiet markers when set
+- `tests/dom/task-row.test.js:97` marks undigested notes in Backlog, Blocked and Finished only, with an icon and a label
+- `tests/dom/task-row.test.js:114` carries rework as its own marker with an icon and a label
+- `tests/dom/task-row.test.js:125` omits the signal marker when neither flag is set
+- `tests/dom/task-row.test.js:130` renders nothing else: no type, estimate, key, assignee, timer, notes or status chip
+- `tests/dom/task-row.test.js:160` clicking the title opens the task editor
+- `tests/dom/task-row.test.js:167` keeps the delete control inside the row actions
 
 ### Wip Limit
 

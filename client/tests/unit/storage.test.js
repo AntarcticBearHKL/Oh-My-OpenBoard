@@ -189,7 +189,7 @@ test('saveColumns + loadColumns roundtrip locks to the five fixed columns', () =
     { id: 'done', name: 'Done', color: '#222222', order: 2, collapsed: false }
   ]);
   const loaded = loadColumns();
-  expect(loaded.map((c) => c.name)).toEqual(['Backlog', 'HIL', 'In Progress', 'Blocked', 'Finished']);
+  expect(loaded.map((c) => c.name)).toEqual(['Backlog', 'Human In The Loop', 'In Progress', 'Blocked', 'Finished']);
 });
 
 test('loadTasks leaves legacy removed fields in stored data untouched', () => {

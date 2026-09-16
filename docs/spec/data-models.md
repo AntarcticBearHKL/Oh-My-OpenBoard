@@ -46,7 +46,7 @@
 
 - `title` is the only required field; a task needs only a title and a description to be created
 - `keyPoints` are the notes to the agent (the human's input) and the agent may only read them: each entry is `{ id, text, at }`, `text` is required, and there is no done flag. `digestedAt` is stamped by `digest_key_points` once the agent folds the note into the description
-- `needsDigest` is set when the human appends a note while the task is in Backlog or HIL, and cleared by `digest_key_points`; it means the agent must fold the notes into the description before starting work
+- `needsDigest` is set when the human appends a note while the task is in Backlog or Human In The Loop, and cleared by `digest_key_points`; it means the agent must fold the notes into the description before starting work
 - `isRework` is set when the human appends a note to a Finished task; the task returns to Backlog, the move is emitted like any other move, and the agent must digest the new notes before redoing the work
 - Legacy `acceptanceCriteria` arrays are read as notes to the agent: `text` is kept and the old `done` flags are dropped
 - `assignee` is who the task is assigned to; `claim_task` sets it when empty, and `claimedBy`/`claimedAt` record the claim (releasing keeps `claimedAt` so the claim duration stays derivable)
@@ -86,11 +86,11 @@
 
 ### Fixed Columns
 
-The board always has exactly five columns — `Backlog`, `HIL`, `In Progress`, `Blocked`, `Finished` —
+The board always has exactly five columns — `Backlog`, `Human In The Loop`, `In Progress`, `Blocked`, `Finished` —
 with fixed ids and order:
 
 - Backlog holds work the agent proposed; the agent's queue
-- HIL (Human In The Loop) is the human's entry point and the only column where a human can add a task by hand
+- Human In The Loop is the human's entry point and the only column where a human can add a task by hand
 - In Progress is what an agent is actively working; tasks there are read-only
 - Blocked is work an agent could not finish and that needs a human decision, or work stuck on a resource conflict
 - Finished is completed work; it carries `role: "done"` and is the source for completion and cycle-time statistics

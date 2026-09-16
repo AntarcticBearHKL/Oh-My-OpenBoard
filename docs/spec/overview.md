@@ -174,8 +174,8 @@ The app uses CSS custom properties and `html[data-theme]` for theming.
 
 ## Default Data
 
-- Fixed columns: `Backlog`, `HIL`, `In Progress`, `Blocked`, `Finished`
-- Backlog holds work the agent proposed; HIL is the human's hand-entry point; In Progress is what an agent is actively working; Blocked is work an agent could not finish and that needs a human decision or is stuck on a resource conflict; Finished is completed work
+- Fixed columns: `Backlog`, `Human In The Loop`, `In Progress`, `Blocked`, `Finished`
+- Backlog holds work the agent proposed; Human In The Loop is the human's hand-entry point; In Progress is what an agent is actively working; Blocked is work an agent could not finish and that needs a human decision or is stuck on a resource conflict; Finished is completed work
 - Default labels: `Task`, `Meeting`, `Email`, `Idea`, `Goal`
 - The default board is created with the fixed columns and default labels, and no tasks
 

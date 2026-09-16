@@ -31,7 +31,7 @@ not per lane×column cell — a WIP limit constrains system capacity, not each l
 Column is exempt: it is terminal and unbounded, and limiting it would block finishing work.
 
 **Fixed columns** — every board has exactly five columns: **Backlog** (work the agent proposed),
-**HIL** (Human In The Loop: the human's hand-entry point and the only column where a human adds a
+**Human In The Loop** (the human's hand-entry point and the only column where a human adds a
 task by hand), **In Progress** (what an agent is actively working; tasks there are read-only),
 **Blocked** (work an agent could not finish and that needs a human decision, or work stuck on a
 resource conflict) and **Finished** (completed work). Their ids, order, and the fifth column's

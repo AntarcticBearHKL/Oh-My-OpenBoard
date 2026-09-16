@@ -10,7 +10,7 @@ export function isDoneColumn(column) {
 
 export const FIXED_COLUMNS = [
   { id: '00000000-0000-4000-8000-000000000030', name: 'Backlog', color: '#3583ff', order: 1 },
-  { id: '00000000-0000-4000-8000-000000000034', name: 'HIL', color: '#8b5cf6', order: 2 },
+  { id: '00000000-0000-4000-8000-000000000034', name: 'Human In The Loop', color: '#8b5cf6', order: 2 },
   { id: '00000000-0000-4000-8000-000000000031', name: 'In Progress', color: '#f59e0b', order: 3 },
   { id: '00000000-0000-4000-8000-000000000032', name: 'Blocked', color: '#ef4444', order: 4 },
   { id: '00000000-0000-4000-8000-000000000033', name: 'Finished', color: '#16a34a', order: 5, role: DONE_COLUMN_ROLE }

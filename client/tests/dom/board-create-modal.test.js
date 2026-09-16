@@ -220,13 +220,13 @@ describe('board create modal', () => {
   });
 });
 
-describe('HIL manual add', () => {
+describe('Human In The Loop manual add', () => {
   beforeEach(() => {
     mountToBody(TASK_MODAL_FIXTURE);
     initializeTaskModalHandlers(() => {});
   });
 
-  test('the HIL add-task control opens the full task modal for that column', () => {
+  test('the Human In The Loop add-task control opens the full task modal for that column', () => {
     const hil = FIXED_COLUMNS.find((column) => column.id === HIL_COLUMN_ID);
     const columnEl = createColumnElement(hil);
     document.body.appendChild(columnEl);
@@ -262,7 +262,7 @@ describe('HIL manual add', () => {
     });
   });
 
-  test('columns other than HIL expose no manual add-task control', () => {
+  test('columns other than Human In The Loop expose no manual add-task control', () => {
     [BACKLOG_COLUMN_ID, IN_PROGRESS_COLUMN_ID].forEach((columnId) => {
       const column = FIXED_COLUMNS.find((entry) => entry.id === columnId);
       const columnEl = createColumnElement(column);

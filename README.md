@@ -45,7 +45,7 @@ Organize your board into horizontal swim lanes for a powerful two-dimensional vi
 - **Flexible Grouping**: Group tasks by **label** or **label group** — each mode creates distinct swim lane rows
 - **Drag & Drop Across Lanes**: Move tasks between columns, lanes, or both in a single gesture — lane assignments update automatically
 - **Per-Cell Control**: Collapse/expand individual swim lane cells, entire rows, or workflow columns independently
-- **Agent-First Creation**: Tasks are created by agents through the API; the HIL column also accepts tasks added by hand, and the rest of the UI is for viewing, editing, and moving them
+- **Agent-First Creation**: Tasks are created by agents through the API; the Human In The Loop column also accepts tasks added by hand, and the rest of the UI is for viewing, editing, and moving them
 - **Smart Finished Column**: Finished tasks are hidden in swim lanes to keep rows compact, while the Finished column remains a drag-and-drop target
 - **Sticky Headers**: Lane headers stay pinned during horizontal scrolling; workflow headers stay visible during vertical scrolling
 - **Mobile Optimized**: Responsive flex layout with sticky lane headers and snap-scrolling columns on mobile
@@ -72,7 +72,7 @@ Edit on your phone, see it on your laptop — within seconds. OpenAgile uses **e
 - **💻 Local-First**: Works fully offline with no backend required — your data lives in your browser and never leaves your device unless you opt into **Real-Time Multi-Device Sync**
 - **🎨 Drag & Drop**: Effortlessly move tasks and columns with optimized performance (handles 300+ tasks)
 - **🏷️ Custom Labels & Colors**: Board-level labels with groups and colors feed swim lane grouping — label text automatically switches between black and white for readability
-- **🧱 Five Fixed Columns**: **Backlog** (work the agent proposed), **HIL** (Human In The Loop: the human's hand-entry point), **In Progress** (what an agent is actively working; read-only), **Blocked** (work an agent could not finish and that needs a human decision, or work stuck on a resource conflict) and **Finished** (completed work). Ids, order and the done-column role are fixed, so the display names can change without a migration
+- **🧱 Five Fixed Columns**: **Backlog** (work the agent proposed), **Human In The Loop** (the human's hand-entry point), **In Progress** (what an agent is actively working; read-only), **Blocked** (work an agent could not finish and that needs a human decision, or work stuck on a resource conflict) and **Finished** (completed work). Ids, order and the done-column role are fixed, so the display names can change without a migration
 - **📋 Multiple Boards**: Create and manage multiple boards with board templates
 - **💾 Easy Backup**: Export/import boards as JSON via **Manage Boards** — save backups to your favorite cloud storage (OneDrive, Google Drive, Dropbox)
 - **📱 Fully Responsive**: Optimized for mobile and desktop — work from anywhere

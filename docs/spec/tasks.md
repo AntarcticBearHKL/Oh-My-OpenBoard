@@ -2,12 +2,12 @@
 
 ## Create and Edit
 
-- Tasks are created by agents through the API (`create_task`), which always lands in Backlog; a human adds a task by hand only through the HIL column's add control
-- Dialog creation always lands in HIL: the create dialog has no column picker
+- Tasks are created by agents through the API (`create_task`), which always lands in Backlog; a human adds a task by hand only through the Human In The Loop column's add control
+- Dialog creation always lands in Human In The Loop: the create dialog has no column picker
 - Create and edit form fields, in one column: title (required, validated inline with red error styling), description, and the notes-to-the-agent list. The dialog shows nothing else
 - The dialog is the whole task surface: the title, the description and the notes-to-the-agent list. The model has no priority, no due date, no task labels, no sub-tasks, no attachments and no custom fields
 - The description belongs to the agent; the notes to the agent (field `keyPoints`) belong to the human and the agent may only read them
-- Write access is keyed to the fixed column id, never the display name: only a task in HIL is fully editable. Outside HIL the agent's title and description render as read-only content, not form fields, and the notes list is the only editable part
+- Write access is keyed to the fixed column id, never the display name: only a task in Human In The Loop is fully editable. Outside Human In The Loop the agent's title and description render as read-only content, not form fields, and the notes list is the only editable part
 - A task in In Progress is fully view-only — the whole form is locked while a subagent works it and the notes control is visibly unavailable, so a note cannot be added there
 - Notes are appended one at a time in a single input: type a note, press Enter, the line joins the list and the input clears for the next note. A note can be removed before saving; a note is `{ id, text, at }` and has no done flag
 - The notes list is the only human-to-agent channel in the dialog; the description is the agent's reply surface
@@ -17,7 +17,7 @@
 
 ## Placement and Ordering
 
-- New tasks are inserted at the top of HIL with `order = 1`
+- New tasks are inserted at the top of Human In The Loop with `order = 1`
 - Standard drag and drop can move tasks between columns
 - In swim lane mode, a single drag can change both column and lane
 - Storage keeps task ordering flattened per column even while swim lanes are enabled
@@ -45,7 +45,7 @@
 
 - A note (field `keyPoints`) is `{ id, text, at }`; `text` is required and `at` is the timestamp the human added it. There is no done flag
 - Notes are human-authored: the task tools and the agent surface expose them read-only. The agent must not add, edit or delete them
-- Appending a note while the task is in Backlog, HIL or Blocked sets `needsDigest` on the task: the agent must fold the notes into the description before starting work
+- Appending a note while the task is in Backlog, Human In The Loop or Blocked sets `needsDigest` on the task: the agent must fold the notes into the description before starting work
 - While a task has undigested notes the agent must not start it: `claim_task` and a `move_task` into In Progress are refused with a message telling the agent to run `digest_key_points` first. Moving a task to any other column is unaffected
 - Appending a note to a task in Finished moves the task back to Backlog, sets `isRework`, and emits the move exactly like a normal move (`task.moved` with the full column ordering plus a `task.updated` with the flag), so history and the projector stay consistent
 - The agent digests notes through `digest_key_points` (MCP): each digested note gets `digestedAt` and the task's `needsDigest` is cleared. It is the only way to clear the flag — no other task tool can. Omitting note ids stamps every undigested note; an already-stamped note keeps its original stamp

@@ -11,10 +11,10 @@ beforeEach(() => {
 
 test('columns are locked to the five fixed columns', () => {
   const names = loadColumns().map((c) => c.name);
-  expect(names).toEqual(['Backlog', 'HIL', 'In Progress', 'Blocked', 'Finished']);
+  expect(names).toEqual(['Backlog', 'Human In The Loop', 'In Progress', 'Blocked', 'Finished']);
 });
 
-test('an existing four-column board gains HIL without losing its tasks', () => {
+test('an existing four-column board gains Human In The Loop without losing its tasks', () => {
   saveColumns([
     { id: '00000000-0000-4000-8000-000000000030', name: 'Backlog', color: '#3583ff', order: 1 },
     { id: '00000000-0000-4000-8000-000000000031', name: 'In Progress', color: '#f59e0b', order: 2 },
@@ -24,7 +24,7 @@ test('an existing four-column board gains HIL without losing its tasks', () => {
   saveTasks([{ id: 't1', title: 'Existing', column: BACKLOG_COLUMN_ID, order: 1 }]);
 
   const columns = loadColumns();
-  expect(columns.map((c) => c.name)).toEqual(['Backlog', 'HIL', 'In Progress', 'Blocked', 'Finished']);
+  expect(columns.map((c) => c.name)).toEqual(['Backlog', 'Human In The Loop', 'In Progress', 'Blocked', 'Finished']);
   expect(columns[1].id).toBe('00000000-0000-4000-8000-000000000034');
   expect(loadTasks().find((t) => t.id === 't1')).toBeTruthy();
 });

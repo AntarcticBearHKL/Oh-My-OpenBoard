@@ -467,7 +467,7 @@ export function registerTools(server) {
 
   server.registerTool('create_column', {
     title: 'Create column',
-    description: 'Columns are fixed: Backlog, HIL, In Progress, Blocked, Finished. Adding a column is rejected.',
+    description: 'Columns are fixed: Backlog, Human In The Loop, In Progress, Blocked, Finished. Adding a column is rejected.',
     inputSchema: {
       name: z.string(),
       color: z.string().optional(),
@@ -476,7 +476,7 @@ export function registerTools(server) {
       boardId: z.string().optional()
     }
   }, async () => {
-    throw new Error('Columns are fixed: Backlog, HIL, In Progress, Blocked, Finished.');
+    throw new Error('Columns are fixed: Backlog, Human In The Loop, In Progress, Blocked, Finished.');
   });
 
   server.registerTool('update_column', {

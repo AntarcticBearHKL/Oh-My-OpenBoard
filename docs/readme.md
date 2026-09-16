@@ -34,10 +34,10 @@ OpenAgile == "Kanban" + "Nirvana" is a Kanban Board, browser-based task manager 
 1. **Pick a starting point**
 	- **Import a template board** (recommended), or
 	- **Create a new board** — the five fixed columns come with it.
-2. **Task creation** — tasks are created by agents through the API, and the HIL column has an Add task control for adding a task by hand.
+2. **Task creation** — tasks are created by agents through the API, and the Human In The Loop column has an Add task control for adding a task by hand.
 3. **Move work forward** by drag-and-drop between columns.
 4. **Use the right tool for the job**
-	- **Columns** = workflow state (Backlog → HIL → In Progress → Blocked → Finished)
+	- **Columns** = workflow state (Backlog → Human In The Loop → In Progress → Blocked → Finished)
 	- **Description** = the agent's full write-up and reply surface
 	- **Notes to the agent** = the human's input; the only human-to-agent channel
 
@@ -118,7 +118,7 @@ Add a second dimension to your board by grouping tasks into horizontal swim lane
 
 - Drag and drop tasks across columns, lanes, or both in a single gesture
 - Collapse/expand individual cells, entire rows, or workflow columns independently
-- Agents create tasks through the API; the HIL column, in the board and swim lane view, also accepts tasks added by hand
+- Agents create tasks through the API; the Human In The Loop column, in the board and swim lane view, also accepts tasks added by hand
 - Finished tasks are hidden in lanes to keep rows compact while remaining a drop target
 - Sticky lane headers during horizontal scrolling and sticky workflow headers during vertical scrolling
 - Fully responsive on mobile with snap-scrolling columns and sticky lane headers
@@ -132,7 +132,7 @@ Multiple boards with independent columns, tasks, labels, and settings. Switch be
 Create tasks with a title and a description. Drag and drop to move between columns. Click anywhere on a task card (except the delete button) to open the edit modal, which holds the title, the description and the notes to the agent. Optimized drag-and-drop performance handles 300+ tasks.
 
 ### Columns
-The board has five fixed columns — **Backlog** (work the agent proposed), **HIL** (Human In The Loop: the human's hand-entry point), **In Progress** (what an agent is actively working; read-only), **Blocked** (work an agent could not finish and that needs a human decision, or work stuck on a resource conflict) and **Finished** (completed work). The ids, order and the done-column role are fixed, so display names can change without a migration. Columns are not user-editable from the board. The Finished column is permanent and optimized for large task counts with virtualization.
+The board has five fixed columns — **Backlog** (work the agent proposed), **Human In The Loop** (the human's hand-entry point), **In Progress** (what an agent is actively working; read-only), **Blocked** (work an agent could not finish and that needs a human decision, or work stuck on a resource conflict) and **Finished** (completed work). The ids, order and the done-column role are fixed, so display names can change without a migration. Columns are not user-editable from the board. The Finished column is permanent and optimized for large task counts with virtualization.
 
 ### Labels & Groups
 Color-coded labels organized into groups. Labels are board-level and feed swim lane grouping — group by **label** or by **label group**. Manage them from **Manage Labels**; board search matches task titles and descriptions.

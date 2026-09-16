@@ -12,8 +12,8 @@ import {
   matchesKey
 } from '../../src/modules/constants.js';
 
-test('the board has five fixed columns with HIL in position two', () => {
-  expect(FIXED_COLUMNS.map((column) => column.name)).toEqual(['Backlog', 'HIL', 'In Progress', 'Blocked', 'Finished']);
+test('the board has five fixed columns with Human In The Loop in position two', () => {
+  expect(FIXED_COLUMNS.map((column) => column.name)).toEqual(['Backlog', 'Human In The Loop', 'In Progress', 'Blocked', 'Finished']);
   expect(FIXED_COLUMNS[0].id).toBe(BACKLOG_COLUMN_ID);
   expect(FIXED_COLUMNS[1].id).toBe(HIL_COLUMN_ID);
   expect(FIXED_COLUMNS[2].id).toBe(IN_PROGRESS_COLUMN_ID);

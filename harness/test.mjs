@@ -58,10 +58,10 @@ const FIXED_COLUMN_IDS = [
   '00000000-0000-4000-8000-000000000033'
 ];
 
-test('the board exposes five fixed columns with HIL in position two', () => {
+test('the board exposes five fixed columns with Human In The Loop in position two', () => {
   assert.deepEqual(
     store.getColumns(store.DEFAULT_BOARD_ID).map((column) => column.name),
-    ['Backlog', 'HIL', 'In Progress', 'Blocked', 'Finished']
+    ['Backlog', 'Human In The Loop', 'In Progress', 'Blocked', 'Finished']
   );
   assert.deepEqual(
     store.getColumns(store.DEFAULT_BOARD_ID).map((column) => column.id),

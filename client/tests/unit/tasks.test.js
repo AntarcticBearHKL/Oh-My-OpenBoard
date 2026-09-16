@@ -18,7 +18,7 @@ beforeEach(() => {
 
 // ── addTask ─────────────────────────────────────────────────────────
 
-test('addTask creates the task in HIL with order 1', () => {
+test('addTask creates the task in Human In The Loop with order 1', () => {
   addTask('First', 'desc');
   const tasks = loadTasks();
   expect(tasks.length).toBe(1);
@@ -383,7 +383,7 @@ test('appending a key point in Backlog sets needsDigest', () => {
   expect(updated.column).toBe(BACKLOG_COLUMN_ID);
 });
 
-test('appending a key point in HIL sets needsDigest', () => {
+test('appending a key point in Human In The Loop sets needsDigest', () => {
   addTask('Human task', '');
   const task = loadTasks()[0];
 
