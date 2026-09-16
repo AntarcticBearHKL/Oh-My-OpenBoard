@@ -11,11 +11,11 @@ OpenAgile a personal + AI Agent Kanban Boards adapt to any workflow. Below, expl
 
 ## ✅ Best Practices for Creating Boards
 
-- **Model workflow state as columns**: The board's columns are fixed — **Backlog → In Progress → Blocked → Finished** — and represent the *status* of work.
-- **Use type and estimate for planning**: There is no priority field any more; the only planning fields are `type` (story/bug/task/spike) and `estimate` (story points). If something is urgent, say so in the description or a comment.
+- **Model workflow state as columns**: The board's columns are fixed — **Backlog → HIL → In Progress → Blocked → Finished** — and represent the *status* of work.
+- **Plan in the description**: There is no priority, due date, type or estimate field any more; write what matters into the description (the agent's surface) or add a note to the agent.
 - **Use labels for “what it is,” not “where it is”**: Good label examples include *type* (Bug, Feature), *area* (Finance, HR), *context* (Home, Work), or *activity* (Email, Meeting, Meeting-Prep, Task). Labels feed swim lane grouping.
 - **Avoid labels like “Blocked”, “Won/Lost”, “Backlog”, “New Lead”**: These read as states — use the fixed columns for state instead of labels.
-- **Start simple**: the board always shows the same four fixed columns, so spend the effort on descriptions and acceptance criteria instead of rearranging columns.
+- **Start simple**: the board always shows the same five fixed columns, so spend the effort on descriptions and notes to the agent instead of rearranging columns.
 - **Keep column names action-oriented**: Prefer “Ready for Review” over vague terms like “Waiting”.
 - **Blocked is a fixed column**: Work an agent could not finish and that needs a human decision, or work stuck on a resource conflict, lands there with a recorded reason.
 
@@ -35,9 +35,10 @@ Jumpstart with these pre-built boards:
 
 ## 🎯 Standard Workflow Columns
 
-The board always shows these four fixed columns:
+The board always shows these five fixed columns:
 
-- **Backlog** — everything not started
+- **Backlog** — work the agent proposed
+- **HIL** — Human In The Loop; the human's hand-entry point
 - **In Progress** — what an agent is actively working; read-only
 - **Blocked** — stuck, needs a human decision or a resource conflict resolved
 - **Finished** — completed work
@@ -46,7 +47,7 @@ Columns cannot be added, renamed, reordered, or deleted from the board.
 
 ## 🏢 Board Templates by Use Case
 
-> **Note:** every board shows the same four fixed columns. The “Recommended Columns” lists below
+> **Note:** every board shows the same five fixed columns. The “Recommended Columns” lists below
 > describe each template's original workflow intent and are kept for reference.
 
 ### 1. 🛠️ Project Management Board

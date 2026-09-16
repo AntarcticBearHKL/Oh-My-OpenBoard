@@ -5,11 +5,11 @@
 - Tasks are created by agents through the API (`create_task`), which always lands in Backlog; a human adds a task by hand only through the HIL column's add control
 - Dialog creation always lands in HIL: the create dialog has no column picker
 - Create and edit form fields, in one column: title (required, validated inline with red error styling), description, and the notes-to-the-agent list. The dialog shows nothing else
-- The task model still carries `type` and `estimate`, but the dialog does not expose them; they are set through the task tools. The model has no priority, no due date, no task labels, no sub-tasks, no attachments and no custom fields
+- The dialog is the whole task surface: the title, the description and the notes-to-the-agent list. The model has no priority, no due date, no task labels, no sub-tasks, no attachments and no custom fields
 - The description belongs to the agent; the notes to the agent (field `keyPoints`) belong to the human and the agent may only read them
 - Notes are appended one at a time with the `+` control, list-style, and can be removed before saving; a note is `{ id, text, at }` and has no done flag
 - The notes list is the only human-to-agent channel in the dialog; the description is the agent's reply surface
-- The edit modal shows the task key as read-only header context. It has no column chip, no claimant chip and no Relationships fieldset
+- The edit modal shows the task key as read-only header context. It has no column chip and no claimant chip
 - A task in In Progress is fully read-only — the whole form is locked while a subagent works it, so a note cannot be added while an agent works on the task
 - Edit mode opens with existing task values prefilled
 - The edit modal includes a fullscreen action on larger screens and a dedicated close button
@@ -32,7 +32,7 @@
 
 ## Card Display
 
-- A task card shows exactly what the task is: title, description preview, and the notes-to-the-agent list (field `keyPoints`), stacked vertically. The card conveys no other status than the column it sits in — the type, estimate, key/code, claimant, elapsed timer, notes indicator, relationships count and blocked badge were removed
+- A task card shows exactly what the task is: title, description preview, and the notes-to-the-agent list (field `keyPoints`), stacked vertically. The card conveys no other status than the column it sits in — the key/code, claimant, elapsed timer, notes indicator and blocked badge were removed
 - Two signals stay because someone must act on them: `needsDigest` (the agent must fold new notes into the description before starting) and `isRework` (the task came back from Finished) render as a quiet marker. They are not decoration
 - Clicking anywhere on a task card opens the edit modal, except the delete button which triggers deletion
 - Drag-and-drop is distinguished from clicks by pointer movement threshold
@@ -52,14 +52,11 @@
 
 ## Comments
 
-- The dialog no longer has a comment thread; the human-to-agent channel is the notes list and the agent's reply surface is the description
-- The `comments` field still exists on the task model and is written by the `add_comment`/`remove_comment` task tools and carried by export/import
+- There is no comment thread in the dialog: the notes list is the only human-to-agent channel and the description is the agent's reply surface
 
 ## Relationships
 
-- Relationships are not edited in the task dialog
-- They live in the relationship model on the task and are managed through the relationship task tools (`add_relationship`, `remove_relationship`); the bidirectional sync, normalization and short-ID display rules are unchanged — see [relationships.md](relationships.md)
-- The card no longer shows a relationships indicator
+- Task relationships are not part of the product: there is no relationship search in the dialog and no relationship indicator on the card
 
 ## Task Deletion
 
@@ -98,6 +95,5 @@ Update this file when you change:
 - task ordering or drag behavior
 - task modal fields or notes-list UX
 - the notes-to-the-agent digest workflow (`needsDigest`, `isRework`, `digestedAt`)
-- relationship UI behavior or card indicator
 - deletion confirmation wording or event propagation
 - claim timing rules or the stale-claim watchdog

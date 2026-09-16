@@ -28,12 +28,15 @@
 ## Boards UI
 
 - Board selection persists and restores on page load
-- Manage Boards supports create, open, export, import, rename, and delete actions
+- Manage Boards supports create, open, export, import, edit an iteration's dates and goal, and delete actions
 - Clicking the brand text or pressing `Ctrl+B` opens the Manage Boards modal; the shortcut is ignored while focus is in an input, textarea, or select
-- New boards start blank
+- New iterations start blank
 - The last remaining board cannot be deleted
 - On mobile, the board selector has a larger touch target and the controls menu stays open while the selector is used
 - Clicking a sidebar group's name or its chevron collapses or expands that group; double-clicking the name renames the group inline
+- A group is named by the user and can be renamed; an iteration is a board inside a group, numbered in order (Iteration 1, Iteration 2, …) and never named by hand
+- A group is the only home for iterations: a board can never live outside a group
+- A group's leading run of iterations whose tasks are all in Finished collapses behind a single control
 
 ## Modals and Dialogs
 

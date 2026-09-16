@@ -3,7 +3,7 @@
 ## Export Behavior
 
 - Export combines the selected board's `boardName`, tasks, columns, labels, and settings into one JSON file
-- Exported tasks carry the current task model: title, description, type, estimate, assignee, parentId, notes to the agent (`keyPoints`), comments, relationships, column, order, dates, blocked fields, claim fields, `needsDigest`/`isRework`, and swim lane assignment
+- Exported tasks carry the current task model: title, description, assignee, notes to the agent (`keyPoints`), column, order, dates, blocked fields, claim fields, `needsDigest`/`isRework`, and swim lane assignment
 - Import/export actions are accessed from Manage Boards; the main toolbar does not provide separate import/export buttons
 - Board-management export can export a chosen board directly
 - Export writes metadata in `exportMeta` including `appVersion`, `schemaVersion`, and `exportedAt`
@@ -16,7 +16,7 @@
 
 - Import creates a new board from JSON rather than overwriting an existing board
 - Imported settings are restored when present
-- When `boardName` exists in the file, it becomes the new board name
+- A `boardName` in the file is kept as export metadata; the created iteration is numbered by its position
 - Import warns that a new board will be created and the UI will switch to it
 - Import performs a preflight review before saving any data: file size is checked first, the JSON shape is validated, and the user must confirm a summary of counts and warnings before the new board is created
 - Imports above the supported size limit are rejected, and unusually large but still supported imports show a caution message before confirmation
@@ -26,7 +26,7 @@
 - An older export that still carries the removed task fields (`priority`, `dueDate`, task `labels`, `subTasks`, `attachments`, `customFields`, `annotations`) imports cleanly: those fields are dropped rather than rejected
 - An older export that still carries `acceptanceCriteria` imports cleanly: the entries are read into `keyPoints` with `text` kept and the old `done` flags dropped
 - Legacy imported IDs, including `done`, `todo`, slug label IDs, and prefixed board IDs, are remapped to UUIDs before persistence
-- Import rewrites task column references, column history entries, swim lane label IDs, and task relationship target IDs when IDs are remapped
+- Import rewrites task column references, column history entries, and swim lane label IDs when IDs are remapped
 
 ## Compatibility Rules
 

@@ -7,9 +7,9 @@ This file is the canonical user-facing text for the in-app **Help** modal.
 
 ## Quick start
 
-- Add a task by hand with the **Add task** row in the **Backlog** column.
-- Drag and drop tasks between the four fixed columns to update status.
-- Use **type** (story/bug/task/spike) and **estimate** (story points) for planning; **acceptance criteria** define when a task is finished.
+- Add a task by hand with the **Add task** control in the **HIL** column.
+- Drag and drop tasks between the five fixed columns to update status.
+- The description belongs to the agent; the notes to the agent are your input, and appending one asks the agent to fold it into the description before starting work.
 
 ## Support & Community
 
@@ -35,7 +35,7 @@ All controls are in the header menu (ellipsis **⋮**).
 
 - **Board Select**: switch boards
 - **Swim Lanes**: toggle the swim lane view
-- **Manage Boards**: open/rename/delete boards
+- **Manage Boards**: open, export, import, edit an iteration's dates and goal, or delete an iteration
 - **Manage Labels**: create/edit/delete labels and groups
 - **Settings**: locale, timestamps, and swim lane options
 - **View Reports** / **View Roadmap**: analytics and iteration overview
@@ -46,27 +46,27 @@ All controls are in the header menu (ellipsis **⋮**).
 - **Switch boards** using the board dropdown.
 - The **last active board is restored** when you return.
 - **Manage Boards** lets you:
-  - Open a board
-  - Rename a board
-  - Delete a board (confirmation required)
-  - The last remaining board cannot be deleted
+  - Open an iteration
+  - Edit an iteration's dates and goal
+  - Delete an iteration (confirmation required)
+  - The last remaining iteration cannot be deleted
 
 ## Tasks
 
-- **Add**: use the **Add task** row in the **Backlog** column to add a task by hand; the other columns are driven by agents. Import/export is in **Manage Boards**.
-- **Edit**: click a task card to edit its title, description, type, estimate, acceptance criteria and notes to the agent.
-- **Move**: drag and drop tasks between the four fixed columns.
+- **Add**: use the **Add task** control in the **HIL** column to add a task by hand; the other columns are driven by agents. Import/export is in **Manage Boards**.
+- **Edit**: click a task card to edit its title, description and notes to the agent.
+- **Move**: drag and drop tasks between the five fixed columns.
 - **Delete**: click the task **trash** button and confirm.
 
-#### Acceptance Criteria & Comments
+#### Notes to the Agent
 
-- **Acceptance criteria** are the definition of done: add each criterion, tick it when it is met, and the task may only move to Finished when everything is checked.
-- **Comments** are your notes to the agent: write what the agent should know or answer, and the agent replies in the same thread.
-- There is no priority, no due date, no label picker, and no sub-task list on a task — type, estimate, acceptance criteria and comments are the task's planning surface.
+- **Notes to the agent** are your input: add one at a time, and the agent folds it into the description before starting work.
+- The **description** belongs to the agent and is where the agent answers.
+- There is no priority, no due date, no label picker, and no sub-task list on a task; the title, the description and the notes list are the whole dialog.
 
 ### Columns
 
-- The board has exactly four fixed columns: Backlog, In Progress, Blocked, Finished.
+- The board has exactly five fixed columns: Backlog, HIL, In Progress, Blocked, Finished.
 - Each column scrolls independently, so long task lists stay manageable.
 - Columns cannot be added, edited, deleted, or reordered from the board.
 - A task in In Progress is read-only while an agent works it.

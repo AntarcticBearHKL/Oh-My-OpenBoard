@@ -30,26 +30,33 @@ limit* is `taskCount > wipLimit`. A Column's count is measured **board-wide acro
 not per lane×column cell — a WIP limit constrains system capacity, not each lane's. The **Finished**
 Column is exempt: it is terminal and unbounded, and limiting it would block finishing work.
 
-**Fixed columns** — every board has exactly four columns: **Backlog** (everything not started),
-**In Progress** (what an agent is actively working; tasks there are read-only), **Blocked** (work an
-agent could not finish and that needs a human decision, or work stuck on a resource conflict) and
-**Finished** (completed work). Their ids, order, and the fourth column's `role: "done"` are fixed;
-behaviour keys off those, never the display name. `name` is display-only, and the fixed definitions
-are reimposed on every board at load, so renaming a fixed column's label needs no migration.
+**Fixed columns** — every board has exactly five columns: **Backlog** (work the agent proposed),
+**HIL** (Human In The Loop: the human's hand-entry point and the only column where a human adds a
+task by hand), **In Progress** (what an agent is actively working; tasks there are read-only),
+**Blocked** (work an agent could not finish and that needs a human decision, or work stuck on a
+resource conflict) and **Finished** (completed work). Their ids, order, and the fifth column's
+`role: "done"` are fixed; behaviour keys off those, never the display name. `name` is display-only,
+and the fixed definitions are reimposed on every board at load, so renaming a fixed column's label
+needs no migration.
+
+**Group / Iteration** — a **Group** is a user-named container that can be renamed and holds
+**Iterations**. An **Iteration** is a Board inside a group, numbered in order (Iteration 1,
+Iteration 2, …) and never named by hand; a Board can never live outside a group. A group's leading
+run of iterations whose tasks are all in Finished collapses behind one control.
 
 ---
 
 ## 2. Aggregate Roots and Boundaries
 
 ```
-Board ──< Column ──< Task ──< Relationship (→ other Task)
+Board ──< Column ──< Task
        ├─< Label (board-level; consumed by swim lane grouping)
        └─< Settings (1:1)
 ```
 
 - **Board** is the aggregate root. No cross-board references exist.
 - **Task** does not carry a label list; swim lane assignment references a Label by ID (`swimlaneLabelId`).
-- **Relationship** is embedded inside Task (not a top-level entity), alongside the embedded `keyPoints` (the notes to the agent) and `comments` collections.
+- **Task** embeds the `keyPoints` collection (the notes to the agent); the description is the agent's reply surface.
 - Every mutation is also recorded as an immutable **domain event** in the event store — the basis of
   sync and replay (see §9, and [ADR-0004](docs/adr/0004-event-sourced-sync.md)). The old inline task
   `activityLog` and board `BoardEvents` audit logs were removed in issue #110.
@@ -97,7 +104,7 @@ the sole writer of `state`/`read_model`, for **both** local and remote (SSE/catc
 **synchronously** by `scheduleDomainEvent()`, so the in-memory projection is updated before the
 mutation returns / `renderBoard()` runs (instant UI); only the IDB event persist and the PocketBase
 push are async. Each mutation's events are self-complete — they encode every read-model effect
-(relationship inverses on target tasks, sibling reordering, derived `doneDate`, swimlane reassignment)
+(sibling reordering, derived `doneDate`, swimlane reassignment)
 so the projection reproduces the change from events alone. Deletes are hard removals via `task.deleted`
 (no read-model tombstone).
 
@@ -198,7 +205,7 @@ all subscribe.
 | `modals.js` | Modal coordination and shared modal state |
 | `dialog.js` | `alertDialog` / `confirmDialog` helpers |
 | `validation.js` | Field validators (column name, task, etc.) |
-| `normalize.js` | Data normalization helpers (hex color, relationships, swim lane ids, etc.) |
+| `normalize.js` | Data normalization helpers (hex color, swim lane ids, etc.) |
 | `settings.js` | Per-board settings load/save |
 | `security.js` | Input sanitization |
 | `theme.js` | Light/dark theme toggle |
@@ -346,5 +353,5 @@ event stream.
 | API mocking | MSW | `client/tests/mocks/*.js` |
 
 Key coverage areas: storage CRUD, UUID migration, swimlane utilities, import/export preflight,
-claim timing, notes to the agent (`keyPoints`), comments, validation, normalization, and the event-sourcing
+claim timing, notes to the agent (`keyPoints`), validation, normalization, and the event-sourcing
 layer (HLC, reducer, outbound queue, realtime/catch-up, snapshots, sync indicator).

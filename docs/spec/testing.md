@@ -57,9 +57,9 @@ expect(loadTasks().some(t => t.title === 'Persisted task')).toBe(true);
 - Board management flows, including the reconstructed board-create dialog
 - Task creation and validation
 - Task deletion flows: permanent delete confirmation removes the card; cancel leaves the card unchanged
-- Task card content: title, description preview, key points, and the `needsDigest`/`isRework` marker
+- Task card content: title, description preview, notes to the agent, and the `needsDigest`/`isRework` marker
 - Task modal: title, description and the notes-to-the-agent list, and the read-only lock on an In Progress task
-- Key-point workflow: digest flags on append, Finished-to-Backlog rework, and `digest_key_points`
+- Notes-to-the-agent workflow: digest flags on append, Finished-to-Backlog rework, and `digest_key_points`
 - Finished-column virtualization behavior
 - Swim lane rendering, settings persistence, and lane-aware moves
 - Claim timing and the stale-claim watchdog

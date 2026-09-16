@@ -12,8 +12,14 @@ const dataDir = mkdtempSync(join(tmpdir(), 'openagile-harness-test-'));
 process.env.OPENAGILE_DATA_DIR = dataDir;
 
 const store = await import('./src/store.mjs');
+const { registerTools } = await import('./src/mcp-tools.mjs');
 
 store.initStore();
+
+const tools = new Map();
+registerTools({ registerTool: (name, config, handler) => { tools.set(name, { config, handler }); } });
+const callTool = (name, args = {}) => tools.get(name).handler(args);
+const toolValue = async (name, args) => JSON.parse((await callTool(name, args)).content[0].text);
 
 let clock = 1000;
 function makeEvent(type, boardId, entityId) {
@@ -284,6 +290,154 @@ test('digesting key points stamps the points and clears needsDigest', () => {
 
 test('digesting a missing task throws', () => {
   assert.throws(() => store.digestKeyPoints('missing-task'), /Task not found/);
+});
+
+test('the removed tools are gone', () => {
+  for (const name of ['add_comment', 'remove_comment', 'add_relationship', 'remove_relationship']) {
+    assert.equal(tools.has(name), false, `${name} must not be registered`);
+  }
+});
+
+test('a group keeps the name it was given', async () => {
+  assert.deepEqual(Object.keys(tools.get('create_group').config.inputSchema), ['name']);
+
+  const group = await toolValue('create_group', { name: 'Frontend Page' });
+
+  assert.equal(group.name, 'Frontend Page');
+  assert.equal(store.getGroups().find((entry) => entry.id === group.id).name, 'Frontend Page');
+  assert.equal(store.getGroups().some((entry) => /^Iterations \d+$/.test(entry.name)), false, 'no group is auto-named');
+});
+
+test('an iteration is numbered from its position in its group', async () => {
+  assert.deepEqual(Object.keys(tools.get('create_board').config.inputSchema), ['groupId'], 'create_board takes no name');
+
+  const alpha = await toolValue('create_group', { name: 'Alpha' });
+  const beta = await toolValue('create_group', { name: 'Beta' });
+  const alpha1 = await toolValue('create_board', { groupId: alpha.id });
+  const alpha2 = await toolValue('create_board', { groupId: alpha.id });
+  const beta1 = await toolValue('create_board', { groupId: beta.id });
+
+  assert.equal(alpha1.name, 'Iteration 1');
+  assert.equal(alpha2.name, 'Iteration 2');
+  assert.equal(beta1.name, 'Iteration 1', 'numbering restarts in another group');
+
+  await assert.rejects(
+    () => callTool('rename_board', { boardId: alpha1.id, name: 'Renamed by hand' }),
+    /numbered by their position in a group and cannot be renamed/
+  );
+  assert.equal(store.getBoard(alpha1.id).name, 'Iteration 1', 'the refused rename changed nothing');
+});
+
+test('a board cannot be left outside a group', async () => {
+  const group = await toolValue('create_group', { name: 'Held Group' });
+  const board = await toolValue('create_board', { groupId: group.id });
+
+  const assigned = await toolValue('assign_board_to_group', { boardId: board.id, groupId: '' });
+  assert.ok(assigned.groupId, 'an empty groupId lands the board on a group');
+  assert.equal(store.getBoards().find((entry) => entry.id === board.id).groupId, assigned.groupId);
+  assert.equal(store.getGroups().some((entry) => entry.id === assigned.groupId), true, 'the group exists');
+
+  const groupless = await toolValue('assign_board_to_group', { boardId: board.id });
+  assert.ok(groupless.groupId, 'an omitted groupId also lands the board on a group');
+  assert.equal(store.getBoards().find((entry) => entry.id === board.id).groupId, groupless.groupId);
+
+  const auto = await toolValue('create_board', {});
+  assert.ok(store.getBoards().find((entry) => entry.id === auto.id).groupId, 'a board created without a group still belongs to one');
+
+  await assert.rejects(
+    () => callTool('assign_board_to_group', { boardId: board.id, groupId: 'no-such-group' }),
+    /Group not found/
+  );
+  assert.throws(() => store.createBoard({ groupId: 'no-such-group' }), /Group not found/);
+});
+
+test('delete_group deletes the iterations it holds', async () => {
+  const group = await toolValue('create_group', { name: 'Doomed Group' });
+  const first = await toolValue('create_board', { groupId: group.id });
+  const second = await toolValue('create_board', { groupId: group.id });
+
+  const result = await toolValue('delete_group', { groupId: group.id });
+
+  assert.deepEqual([...result.deletedBoards].sort(), [first.id, second.id].sort());
+  for (const boardId of [first.id, second.id]) {
+    assert.equal(store.getBoard(boardId), null, 'the iteration is deleted, not stranded');
+    assert.equal(store.getBoardGroupMap()[boardId], undefined, 'no group mapping survives');
+  }
+  assert.equal(store.getGroups().some((entry) => entry.id === group.id), false);
+});
+
+test('the agent cannot add, edit or delete a note', async () => {
+  for (const name of ['create_task', 'update_task']) {
+    const keys = Object.keys(tools.get(name).config.inputSchema);
+    for (const field of ['type', 'estimate', 'parentId', 'keyPoints']) {
+      assert.equal(keys.includes(field), false, `${name} must not advertise ${field}`);
+    }
+  }
+
+  const created = await toolValue('create_task', {
+    title: 'Notes stay human',
+    keyPoints: [{ id: 'injected', text: 'injected note' }],
+    type: 'bug',
+    estimate: 8,
+    parentId: 'epic'
+  });
+  assert.deepEqual(created.task.keyPoints ?? [], [], 'create_task writes no notes');
+  assert.equal('type' in created.task, false);
+  assert.equal('estimate' in created.task, false);
+  assert.equal('parentId' in created.task, false);
+
+  store.appendEvents([makeTask(BOARD_A, 'task-notes', {
+    title: 'Human notes',
+    column: FIXED_COLUMN_IDS[0],
+    keyPoints: [
+      { id: 'note-1', text: 'Keep me', at: '2026-01-01T00:00:00.000Z' },
+      { id: 'note-2', text: 'Keep me too', at: '2026-01-01T00:00:00.000Z' }
+    ],
+    needsDigest: true
+  })]);
+
+  const before = store.getTasks(BOARD_A).find((entry) => entry.id === 'task-notes').keyPoints.map((point) => ({ ...point }));
+  await callTool('digest_key_points', { taskId: 'task-notes', pointIds: ['note-1'] });
+  const afterDigest = store.getTasks(BOARD_A).find((entry) => entry.id === 'task-notes');
+
+  assert.equal(afterDigest.keyPoints.length, before.length, 'digesting deletes nothing');
+  assert.equal(afterDigest.keyPoints[0].id, before[0].id);
+  assert.equal(afterDigest.keyPoints[0].text, before[0].text, 'note text is never edited');
+  assert.equal(afterDigest.keyPoints[0].at, before[0].at, 'the original stamp is kept');
+  assert.ok(afterDigest.keyPoints[0].digestedAt, 'only the digestion stamp is written');
+  assert.deepEqual(afterDigest.keyPoints[1], before[1], 'the untargeted note is untouched');
+  assert.equal(afterDigest.needsDigest, false);
+
+  await callTool('update_task', { taskId: 'task-notes', description: 'folded in', keyPoints: [{ id: 'x', text: 'nope' }] });
+  const afterUpdate = store.getTasks(BOARD_A).find((entry) => entry.id === 'task-notes');
+  assert.equal(afterUpdate.keyPoints.length, before.length, 'update_task cannot add or delete notes');
+  assert.equal(afterUpdate.keyPoints[1].text, 'Keep me too', 'update_task cannot edit notes');
+});
+
+test('comments and relationships are gone from the tools and ignored on read', async () => {
+  store.appendEvents([makeTask(BOARD_A, 'task-legacy-fields', {
+    title: 'Legacy fields',
+    column: FIXED_COLUMN_IDS[0],
+    comments: [{ id: 'comment-1', author: 'You', text: 'old comment', at: '2026-01-01T00:00:00.000Z' }],
+    relationships: [{ type: 'prerequisite', targetTaskId: 'other-task' }]
+  })]);
+
+  const listed = (await toolValue('list_tasks', { boardId: BOARD_A })).find((task) => task.id === 'task-legacy-fields');
+  assert.ok(listed, 'the task stays readable');
+  assert.equal('comments' in listed, false);
+  assert.equal('relationships' in listed, false);
+
+  const fetched = (await toolValue('get_task', { taskId: 'task-legacy-fields' })).task;
+  assert.equal('comments' in fetched, false);
+  assert.equal('relationships' in fetched, false);
+
+  const snapshot = await toolValue('get_board_snapshot', { boardId: BOARD_A });
+  const snapshotTask = snapshot.state.tasks.find((task) => task.id === 'task-legacy-fields');
+  assert.equal('comments' in snapshotTask, false);
+  assert.equal('relationships' in snapshotTask, false);
+
+  const created = await toolValue('create_task', { title: 'No comments', comments: [{ id: 'injected' }] });
+  assert.equal('comments' in created.task, false, 'create_task writes no comments');
 });
 
 after(() => {

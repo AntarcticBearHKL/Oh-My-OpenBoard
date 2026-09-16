@@ -466,24 +466,27 @@ export function getStats() {
   };
 }
 
-export function createBoard(name, { groupId = '' } = {}) {
-  const trimmed = typeof name === 'string' ? name.trim() : '';
-  const boardId = randomUUID();
-  const board = { id: boardId, name: trimmed || 'Untitled board', createdAt: new Date().toISOString() };
-  emit('board.created', { boardId, entityId: boardId, payload: { board } });
-  noBoards = false;
-  if (groupId) boardGroups[boardId] = String(groupId);
-  schedulePersist();
-  return { ...board, groupId: boardGroups[boardId] || '' };
+export function resolveGroup(groupId = '') {
+  const groups = getGroups();
+  const target = groupId ? groups.find((entry) => entry.id === groupId) : groups[groups.length - 1];
+  if (!target) {
+    throw new Error(groupId
+      ? `Group not found: ${groupId}`
+      : 'No groups exist; create a group first: every iteration belongs to a group');
+  }
+  return target;
 }
 
-export function renameBoard(boardId, name) {
-  const board = getBoard(boardId);
-  if (!board) throw new Error(`Board not found: ${boardId}`);
-  const trimmed = typeof name === 'string' ? name.trim() : '';
-  if (!trimmed) throw new Error('name is required');
-  emit('board.updated', { boardId, entityId: boardId, payload: { fields: { name: trimmed } } });
-  return { id: boardId, name: trimmed };
+export function createBoard({ groupId = '' } = {}) {
+  const group = resolveGroup(groupId);
+  const position = getBoards().filter((board) => board.groupId === group.id).length + 1;
+  const boardId = randomUUID();
+  const board = { id: boardId, name: `Iteration ${position}`, createdAt: new Date().toISOString() };
+  emit('board.created', { boardId, entityId: boardId, payload: { board } });
+  noBoards = false;
+  boardGroups[boardId] = group.id;
+  schedulePersist();
+  return { ...board, groupId: group.id };
 }
 
 export function deleteBoard(boardId) {
@@ -528,7 +531,7 @@ export const DEFAULT_SKILLS = [
       '- HIL：Human In The Loop，人手工建任务的地方；新任务从这里出发。',
       '- In Progress：已被某个 subagent 认领并在处理中 → 任务表单完全锁定（只读）。',
       '- Blocked：卡住了，必须写原因；连续两次日报仍卡住就升级。',
-      '- Finished：已完成，是速度/完成点数的统计来源。',
+      '- Finished：已完成，是完成情况的统计来源。',
       '',
       '【交接约定】',
       '- 同一时刻一个任务只应被一个 subagent 认领；已被别人认领的任务不要动。',
@@ -554,7 +557,7 @@ export const DEFAULT_SKILLS = [
       '- 只有真的动了才移动任务：开始做时移到 In Progress，做不下去时移到 Blocked 并写原因，',
       '  主工作完成后才移到 Finished。',
       '- 人只通过 HIL 列手工建任务；Backlog 与其余列由 agent 与流程驱动。',
-      '- 与其建一个大任务，不如拆成带故事点（story points）的小任务。',
+      '- 与其建一个大任务，不如拆成能一次做完的小任务。',
       '- 人写在「给 agent 的备注」里的指示必须回应：把它折进描述，不要让人的话悬着。',
       '- 评审者需要知道的任何事，都写进任务的描述（description）。',
       '',
@@ -562,7 +565,7 @@ export const DEFAULT_SKILLS = [
     ].join('\n')
   },
   {
-    name: '任务拆分与要点',
+    name: '任务拆分与备注',
     description: '如何把工作切到能一次做完的程度。',
     content: [
       '一个任务只需要标题和描述就能创建；没有优先级、没有截止日期、没有标签、没有子任务。',
@@ -573,27 +576,29 @@ export const DEFAULT_SKILLS = [
       '',
       '拆分规则：',
       '- 一个任务 = 一个结果，一天内可交付。',
-      '- 它所属的 epic 用 parentId 关联。',
-      '- 用点数估算（1、2、3、5、8）；超过 8 的必须拆开。',
-      '- Bug 在描述里写复现步骤；spike 是有时限的调研。',
+      '- 按结果切，不要按阶段或文档切。',
+      '- 一个任务一天内做不完，就继续拆成多个任务。',
+      '- 需要交代的背景和步骤，都写进描述，由 agent 维护。',
     ].join('\n')
   },
   {
-    name: '迭代规划与估算',
-    description: '如何填充 group／迭代，以及如何读懂速度。',
+    name: '迭代规划',
+    description: '如何用 group／迭代组织工作，以及如何读懂周期时间。',
     content: [
-      'group 是容器；迭代（iteration）是它里面的一块看板。',
+      'group 是人命名的容器，可以改名，里面装着一个或多个迭代。',
+      '迭代（iteration）是 group 里的一块看板，按顺序编号（Iteration 1、Iteration 2……），不能手工命名。',
+      '一块看板永远属于某个 group，不会独立存在。',
+      'group 开头连续若干个「任务全部在 Finished」的迭代，可以用一个控件折叠起来。',
       '',
       '规划流程：',
       '- 开始前先设好迭代日期（startDate/endDate）和一句话目标。',
-      '- 只把近期速度（velocity）装得下的工作拉进迭代，其余留作未分配。',
+      '- 只把近期做得了的工作拉进迭代，其余留在 Backlog。',
       '- 让五列保持如实：Backlog、HIL、In Progress、Blocked、Finished。',
       '- 人只在 HIL 列手工建任务；Backlog 是 agent 立项的队列。',
       '',
       '读懂数字：',
-      '- 速度 = 每个迭代完成的故事点（见 Reports）。',
-      '- 燃尽图把剩余点数与迭代周期内的理想线作对比。',
       '- 周期时间（cycle time）分布告诉你工作卡在哪；盯 p90，不要盯平均值。',
+      '- 每个迭代的起止日期和 Finished 列一起，说明这一轮做完了什么。',
     ].join('\n')
   },
   {
@@ -633,7 +638,7 @@ export const DEFAULT_SKILLS = [
       'Blocked 的含义：没有你控制之外的东西就无法继续推进。',
       '',
       '- 一定要写阻塞原因（set_blocked_reason）；只写「blocked」而没原因是没用的。',
-      '- Blocked 的任务保留点数；它们仍是可燃烧的工作，不是已完成的工作。',
+      '- Blocked 的任务还没完成；它们是进行中的工作，不是已完成的工作。',
       '- 任务连续两次每日更新仍然卡住，就要升级处理。',
       '',
       '每日更新（agent 写进迭代任务的描述 description）：',

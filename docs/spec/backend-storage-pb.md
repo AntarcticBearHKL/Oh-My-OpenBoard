@@ -131,7 +131,7 @@ boards in v1.
 
 ### Legacy collections (deprecated, write-locked)
 
-`tasks`, `columns`, `labels`, and `task_relationships` are the old whole-record LWW mirrors. The
+`tasks`, `columns`, and `labels` are the old whole-record LWW mirrors. The
 event-sourced migration (`1746100010`) sets their `createRule`/`updateRule`/`deleteRule` to `null`
 (reads kept), and they are scheduled for removal after a 30-day quiet period — **issue #116**. Do not
 write to them. Their schemas remain in `data-models.md` for reference.

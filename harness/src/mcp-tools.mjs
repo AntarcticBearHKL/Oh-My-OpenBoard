@@ -22,7 +22,7 @@ import {
   getSkills,
   getSnapshot,
   getTasks,
-  renameBoard,
+  resolveGroup,
   setBoardGroupMap,
   setGroups,
   setSkills
@@ -77,6 +77,11 @@ function findTaskOrThrow(taskId) {
   const found = findTask(taskId);
   if (!found) throw new Error(`Task not found: ${taskId}`);
   return found;
+}
+
+function withoutRemovedFields(task) {
+  const { comments, relationships, ...rest } = task;
+  return rest;
 }
 
 function maxOrder(columnId, tasks) {
@@ -174,98 +179,93 @@ function computeMetrics(boardId) {
   };
 }
 
-function withDerivedGroupNames(groups) {
-  return groups.map((group, index) => ({ ...group, order: index + 1, name: `Iterations ${index + 1}` }));
-}
-
 export function registerTools(server) {
   // ── Boards / reads ──────────────────────────────────────────────────────────
 
   server.registerTool('list_boards', {
     title: 'List boards',
-    description: 'List all boards (iterations) with id, name and groupId.'
+    description: 'List all iterations (boards) with id, derived name and groupId. Every iteration belongs to a group.'
   }, async () => ok(getBoards()));
 
   server.registerTool('create_board', {
     title: 'Create board',
-    description: 'Create a new board (iteration). Optionally assign it to a group.',
+    description: 'Create an iteration (board) inside a group. An iteration is named Iteration N from its position in the group and is not named by hand.',
     inputSchema: {
-      name: z.string(),
-      groupId: z.string().optional()
+      groupId: z.string().optional().describe('Group that will hold the iteration; defaults to the last group')
     }
-  }, async ({ name, groupId = '' }) => ok(createBoard(name, { groupId })));
+  }, async ({ groupId = '' }) => ok(createBoard({ groupId })));
 
   server.registerTool('rename_board', {
     title: 'Rename board',
-    description: 'Rename a board (iteration).',
-    inputSchema: { boardId: z.string(), name: z.string() }
-  }, async ({ boardId, name }) => ok(renameBoard(boardId, name)));
+    description: 'Iterations are named Iteration 1, Iteration 2, ... from their position in a group and cannot be renamed by hand; this tool always refuses.',
+    inputSchema: { boardId: z.string() }
+  }, async () => {
+    throw new Error('Iterations are numbered by their position in a group and cannot be renamed.');
+  });
 
   server.registerTool('delete_board', {
     title: 'Delete board',
-    description: 'Delete a board and its tasks. The last board can also be deleted; the app then shows an empty state until another board is created.',
+    description: 'Delete an iteration and its tasks. The last iteration can also be deleted; the app then shows an empty state until another is created.',
     inputSchema: { boardId: z.string() }
   }, async ({ boardId }) => ok(deleteBoard(boardId)));
 
   server.registerTool('list_groups', {
     title: 'List groups',
-    description: 'List groups and the boardId to groupId mapping.',
+    description: 'List the user-named groups and the mapping from each iteration to its group.',
     inputSchema: {}
   }, async () => ok({ groups: getGroups(), boardGroups: getBoardGroupMap() }));
 
   server.registerTool('create_group', {
     title: 'Create group',
-    description: 'Create a group: a top-level container for boards (iterations).',
-    inputSchema: {}
-  }, async () => {
-    const groups = withDerivedGroupNames(getGroups());
-    const group = {
-      id: randomUUID(),
-      name: `Iterations ${groups.length + 1}`,
-      order: groups.length + 1,
-      collapsed: false
-    };
+    description: 'Create a group: a user-named container that holds iterations. A group can be renamed.',
+    inputSchema: { name: z.string().describe('Group name, as given by the user') }
+  }, async ({ name }) => {
+    const trimmed = typeof name === 'string' ? name.trim() : '';
+    if (!trimmed) throw new Error('name is required');
+    const groups = getGroups();
+    const order = groups.reduce((max, group) => Math.max(max, Number.isFinite(group.order) ? group.order : 0), 0) + 1;
+    const group = { id: randomUUID(), name: trimmed, order, collapsed: false };
     setGroups([...groups, group]);
     return ok(group);
   });
 
   server.registerTool('delete_group', {
     title: 'Delete group',
-    description: 'Delete a group. Its boards are not deleted; they become ungrouped.',
+    description: 'Delete a group and the iterations it holds. A board can never live outside a group, so its iterations are deleted with it.',
     inputSchema: { groupId: z.string() }
   }, async ({ groupId }) => {
     const groups = getGroups();
     if (!groups.some((group) => group.id === groupId)) throw new Error(`Group not found: ${groupId}`);
-    setGroups(withDerivedGroupNames(groups.filter((group) => group.id !== groupId)));
+    const deletedBoards = getBoards()
+      .filter((board) => board.groupId === groupId)
+      .map((board) => board.id);
+    for (const boardId of deletedBoards) deleteBoard(boardId);
+    setGroups(groups.filter((group) => group.id !== groupId));
     const map = getBoardGroupMap();
     const next = {};
     for (const [boardId, mappedGroupId] of Object.entries(map)) {
       if (mappedGroupId !== groupId) next[boardId] = mappedGroupId;
     }
     setBoardGroupMap(next);
-    return ok({ deleted: groupId });
+    return ok({ deleted: groupId, deletedBoards });
   });
 
   server.registerTool('assign_board_to_group', {
     title: 'Assign board to group',
-    description: 'Move a board into a group. Pass an empty groupId to make it ungrouped.',
+    description: 'Move an iteration into a group. Every iteration belongs to a group and cannot be left outside one: an empty groupId attaches it to the last group.',
     inputSchema: { boardId: z.string(), groupId: z.string().optional() }
   }, async ({ boardId, groupId = '' }) => {
     if (!getBoard(boardId)) throw new Error(`Board not found: ${boardId}`);
+    const group = resolveGroup(groupId);
     const map = getBoardGroupMap();
-    if (groupId) {
-      if (!getGroups().some((group) => group.id === groupId)) throw new Error(`Group not found: ${groupId}`);
-      map[boardId] = groupId;
-    } else {
-      delete map[boardId];
-    }
+    map[boardId] = group.id;
     setBoardGroupMap(map);
-    return ok({ boardId, groupId: groupId || '' });
+    return ok({ boardId, groupId: group.id });
   });
 
   server.registerTool('get_board', {
     title: 'Get board',
-    description: 'Get a board with its columns, labels and tasks.',
+    description: 'Get an iteration with its columns, labels and tasks.',
     inputSchema: { boardId: z.string().optional() }
   }, async ({ boardId }) => {
     const bid = resolveBoard(boardId);
@@ -281,7 +281,7 @@ export function registerTools(server) {
 
   server.registerTool('list_columns', {
     title: 'List columns',
-    description: 'List the columns of a board (id, name, order).',
+    description: 'List the five fixed columns of an iteration (id, name, order).',
     inputSchema: { boardId: z.string().optional() }
   }, async ({ boardId }) => ok(getColumns(resolveBoard(boardId)).map((c) => ({ id: c.id, name: c.name, color: c.color, order: c.order, role: c.role || '', wipLimit: c.wipLimit || 0 }))));
 
@@ -293,7 +293,7 @@ export function registerTools(server) {
 
   server.registerTool('list_tasks', {
     title: 'List tasks',
-    description: 'List tasks, optionally filtered by column (id or name) or a text search over title/description.',
+    description: 'List tasks in an iteration, optionally filtered by column (id or name) or a text search over title/description.',
     inputSchema: {
       boardId: z.string().optional(),
       column: z.string().optional(),
@@ -313,38 +313,33 @@ export function registerTools(server) {
         column: t.column, columnName: columnsById.get(t.column) || '',
         type: t.type || 'task', estimate: Number.isFinite(t.estimate) ? t.estimate : null,
         claimedBy: t.claimedBy || '', assignee: t.assignee || '',
-        keyPoints: t.keyPoints || [], needsDigest: t.needsDigest === true, isRework: t.isRework === true,
-        comments: t.comments || [],
-        relationships: t.relationships || []
+        keyPoints: t.keyPoints || [], needsDigest: t.needsDigest === true, isRework: t.isRework === true
       }));
     return ok(tasks);
   });
 
   server.registerTool('get_task', {
     title: 'Get task',
-    description: 'Get a single task by id, including key points, comments and relationships.',
+    description: 'Get a single task by id: its title, description and the notes to the agent (keyPoints).',
     inputSchema: { taskId: z.string() }
   }, async ({ taskId }) => {
     const { task, boardId } = findTaskOrThrow(taskId);
     const column = getColumns(boardId).find((c) => c.id === task.column);
-    return ok({ boardId, columnName: column?.name || '', task });
+    return ok({ boardId, columnName: column?.name || '', task: withoutRemovedFields(task) });
   });
 
   // ── Task mutations ──────────────────────────────────────────────────────────
 
   server.registerTool('create_task', {
     title: 'Create task',
-    description: 'Create a task in Backlog. Supports type, story-point estimate, assignee and parent (epic). Key points are the human\'s to write and cannot be set here.',
+    description: 'Create a task in Backlog with a title and a description. Notes to the agent (keyPoints) belong to the human: no tool can add, edit or remove them, and the agent only reads and digests them.',
     inputSchema: {
       title: z.string().describe('Task title'),
       description: z.string().optional(),
-      type: z.enum(['story', 'bug', 'task', 'spike']).optional(),
-      estimate: z.number().optional().describe('Story points'),
       assignee: z.string().optional(),
-      parentId: z.string().optional().describe('Parent / epic task id'),
       boardId: z.string().optional()
     }
-  }, async ({ title, description = '', type = 'task', estimate = null, assignee = '', parentId = '', boardId }) => {
+  }, async ({ title, description = '', assignee = '', boardId }) => {
     const bid = resolveBoard(boardId);
     if (!title || !String(title).trim()) throw new Error('title is required');
     const backlogColumn = resolveBacklogColumn(bid);
@@ -356,17 +351,12 @@ export function registerTools(server) {
       key: nextTaskKey(bid, tasks),
       title: String(title).trim(),
       description,
-      type,
-      estimate: Number.isFinite(estimate) ? estimate : null,
       assignee,
-      parentId: parentId || null,
-      keyPoints: [],
       column: backlogColumn.id,
       order: maxOrder(backlogColumn.id, tasks) + 1,
       creationDate: now,
       changeDate: now,
       columnHistory: [{ column: backlogColumn.id, at: now }],
-      comments: [],
       blockedReason: '',
       blockedAt: null
     };
@@ -376,26 +366,20 @@ export function registerTools(server) {
 
   server.registerTool('update_task', {
     title: 'Update task',
-    description: 'Update task fields: title, description, type, estimate, assignee, parentId or blockedReason. Key points cannot be added, edited or removed here.',
+    description: 'Update a task\'s title, description, assignee or blocked reason. The notes to the agent (keyPoints) cannot be added, edited or removed here.',
     inputSchema: {
       taskId: z.string(),
       title: z.string().optional(),
       description: z.string().optional(),
-      type: z.enum(['story', 'bug', 'task', 'spike']).optional(),
-      estimate: z.number().nullable().optional(),
       assignee: z.string().optional(),
-      parentId: z.string().nullable().optional(),
       blockedReason: z.string().optional()
     }
-  }, async ({ taskId, title, description, type, estimate, assignee, parentId, blockedReason }) => {
+  }, async ({ taskId, title, description, assignee, blockedReason }) => {
     const { boardId } = findTaskOrThrow(taskId);
     const fields = {};
     if (title !== undefined) fields.title = title;
     if (description !== undefined) fields.description = description;
-    if (type !== undefined) fields.type = type;
-    if (estimate !== undefined) fields.estimate = estimate;
     if (assignee !== undefined) fields.assignee = assignee;
-    if (parentId !== undefined) fields.parentId = parentId || null;
     if (blockedReason !== undefined) {
       fields.blockedReason = blockedReason;
       fields.blockedAt = blockedReason ? new Date().toISOString() : null;
@@ -472,7 +456,7 @@ export function registerTools(server) {
 
   server.registerTool('create_column', {
     title: 'Create column',
-    description: 'Add a column to a board. `role: "done"` is rejected if a Done column already exists.',
+    description: 'Columns are fixed: Backlog, HIL, In Progress, Blocked, Finished. Adding a column is rejected.',
     inputSchema: {
       name: z.string(),
       color: z.string().optional(),
@@ -507,7 +491,7 @@ export function registerTools(server) {
 
   server.registerTool('delete_column', {
     title: 'Delete column',
-    description: 'Delete a column and its tasks. The Done column cannot be deleted.',
+    description: 'Columns are fixed and cannot be deleted; this tool is rejected.',
     inputSchema: { columnId: z.string(), boardId: z.string().optional() }
   }, async () => {
     throw new Error('Columns are fixed and cannot be deleted.');
@@ -515,7 +499,7 @@ export function registerTools(server) {
 
   server.registerTool('reorder_columns', {
     title: 'Reorder columns',
-    description: 'Reorder columns. Pass the full array of { id, order }.',
+    description: 'Columns are fixed and cannot be reordered; this tool is rejected.',
     inputSchema: {
       order: z.array(z.object({ id: z.string(), order: z.number() })),
       boardId: z.string().optional()
@@ -525,29 +509,6 @@ export function registerTools(server) {
   });
 
   // ── Diagnostics ─────────────────────────────────────────────────────────────
-
-  server.registerTool('add_comment', {
-    title: 'Add comment',
-    description: 'Append a comment to a task.',
-    inputSchema: { taskId: z.string(), text: z.string(), author: z.string().optional() }
-  }, async ({ taskId, text, author = AGENT_ID }) => {
-    const { task, boardId } = findTaskOrThrow(taskId);
-    const comment = { id: randomUUID(), author, text: String(text), at: new Date().toISOString() };
-    const comments = [...(Array.isArray(task.comments) ? task.comments : []), comment];
-    emit('task.updated', { boardId, entityId: taskId, payload: { fields: { comments, changeDate: comment.at } }, actor: AGENT });
-    return ok(comment);
-  });
-
-  server.registerTool('remove_comment', {
-    title: 'Remove comment',
-    description: 'Remove a comment from a task.',
-    inputSchema: { taskId: z.string(), commentId: z.string() }
-  }, async ({ taskId, commentId }) => {
-    const { task, boardId } = findTaskOrThrow(taskId);
-    const comments = (Array.isArray(task.comments) ? task.comments : []).filter((comment) => comment.id !== commentId);
-    emit('task.updated', { boardId, entityId: taskId, payload: { fields: { comments, changeDate: new Date().toISOString() } }, actor: AGENT });
-    return ok({ removed: commentId });
-  });
 
   server.registerTool('set_blocked_reason', {
     title: 'Set blocked reason',
@@ -567,7 +528,7 @@ export function registerTools(server) {
 
   server.registerTool('set_board_dates', {
     title: 'Set iteration dates',
-    description: 'Set start/end dates and an optional goal for a board (iteration). Needed for burndown.',
+    description: 'Set the start/end dates and the goal of an iteration. Needed for burndown.',
     inputSchema: {
       boardId: z.string().optional(),
       startDate: z.string().optional(),
@@ -587,13 +548,13 @@ export function registerTools(server) {
 
   server.registerTool('get_metrics', {
     title: 'Get metrics',
-    description: 'Velocity (story points), burndown series (needs board dates) and lead/cycle time stats.',
+    description: 'Velocity, burndown series (needs iteration dates) and lead/cycle time stats.',
     inputSchema: { boardId: z.string().optional() }
   }, async ({ boardId }) => ok(computeMetrics(resolveBoard(boardId))));
 
   server.registerTool('list_roadmap', {
     title: 'List roadmap',
-    description: 'List iterations (boards) with dates, goal, task counts and completed story points.',
+    description: 'List iterations with dates, goal and task counts.',
     inputSchema: {}
   }, async () => ok(getBoards().map((board) => {
     const row = getBoard(board.id) || {};
@@ -615,41 +576,6 @@ export function registerTools(server) {
       donePoints: doneTasks.reduce((sum, task) => sum + points(task), 0)
     };
   })));
-
-  server.registerTool('add_relationship', {
-    title: 'Link tasks',
-    description: 'Create a relationship between two tasks: prerequisite, dependent or related. The inverse is created on the other task.',
-    inputSchema: {
-      taskId: z.string(),
-      targetTaskId: z.string(),
-      type: z.enum(['prerequisite', 'dependent', 'related'])
-    }
-  }, async ({ taskId, targetTaskId, type }) => {
-    const source = findTaskOrThrow(taskId);
-    const target = findTaskOrThrow(targetTaskId);
-    if (source.boardId !== target.boardId) throw new Error('Tasks must be on the same board');
-    const inverse = type === 'related' ? 'related' : (type === 'prerequisite' ? 'dependent' : 'prerequisite');
-    emit('relationship.added', { boardId: source.boardId, entityId: taskId, payload: { relationship: { type, targetTaskId } }, actor: AGENT });
-    emit('relationship.added', { boardId: target.boardId, entityId: targetTaskId, payload: { relationship: { type: inverse, targetTaskId: taskId } }, actor: AGENT });
-    return ok({ taskId, targetTaskId, type, inverse });
-  });
-
-  server.registerTool('remove_relationship', {
-    title: 'Unlink tasks',
-    description: 'Remove a relationship between two tasks and its inverse.',
-    inputSchema: {
-      taskId: z.string(),
-      targetTaskId: z.string(),
-      type: z.enum(['prerequisite', 'dependent', 'related'])
-    }
-  }, async ({ taskId, targetTaskId, type }) => {
-    const source = findTaskOrThrow(taskId);
-    findTaskOrThrow(targetTaskId);
-    const inverse = type === 'related' ? 'related' : (type === 'prerequisite' ? 'dependent' : 'prerequisite');
-    emit('relationship.removed', { boardId: source.boardId, entityId: taskId, payload: { targetTaskId, relationship_type: type }, actor: AGENT });
-    emit('relationship.removed', { boardId: source.boardId, entityId: targetTaskId, payload: { targetTaskId: taskId, relationship_type: inverse }, actor: AGENT });
-    return ok({ removed: true, taskId, targetTaskId, type });
-  });
 
   server.registerTool('update_label', {
     title: 'Update label',
@@ -686,7 +612,7 @@ export function registerTools(server) {
 
   server.registerTool('digest_key_points', {
     title: 'Digest key points',
-    description: 'Mark human key points as folded into the description and clear the needsDigest flag. Pass pointIds to stamp specific points, or omit them to stamp every point on the task.',
+    description: 'Mark the human\'s notes (keyPoints) as folded into the description by stamping digestedAt on them and clear the needsDigest flag. Pass pointIds to stamp specific notes, or omit them to stamp every undigested note. Notes are never added, edited or removed here.',
     inputSchema: { taskId: z.string(), pointIds: z.array(z.string()).optional() }
   }, async ({ taskId, pointIds }) => ok(digestKeyPoints(taskId, pointIds)));
 
@@ -781,9 +707,13 @@ export function registerTools(server) {
 
   server.registerTool('get_board_snapshot', {
     title: 'Get raw board snapshot',
-    description: 'Return the raw projected read model for a board (boards, tasks, columns, labels, settings) and current event seq.',
+    description: 'Return the projected read model for a board (boards, tasks, columns, labels, settings) and current event seq. Tasks omit the removed comments and relationships fields.',
     inputSchema: { boardId: z.string().optional() }
-  }, async ({ boardId }) => ok(getSnapshot(resolveBoard(boardId))));
+  }, async ({ boardId }) => {
+    const snapshot = getSnapshot(resolveBoard(boardId));
+    const tasks = (snapshot.state?.tasks || []).map(withoutRemovedFields);
+    return ok({ ...snapshot, state: { ...snapshot.state, tasks } });
+  });
 
   server.registerTool('get_settings', {
     title: 'Get board settings',

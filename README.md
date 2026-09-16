@@ -27,33 +27,16 @@ Experience it firsthand: **[Try the Live Demo](https://kanvana.com)**
 
 ## ✨ Key Features
 
-### ✅ Acceptance Criteria (New!)
+### 📝 Notes to the Agent (New!)
 
-Every task carries a checklist that defines "done":
+Every task carries an append-only list of notes the human writes for the agent:
 
-- **Inline creation** — type a criterion and press **Enter** to add it
-- **Tick to complete** — each criterion has a checkbox; the legend and card show `done / total`
-- **Inline editing** — click any criterion to edit it in place; press **Enter** to save or **Escape** to cancel
-- **The definition of done** — a task may only move to Finished when every criterion is met
-- **Lightweight** — criteria have no labels, priorities, or relationships; they stay scoped to their parent task
+- **The description belongs to the agent**: it is the agent's full write-up and reply surface
+- **The notes list belongs to the human**: appending a note sets `needsDigest`
+- **The agent folds each note into the description** before starting work, then stamps it digested
+- **A note added to a finished task** sends it back to Backlog as rework
 
-Acceptance criteria travel with the task and survive export/import round-trips. Existing tasks default to an empty list with no migration needed.
-
-
-<img width="355" height="190" alt="image" src="https://github.com/user-attachments/assets/f6cf23be-8178-4edb-ac27-ddc53741e92f" /><br>
-
-<img width="166" height="87" alt="image" src="https://github.com/user-attachments/assets/296070c9-0232-41c6-8f88-2f13fa7eb1b9" />
-
-
-### 🔗 Task Relationships
-
-Link tasks together to communicate dependencies and connections:
-
-- **Prerequisite** — another task must be completed before this one can begin
-- **Dependent** — this task is needed by another task before that task can start
-- **Related** — a general connection between two tasks without implying order
-
-Relationships are **bidirectional**: adding one automatically creates the inverse on the linked task, and removing it cleans up both sides. Search for tasks by short ID (e.g. `#ae2ry`) or title, view active relationships as color-coded badges in the task modal, and click any badge ID to jump straight to that task.
+Notes travel with the task and survive export/import round-trips.
 
 ### 🏊 Swim Lanes
 
@@ -62,7 +45,7 @@ Organize your board into horizontal swim lanes for a powerful two-dimensional vi
 - **Flexible Grouping**: Group tasks by **label** or **label group** — each mode creates distinct swim lane rows
 - **Drag & Drop Across Lanes**: Move tasks between columns, lanes, or both in a single gesture — lane assignments update automatically
 - **Per-Cell Control**: Collapse/expand individual swim lane cells, entire rows, or workflow columns independently
-- **Agent-First Creation**: Tasks are created by agents through the API; the Backlog column also accepts tasks added by hand, and the rest of the UI is for viewing, editing, and moving them
+- **Agent-First Creation**: Tasks are created by agents through the API; the HIL column also accepts tasks added by hand, and the rest of the UI is for viewing, editing, and moving them
 - **Smart Finished Column**: Finished tasks are hidden in swim lanes to keep rows compact, while the Finished column remains a drag-and-drop target
 - **Sticky Headers**: Lane headers stay pinned during horizontal scrolling; workflow headers stay visible during vertical scrolling
 - **Mobile Optimized**: Responsive flex layout with sticky lane headers and snap-scrolling columns on mobile
@@ -89,7 +72,7 @@ Edit on your phone, see it on your laptop — within seconds. OpenAgile uses **e
 - **💻 Local-First**: Works fully offline with no backend required — your data lives in your browser and never leaves your device unless you opt into **Real-Time Multi-Device Sync**
 - **🎨 Drag & Drop**: Effortlessly move tasks and columns with optimized performance (handles 300+ tasks)
 - **🏷️ Custom Labels & Colors**: Board-level labels with groups and colors feed swim lane grouping — label text automatically switches between black and white for readability
-- **🧱 Four Fixed Columns**: **Backlog** (everything not started), **In Progress** (what an agent is actively working; read-only), **Blocked** (work an agent could not finish and that needs a human decision, or work stuck on a resource conflict) and **Finished** (completed work). Ids, order and the done-column role are fixed, so the display names can change without a migration
+- **🧱 Five Fixed Columns**: **Backlog** (work the agent proposed), **HIL** (Human In The Loop: the human's hand-entry point), **In Progress** (what an agent is actively working; read-only), **Blocked** (work an agent could not finish and that needs a human decision, or work stuck on a resource conflict) and **Finished** (completed work). Ids, order and the done-column role are fixed, so the display names can change without a migration
 - **📋 Multiple Boards**: Create and manage multiple boards with board templates
 - **💾 Easy Backup**: Export/import boards as JSON via **Manage Boards** — save backups to your favorite cloud storage (OneDrive, Google Drive, Dropbox)
 - **📱 Fully Responsive**: Optimized for mobile and desktop — work from anywhere
