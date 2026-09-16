@@ -11,13 +11,13 @@ OpenAgile a personal + AI Agent Kanban Boards adapt to any workflow. Below, expl
 
 ## ✅ Best Practices for Creating Boards
 
-- **Model workflow state as columns**: Use columns like **To Do → In Progress → Review → Done** to represent the *status* of work.
-- **Use priority**  not labels for priorities (we have a dedicated priority function for you with sensible defaults )
-- **Use labels for “what it is,” not “where it is”**: Good label examples include *type* (Bug, Feature), *area* (Finance, HR), *context* (Home, Work), or *activity* (Email, Meeting, Meeting-Prep, Task).
-- **Avoid labels like “Blocked”, “Won/Lost”, “Backlog”, “New Lead”**: These read as states and are clearer as columns.
-- **Start simple (3–6 columns)**: Add more columns only when you repeatedly ask “what’s the next step?”
+- **Model workflow state as columns**: The board's columns are fixed — **Backlog → In Progress → Blocked → Finished** — and represent the *status* of work.
+- **Use type and estimate for planning**: There is no priority field any more; the only planning fields are `type` (story/bug/task/spike) and `estimate` (story points). If something is urgent, say so in the description or a comment.
+- **Use labels for “what it is,” not “where it is”**: Good label examples include *type* (Bug, Feature), *area* (Finance, HR), *context* (Home, Work), or *activity* (Email, Meeting, Meeting-Prep, Task). Labels feed swim lane grouping.
+- **Avoid labels like “Blocked”, “Won/Lost”, “Backlog”, “New Lead”**: These read as states — use the fixed columns for state instead of labels.
+- **Start simple**: the board always shows the same four fixed columns, so spend the effort on descriptions and acceptance criteria instead of rearranging columns.
 - **Keep column names action-oriented**: Prefer “Ready for Review” over vague terms like “Waiting”.
-- **Add a dedicated “Blocked” column if you need it**: It makes stuck work visible without mixing it into labels.
+- **Blocked is a fixed column**: Work an agent could not finish and that needs a human decision, or work stuck on a resource conflict, lands there with a recorded reason.
 
 ## 📁 Quick Example Boards
 
@@ -25,7 +25,7 @@ Jumpstart with these pre-built boards:
 
 - **[AI-Agent-Ops-Starter-Template.json](example-boards/AI-Agent-Ops-Starter-Template.json)** — Beginner-friendly workflow for running 2–5 agents in parallel.
 - **[RAID-Board-Template.json](example-boards/RAID-Board-Template.json)** — RAID Board for project management.
-- **[Eisenhower-Method-Board.json](example-boards/Eisenhower-Method-Board.json)** — Priority matrix for decisions.
+- **[Eisenhower-Method-Board.json](example-boards/Eisenhower-Method-Board.json)** — Urgency/importance matrix for decisions.
 - **[Getting-Things-Done-Template.json](example-boards/Getting-Things-Done-Template.json)** — GTD productivity system.
 - **[Personal-Work-Kanban-Template.json](example-boards/Personal-Work-Kanban-Template.json)** — Balance personal and work tasks.
 - **[Personal_Demo_board.json](example-boards/Personal_Demo_board.json)** — Sample board with basics.
@@ -35,17 +35,19 @@ Jumpstart with these pre-built boards:
 
 ## 🎯 Standard Workflow Columns
 
-Most boards use these core stages for progress tracking:
+The board always shows these four fixed columns:
 
-- **To Do** — Tasks awaiting action
-- **In Progress** — Active work
-- **Review** — Quality checks or feedback
-- **Blocked** — Stuck, needs resolution
-- **Done** — Completed successfully
+- **Backlog** — everything not started
+- **In Progress** — what an agent is actively working; read-only
+- **Blocked** — stuck, needs a human decision or a resource conflict resolved
+- **Finished** — completed work
 
-Adjust based on your needs—add, rename, or reorder columns anytime.
+Columns cannot be added, renamed, reordered, or deleted from the board.
 
 ## 🏢 Board Templates by Use Case
+
+> **Note:** every board shows the same four fixed columns. The “Recommended Columns” lists below
+> describe each template's original workflow intent and are kept for reference.
 
 ### 1. 🛠️ Project Management Board
 

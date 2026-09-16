@@ -27,18 +27,17 @@ Experience it firsthand: **[Try the Live Demo](https://kanvana.com)**
 
 ## ✨ Key Features
 
-### ✅ Sub-tasks (New!)
+### ✅ Acceptance Criteria (New!)
 
-Break complex tasks into smaller, trackable steps without leaving the board:
+Every task carries a checklist that defines "done":
 
-- **Inline creation** — type a sub-task title and press **Enter** to add it instantly
-- **Checkbox completion** — check off each step; completed items are struck through and visually muted
-- **Inline editing** — click any sub-task title to edit it in place; press **Enter** to save or **Escape** to cancel
-- **Drag to reorder** — grab the handle and drag sub-tasks into the order that makes sense
-- **Progress indicator** — the task card shows a donut circle with `completed/total Done` count that turns green when everything is done
-- **Lightweight** — sub-tasks have no labels, priorities, or relationships; they stay scoped to their parent task
+- **Inline creation** — type a criterion and press **Enter** to add it
+- **Tick to complete** — each criterion has a checkbox; the legend and card show `done / total`
+- **Inline editing** — click any criterion to edit it in place; press **Enter** to save or **Escape** to cancel
+- **The definition of done** — a task may only move to Finished when every criterion is met
+- **Lightweight** — criteria have no labels, priorities, or relationships; they stay scoped to their parent task
 
-Sub-tasks are saved with the parent task and survive export/import round-trips. Existing tasks default to zero sub-tasks with no migration needed.
+Acceptance criteria travel with the task and survive export/import round-trips. Existing tasks default to an empty list with no migration needed.
 
 
 <img width="355" height="190" alt="image" src="https://github.com/user-attachments/assets/f6cf23be-8178-4edb-ac27-ddc53741e92f" /><br>
@@ -60,10 +59,10 @@ Relationships are **bidirectional**: adding one automatically creates the invers
 
 Organize your board into horizontal swim lanes for a powerful two-dimensional view of your workflow:
 
-- **Flexible Grouping**: Group tasks by **label**, **label group**, or **priority** — each mode creates distinct swim lane rows
+- **Flexible Grouping**: Group tasks by **label** or **label group** — each mode creates distinct swim lane rows
 - **Drag & Drop Across Lanes**: Move tasks between columns, lanes, or both in a single gesture — lane assignments update automatically
 - **Per-Cell Control**: Collapse/expand individual swim lane cells, entire rows, or workflow columns independently
-- **Agent-First Creation**: Tasks are created by agents through the API; the UI is for viewing, editing, and moving them
+- **Agent-First Creation**: Tasks are created by agents through the API; the Backlog column also accepts tasks added by hand, and the rest of the UI is for viewing, editing, and moving them
 - **Smart Finished Column**: Finished tasks are hidden in swim lanes to keep rows compact, while the Finished column remains a drag-and-drop target
 - **Sticky Headers**: Lane headers stay pinned during horizontal scrolling; workflow headers stay visible during vertical scrolling
 - **Mobile Optimized**: Responsive flex layout with sticky lane headers and snap-scrolling columns on mobile
@@ -85,19 +84,18 @@ Edit on your phone, see it on your laptop — within seconds. OpenAgile uses **e
 - **🔗 Clickable URLs in Descriptions**: Paste any `http://` or `https://` link into a task description and it becomes a clickable link on the card — opens in a new tab, no page refresh. A live link preview strip also appears below the description field in the task modal as you type, so you can click URLs without saving first
 - **⌨️ Keyboard Shortcuts**: Move quickly through board management and task editing with context-aware keybindings. `Ctrl+B` opens Manage Boards, `Escape` closes active modals and menus, arrow keys navigate board and label lists, and `Enter` activates focused choices. Shortcuts are form-safe, so typing in inputs does not accidentally trigger global actions. See the full [keyboard shortcuts table](docs/user/keybindings.md).
 - **🚀 Blazing Fast & Simple**: Lightning-quick performance with a clean, intuitive interface
-- **🔍 Powerful Search**: Find tasks instantly by label, title, description, or label groups
+- **🔍 Powerful Search**: Find tasks instantly by title or description
 - **📊 Productivity Reports**: Visualize your progress with Cumulative Flow Diagrams, weekly lead time, completion stats, same-day completions tracking, and an activity heatmap covering the last 365 days
-- **📅 Calendar View**: See tasks by due date on a monthly calendar with overdue highlighting
+- **📅 Calendar View**: See tasks by due date on a monthly calendar with overdue highlighting (currently has no data source — the slimmed task model no longer carries due dates)
 - **💻 Local-First**: Works fully offline with no backend required — your data lives in your browser and never leaves your device unless you opt into **Real-Time Multi-Device Sync**
 - **🎨 Drag & Drop**: Effortlessly move tasks and columns with optimized performance (handles 300+ tasks)
-- **🏷️ Custom Labels & Colors**: Organize with personalized labels, groups, and column colors — label text automatically switches between black and white for readability
+- **🏷️ Custom Labels & Colors**: Board-level labels with groups and colors feed swim lane grouping — label text automatically switches between black and white for readability
 - **🧱 Four Fixed Columns**: **Backlog** (everything not started), **In Progress** (what an agent is actively working; read-only), **Blocked** (work an agent could not finish and that needs a human decision, or work stuck on a resource conflict) and **Finished** (completed work). Ids, order and the done-column role are fixed, so the display names can change without a migration
 - **📋 Multiple Boards**: Create and manage multiple boards with board templates
 - **💾 Easy Backup**: Export/import boards as JSON via **Manage Boards** — save backups to your favorite cloud storage (OneDrive, Google Drive, Dropbox)
 - **📱 Fully Responsive**: Optimized for mobile and desktop — work from anywhere
 - **🌗 Light & Dark Theme**: Toggle between themes with automatic persistence
-- **⚡ Collapsible Columns**: Collapse columns to save space while still accepting drag-and-drop
-- **⏱️ Due Date Countdown**: Color-coded countdown timers with configurable urgent and warning thresholds
+- **⚡ Collapsible Swim Lane Cells**: Collapse swim lane rows and cells to save space while still accepting drag-and-drop
 - **🥇 Free & Open Source**: Always free, no hidden costs or subscriptions
 
 ## 📸 Screenshots

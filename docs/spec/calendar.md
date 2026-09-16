@@ -1,5 +1,9 @@
 # Calendar
 
+> **Data-source note:** whether this page survives is an open decision. It renders tasks by
+> `task.dueDate`, and the slimmed task model no longer carries a due date, so the page currently
+> has no live data source.
+
 ## Calendar Page
 
 - Entry point: `src/calendar.html`

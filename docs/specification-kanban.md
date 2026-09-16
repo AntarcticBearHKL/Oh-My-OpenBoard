@@ -6,18 +6,18 @@ This file is the entrypoint to the canonical application specification. Detailed
 
 - `docs/spec/overview.md` - architecture, technology rules, module map, rendering foundations, CSS architecture
 - `docs/spec/data-models.md` - persisted models and settings shape
-- `docs/spec/storage.md` - localStorage keys, migration, persistence scope
+- `docs/spec/storage.md` - IDB persistence model, storage keys, migration
 - `docs/spec/board-ui.md` - board shell, controls, modals, rendering, warnings, drag/drop behavior
-- `docs/spec/tasks.md` - task model usage, modal behavior, card display, ordering
-- `docs/spec/columns.md` - column CRUD, collapse, sorting, Done rules
-- `docs/spec/labels.md` - label groups, management modal, validation, assignment
+- `docs/spec/tasks.md` - task model usage, acceptance criteria, comments, claim timing, card display, ordering
+- `docs/spec/columns.md` - fixed columns, column UI, WIP limits, Finished rules
+- `docs/spec/labels.md` - label groups, management modal, validation, swim lane use
 - `docs/spec/swimlanes.md` - swim lane layout, grouping rules, collapse, mobile behavior
 - `docs/spec/settings.md` - per-board settings and swim lane controls
 - `docs/spec/reports.md` - reports calculations and layout rules
-- `docs/spec/calendar.md` - due-date calendar behavior
+- `docs/spec/calendar.md` - due-date calendar behavior (no data source at present)
 - `docs/spec/import-export.md` - board JSON import/export rules and compatibility expectations
 - `docs/spec/relationships.md` - task relationship types, bidirectional sync, card display, modal UI
-- `docs/spec/sub-tasks.md` - sub-task data model, modal UI, completion, progress indicator, import/export
+- `docs/spec/sub-tasks.md` - retired sub-task model; acceptance criteria replaced it
 - `docs/spec/audit-trail.md` - two-log audit trail design, event types, actor model, storage keys, UI entry points
 - `docs/spec/sync.md` - Go Online button, backend health probe, login modal, session management, sync operations
 - `docs/spec/testing.md` - testing stack, scripts, and coverage focus
@@ -37,8 +37,8 @@ Use this mapping to decide which spec files to update alongside code changes.
 - `src/modules/board-serializer.js` -> `docs/spec/storage.md`, `docs/spec/import-export.md`, `docs/spec/data-models.md`
 - `src/modules/storage.js` -> `docs/spec/storage.md`, `docs/spec/data-models.md`
 - `src/modules/importexport.js` -> `docs/spec/import-export.md`, `docs/spec/storage.md`, `docs/spec/data-models.md`
-- `src/modules/tasks.js` -> `docs/spec/tasks.md`, `docs/spec/data-models.md`, `docs/spec/relationships.md`, `docs/spec/sub-tasks.md`
-- `src/modules/normalize.js`, `src/modules/task-modal.js`, `src/modules/task-card.js` -> `docs/spec/relationships.md`, `docs/spec/sub-tasks.md`, and any other affected feature spec files
+- `src/modules/tasks.js` -> `docs/spec/tasks.md`, `docs/spec/data-models.md`, `docs/spec/relationships.md`
+- `src/modules/normalize.js`, `src/modules/task-modal.js`, `src/modules/task-card.js` -> `docs/spec/tasks.md`, `docs/spec/relationships.md`, and any other affected feature spec files
 - `src/modules/columns.js`, `src/modules/column-element.js`, `src/modules/column-modal.js` -> `docs/spec/columns.md`
 - `src/modules/labels.js`, `src/modules/labels-modal.js` -> `docs/spec/labels.md`
 - `src/modules/boards.js`, `src/modules/boards-modal.js` -> `docs/spec/board-ui.md`

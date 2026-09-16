@@ -3,9 +3,9 @@
 [![GitHub stars](https://img.shields.io/github/stars/mdiener21/kanvana.svg?style=social)](https://github.com/mdiener21/kanvana/stargazers)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Now-blue)](https://mdiener21.github.io/openagile/)
 
-> Labels help you categorize and filter tasks without changing your workflow columns.
+> Labels help you group work into swim lanes without changing your workflow columns.
 
-Use **columns** to track workflow state (To Do → In Progress → Done) and use **labels** for categories like type, area, context, and activity. With **label groups**, you can keep labels organized and easy to scan.
+Use **columns** to track workflow state (Backlog → In Progress → Blocked → Finished) and use **labels** for categories like type, area, context, and activity. With **label groups**, you can keep labels organized and easy to scan.
 
 **🚀 [Use it LIVE here](https://mdiener21.github.io/openagile/) and see labels in action!**
 
@@ -26,19 +26,19 @@ Kickstart your setup with these ready-to-import boards featuring label examples:
 
 Import creates a **new board** from the JSON and switches to it.
 
-## ✅ Labels vs Columns vs Priority (fast rules)
+## ✅ Labels vs Columns (fast rules)
 
-- **Columns = state**: To Do / In Progress / Review / Done.
-- **Priority = urgency**: Use the built-in priority field (urgent/high/medium/low/none) instead of creating “Urgent” labels.
+- **Columns = state**: Backlog / In Progress / Blocked / Finished — the four fixed columns.
 - **Labels = category**: Use labels to answer “what kind of work is this?” or “where does it belong?”
+- **Type and estimate = planning**: A task's only planning fields are its type (story/bug/task/spike) and its story-point estimate.
 
-Avoid using labels like **Blocked**, **Won/Lost**, **In Review**, etc. Those are clearer as columns.
+Avoid using labels like **Blocked**, **Won/Lost**, **In Review**, etc. Those are clearer as fixed columns.
 
 ## 🎯 How Labels & Groups Work
 
-- **Labels**: Colored tags you assign to tasks (e.g., "Feature", "Bug", "Home"). Each label has a name, color, and optional group.
-- **Groups**: Organize labels into sections (e.g., "Activity", "People", "Type", "Area"). Groups make the label picker and management modal cleaner and more searchable.
-- **Search & Filter**: Find tasks by label name or group name—super fast!
+- **Labels**: Colored tags at board level (e.g., "Feature", "Bug", "Home"). Each label has a name, color, and optional group.
+- **Groups**: Organize labels into sections (e.g., "Activity", "People", "Type", "Area"). Groups make the label management modal cleaner and more searchable.
+- **Swim lanes**: Switch to swim-lane view and group by label or label group to turn labels into lanes.
 - **Customization**: Create, edit, and delete labels/groups to fit your workflow.
 
 **Pro Tip**: Use groups to avoid label clutter. For example, group "Meeting" and "Email" under "Activity" group.
@@ -48,7 +48,7 @@ Avoid using labels like **Blocked**, **Won/Lost**, **In Review**, etc. Those are
 1. **Create a Label**: In the Manage Labels modal, add a name, pick a color, and optionally assign a group.
 2. **Group Suggestions**: The app autocompletes group names from existing ones.
 3. **Organize**: Labels appear grouped in accordions—expand/collapse for easy browsing.
-4. **Assign to Tasks**: In the task modal, check labels organized by group.
+4. **Use in Swim Lanes**: Enable swim lanes and group by label (or by label group) to turn labels into lanes.
 5. **Search**: Filter labels by name or group in the management modal.
 
 ## 📋 Label Group Examples (copy/paste ideas)
@@ -82,7 +82,7 @@ These are starter sets. Keep them small and grow them as needed
 - Follow Up
 - Review
 
-Tip: Use columns like **Review** or **Blocked** for state instead of labels.
+Tip: workflow state lives in the fixed columns (Backlog, In Progress, Blocked, Finished) — keep labels for grouping.
 
 ---
 

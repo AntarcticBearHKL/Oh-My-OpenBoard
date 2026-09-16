@@ -1,7 +1,7 @@
 # Copilot instructions (openagile)
 
 ## Big picture
-- This is a **local-first, no-backend** kanban app: all state lives in **browser `localStorage`** and the UI is plain DOM.
+- This is a **local-first, no-backend** kanban app: all state lives in **browser IndexedDB** (`openagile-db`) and the UI is plain DOM.
 - Build tooling is **Vite** with **`src/` as the Vite root** and output to `client/dist/`.
   - Edit source files in `src/` (do **not** hand-edit `client/dist/`).
 - Specification entrypoint is `docs/specification-kanban.md`, and canonical feature/data specs live in `docs/spec/` (**always keep the relevant spec files updated** as features change).
@@ -19,11 +19,11 @@
 - `src/kanban.js` - Main entry, wires UI handlers and calls `renderBoard()`
 - `src/index.html` - Main board UI
 - `src/reports.html` - Separate reports page with ECharts visualizations
-- `src/calendar.html` - Calendar view showing tasks by due date
+- `src/calendar.html` - Calendar view showing tasks by due date (currently has no data source; the slimmed task model no longer carries due dates)
 
 ### Module Structure (src/modules/)
-- **render.js** - Centralized rendering via `renderBoard()`. After any data change, call this to refresh UI. Exports sync helpers (`syncTaskCounters`, `syncCollapsedTitles`, `syncMovedTaskDueDate`) for incremental updates.
-- **idb-store.js** - IDB singleton, key helpers (`keyFor`, `getBoardEventsKey`), `schedulePersist`, `scheduleDelete`
+- **render.js** - Centralized rendering via `renderBoard()`. After any data change, call this to refresh UI. `reconcileBoard()` patches the board in place (and is forced for a drag drop), and `beginDragReconcile()` / `endDragReconcile()` open the drag-reconcile window.
+- **idb-store.js** - IDB singleton, key helpers (`keyFor`), `schedulePersist`, `scheduleDelete`
 - **board-serializer.js** - Board import ID-remapping: `normalizeBoardModelIds()`
 - **storage.js** - In-memory state, all CRUD helpers (`loadTasks`, `saveTasks`, etc.), `initStorage()`, migration. Keys: `kanbanBoards`, `kanbanActiveBoardId`, `kanbanBoard:<boardId>:columns|tasks|labels|settings`
 - **tasks.js** - Task CRUD, drag-drop position updates (`updateTaskPositionsFromDrop`, `moveTaskToTopInColumn`)
@@ -35,8 +35,8 @@
 - **icons.js** - Lucide icons tree-shaking. To add an icon: import from `lucide`, add to `icons` object, call `renderIcons()` after dynamic DOM changes.
 - **settings.js** - Per-board settings modal and persistence
 - **labels.js** - Label management modal UI
-- **dateutils.js** - Due date countdown calculations and formatting
-- **calendar.js** - Calendar page rendering with ECharts
+- **dateutils.js** - Timestamp and elapsed-duration formatting
+- **calendar.js** - Calendar page rendering (reads `task.dueDate`, which the slimmed task model no longer has)
 - **reports.js** - Reports page with ECharts (lead time, completions, cumulative flow)
 - **accordion.js** - Reusable collapsible accordion. `createAccordionSection(title, items, expanded, renderItem)` builds a section with chevron toggle, count badge, and a body populated via the `renderItem` callback.
 - **importexport.js** - Per-board JSON export/import. Must update if data shapes change.
@@ -59,10 +59,10 @@ Mutations generally follow: **load → modify → save → `renderBoard()`**.
   - `storage.js` — in-memory state, all CRUD. Always go through `loadColumns()` / `loadTasks()` / `loadLabels()` rather than reading IDB directly.
   - Boards list key: `kanbanBoards`; active board key: `kanbanActiveBoardId`.
   - Per-board keys are `kanbanBoard:${boardId}:columns|tasks|labels|settings`.
-  - Legacy migration exists for single-board keys (`kanbanColumns`, `kanbanTasks`, `kanbanLabels`). Keep backward-compat fields like `task.text` and `task['due-date']` supported where relevant.
+  - Legacy migration exists for single-board keys (`kanbanColumns`, `kanbanTasks`, `kanbanLabels`). Keep backward-compat fields like `task.text` supported where relevant.
 
 ## Domain objects (what code expects)
-- **Task**: `id`, `title` (legacy: `text`), `description`, `priority` (`urgent|high|medium|low|none`), `dueDate` (`YYYY-MM-DD`), `column`, `order`, `labels[]`, `creationDate`, `changeDate`, `doneDate`, `columnHistory[]`
+- **Task**: `id`, `key`, `title` (legacy: `text`), `description`, `type` (`story|bug|task|spike`), `estimate` (story points or `null`), `assignee`, `claimedBy`, `claimedAt`, `acceptanceCriteria[]`, `comments[]`, `annotations[]`, `relationships[]`, `column`, `order`, `creationDate`, `changeDate`, `doneDate`, `blockedAt`, `blockedReason`, `columnHistory[]`, `swimlaneLabelId`, `swimlaneLabelGroup`. There is no `priority`, `dueDate`, task `labels`, `subTasks`, `attachments` or `customFields` in the model, and the create dialog has no column picker (tasks always start in Backlog).
 - **Column**: `id`, `name`, `color` (hex), `order`, `collapsed`, `role` (`"done"` only on the fourth fixed column)
 - **Fixed columns**: the four columns are Backlog (everything not started), In Progress (what an agent is actively working; read-only), Blocked (work an agent could not finish and that needs a human decision, or work stuck on a resource conflict) and Finished (completed work). Ids, order and `role` are fixed — key behaviour off those, never the display name; `name` is display-only and the fixed definitions are reimposed on every board at load, so a rename needs no migration.
 - **Label**: `id`, `name` (max 40 chars), `color` (hex), `group`

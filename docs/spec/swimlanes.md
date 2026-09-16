@@ -2,17 +2,16 @@
 
 ## Overview
 
-- Swim lanes are a per-board by label, label-group or priorty
+- Swim lanes are a per-board view grouped by label or label group
 - A quick-access toggle in the board controls menu allows enabling/disabling swim lanes directly, without opening the Settings modal
-- The full swim lane configuration (grouping mode by label, label-group or priority selection) remains in Settings
+- The full swim lane configuration (grouping mode and label group selection) remains in Settings
 - The board becomes a grid of swim lane rows by workflow columns
 - Swim lanes can be toggled on and off without a page reload
 
 ## Grouping Modes
 
-- `label` - lane assignment uses `task.swimlaneLabelId` when present, otherwise the first task label
-- `label-group` - the user selects one label group, then each label value in that group becomes a lane
-- `priority` - lane assignment uses task priority with stable order `Urgent`, `High`, `Medium`, `Low`, `None`
+- `label` - lane assignment uses `task.swimlaneLabelId`; tasks without one appear in `No Group`
+- `label-group` - the user selects one label group, then each label value in that group becomes a lane; lane assignment uses `task.swimlaneLabelId` and records the selected group in `task.swimlaneLabelGroup`
 - Tasks with no matching lane value are shown in `No Group`
 
 ## Lane Ordering
@@ -20,17 +19,16 @@
 - Lane order is customizable via drag-and-drop in the Settings modal
 - When swim lanes are enabled, a reorderable list shows all lanes for the current grouping mode
 - Custom order is stored as `swimLaneOrder` in per-board settings (array of lane keys)
-- An empty order array falls back to default sorting (alphabetical for labels, fixed for priority)
+- An empty order array falls back to default sorting (alphabetical by lane label)
 - Changing the grouping mode or label group resets the custom order
 - Lanes not present in the saved order (e.g. newly created labels) appear at the end in default order
 
 ## Lane Assignment Rules
 
 - Dragging between swim lanes persists the new lane assignment immediately
-- In `label` mode, dropping into a label lane also prepends that label to `task.labels` if needed
-- Dropping into `No Group` stores an explicit empty-string lane assignment
-- In `label-group` mode, lane moves replace labels only within the selected group and preserve labels from other groups
-- In `priority` mode, lane moves update `task.priority`
+- In `label` mode, dropping into a lane sets `task.swimlaneLabelId`; dropping into `No Group` clears it
+- In `label-group` mode, dropping into a lane sets `swimlaneLabelId` and records the selected group in `swimlaneLabelGroup`; dropping into `No Group` clears both
+- Tasks do not carry a label list; the swim lane assignment is the only label reference on a task
 
 ## Layout Behavior
 

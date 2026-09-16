@@ -12,7 +12,7 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 
 | Spec | Purpose |
 |---|---|
-| `docs/spec/data-models.md` | Canonical shapes for board, task, column, label, subtask, relationship, and all PocketBase collection schemas |
+| `docs/spec/data-models.md` | Canonical shapes for board, task, column, label, relationship, and all PocketBase collection schemas |
 | `docs/spec/storage.md` | IDB persistence model, in-memory state pattern, storage key layout, migration logic |
 | `docs/adr/0004-event-sourced-sync.md` | **Architecture decision (current sync)** — pure event sourcing + HLC replaces whole-record LWW; PocketBase as a dumb event store; offline-first. Read this first for sync. |
 | `docs/spec/backend-storage-pb.md` | Event-sourced sync mechanics: local emission → projection, outbound push queue, SSE realtime + catch-up, HLC, snapshots/GC, auth, PocketBase `events`/`snapshots` schema |
@@ -22,12 +22,12 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 | Spec | Purpose |
 |---|---|
 | `docs/spec/board-ui.md` | Main board layout, column/card rendering, drag-drop, mobile behavior |
-| `docs/spec/tasks.md` | Task CRUD, priority, due date, card display rules |
-| `docs/spec/columns.md` | Column CRUD, Finished column invariants, ordering, collapse |
-| `docs/spec/labels.md` | Label management, groups, color constraints |
+| `docs/spec/tasks.md` | Task CRUD, acceptance criteria, comments, claim timing, card display rules |
+| `docs/spec/columns.md` | Fixed columns, column UI, WIP limits, Finished column invariants |
+| `docs/spec/labels.md` | Label management, groups, color constraints, and their use by swim lanes |
 | `docs/spec/settings.md` | Per-board settings fields and persistence |
 | `docs/spec/relationships.md` | Task relationship types, bidirectional sync rules |
-| `docs/spec/sub-tasks.md` | Sub-task model, checklist behavior, ordering |
+| `docs/spec/sub-tasks.md` | Retired sub-task model — acceptance criteria replaced it |
 | `docs/spec/swimlanes.md` | Swim lane grouping modes, collapse state, lane-aware drag-drop |
 | `docs/spec/import-export.md` | Board JSON export/import format and ID-remapping rules |
 | `docs/spec/sync.md` | "Go Online" auth flow: backend health probe, login modal, session management (event-sourced sync itself lives in `backend-storage-pb.md`) |
@@ -38,7 +38,7 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 | Spec | Purpose |
 |---|---|
 | `docs/spec/reports.md` | Reports page: lead time, completions, cumulative flow (ECharts) |
-| `docs/spec/calendar.md` | Calendar view: task-by-due-date rendering (ECharts) |
+| `docs/spec/calendar.md` | Calendar view: task-by-due-date rendering (currently has no data source — see the note in that file) |
 
 ### Testing
 
@@ -81,13 +81,13 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 
 ## Module Map
 
-- `src/modules/schema.js` - canonical factory functions for all domain objects (`createTask`, `createColumn`, `createLabel`, `createBoard`, `createSubTask`, `createRelationship`)
-- `src/modules/render.js` - centralized board rendering and incremental sync helpers (`renderBoard`, `syncTaskCounters`, `syncCollapsedTitles`)
+- `src/modules/schema.js` - canonical factory functions for all domain objects (`createTask`, `createColumn`, `createLabel`, `createBoard`, `createRelationship`)
+- `src/modules/render.js` - centralized board rendering (`renderBoard`) plus the keyed in-place patch (`reconcileBoard`) and the drag-reconcile window
 - `src/modules/idb-store.js` - IDB singleton, key helpers (`keyFor`, `getBoardEventsKey`), `schedulePersist`, `scheduleDelete`
 - `src/modules/board-serializer.js` - board import ID-remapping (`normalizeBoardModelIds`)
 - `src/modules/storage.js` - in-memory state, all CRUD helpers (`load*`/`save*`), `initStorage()`, migration, default data
 - `src/modules/tasks.js` - task CRUD and drop-position updates
-- `src/modules/columns.js` - column CRUD, collapse, ordering, sorting
+- `src/modules/columns.js` - column collapse state helpers
 - `src/modules/boards.js` - board management
 - `src/modules/dragdrop.js` - SortableJS-based task/column drag and drop
 - `src/modules/modals.js` - modal open/close wiring and Escape/backdrop behavior
@@ -95,7 +95,7 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 - `src/modules/icons.js` - Lucide icon registration and `renderIcons()`
 - `src/modules/settings.js` - per-board settings modal and persistence
 - `src/modules/labels.js` - label management UI
-- `src/modules/dateutils.js` - countdown and date formatting helpers
+- `src/modules/dateutils.js` - date formatting helpers
 - `src/modules/calendar.js` - calendar page rendering
 - `src/modules/reports.js` - reports page rendering
 - `src/modules/accordion.js` - reusable collapsible accordion component
@@ -105,15 +105,14 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 - `src/modules/swimlane-renderer.js` - swim lane DOM rendering helpers
 - `src/modules/validation.js` - form validation helpers
 - `src/modules/utils.js` - UUID generation and shared utilities
-- `src/modules/normalize.js` - data normalization: priority, color (`isHexColor`, `defaultColumnColor`), dates, relationships, sub-tasks, string keys
+- `src/modules/normalize.js` - data normalization: color (`isHexColor`, `defaultColumnColor`), dates, relationships, swim lane ids, string keys
 - `src/modules/security.js` - HTML escaping (`escapeHtml`) and byte formatting utilities
 - `src/modules/dom.js` - minimal DOM construction helper (`el()` factory)
 - `src/modules/events.js` - lightweight event bus replacing circular dynamic imports
-- `src/modules/constants.js` - domain constants (priorities, column IDs, defaults)
+- `src/modules/constants.js` - domain constants (fixed column IDs, defaults, keybindings)
 - `src/modules/task-card.js` - task card DOM element builder
 - `src/modules/task-modal.js` - task edit/create modal logic
 - `src/modules/column-element.js` - column DOM element builder
-- `src/modules/column-modal.js` - column edit/create modal logic
 - `src/modules/boards-modal.js` - manage boards modal logic
 - `src/modules/labels-modal.js` - label management modal UI
 - `src/modules/impressum.js` - impressum/imprint page logic
@@ -181,8 +180,8 @@ The app uses CSS custom properties and `html[data-theme]` for theming.
 
 - Fixed columns: `Backlog`, `In Progress`, `Blocked`, `Finished`
 - Backlog holds everything not started; In Progress is what an agent is actively working; Blocked is work an agent could not finish and that needs a human decision or is stuck on a resource conflict; Finished is completed work
-- Default labels: `Urgent`, `Feature`, `Task`
-- Default sample board includes 6 sample tasks
+- Default labels: `Task`, `Meeting`, `Email`, `Idea`, `Goal`
+- The default board is created with the fixed columns and default labels, and no tasks
 
 ## Footer and Help
 

@@ -31,7 +31,7 @@ client/             Frontend app (the main product)
     kanban.js       Entry point — initialises storage, renders board
     index.html      Main board page
     reports.html    Analytics page
-    calendar.html   Calendar view
+    calendar.html   Calendar view (no data source at present — reads a removed due date)
     activity.html   Board event log page
   tests/
     unit/           Vitest pure-unit tests
@@ -121,7 +121,7 @@ Check `docs/adr/` for recorded architectural decisions before making structural 
 | API mocking | MSW | `client/tests/mocks/` |
 
 Key coverage areas: storage CRUD, UUID migration, swimlane utilities, import/export preflight,
-due-date countdown, validation, normalization, subtasks.
+claim timing, acceptance criteria, comments, validation, normalization.
 
 ---
 

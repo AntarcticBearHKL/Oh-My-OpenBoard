@@ -3,9 +3,10 @@
 ## Label Model and Grouping
 
 - Labels have `id`, `name`, `color`, and optional `group`
+- Labels are board-level entities; tasks do not carry a list of labels
 - Groups are simple strings and are not stored as a separate entity
-- Task cards display only label name and color, not the group name
 - Label text color is automatically set to black or white based on perceived luminance of the background color (`(R×299 + G×587 + B×114) / 1000`; threshold 150 of 255 favors white text on mid-tones)
+- Labels are consumed by swim lane grouping: in `label` mode each label becomes a lane, in `label-group` mode the labels of the selected group become lanes
 
 ## Manage Labels Modal
 
@@ -21,15 +22,13 @@
 - Color picker and hex field stay synchronized bidirectionally
 - Invalid hex values show inline validation and block save
 
-## Assignment
+## Swim Lane Use
 
-- Tasks can have multiple labels
-- Task modal organizes available labels by group
-- Label search supports keyboard navigation: Arrow Up/Down to move highlight, Enter to toggle the highlighted label and clear search
-- When no labels match the search, the "Create label" button is auto-highlighted and selectable via Enter
-- Labels can be created inline from task editing without dismissing the task modal; the new label is auto-selected and the search field is cleared on return
+- A task's lane assignment is stored as `swimlaneLabelId` (plus `swimlaneLabelGroup` in `label-group` mode); it is a single value, not a label list
+- Assigning a lane happens by dragging the task into that swim lane row
+- Deleting a label tombstones it: it disappears from the Manage Labels list and from swim lane grouping, and tasks that referenced it fall back to `No Group`
 
 ## Delete Behavior
 
 - Deleting a label requires confirmation
-- Deleting a label removes it from all tasks
+- Deleting a label does not rewrite task records; the lane falls back to `No Group`

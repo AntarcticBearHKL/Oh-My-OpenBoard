@@ -53,15 +53,15 @@ Each task stores its relationships as an array on the task object:
 ## Card Display
 
 - Task cards show a relationship indicator only when `task.relationships.length > 0`.
-- The indicator uses the `git-branch` Lucide icon followed by the text `relationships (N)` where N is the count.
-- The indicator is placed below the labels section, above the footer.
+- The indicator uses the `git-branch` Lucide icon followed by the relationship count.
+- The indicator sits in the card's meta cluster next to the other badges.
 - No relationship indicator is shown when the count is zero.
 
 ## Modal UI
 
 ### Relationships Fieldset
 
-- The task edit modal includes a "Relationships" fieldset below the Labels fieldset in the right column.
+- The task edit modal includes a "Relationships" fieldset in the right form column, below the acceptance-criteria and comments fieldsets.
 - The fieldset contains:
   - An active relationships list showing current relationships as badges
   - A type selector (`<select>`) with options: Prerequisite, Dependent, Related

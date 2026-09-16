@@ -7,9 +7,9 @@ This file is the canonical user-facing text for the in-app **Help** modal.
 
 ## Quick start
 
-- Create a task with the **+** button in a column header.
-- Drag and drop tasks between columns to update status.
-- Use **Priority** for urgency, **Due Date** for deadlines, and **Labels** for categories.
+- Add a task by hand with the **Add task** row in the **Backlog** column.
+- Drag and drop tasks between the four fixed columns to update status.
+- Use **type** (story/bug/task/spike) and **estimate** (story points) for planning; **acceptance criteria** define when a task is finished.
 
 ## Support & Community
 
@@ -26,7 +26,7 @@ Your feedback keeps the app improving! 🚀
 This is a fully local personal + AI Agent Kanban board.
 
 - **No server required**: everything runs in your browser.
-- **Local-first storage**: data is stored in this browser’s `localStorage`.
+- **Local-first storage**: data is stored in this browser’s IndexedDB.
 - **Backups are your responsibility**: export regularly if you care about the data.
 
 ## Controls Menu
@@ -34,11 +34,11 @@ This is a fully local personal + AI Agent Kanban board.
 All controls are in the header menu (ellipsis **⋮**).
 
 - **Board Select**: switch boards
-- **New Board**: create a board
+- **Swim Lanes**: toggle the swim lane view
 - **Manage Boards**: open/rename/delete boards
-- **Add Column**: create a new column
 - **Manage Labels**: create/edit/delete labels and groups
-- **Export** / **Import**: backup and restore boards
+- **Settings**: locale, timestamps, and swim lane options
+- **View Reports** / **View Roadmap**: analytics and iteration overview
 - **Theme** / **Help**: appearance and help
 
 ## Boards
@@ -53,36 +53,29 @@ All controls are in the header menu (ellipsis **⋮**).
 
 ## Tasks
 
-- **Add**: click the **plus** icon in a column header.
-- **Edit**: click a task card to edit its title/description/priority/due date/column/labels.
-- **Move**: drag and drop tasks between columns.
+- **Add**: use the **Add task** row in the **Backlog** column to add a task by hand; the other columns are driven by agents. Import/export is in **Manage Boards**.
+- **Edit**: click a task card to edit its title, description, type, estimate, acceptance criteria and notes to the agent.
+- **Move**: drag and drop tasks between the four fixed columns.
 - **Delete**: click the task **trash** button and confirm.
 
-#### Task Priority
+#### Acceptance Criteria & Comments
 
-- **Urgent** (Bright Deep Red) — Needs immediate attention
-- **High** (Light Red) — Important, time-sensitive
-- **Medium** (Orange) — Standard priority
-- **Low** (Light Grey Blue) — Nice to have
-- **None** (Grey) — Not decided yet
+- **Acceptance criteria** are the definition of done: add each criterion, tick it when it is met, and the task may only move to Finished when everything is checked.
+- **Comments** are your notes to the agent: write what the agent should know or answer, and the agent replies in the same thread.
+- There is no priority, no due date, no label picker, and no sub-task list on a task — type, estimate, acceptance criteria and comments are the task's planning surface.
 
 ### Columns
 
-- **Add**: click **Add Column**.
-- **Edit/Delete**: use the column **ellipsis** menu.
-- **Reorder**: drag the column **grip handle**.
-- **Deleting a column**:
-  - If the column has tasks, you’ll be warned that tasks will also be deleted.
-  - The last remaining column cannot be deleted.
+- The board has exactly four fixed columns: Backlog, In Progress, Blocked, Finished.
+- Each column scrolls independently, so long task lists stay manageable.
+- Columns cannot be added, edited, deleted, or reordered from the board.
+- A task in In Progress is read-only while an agent works it.
 
 ### Labels
 
 - Open **Manage Labels** to create, edit, or delete labels.
-- Assign labels while editing a task.
-- The task editor includes:
-  - A **selected labels** row (pills)
-  - A **search box** to filter labels
-- Deleting a label removes it from all tasks (confirmation required).
+- Labels are board-level: they group work into swim lanes (group by label or label group).
+- Deleting a label removes it from the label list and from swim lane grouping (confirmation required).
 
 ### Import / Export (Backups)
 
@@ -110,7 +103,7 @@ Important notes:
 
 - Export on a schedule (end of day / end of week).
 - Use multiple boards to separate contexts (work, personal, projects).
-- Use labels to slice across columns (e.g., Feature, Finance, Email).
+- Use labels to group swim lanes across columns (e.g., Feature, Finance, Email).
 
 ## Writing good task titles (optional)
 

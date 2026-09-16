@@ -5,7 +5,7 @@ Generated from test source. Do not edit by hand; run `npm run test:overview` fro
 ## Fast Scan
 
 - Test files: 57
-- Test cases: 521
+- Test cases: 480
 - Unit files: 30
 - DOM integration files: 27
 - E2E files: 0
@@ -68,15 +68,14 @@ These lists compare source/spec filenames against test file names and test title
 - `src/modules/task-modal-agile-fields.js`
 - `src/modules/task-modal-chrome.js`
 - `src/modules/task-modal-form.js`
-- `src/modules/task-modal-labels.js`
 - `src/modules/task-modal-relationships.js`
 - `src/modules/task-modal-state.js`
 - `src/modules/task-modal-status.js`
-- `src/modules/task-modal-subtasks.js`
 - `src/modules/task-modal-summary.js`
 - `src/modules/task-modal-wiring-agile.js`
 - `src/modules/task-modal-wiring-controls.js`
 - `src/modules/task-modal-wiring-submit.js`
+- `src/modules/theme.js`
 
 ### Specs Without Obvious Named Coverage
 
@@ -90,33 +89,29 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/unit/agile.test.js`
 - Type: Unit
-- Test count: 25
+- Test count: 21
 
-- `tests/unit/agile.test.js:21` normalizeTaskType accepts the four agile types
-- `tests/unit/agile.test.js:28` normalizeTaskType is case-insensitive and trims
-- `tests/unit/agile.test.js:33` normalizeTaskType falls back to task for invalid values
-- `tests/unit/agile.test.js:42` normalizeEstimate keeps finite numbers including zero
-- `tests/unit/agile.test.js:49` normalizeEstimate returns null for empty or invalid values
-- `tests/unit/agile.test.js:59` normalizeAcceptanceCriteria keeps entries and coerces done
-- `tests/unit/agile.test.js:70` normalizeAcceptanceCriteria generates missing ids and drops empty text
-- `tests/unit/agile.test.js:83` normalizeAcceptanceCriteria returns [] for non-arrays
-- `tests/unit/agile.test.js:90` normalizeComments defaults the author to You and preserves timestamps
-- `tests/unit/agile.test.js:99` normalizeComments stamps a missing timestamp and drops empty text
-- `tests/unit/agile.test.js:108` normalizeAttachments keeps name, url and optional metadata
-- `tests/unit/agile.test.js:122` normalizeAttachments omits missing size/type and filters incomplete entries
-- `tests/unit/agile.test.js:136` normalizeCustomFields trims keys and preserves values
-- `tests/unit/agile.test.js:142` normalizeCustomFields drops empty keys and non-objects
-- `tests/unit/agile.test.js:150` boardKeyPrefix uses initials for multi-word names
-- `tests/unit/agile.test.js:156` boardKeyPrefix uses the first three chars for single-word names
-- `tests/unit/agile.test.js:162` boardKeyPrefix strips non-alphanumerics and falls back to BRD
-- `tests/unit/agile.test.js:170` nextTaskKey starts at 1 for a fresh board
-- `tests/unit/agile.test.js:174` nextTaskKey increments past the highest matching suffix
-- `tests/unit/agile.test.js:179` nextTaskKey ignores malformed or foreign keys
-- `tests/unit/agile.test.js:186` isBlockedColumnId matches the Blocked column by id
-- `tests/unit/agile.test.js:203` taskAgeDays counts whole days since creationDate
-- `tests/unit/agile.test.js:208` taskAgeDays returns null without a valid creationDate
-- `tests/unit/agile.test.js:213` isTaskStale flags tasks unchanged for more than 14 days
-- `tests/unit/agile.test.js:219` isTaskStale falls back to creationDate and ignores missing dates
+- `tests/unit/agile.test.js:19` normalizeTaskType accepts the four agile types
+- `tests/unit/agile.test.js:26` normalizeTaskType is case-insensitive and trims
+- `tests/unit/agile.test.js:31` normalizeTaskType falls back to task for invalid values
+- `tests/unit/agile.test.js:40` normalizeEstimate keeps finite numbers including zero
+- `tests/unit/agile.test.js:47` normalizeEstimate returns null for empty or invalid values
+- `tests/unit/agile.test.js:57` normalizeAcceptanceCriteria keeps entries and coerces done
+- `tests/unit/agile.test.js:68` normalizeAcceptanceCriteria generates missing ids and drops empty text
+- `tests/unit/agile.test.js:81` normalizeAcceptanceCriteria returns [] for non-arrays
+- `tests/unit/agile.test.js:88` normalizeComments defaults the author to You and preserves timestamps
+- `tests/unit/agile.test.js:97` normalizeComments stamps a missing timestamp and drops empty text
+- `tests/unit/agile.test.js:106` boardKeyPrefix uses initials for multi-word names
+- `tests/unit/agile.test.js:112` boardKeyPrefix uses the first three chars for single-word names
+- `tests/unit/agile.test.js:118` boardKeyPrefix strips non-alphanumerics and falls back to BRD
+- `tests/unit/agile.test.js:126` nextTaskKey starts at 1 for a fresh board
+- `tests/unit/agile.test.js:130` nextTaskKey increments past the highest matching suffix
+- `tests/unit/agile.test.js:135` nextTaskKey ignores malformed or foreign keys
+- `tests/unit/agile.test.js:142` isBlockedColumnId matches the Blocked column by id
+- `tests/unit/agile.test.js:159` taskAgeDays counts whole days since creationDate
+- `tests/unit/agile.test.js:164` taskAgeDays returns null without a valid creationDate
+- `tests/unit/agile.test.js:169` isTaskStale flags tasks unchanged for more than 14 days
+- `tests/unit/agile.test.js:175` isTaskStale falls back to creationDate and ignores missing dates
 
 ### Backend Event Schema
 
@@ -186,47 +181,25 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/unit/constants.test.js`
 - Type: Unit
-- Test count: 8
+- Test count: 5
 
-- `tests/unit/constants.test.js:14` PRIORITIES contains 5 values in correct order
-- `tests/unit/constants.test.js:18` PRIORITY_SET contains all expected priorities and rejects unknown values
-- `tests/unit/constants.test.js:28` PRIORITY_ORDER maps priorities to ascending numeric rank
-- `tests/unit/constants.test.js:36` DEFAULT_PRIORITY is none
-- `tests/unit/constants.test.js:40` DONE_COLUMN_ID is done
-- `tests/unit/constants.test.js:44` DEFAULT_COLUMN_COLOR is a valid hex color
-- `tests/unit/constants.test.js:48` MAX_LABEL_NAME_LENGTH is a positive integer
-- `tests/unit/constants.test.js:53` open boards modal shortcut defaults to Ctrl+B
+- `tests/unit/constants.test.js:14` the board has four fixed columns in workflow order
+- `tests/unit/constants.test.js:22` DONE_COLUMN_ID is done
+- `tests/unit/constants.test.js:26` DEFAULT_COLUMN_COLOR is a valid hex color
+- `tests/unit/constants.test.js:30` MAX_LABEL_NAME_LENGTH is a positive integer
+- `tests/unit/constants.test.js:35` open boards modal shortcut defaults to Ctrl+B
 
 ### Dateutils
 
 - Path: `tests/unit/dateutils.test.js`
 - Type: Unit
-- Test count: 24
+- Test count: 5
 
-- `tests/unit/dateutils.test.js:14` calculateDaysUntilDue returns 0 when due today
-- `tests/unit/dateutils.test.js:18` calculateDaysUntilDue returns 1 when due tomorrow
-- `tests/unit/dateutils.test.js:22` calculateDaysUntilDue returns negative when overdue
-- `tests/unit/dateutils.test.js:26` calculateDaysUntilDue returns positive for future date
-- `tests/unit/dateutils.test.js:30` calculateDaysUntilDue returns null for empty string
-- `tests/unit/dateutils.test.js:34` calculateDaysUntilDue returns null for invalid date
-- `tests/unit/dateutils.test.js:41` formatCountdown returns empty string for null
-- `tests/unit/dateutils.test.js:45` formatCountdown returns today for 0 days
-- `tests/unit/dateutils.test.js:49` formatCountdown returns tomorrow for 1 day
-- `tests/unit/dateutils.test.js:53` formatCountdown returns day count for 2-29 days
-- `tests/unit/dateutils.test.js:58` formatCountdown returns months and days for 30+ days
-- `tests/unit/dateutils.test.js:65` formatCountdown returns overdue with singular day
-- `tests/unit/dateutils.test.js:69` formatCountdown returns overdue with plural days
-- `tests/unit/dateutils.test.js:73` formatCountdown returns overdue with months
-- `tests/unit/dateutils.test.js:80` getCountdownClassName returns countdown-none for null
-- `tests/unit/dateutils.test.js:84` getCountdownClassName returns countdown-urgent within threshold
-- `tests/unit/dateutils.test.js:90` getCountdownClassName returns countdown-warning within threshold
-- `tests/unit/dateutils.test.js:95` getCountdownClassName returns countdown-normal beyond thresholds
-- `tests/unit/dateutils.test.js:100` getCountdownClassName respects custom thresholds
-- `tests/unit/dateutils.test.js:108` formatElapsedDuration returns empty string for invalid or negative values
-- `tests/unit/dateutils.test.js:115` formatElapsedDuration shows under a minute
-- `tests/unit/dateutils.test.js:120` formatElapsedDuration shows whole minutes under an hour
-- `tests/unit/dateutils.test.js:126` formatElapsedDuration shows hours with zero-padded minutes
-- `tests/unit/dateutils.test.js:132` formatElapsedDuration shows days with remaining hours
+- `tests/unit/dateutils.test.js:6` formatElapsedDuration returns empty string for invalid or negative values
+- `tests/unit/dateutils.test.js:13` formatElapsedDuration shows under a minute
+- `tests/unit/dateutils.test.js:18` formatElapsedDuration shows whole minutes under an hour
+- `tests/unit/dateutils.test.js:24` formatElapsedDuration shows hours with zero-padded minutes
+- `tests/unit/dateutils.test.js:30` formatElapsedDuration shows days with remaining hours
 
 ### Backfill
 
@@ -311,7 +284,7 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/unit/event-sourcing/reducer.test.js`
 - Type: Unit
-- Test count: 10
+- Test count: 11
 
 - `tests/unit/event-sourcing/reducer.test.js:18` applyEvent is idempotent by event id
 - `tests/unit/event-sourcing/reducer.test.js:35` task.deleted tombstones prevent later task updates from resurrecting the task
@@ -319,10 +292,11 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/unit/event-sourcing/reducer.test.js:74` task.moved updates column order and columnHistory
 - `tests/unit/event-sourcing/reducer.test.js:106` unknown event types warn and leave projection unchanged
 - `tests/unit/event-sourcing/reducer.test.js:118` label events create update and tombstone labels
-- `tests/unit/event-sourcing/reducer.test.js:142` label task membership events update task label refs
-- `tests/unit/event-sourcing/reducer.test.js:164` column events create update delete and reorder columns
-- `tests/unit/event-sourcing/reducer.test.js:180` settings.updated folds board settings
-- `tests/unit/event-sourcing/reducer.test.js:190` subtask and relationship events update embedded task collections
+- `tests/unit/event-sourcing/reducer.test.js:142` unknown removed event types leave the model untouched
+- `tests/unit/event-sourcing/reducer.test.js:157` column events create update delete and reorder columns
+- `tests/unit/event-sourcing/reducer.test.js:173` settings.updated folds board settings
+- `tests/unit/event-sourcing/reducer.test.js:183` relationship events update embedded task collections
+- `tests/unit/event-sourcing/reducer.test.js:203` subtask events are no longer applied to tasks
 
 ### Snapshot
 
@@ -360,12 +334,12 @@ These lists compare source/spec filenames against test file names and test title
 
 - `tests/unit/importexport.test.js:46` inspectImportPayload accepts valid board export objects
 - `tests/unit/importexport.test.js:71` inspectImportPayload remaps legacy model ids to UUIDs while preserving references
-- `tests/unit/importexport.test.js:105` inspectImportPayload rejects files above the size limit
-- `tests/unit/importexport.test.js:111` inspectImportPayload warns for legacy task-only imports
-- `tests/unit/importexport.test.js:125` inspectImportPayload preserves and remaps task relationships
-- `tests/unit/importexport.test.js:147` inspectImportPayload remaps swimlane settings that reference labels and columns
-- `tests/unit/importexport.test.js:174` inspectImportPayload removes unknown label references and warns
-- `tests/unit/importexport.test.js:194` buildImportConfirmationMessage includes summary details
+- `tests/unit/importexport.test.js:104` inspectImportPayload rejects files above the size limit
+- `tests/unit/importexport.test.js:110` inspectImportPayload warns for legacy task-only imports
+- `tests/unit/importexport.test.js:124` inspectImportPayload preserves and remaps task relationships
+- `tests/unit/importexport.test.js:146` inspectImportPayload remaps swimlane settings that reference labels and columns
+- `tests/unit/importexport.test.js:173` inspectImportPayload ignores the removed task fields from an older export
+- `tests/unit/importexport.test.js:210` buildImportConfirmationMessage includes summary details
 
 ### Labels
 
@@ -385,45 +359,30 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/unit/labels.test.js:82` updateLabel allows keeping the same name on the same label
 - `tests/unit/labels.test.js:88` updateLabel returns EMPTY_NAME for empty name
 - `tests/unit/labels.test.js:97` deleteLabel removes label from labels list
-- `tests/unit/labels.test.js:104` deleteLabel removes label ID from all tasks
-- `tests/unit/labels.test.js:117` deleteLabel soft-deletes: label hidden from loadLabels but present in loadDeletedLabelsForBoard
+- `tests/unit/labels.test.js:104` deleteLabel leaves task records untouched
+- `tests/unit/labels.test.js:116` deleteLabel soft-deletes: label hidden from loadLabels but present in loadDeletedLabelsForBoard
 
 ### Normalize
 
 - Path: `tests/unit/normalize.test.js`
 - Type: Unit
-- Test count: 30
+- Test count: 15
 
-- `tests/unit/normalize.test.js:16` normalizePriority returns valid priorities unchanged
-- `tests/unit/normalize.test.js:24` normalizePriority is case-insensitive
-- `tests/unit/normalize.test.js:30` normalizePriority returns none for invalid input
-- `tests/unit/normalize.test.js:38` normalizePriority trims whitespace
-- `tests/unit/normalize.test.js:44` isHexColor accepts valid 6-digit hex colors
-- `tests/unit/normalize.test.js:50` isHexColor accepts valid 3-digit hex colors
-- `tests/unit/normalize.test.js:55` isHexColor rejects invalid values
-- `tests/unit/normalize.test.js:67` normalizeHexColor returns valid color unchanged
-- `tests/unit/normalize.test.js:71` normalizeHexColor trims whitespace from valid color
-- `tests/unit/normalize.test.js:75` normalizeHexColor returns default fallback for invalid color
-- `tests/unit/normalize.test.js:80` normalizeHexColor uses custom fallback
-- `tests/unit/normalize.test.js:86` boardDisplayName returns trimmed name
-- `tests/unit/normalize.test.js:90` boardDisplayName returns Untitled board for missing/empty name
-- `tests/unit/normalize.test.js:100` normalizeDueDate returns plain date unchanged
-- `tests/unit/normalize.test.js:104` normalizeDueDate strips ISO time portion
-- `tests/unit/normalize.test.js:109` normalizeDueDate returns empty string for empty/null input
-- `tests/unit/normalize.test.js:117` normalizeActivityLog drops malformed entries and preserves valid entries
-- `tests/unit/normalize.test.js:138` normalizeActivityLog drops entries with empty type, non-parseable timestamp, or invalid actor
-- `tests/unit/normalize.test.js:157` normalizeActivityLog accepts ISO timestamps with UTC offset and microsecond precision
-- `tests/unit/normalize.test.js:174` normalizeStringKeys deduplicates and trims
-- `tests/unit/normalize.test.js:178` normalizeStringKeys filters empty strings and non-strings
-- `tests/unit/normalize.test.js:182` normalizeStringKeys returns empty array for non-array input
-- `tests/unit/normalize.test.js:190` normalizeSubTasks returns empty array for non-array input
-- `tests/unit/normalize.test.js:197` normalizeSubTasks returns empty array for empty array input
-- `tests/unit/normalize.test.js:201` normalizeSubTasks filters entries with missing id or title
-- `tests/unit/normalize.test.js:213` normalizeSubTasks coerces completed to boolean
-- `tests/unit/normalize.test.js:226` normalizeSubTasks preserves order when valid
-- `tests/unit/normalize.test.js:235` normalizeSubTasks assigns index-based order when order is missing or non-finite
-- `tests/unit/normalize.test.js:246` normalizeSubTasks trims id and title
-- `tests/unit/normalize.test.js:254` normalizeSubTasks ignores non-object entries
+- `tests/unit/normalize.test.js:13` isHexColor accepts valid 6-digit hex colors
+- `tests/unit/normalize.test.js:19` isHexColor accepts valid 3-digit hex colors
+- `tests/unit/normalize.test.js:24` isHexColor rejects invalid values
+- `tests/unit/normalize.test.js:36` normalizeHexColor returns valid color unchanged
+- `tests/unit/normalize.test.js:40` normalizeHexColor trims whitespace from valid color
+- `tests/unit/normalize.test.js:44` normalizeHexColor returns default fallback for invalid color
+- `tests/unit/normalize.test.js:49` normalizeHexColor uses custom fallback
+- `tests/unit/normalize.test.js:55` boardDisplayName returns trimmed name
+- `tests/unit/normalize.test.js:59` boardDisplayName returns Untitled board for missing/empty name
+- `tests/unit/normalize.test.js:69` normalizeActivityLog drops malformed entries and preserves valid entries
+- `tests/unit/normalize.test.js:90` normalizeActivityLog drops entries with empty type, non-parseable timestamp, or invalid actor
+- `tests/unit/normalize.test.js:109` normalizeActivityLog accepts ISO timestamps with UTC offset and microsecond precision
+- `tests/unit/normalize.test.js:126` normalizeStringKeys deduplicates and trims
+- `tests/unit/normalize.test.js:130` normalizeStringKeys filters empty strings and non-strings
+- `tests/unit/normalize.test.js:134` normalizeStringKeys returns empty array for non-array input
 
 ### Security
 
@@ -491,14 +450,14 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/unit/storage.test.js:168` loadColumns returns default columns on fresh board
 - `tests/unit/storage.test.js:177` loadColumns ensures Done column exists
 - `tests/unit/storage.test.js:185` saveColumns + loadColumns roundtrip locks to the four fixed columns
-- `tests/unit/storage.test.js:195` loadTasks normalizes priority on load
+- `tests/unit/storage.test.js:195` loadTasks leaves legacy removed fields in stored data untouched
 - `tests/unit/storage.test.js:205` loadTasks adds doneDate to tasks in Done column that lack it
 - `tests/unit/storage.test.js:215` loadTasks removes doneDate from tasks not in Done column
 - `tests/unit/storage.test.js:225` saveTasks + loadTasks roundtrip
 - `tests/unit/storage.test.js:236` loadLabels adds empty group to labels missing it
 - `tests/unit/storage.test.js:246` loadSettings returns defaults on fresh board
-- `tests/unit/storage.test.js:255` loadSettings normalizes invalid swimLaneGroupBy
-- `tests/unit/storage.test.js:262` loadSettings clamps countdownWarningThreshold to be >= urgentThreshold
+- `tests/unit/storage.test.js:254` loadSettings normalizes invalid swimLaneGroupBy
+- `tests/unit/storage.test.js:261` loadSettings drops the legacy priority swimLaneGroupBy
 
 ### Swimlanes Utils
 
@@ -506,11 +465,11 @@ These lists compare source/spec filenames against test file names and test title
 - Type: Unit
 - Test count: 5
 
-- `tests/unit/swimlanes-utils.test.js:33` groupTasksBySwimLane groups tasks into distinct lanes plus No Group
-- `tests/unit/swimlanes-utils.test.js:47` groupTasksBySwimLane sorts priority lanes in workflow order
-- `tests/unit/swimlanes-utils.test.js:59` groupTasksBySwimLane includes one lane per label in the selected group
-- `tests/unit/swimlanes-utils.test.js:70` buildBoardGrid places tasks into the correct lane and column cells
-- `tests/unit/swimlanes-utils.test.js:88` getVisibleTasksForLane hides done-column tasks but keeps active columns visible
+- `tests/unit/swimlanes-utils.test.js:27` groupTasksBySwimLane groups tasks into distinct lanes plus No Group
+- `tests/unit/swimlanes-utils.test.js:41` groupTasksBySwimLane ignores tasks whose lane marker is unknown
+- `tests/unit/swimlanes-utils.test.js:50` groupTasksBySwimLane includes one lane per label in the selected group
+- `tests/unit/swimlanes-utils.test.js:61` buildBoardGrid places tasks into the correct lane and column cells
+- `tests/unit/swimlanes-utils.test.js:79` getVisibleTasksForLane hides done-column tasks but keeps active columns visible
 
 ### Sync
 
@@ -537,44 +496,40 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/unit/tasks.test.js`
 - Type: Unit
-- Test count: 36
+- Test count: 32
 
-- `tests/unit/tasks.test.js:18` addTask creates task with order 1 (top of column)
-- `tests/unit/tasks.test.js:28` addTask bumps existing task orders in same column
-- `tests/unit/tasks.test.js:38` addTask does nothing for empty title
-- `tests/unit/tasks.test.js:43` addTask sets creationDate, changeDate, and columnHistory
-- `tests/unit/tasks.test.js:53` addTask sets doneDate when added to Done column
-- `tests/unit/tasks.test.js:59` addTask does not set doneDate for non-Done column
-- `tests/unit/tasks.test.js:65` addTask preserves labels
-- `tests/unit/tasks.test.js:73` updateTask updates title, description, priority
-- `tests/unit/tasks.test.js:86` updateTask does nothing for empty title
-- `tests/unit/tasks.test.js:94` updateTask appends to columnHistory on column change
-- `tests/unit/tasks.test.js:105` updateTask sets doneDate when moving to Done column
-- `tests/unit/tasks.test.js:114` updateTask removes doneDate when moving from Done column
-- `tests/unit/tasks.test.js:124` updateTask seeds columnHistory if missing
-- `tests/unit/tasks.test.js:137` deleteTask removes task by ID
-- `tests/unit/tasks.test.js:149` deleteTask permanently removes task from live and deleted task lists by default
-- `tests/unit/tasks.test.js:159` updateTaskPositionsFromDrop preserves existing task tombstones
-- `tests/unit/tasks.test.js:188` purgeDeleted hard-removes task tombstones from storage
-- `tests/unit/tasks.test.js:201` purgeDeleted with { tasks: false } keeps task tombstones
-- `tests/unit/tasks.test.js:216` moveTaskToTopInColumn moves specified task to order 1
-- `tests/unit/tasks.test.js:231` moveTaskToTopInColumn returns null for missing args
-- `tests/unit/tasks.test.js:238` addTask stores subTasks when provided
-- `tests/unit/tasks.test.js:253` addTask stores empty subTasks array when none provided
-- `tests/unit/tasks.test.js:260` updateTask persists updated subTasks
-- `tests/unit/tasks.test.js:278` updateTask clears subTasks when empty array passed
-- `tests/unit/tasks.test.js:290` updateTask normalizes invalid subTask entries
-- `tests/unit/tasks.test.js:305` subTasks persist through storage round-trip
-- `tests/unit/tasks.test.js:320` addTask generates a board-prefixed key
-- `tests/unit/tasks.test.js:329` addTask defaults the agile fields
-- `tests/unit/tasks.test.js:345` addTask persists provided agile fields
-- `tests/unit/tasks.test.js:368` updateTask persists agile fields and rejects a self-parent
-- `tests/unit/tasks.test.js:390` updateTask without extraFields leaves agile fields untouched
-- `tests/unit/tasks.test.js:428` updateTaskPositionsFromDrop flags and records a move into Blocked
-- `tests/unit/tasks.test.js:446` updateTaskPositionsFromDrop leaves the reason empty when none is provided
-- `tests/unit/tasks.test.js:457` updateTaskPositionsFromDrop clears blocked fields when leaving Blocked
-- `tests/unit/tasks.test.js:482` setTaskBlockedReason stores a trimmed reason and clears on empty
-- `tests/unit/tasks.test.js:497` setTaskBlockedReason returns false for a missing task
+- `tests/unit/tasks.test.js:21` addTask creates task in Backlog with order 1
+- `tests/unit/tasks.test.js:31` addTask with only title, description, type and estimate keeps the slim model
+- `tests/unit/tasks.test.js:45` addTask bumps existing task orders in the same column
+- `tests/unit/tasks.test.js:55` addTask does nothing for empty title
+- `tests/unit/tasks.test.js:60` addTask sets creationDate, changeDate, and columnHistory
+- `tests/unit/tasks.test.js:72` updateTask updates title and description
+- `tests/unit/tasks.test.js:82` updateTask does nothing for empty title
+- `tests/unit/tasks.test.js:90` updateTask appends to columnHistory when a column is passed explicitly
+- `tests/unit/tasks.test.js:101` updateTask keeps the current column when none is passed
+- `tests/unit/tasks.test.js:111` updateTask sets doneDate when moving to the done column
+- `tests/unit/tasks.test.js:120` updateTask removes doneDate when moving out of the done column
+- `tests/unit/tasks.test.js:131` updateTask seeds columnHistory if missing
+- `tests/unit/tasks.test.js:144` deleteTask removes task by ID
+- `tests/unit/tasks.test.js:156` deleteTask permanently removes task from live and deleted task lists by default
+- `tests/unit/tasks.test.js:166` updateTaskPositionsFromDrop preserves existing task tombstones
+- `tests/unit/tasks.test.js:195` purgeDeleted hard-removes task tombstones from storage
+- `tests/unit/tasks.test.js:208` purgeDeleted with { tasks: false } keeps task tombstones
+- `tests/unit/tasks.test.js:221` moveTaskToTopInColumn moves specified task to order 1
+- `tests/unit/tasks.test.js:236` moveTaskToTopInColumn returns null for missing args
+- `tests/unit/tasks.test.js:243` addTask generates a board-prefixed key
+- `tests/unit/tasks.test.js:252` addTask defaults the agile fields
+- `tests/unit/tasks.test.js:266` addTask persists provided agile fields
+- `tests/unit/tasks.test.js:285` addTask persists acceptance criteria as { id, text, done }
+- `tests/unit/tasks.test.js:299` updateTask persists agile fields and rejects a self-parent
+- `tests/unit/tasks.test.js:319` updateTask without extraFields leaves agile fields untouched
+- `tests/unit/tasks.test.js:332` updateTask leaves assignee and parentId untouched when the payload omits them
+- `tests/unit/tasks.test.js:345` updateTask replaces acceptance criteria and comments wholesale
+- `tests/unit/tasks.test.js:388` updateTaskPositionsFromDrop flags and records a move into Blocked
+- `tests/unit/tasks.test.js:406` updateTaskPositionsFromDrop leaves the reason empty when none is provided
+- `tests/unit/tasks.test.js:417` updateTaskPositionsFromDrop clears blocked fields when leaving Blocked
+- `tests/unit/tasks.test.js:440` setTaskBlockedReason stores a trimmed reason and clears on empty
+- `tests/unit/tasks.test.js:455` setTaskBlockedReason returns false for a missing task
 
 ### Utils
 
@@ -742,9 +697,9 @@ These lists compare source/spec filenames against test file names and test title
 - Test count: 4
 
 - `tests/dom/event-sourcing/feature-modules-emit-events.test.js:34` updateTask emits one task.updated event with HLC entity id and minimal fields
-- `tests/dom/event-sourcing/feature-modules-emit-events.test.js:69` label mutations emit label entity and task membership events
-- `tests/dom/event-sourcing/feature-modules-emit-events.test.js:88` updateTask emits collection-op and move events for non-scalar changes
-- `tests/dom/event-sourcing/feature-modules-emit-events.test.js:118` deleteTask emits task.deleted
+- `tests/dom/event-sourcing/feature-modules-emit-events.test.js:69` label mutations emit label entity events only
+- `tests/dom/event-sourcing/feature-modules-emit-events.test.js:84` updateTask emits relationship and move events for non-scalar changes
+- `tests/dom/event-sourcing/feature-modules-emit-events.test.js:113` deleteTask emits task.deleted
 
 ### Realtime
 
@@ -766,10 +721,10 @@ These lists compare source/spec filenames against test file names and test title
 - Type: DOM Integration
 - Test count: 4
 
-- `tests/dom/event-sourcing/replay-fidelity.test.js:70` updateTask relationship change replays the inverse on the target task
-- `tests/dom/event-sourcing/replay-fidelity.test.js:86` addTask replays the sibling reorder in the column
-- `tests/dom/event-sourcing/replay-fidelity.test.js:107` moving a task into and out of the done column replays its doneDate
-- `tests/dom/event-sourcing/replay-fidelity.test.js:131` swimlane drag across priority lanes replays the priority reassignment
+- `tests/dom/event-sourcing/replay-fidelity.test.js:71` updateTask relationship change replays the inverse on the target task
+- `tests/dom/event-sourcing/replay-fidelity.test.js:87` addTask replays the sibling reorder in the column
+- `tests/dom/event-sourcing/replay-fidelity.test.js:108` moving a task into and out of the done column replays its doneDate
+- `tests/dom/event-sourcing/replay-fidelity.test.js:132` swimlane drag across label lanes replays the lane reassignment
 
 ### Snapshot Catchup
 
@@ -858,7 +813,7 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/dom/reconcile.test.js:166` reconcileBoard defers to a full rebuild when swimlane mode is on
 - `tests/dom/reconcile.test.js:179` reconcileBoard defers to a full rebuild when the column set changed
 - `tests/dom/reconcile.test.js:192` reconcileBoard virtualizes an overfull Done column instead of rendering every card
-- `tests/dom/reconcile.test.js:209` reconcileBoard patches a card due-date in place when it lands in Done
+- `tests/dom/reconcile.test.js:209` reconcileBoard renders a new card with acceptance progress and the notes indicator
 
 ### Settings Ui
 
@@ -866,7 +821,7 @@ These lists compare source/spec filenames against test file names and test title
 - Type: DOM Integration
 - Test count: 2
 
-- `tests/dom/settings-ui.test.js:43` settings modal opens with board settings controls
+- `tests/dom/settings-ui.test.js:37` settings modal opens with the surviving board settings controls
 - `tests/dom/settings-ui.test.js:56` settings changes persist through board settings
 
 ### Skills Modal
@@ -939,60 +894,63 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/dom/task-modal-agile.test.js`
 - Type: DOM Integration
-- Test count: 4
+- Test count: 5
 
-- `tests/dom/task-modal-agile.test.js:204` add form saves agile fields through addTask
-- `tests/dom/task-modal-agile.test.js:246` acceptance criteria can be toggled and removed before saving
-- `tests/dom/task-modal-agile.test.js:270` editing a task into Blocked prompts for and stores a reason
-- `tests/dom/task-modal-agile.test.js:296` a normal edit does not prompt for a blocked reason
+- `tests/dom/task-modal-agile.test.js:169` add form saves title, description, type, estimate and relationships through addTask
+- `tests/dom/task-modal-agile.test.js:192` the acceptance editor adds, toggles and removes items and reports done/total
+- `tests/dom/task-modal-agile.test.js:223` a comment written in the dialog renders in the thread with author and time
+- `tests/dom/task-modal-agile.test.js:245` the agent reply shows up in the same thread when the dialog reopens
+- `tests/dom/task-modal-agile.test.js:267` editing a task saves the slim payload through updateTask
 
 ### Task Modal Annotations
 
 - Path: `tests/dom/task-modal-annotations.test.js`
 - Type: DOM Integration
-- Test count: 7
+- Test count: 8
 
-- `tests/dom/task-modal-annotations.test.js:258` edit modal renders the stored annotations with text, author and time
-- `tests/dom/task-modal-annotations.test.js:271` adding an annotation calls addAnnotation and appends it to the list
-- `tests/dom/task-modal-annotations.test.js:293` pressing Enter in the annotation input adds the annotation
-- `tests/dom/task-modal-annotations.test.js:312` removing an annotation calls removeAnnotation and drops the entry
-- `tests/dom/task-modal-annotations.test.js:324` edit modal leads with key, type, estimate, priority, due date and column
-- `tests/dom/task-modal-annotations.test.js:343` an In Progress task is fully read-only, including annotations
-- `tests/dom/task-modal-annotations.test.js:387` add mode hides the summary, claim chip and annotations sections
+- `tests/dom/task-modal-annotations.test.js:198` edit modal renders the stored annotations with text, author and time
+- `tests/dom/task-modal-annotations.test.js:211` adding an annotation calls addAnnotation and appends it to the list
+- `tests/dom/task-modal-annotations.test.js:233` pressing Enter in the annotation input adds the annotation
+- `tests/dom/task-modal-annotations.test.js:252` removing an annotation calls removeAnnotation and drops the entry
+- `tests/dom/task-modal-annotations.test.js:264` edit modal leads with the key, the read-only column and the claimant
+- `tests/dom/task-modal-annotations.test.js:280` edit modal no longer offers priority, due date, labels, sub-tasks, attachments, custom fields or a column selector
+- `tests/dom/task-modal-annotations.test.js:299` an In Progress task is fully read-only, including annotations
+- `tests/dom/task-modal-annotations.test.js:337` add mode hides the summary, claim chip and annotations sections
 
 ### Task Row Agile
 
 - Path: `tests/dom/task-row-agile.test.js`
 - Type: DOM Integration
-- Test count: 14
+- Test count: 11
 
-- `tests/dom/task-row-agile.test.js:36` renders the human-readable key when present
-- `tests/dom/task-row-agile.test.js:41` omits the key when the task has none
-- `tests/dom/task-row-agile.test.js:46` renders a colour-coded type marker for known types
-- `tests/dom/task-row-agile.test.js:56` omits the type marker for unknown types
-- `tests/dom/task-row-agile.test.js:61` renders an estimate badge when set
-- `tests/dom/task-row-agile.test.js:66` omits the estimate badge when null
-- `tests/dom/task-row-agile.test.js:71` renders assignee initials with the full name as title
-- `tests/dom/task-row-agile.test.js:79` renders a blocked indicator when blockedReason is set
-- `tests/dom/task-row-agile.test.js:87` omits the blocked indicator without a reason
-- `tests/dom/task-row-agile.test.js:92` shows task age in days since creation
-- `tests/dom/task-row-agile.test.js:97` flags a stale task with a warning dot outside the done column
-- `tests/dom/task-row-agile.test.js:109` does not flag a recently updated task as stale
-- `tests/dom/task-row-agile.test.js:120` does not flag tasks in the done column as stale
-- `tests/dom/task-row-agile.test.js:131` hides the age when the showAge setting is off
+- `tests/dom/task-row-agile.test.js:31` renders the human-readable key when present
+- `tests/dom/task-row-agile.test.js:36` omits the key when the task has none
+- `tests/dom/task-row-agile.test.js:41` renders a colour-coded type marker for known types
+- `tests/dom/task-row-agile.test.js:51` omits the type marker for unknown types
+- `tests/dom/task-row-agile.test.js:56` renders an estimate badge when set
+- `tests/dom/task-row-agile.test.js:61` omits the estimate badge when null
+- `tests/dom/task-row-agile.test.js:66` renders assignee initials with the full name as title
+- `tests/dom/task-row-agile.test.js:74` renders a blocked indicator when blockedReason is set
+- `tests/dom/task-row-agile.test.js:82` omits the blocked indicator without a reason
+- `tests/dom/task-row-agile.test.js:87` never renders a task age badge even when creationDate is set
+- `tests/dom/task-row-agile.test.js:94` ignores the showAge setting because the age badge is gone
 
 ### Task Row
 
 - Path: `tests/dom/task-row.test.js`
 - Type: DOM Integration
-- Test count: 6
+- Test count: 10
 
-- `tests/dom/task-row.test.js:39` renders a single compact row without card chrome
-- `tests/dom/task-row.test.js:51` orders the meta cluster priority, due date, labels, sub-task progress
-- `tests/dom/task-row.test.js:69` shows an overdue countdown for a past due date
-- `tests/dom/task-row.test.js:77` respects the showPriority and showDueDate settings
-- `tests/dom/task-row.test.js:84` clicking the title opens the task editor
-- `tests/dom/task-row.test.js:91` keeps the delete control inside the row actions
+- `tests/dom/task-row.test.js:34` renders a single compact row without card chrome
+- `tests/dom/task-row.test.js:45` renders a one-line description preview when a description is present
+- `tests/dom/task-row.test.js:53` omits the description preview when there is no description
+- `tests/dom/task-row.test.js:58` no longer renders a priority chip, a due date or a label area
+- `tests/dom/task-row.test.js:76` shows acceptance progress as done over total
+- `tests/dom/task-row.test.js:92` omits acceptance progress when there are no criteria
+- `tests/dom/task-row.test.js:97` shows a notes indicator when comments exist
+- `tests/dom/task-row.test.js:112` omits the notes indicator without comments
+- `tests/dom/task-row.test.js:117` clicking the title opens the task editor
+- `tests/dom/task-row.test.js:124` keeps the delete control inside the row actions
 
 ### Wip Limit
 

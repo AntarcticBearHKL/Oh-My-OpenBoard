@@ -38,9 +38,10 @@ OpenAgile == "Kanban" + "Nirvana" is a Kanban Board, browser-based task manager 
 3. **Move work forward** by drag-and-drop between columns.
 4. **Use the right tool for the job**
 	- **Columns** = workflow state (Backlog → In Progress → Blocked → Finished)
-	- **Priority** = urgency (urgent/high/medium/low/none)
-	- **Labels** = categories (type/area/context/activity)
-	- **Due dates** = deadlines
+	- **Type** = kind of work (story/bug/task/spike)
+	- **Estimate** = story points
+	- **Acceptance criteria** = the definition of done
+	- **Comments** = notes to the agent
 
 Tip: Everything is stored locally in your browser (IndexedDB). Export regularly if you care about keeping the data.
 
@@ -104,19 +105,18 @@ The app is built with **Vite**, uses **vanilla JavaScript/CSS/HTML**, and follow
 
 ## Core Features at a Glance
 
-### Sub-tasks (New!)
+### Acceptance Criteria
 
-Break any task into a checklist of smaller steps managed directly inside the task modal:
+Every task carries a checklist that defines "done":
 
-- Type a title and press **Enter** to add a sub-task; drag the handle to reorder
-- Check a sub-task to mark it complete — title is struck through and muted
-- Click a title to edit it inline; press **Enter** to save or **Escape** to cancel
-- Each task card shows a `completed / total` progress indicator and a progress bar (turns green when all done)
-- Sub-tasks persist with the parent task and are included in board exports
+- Add a criterion with a title; tick it once it is met
+- The card shows `done / total` progress and turns complete when every criterion is checked
+- A task may only move to Finished when all of its criteria are met
+- Criteria travel with the task in board exports
 
 ### Swim Lanes (New!)
 
-Add a second dimension to your board by grouping tasks into horizontal swim lanes. Group by **label**, **label group**, or **priority** to see your work from different angles.
+Add a second dimension to your board by grouping tasks into horizontal swim lanes. Group by **label** or **label group** to see your work from different angles.
 
 - Drag and drop tasks across columns, lanes, or both in a single gesture
 - Collapse/expand individual cells, entire rows, or workflow columns independently
@@ -131,7 +131,7 @@ Add a second dimension to your board by grouping tasks into horizontal swim lane
 Multiple boards with independent columns, tasks, labels, and settings. Switch between contexts instantly. New boards start blank.
 
 ### Tasks
-Create tasks with titles, descriptions, priorities (urgent/high/medium/low/none), due dates, labels, and sub-tasks. Drag and drop to move between columns. Click anywhere on a task card (except the delete button) to open the edit modal. Break work down further with inline sub-task checklists — each task card shows sub-task progress as a donut circle at a glance. Due dates include a countdown timer with configurable color-coded urgency indicators. Optimized drag-and-drop performance handles 300+ tasks.
+Create tasks with a title and a description; type and estimate are the only planning fields. Drag and drop to move between columns. Click anywhere on a task card (except the delete button) to open the edit modal. Each task can carry acceptance criteria — its definition of done — and a comment thread where the human gives instructions and the agent answers. Cards show the type, estimate, claim state and elapsed time, and acceptance progress at a glance. Optimized drag-and-drop performance handles 300+ tasks.
 
 ### Task Relationships
 
@@ -141,13 +141,13 @@ Link tasks together to model dependencies and connections:
 - **Dependent** — this task is needed by another before that task can start
 - **Related** — a general connection without implying order
 
-Relationships are bidirectional: adding one automatically creates the inverse on the linked task, and removing it cleans up both sides. Search for tasks by short ID (e.g. `#ae2ry`) or title, view active relationships as color-coded badges in the task modal, and click any badge ID to jump to that task. Cards with relationships show a count indicator below the labels.
+Relationships are bidirectional: adding one automatically creates the inverse on the linked task, and removing it cleans up both sides. Search for tasks by short ID (e.g. `#ae2ry`) or title, view active relationships as color-coded badges in the task modal, and click any badge ID to jump to that task. Cards with relationships show a count indicator in the card's meta cluster.
 
 ### Columns
-The board has four fixed columns — **Backlog** (everything not started), **In Progress** (what an agent is actively working; read-only), **Blocked** (work an agent could not finish and that needs a human decision, or work stuck on a resource conflict) and **Finished** (completed work). The ids, order and the done-column role are fixed, so display names can change without a migration. Columns keep their colors, collapse/expand, and sorting by due date or priority, and collapsed columns still accept drag-and-drop with visual hover feedback. The Finished column is permanent and optimized for large task counts with virtualization.
+The board has four fixed columns — **Backlog** (everything not started), **In Progress** (what an agent is actively working; read-only), **Blocked** (work an agent could not finish and that needs a human decision, or work stuck on a resource conflict) and **Finished** (completed work). The ids, order and the done-column role are fixed, so display names can change without a migration. Columns are not user-editable from the board: each header offers a WIP-aware count and the agent column summary. The Finished column is permanent and optimized for large task counts with virtualization.
 
 ### Labels & Groups
-Color-coded labels organized into groups. Assign multiple labels per task. Search and filter across your board by label name, group, title, description, or priority. Create labels inline from the task editor search.
+Color-coded labels organized into groups. Labels are board-level and feed swim lane grouping — group by **label** or by **label group**. Manage them from **Manage Labels**; board search matches task titles and descriptions.
 
 ### Reports & Calendar
 Dedicated pages for productivity analytics and date-based planning:
@@ -156,10 +156,10 @@ Dedicated pages for productivity analytics and date-based planning:
 - **Lead Time & Completion**: Weekly lead time chart with trend line, completion KPIs, and sparklines
 - **Same-Day Completions**: Track ad-hoc tasks created and completed on the same day with KPIs and 12-week sparkline
 - **Cumulative Flow Diagram**: Stacked area chart showing task distribution across columns over time
-- **Calendar View**: Monthly due-date calendar with overdue highlighting and clickable task links
+- **Calendar View**: Monthly due-date calendar with overdue highlighting and clickable task links (currently has no data source — the slimmed task model no longer carries due dates)
 
 ### Settings
-Per-board configuration: toggle visibility of priority, due date, age, and timestamps. Set countdown thresholds, locale, and default priority. Configure swim lane grouping mode and manage collapsed lane states.
+Per-board configuration: locale, the updated-timestamp toggle, column summaries, and swim lane grouping mode, label-group source, lane order, and collapsed lane states.
 
 ---
 

@@ -42,12 +42,13 @@ The same logical keys used previously for localStorage are now IDB keys in the `
 - `kanbanBoard:<boardId>:labels`
 - `kanbanBoard:<boardId>:settings`
 
-### Board Event Store
+### Event-Sourced Stores
 
-- `events:<boardId>` — array of board-level `ActivityEvent` objects (column mutations, task deletions, cross-column task moves)
+- `events` — the domain-event log, keyed by event `id`; the `synced` flag drives the outbound queue
+- `read_model` — per-board projections (tasks / columns / labels / settings), keyed `{boardId}:{kind}`
+- `snapshots` — local projection snapshots that bound replay and event GC
 
-`deleteBoard()` removes this key alongside all other per-board keys to prevent orphaned IDB entries.
-Storage helpers: `loadBoardEvents()`, `saveBoardEvents()`, `appendBoardEvent()` in `storage.js`; `getBoardEventsKey()` in `idb-store.js` (re-exported from `storage.js` for backward compatibility).
+The old board-event key (`events:<boardId>`) and its `ActivityEvent` helpers were removed with the audit-trail feature (issue #110); mutation history now lives in the domain-event stream (see [ADR-0004](../adr/0004-event-sourced-sync.md)).
 
 Values are stored as native JavaScript objects (structured clone), not JSON strings.
 
@@ -57,7 +58,7 @@ Values are stored as native JavaScript objects (structured clone), not JSON stri
 - All CRUD operations act on the active board (determined by `getActiveBoardId()`)
 - Board data is namespaced by board id
 - Board, task, column, and label model `id` values are UUIDs
-- The permanent Finished column is identified by `role: "done"`, not by a fixed column id
+- The permanent Finished column is the fixed fourth column (`role: "done"`, fixed id `00000000-0000-4000-8000-000000000033`); the fixed column definitions are reimposed on every board at load
 - Export operates on the active board unless the board-management UI exports a selected board
   (uses `loadTasksForBoard(id)`, `loadColumnsForBoard(id)`, etc.)
 - Import creates a new board from JSON and switches to it

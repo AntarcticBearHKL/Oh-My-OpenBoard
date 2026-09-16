@@ -7,8 +7,9 @@
 
 ## 1. Core Domain Entities
 
-All canonical factory functions live in `client/src/modules/schema.js`. Every new entity must be
-constructed through those factories so all fields are always present.
+Entity shapes are defined by the models in §2 (task, column, label, board). New entities are
+constructed by the module that owns them (`storage-defaults.js` for default columns and labels,
+`tasks.js` for tasks), and every constructed entity must carry all fields the model defines.
 
 ### Glossary
 
@@ -41,15 +42,14 @@ are reimposed on every board at load, so renaming a fixed column's label needs n
 ## 2. Aggregate Roots and Boundaries
 
 ```
-Board ──< Column ──< Task ──< SubTask
-                 │        └─< Relationship (→ other Task)
-                 └─< Label (shared across board)
+Board ──< Column ──< Task ──< Relationship (→ other Task)
+       ├─< Label (board-level; consumed by swim lane grouping)
        └─< Settings (1:1)
 ```
 
 - **Board** is the aggregate root. No cross-board references exist.
-- **Task** references Labels by ID; labels are not embedded.
-- **SubTask** and **Relationship** are embedded inside Task (not top-level entities).
+- **Task** does not carry a label list; swim lane assignment references a Label by ID (`swimlaneLabelId`).
+- **Relationship** is embedded inside Task (not a top-level entity), alongside the embedded `acceptanceCriteria` and `comments` collections.
 - Every mutation is also recorded as an immutable **domain event** in the event store — the basis of
   sync and replay (see §9, and [ADR-0004](docs/adr/0004-event-sourced-sync.md)). The old inline task
   `activityLog` and board `BoardEvents` audit logs were removed in issue #110.
@@ -177,30 +177,29 @@ all subscribe.
 | `kanban.js` | Entry point — initialises storage, renders board |
 | `boards.js` | Board lifecycle: create, rename, switch |
 | `boards-modal.js` | Board selector / management modal |
-| `columns.js` | Column CRUD |
+| `columns.js` | Column collapse state helpers |
 | `column-element.js` | Column DOM element factory |
-| `column-modal.js` | Column edit modal |
 | `tasks.js` | Task CRUD |
 | `task-card.js` | Task card DOM element factory |
-| `task-modal.js` | Task edit modal (labels, subtasks, relationships) |
+| `task-modal.js` | Task edit modal (acceptance criteria, comments, annotations, relationships) |
 | `labels.js` | Label CRUD |
 | `labels-modal.js` | Label management modal |
-| `render.js` | Two render adapters behind one read model: `renderBoard()` (full rebuild — `innerHTML` reset + `initDragDrop()`) and `reconcileBoard()` (in-place patch — moves cards by id, reorders, counters, collapsed titles, due dates, Finished-column virtualization). Plus the **drag-reconcile window** (`beginDragReconcile()`/`endDragReconcile()`) that routes a drop's `DATA_CHANGED` through reconcile so the just-dragged node is never detached. See §7 "Board Render Flow". |
+| `render.js` | Two render adapters behind one read model: `renderBoard()` (full rebuild — `innerHTML` reset + `initDragDrop()`) and `reconcileBoard()` (in-place patch — moves cards by id, reorders, counters, collapsed titles, card meta, Finished-column virtualization). Plus the **drag-reconcile window** (`beginDragReconcile()`/`endDragReconcile()`) that routes a drop's `DATA_CHANGED` through reconcile so the just-dragged node is never detached. See §7 "Board Render Flow". |
 | `swimlanes.js` | Swimlane grouping logic (`groupTasksBySwimLane`, etc.) |
 | `swimlane-renderer.js` | Swimlane board DOM builder |
 | `dragdrop.js` | SortableJS initialization/teardown; swimlane-aware drop handling |
 | `importexport.js` | Board JSON export/import with preflight validation |
 | `reports.js` | ECharts: lead time, daily completions, cumulative flow diagram |
-| `calendar.js` | Monthly calendar view; groups tasks by `dueDate` |
+| `calendar.js` | Monthly calendar view; reads `task.dueDate`, which the slimmed task model no longer has (currently no data source) |
 | `reducer.js` | Pure event reducer — `applyEvent(state, event)` folds a domain event into projection state |
 | `event-sourcing/emitter.js` | `emitDomainEvent()` / `scheduleDomainEvent()` — stamp (UUID + HLC), persist, emit `EVENT_EMITTED` |
 | `event-sourcing/dispatcher.js` | `reduceEventAndNotify()` — runs the reducer and signals re-render |
 | `event-sourcing/{hlc,sync-queue,realtime,snapshot,snapshot-sync,sync-indicator}.js` | Sync layer — see §4 |
-| `dateutils.js` | Date calculation utilities (`calculateDaysUntilDue`, `formatCountdown`) |
+| `dateutils.js` | Date/time formatting utilities (timestamps, elapsed durations) |
 | `modals.js` | Modal coordination and shared modal state |
 | `dialog.js` | `alertDialog` / `confirmDialog` helpers |
 | `validation.js` | Field validators (column name, task, etc.) |
-| `normalize.js` | Data normalization helpers (priority, hex color, relationships, etc.) |
+| `normalize.js` | Data normalization helpers (hex color, relationships, swim lane ids, etc.) |
 | `settings.js` | Per-board settings load/save |
 | `security.js` | Input sanitization |
 | `theme.js` | Light/dark theme toggle |
@@ -208,7 +207,7 @@ all subscribe.
 | `accordion.js` | Accordion UI component |
 | `dom.js` | Shared DOM helpers |
 | `utils.js` | `generateUUID()` and other pure utilities |
-| `constants.js` | Domain constants: priorities, column roles, keybindings |
+| `constants.js` | Domain constants: fixed column ids/roles, keybindings |
 | `impressum.js` | Impressum/legal page |
 
 ---
@@ -233,9 +232,9 @@ drop onEnd → beginDragReconcile() → updateTaskPositionsFromDrop() → …DAT
            → reconcileBoard() [patch in place]  → endDragReconcile()
 ```
 
-### Task Due Date Rendering
+### Task Card Meta
 ```
-calculateDaysUntilDue → formatCountdown → getCountdownClassName
+claimTiming → formatElapsedDuration → buildTaskMeta
   → createTaskElement
 ```
 
@@ -303,14 +302,18 @@ re-sorts by HLC on replay, so server insertion order is irrelevant. Node id pers
 ```json
 {
   "id": "<uuid>",
-  "type": "task.priority_changed",
+  "type": "task.moved",
   "hlc": { /* HLC stamp */ },
   "at": "<ISO datetime>",
   "scope": "board",
   "board_id": "<board uuid | null for global>",
   "entity_id": "<id of the affected entity>",
   "actor": { "type": "human", "id": null },
-  "payload": { "from": "high", "to": "medium" }
+  "payload": {
+    "from_column": "<uuid>",
+    "to_column": "<uuid>",
+    "order": [{ "id": "<task uuid>", "column": "<column uuid>", "order": 1 }]
+  }
 }
 ```
 
@@ -344,5 +347,5 @@ event stream.
 | API mocking | MSW | `client/tests/mocks/*.js` |
 
 Key coverage areas: storage CRUD, UUID migration, swimlane utilities, import/export preflight,
-due-date countdown, validation, normalization, subtasks, and the event-sourcing layer (HLC, reducer,
-outbound queue, realtime/catch-up, snapshots, sync indicator).
+claim timing, acceptance criteria, comments, validation, normalization, and the event-sourcing
+layer (HLC, reducer, outbound queue, realtime/catch-up, snapshots, sync indicator).

@@ -11,44 +11,28 @@ The board always has exactly four fixed columns, in this order:
 | Blocked | Work an agent could not finish and that needs a human decision, or work stuck on a resource conflict |
 | Finished | Completed work; carries the done-column `role` and feeds velocity and cycle-time statistics |
 
+- The fixed definitions (id, name, order, role) are reimposed on every board at load; `name` is display-only and behaviour keys off the fixed ids, never the display name
 - The fourth column keeps `role: "done"` and the fixed id `00000000-0000-4000-8000-000000000033`
-- `name` is display-only; column behaviour keys off the fixed ids, never the display name
-- Because the fixed definitions are reimposed on every board at load, renaming a fixed column needs no migration
-- A claimed task that sits in In Progress with no update for five minutes is moved to Blocked by the server watchdog, with the reason recorded on the card (see [tasks.md](tasks.md)).
+- A claimed task that sits in In Progress with no update for five minutes is moved to Blocked by the server watchdog, with the reason recorded on the card (see [tasks.md](tasks.md))
 
-## Column CRUD
+## Column UI
 
-- Columns are created through a modal with required name and color fields
-- Missing names show inline validation with red styling and an error message
-- New columns are inserted before the permanent `done` column
-- New columns receive UUID IDs
-- Columns can be edited through the header menu
-- Columns can be deleted through the header menu, with confirmation when tasks exist
+- Columns are fixed: the board has no add, edit, delete, or reorder controls for columns, and the column tools reject create/delete/reorder
+- Each column header shows the column name, a WIP-aware task counter, and a Summary button
+- The Summary button opens the agent-written column summary; a human can read it and edit or clear it
+- The Backlog column additionally renders a full-width Add task row; the other columns have no add control
+- A long task list scrolls within its column; the Finished column adds a "Show more (N remaining)" control when its list exceeds the virtualization batch
 
-## Ordering and Collapse
+## WIP Limits
 
-- Columns are reordered by drag handle
-- Each column has a persisted `order`
-- Columns can be collapsed into a narrow rail with persisted state
-- Collapsed headers show the column name and task count in standard board view
-- Collapsed columns still accept drops and place dropped tasks at the top
-
-## Sorting
-
-- Column menu offers sorting by due date or by priority
-- Due-date sorting places earliest due dates first and tasks without due dates last
-- Priority sorting orders higher priorities first
-- Sorting is persistent because it rewrites each task's `order`
-
-## Column Header Actions
-
-- Plus icon creates a task in the current column
-- Ellipsis menu contains edit, sort, and delete actions
+- Each column stores an advisory `wipLimit`; `0` means unlimited (the default)
+- WIP limits are never enforced: nothing blocks adding, dragging, importing, or syncing a task into a column at or over its limit
+- The header counter reflects the breach state (at limit / over limit); Finished is exempt because it is terminal and unbounded
 
 ## Color Behavior
 
-- Each column has a user-selected hex color
-- Column accent styling is reused by task cards in that column
+- Each column has a hex color; the stored color is reapplied at load and the column accent is reused by task cards in that column
+- Colors are set through the column tools; the board UI does not expose column color editing
 
 ## Finished Column Rules
 
