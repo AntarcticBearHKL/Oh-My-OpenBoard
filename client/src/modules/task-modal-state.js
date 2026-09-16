@@ -2,5 +2,7 @@
 
 export const state = {
   editingTaskId: null,
-  selectedTaskKeyPoints: [] // [{ id, text, at }]
+  selectedTaskKeyPoints: [], // [{ id, text, at }]
+  lastAddedKeyPointId: null,
+  dialogAccess: { title: true, description: true, notes: true }
 };

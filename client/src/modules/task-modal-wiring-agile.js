@@ -9,14 +9,18 @@ export function initializeKeyPointHandlers() {
   const keyPointInput = $id('task-key-point-input');
 
   function appendKeyPoint() {
+    if (state.dialogAccess?.notes === false) return;
     const text = (keyPointInput?.value || '').trim();
     if (!text) {
       keyPointInput?.focus();
       return;
     }
-    state.selectedTaskKeyPoints.push({ id: generateUUID(), text, at: new Date().toISOString() });
+    const id = generateUUID();
+    state.selectedTaskKeyPoints.push({ id, text, at: new Date().toISOString() });
+    state.lastAddedKeyPointId = id;
     if (keyPointInput) keyPointInput.value = '';
     renderKeyPointsList();
+    keyPointInput?.focus();
   }
 
   keyPointInput?.addEventListener('keydown', (e) => {
@@ -24,6 +28,4 @@ export function initializeKeyPointHandlers() {
     e.preventDefault();
     appendKeyPoint();
   });
-
-  $id('task-key-point-add-btn')?.addEventListener('click', appendKeyPoint);
 }

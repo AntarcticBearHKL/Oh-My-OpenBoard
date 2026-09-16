@@ -292,6 +292,54 @@ test('digesting a missing task throws', () => {
   assert.throws(() => store.digestKeyPoints('missing-task'), /Task not found/);
 });
 
+test('claiming is refused while notes are undigested and allowed right after digest_key_points', async () => {
+  store.appendEvents([makeTask(BOARD_A, 'task-guarded', {
+    title: 'Guarded',
+    column: FIXED_COLUMN_IDS[0],
+    keyPoints: [{ id: 'note-1', text: 'Change the copy', at: minutesAgo(0) }],
+    needsDigest: true
+  })]);
+
+  await assert.rejects(
+    () => callTool('claim_task', { taskId: 'task-guarded' }),
+    /digest_key_points/
+  );
+  assert.equal(store.getTasks(BOARD_A).find((entry) => entry.id === 'task-guarded').claimedBy, undefined, 'a refused claim writes nothing');
+
+  await callTool('update_task', { taskId: 'task-guarded', description: 'still not digested' });
+  assert.equal(store.getTasks(BOARD_A).find((entry) => entry.id === 'task-guarded').needsDigest, true, 'update_task cannot clear the flag');
+
+  await callTool('digest_key_points', { taskId: 'task-guarded' });
+  const digested = store.getTasks(BOARD_A).find((entry) => entry.id === 'task-guarded');
+  assert.equal(digested.needsDigest, false, 'digest_key_points clears the flag');
+  assert.ok(digested.keyPoints[0].digestedAt, 'the note is stamped');
+
+  const claimed = await toolValue('claim_task', { taskId: 'task-guarded', agent: 'agent-b' });
+  assert.equal(claimed.claimedBy, 'agent-b', 'the claim is allowed once the notes are digested');
+});
+
+test('moving a task into In Progress is refused while its notes are undigested', async () => {
+  store.appendEvents([makeTask(BOARD_A, 'task-move-guarded', {
+    title: 'Move guarded',
+    column: FIXED_COLUMN_IDS[0],
+    keyPoints: [{ id: 'note-2', text: 'Do it this way', at: minutesAgo(0) }],
+    needsDigest: true
+  })]);
+
+  await assert.rejects(
+    () => callTool('move_task', { taskId: 'task-move-guarded', column: FIXED_COLUMN_IDS[2] }),
+    /digest_key_points/
+  );
+  assert.equal(store.getTasks(BOARD_A).find((entry) => entry.id === 'task-move-guarded').column, FIXED_COLUMN_IDS[0], 'a refused move changes nothing');
+
+  const parked = await toolValue('move_task', { taskId: 'task-move-guarded', column: FIXED_COLUMN_IDS[3] });
+  assert.equal(parked.column, FIXED_COLUMN_IDS[3], 'moving somewhere other than In Progress stays allowed');
+
+  await callTool('digest_key_points', { taskId: 'task-move-guarded' });
+  const moved = await toolValue('move_task', { taskId: 'task-move-guarded', column: FIXED_COLUMN_IDS[2] });
+  assert.equal(moved.column, FIXED_COLUMN_IDS[2], 'the move is allowed once the notes are digested');
+});
+
 test('the removed tools are gone', () => {
   for (const name of ['add_comment', 'remove_comment', 'add_relationship', 'remove_relationship']) {
     assert.equal(tools.has(name), false, `${name} must not be registered`);

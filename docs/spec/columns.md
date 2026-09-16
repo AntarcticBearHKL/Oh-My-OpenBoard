@@ -14,6 +14,7 @@ The board always has exactly five fixed columns, in this order:
 
 - The fixed definitions (id, name, order, role) are reimposed on every board at load, so an existing board gains HIL without losing its columns or tasks; `name` is display-only and behaviour keys off the fixed ids, never the display name
 - HIL has the fixed id `00000000-0000-4000-8000-000000000034` and order 2
+- Task-dialog write access is keyed to the fixed column id: HIL is the only fully editable column; Backlog, Blocked and Finished keep the agent's title and description read-only and let the human edit only the notes list; In Progress is fully view-only. A task with undigested notes is refused as a start (`claim_task`, a move into In Progress) until `digest_key_points` clears the flag
 - The Finished column keeps `role: "done"` and the fixed id `00000000-0000-4000-8000-000000000033`
 - A claimed task that sits in In Progress with no update for five minutes is moved to Blocked by the server watchdog, with the reason recorded on the card (see [tasks.md](tasks.md))
 

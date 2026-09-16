@@ -103,6 +103,14 @@
   /* Stale task warning */
   --stale-fg: oklch(0.47 0.11 70);
 
+  /* Human-action card signals (consume in card.css) */
+  --signal-digest-fg: oklch(0.42 0.17 300);
+  --signal-digest-bg: rgba(139, 92, 246, 0.12);
+  --signal-digest-border: rgba(139, 92, 246, 0.30);
+  --signal-rework-fg: oklch(0.44 0.11 70);
+  --signal-rework-bg: rgba(202, 138, 4, 0.12);
+  --signal-rework-border: rgba(202, 138, 4, 0.28);
+
   /* Sync state indicator — read-only, quiet semantics */
   --sync-live-fg: oklch(0.45 0.09 155);
   --sync-live-bg: oklch(0.96 0.02 155);
@@ -291,6 +299,13 @@
   --type-spike-fg: oklch(0.84 0.11 85);
 
   --stale-fg: oklch(0.84 0.11 85);
+
+  --signal-digest-fg: oklch(0.86 0.10 300);
+  --signal-digest-bg: rgba(167, 139, 250, 0.18);
+  --signal-digest-border: rgba(167, 139, 250, 0.34);
+  --signal-rework-fg: oklch(0.86 0.10 85);
+  --signal-rework-bg: rgba(251, 191, 36, 0.16);
+  --signal-rework-border: rgba(251, 191, 36, 0.30);
 
   --sync-live-fg: oklch(0.8 0.11 155);
   --sync-live-bg: rgba(74, 222, 128, 0.12);

@@ -4,6 +4,9 @@ import { deleteTask } from './tasks.js';
 import { showEditModal } from './modals.js';
 import { confirmDialog } from './dialog.js';
 import { h } from './dom.js';
+import { BACKLOG_COLUMN_ID, BLOCKED_COLUMN_ID, FIXED_COLUMNS, canonicalColumnId } from './constants.js';
+
+const SIGNAL_COLUMN_IDS = new Set([BACKLOG_COLUMN_ID, BLOCKED_COLUMN_ID, FIXED_COLUMNS[4].id]);
 
 // Safely convert URLs in text to <a> elements. Returns a DocumentFragment.
 // Only http/https URLs are matched; DOM APIs prevent XSS.
@@ -35,16 +38,27 @@ export function linkifyText(text) {
 }
 
 function buildTaskSignal(task) {
+  if (!SIGNAL_COLUMN_IDS.has(canonicalColumnId(task.column))) return null;
+
   const flags = [];
   if (task.needsDigest === true) flags.push('Needs digest');
   if (task.isRework === true) flags.push('Rework');
   if (flags.length === 0) return null;
+
   const label = flags.join(' · ');
+  const humanChanged = task.needsDigest === true;
   return h('span', {
-    class: 'task-signal',
+    class: `task-signal ${humanChanged ? 'task-signal--digest' : 'task-signal--rework'}`,
+    'data-signal': humanChanged ? 'needs-digest' : 'rework',
     title: label,
     'aria-label': label
-  }, label);
+  },
+    h('span', {
+      class: 'task-signal-icon',
+      'data-lucide': humanChanged ? 'message-square' : 'history',
+      'aria-hidden': 'true'
+    }),
+    h('span', { class: 'task-signal-label' }, label));
 }
 
 function buildKeyPointsList(task) {

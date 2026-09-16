@@ -1,5 +1,5 @@
 import { getActiveBoardId, isDoneColumnId, loadColumns, loadTasks } from './storage.js';
-import { BACKLOG_COLUMN_ID, HIL_COLUMN_ID } from './constants.js';
+import { BACKLOG_COLUMN_ID } from './constants.js';
 import { normalizeRelationships } from './normalize.js';
 import {
   isBlockedColumnId,
@@ -68,7 +68,7 @@ export function updateTask(taskId, title, description, extraFields = undefined) 
         tasks[taskIndex].column = nextColumn;
         tasks[taskIndex].isRework = true;
         tasks[taskIndex].needsDigest = true;
-      } else if (appended && (nextColumn === BACKLOG_COLUMN_ID || nextColumn === HIL_COLUMN_ID)) {
+      } else if (appended) {
         tasks[taskIndex].needsDigest = true;
       }
     }

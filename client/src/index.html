@@ -155,13 +155,21 @@
       <div id="task-lock-notice" class="task-lock-notice hidden" role="status"></div>
 
       <form id="task-form" novalidate>
-        <div class="form-group">
-          <label for="task-title">Title <span aria-hidden="true">*</span></label>
+        <div class="form-group" id="task-title-group">
+          <label for="task-title" id="task-title-label">Title <span aria-hidden="true">*</span></label>
           <input id="task-title" type="text" required placeholder="Enter task title..." aria-required="true">
+          <div id="task-title-view" class="task-readonly-block hidden">
+            <span class="task-readonly-label">Title</span>
+            <h4 id="task-title-view-text" class="task-readonly-title"></h4>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="task-description">Description</label>
+        <div class="form-group" id="task-description-group">
+          <label for="task-description" id="task-description-label">Description</label>
           <textarea id="task-description" rows="3" placeholder="Enter task description..."></textarea>
+          <div id="task-description-view" class="task-readonly-block hidden">
+            <span class="task-readonly-label">Description</span>
+            <div id="task-description-view-text" class="task-readonly-description"></div>
+          </div>
           <div id="task-description-links" class="description-links" hidden aria-label="Links in description"></div>
         </div>
         <fieldset class="form-group" id="task-key-points-fieldset">
@@ -169,9 +177,9 @@
             <span data-lucide="list-checks" aria-hidden="true"></span>
             Notes to the agent
           </legend>
-          <p class="form-help">The human writes notes here. The agent reads them and folds them into the description before starting work.</p>
+          <p class="form-help" id="task-key-points-help">The human writes notes here. The agent reads them and folds them into the description before starting work.</p>
           <ul id="task-key-points-list" class="key-points-list" role="list" aria-label="Notes to the agent"></ul>
-          <div class="task-key-point-add-row">
+          <div class="task-key-point-add-row" id="task-key-point-add-row">
             <input
               type="text"
               id="task-key-point-input"
@@ -180,8 +188,9 @@
               maxlength="200"
               aria-label="New note"
             >
-            <button type="button" id="task-key-point-add-btn" class="btn-small" aria-label="Add note">+</button>
+            <span class="key-point-enter-hint" aria-hidden="true">Enter</span>
           </div>
+          <p class="task-notes-view-notice hidden" id="task-notes-view-notice" role="status">Notes are read-only while a task is In Progress. The agent hands the task back before notes can be added.</p>
         </fieldset>
         <div class="form-actions">
           <button type="button" id="cancel-task-btn" class="btn btn-secondary">Cancel</button>

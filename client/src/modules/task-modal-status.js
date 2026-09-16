@@ -2,6 +2,7 @@
 
 import { $id, h } from './dom.js';
 import { state } from './task-modal-state.js';
+import { renderIcons } from './icons.js';
 
 export function setTaskLocked(locked, task) {
   const form = $id('task-form');
@@ -31,22 +32,31 @@ export function renderKeyPointsList() {
   const listEl = $id('task-key-points-list');
   if (!listEl) return;
 
+  const removable = state.dialogAccess?.notes !== false;
+
   listEl.innerHTML = '';
   state.selectedTaskKeyPoints.forEach((point) => {
-    const removeBtn = h('button', {
-      type: 'button',
-      class: 'key-point-remove-btn',
-      title: 'Remove note',
-      'aria-label': `Remove note "${point.text}"`,
-      onClick: () => {
-        state.selectedTaskKeyPoints = state.selectedTaskKeyPoints.filter((entry) => entry.id !== point.id);
-        renderKeyPointsList();
-      }
-    }, '×');
+    const children = [h('span', { class: 'key-point-text' }, point.text)];
+
+    if (removable) {
+      children.push(h('button', {
+        type: 'button',
+        class: 'key-point-remove-btn',
+        title: 'Remove note',
+        'aria-label': `Remove note "${point.text}"`,
+        onClick: () => {
+          state.selectedTaskKeyPoints = state.selectedTaskKeyPoints.filter((entry) => entry.id !== point.id);
+          renderKeyPointsList();
+        }
+      }, h('span', { 'data-lucide': 'x', 'aria-hidden': 'true' })));
+    }
 
     listEl.appendChild(h('li', {
-      class: 'key-point-item',
+      class: point.id === state.lastAddedKeyPointId ? 'key-point-item key-point-item--new' : 'key-point-item',
       'data-key-point-id': point.id
-    }, h('span', { class: 'key-point-text' }, point.text), removeBtn));
+    }, ...children));
   });
+
+  state.lastAddedKeyPointId = null;
+  renderIcons();
 }

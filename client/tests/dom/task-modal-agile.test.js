@@ -59,6 +59,15 @@ vi.mock('sortablejs', () => ({
 }));
 
 import { initializeTaskModalHandlers, showEditModal, showModal } from '../../src/modules/task-modal.js';
+import {
+  BACKLOG_COLUMN_ID,
+  BLOCKED_COLUMN_ID,
+  FIXED_COLUMNS,
+  HIL_COLUMN_ID,
+  IN_PROGRESS_COLUMN_ID
+} from '../../src/modules/constants.js';
+
+const FINISHED_COLUMN_ID = FIXED_COLUMNS[4].id;
 
 const FIXTURE = `
   <div id="task-modal" class="modal hidden">
@@ -74,19 +83,32 @@ const FIXTURE = `
       </header>
       <div id="task-lock-notice" class="task-lock-notice hidden" role="status"></div>
       <form id="task-form" novalidate>
-        <div class="form-group"><label for="task-title">Title</label><input id="task-title" type="text"></div>
-        <div class="form-group">
-          <label for="task-description">Description</label>
+        <div class="form-group" id="task-title-group">
+          <label for="task-title" id="task-title-label">Title</label>
+          <input id="task-title" type="text">
+          <div id="task-title-view" class="task-readonly-block hidden">
+            <span class="task-readonly-label">Title</span>
+            <h4 id="task-title-view-text" class="task-readonly-title"></h4>
+          </div>
+        </div>
+        <div class="form-group" id="task-description-group">
+          <label for="task-description" id="task-description-label">Description</label>
           <textarea id="task-description"></textarea>
+          <div id="task-description-view" class="task-readonly-block hidden">
+            <span class="task-readonly-label">Description</span>
+            <div id="task-description-view-text" class="task-readonly-description"></div>
+          </div>
           <div id="task-description-links" hidden></div>
         </div>
         <fieldset class="form-group" id="task-key-points-fieldset">
           <legend>Notes to the agent</legend>
+          <p class="form-help" id="task-key-points-help">The human writes notes here.</p>
           <ul id="task-key-points-list" aria-label="Notes to the agent"></ul>
-          <div class="task-key-point-add-row">
+          <div class="task-key-point-add-row" id="task-key-point-add-row">
             <input type="text" id="task-key-point-input">
-            <button type="button" id="task-key-point-add-btn">+</button>
+            <span class="key-point-enter-hint" aria-hidden="true">Enter</span>
           </div>
+          <p class="task-notes-view-notice hidden" id="task-notes-view-notice" role="status">Notes are read-only while a task is In Progress.</p>
         </fieldset>
         <div class="form-actions">
           <button type="button" id="cancel-task-btn" class="btn btn-secondary">Cancel</button>
@@ -128,9 +150,23 @@ beforeEach(() => {
   mocks.promptDialog.mockResolvedValue(null);
   mocks.loadTasks.mockReset();
   mocks.loadTasks.mockReturnValue([]);
+  mocks.isTaskLocked.mockReset();
+  mocks.isTaskLocked.mockReturnValue(false);
   mocks.emit.mockClear();
   localStorage.clear();
 });
+
+function loadTaskAt(column, extra = {}) {
+  mocks.loadTasks.mockReturnValue([{
+    id: 't1',
+    title: 'Agent title',
+    description: 'Agent description',
+    column,
+    keyPoints: [{ id: 'k1', text: 'Human note', at: '2026-01-01T10:00:00.000Z' }],
+    ...extra
+  }]);
+  return mocks.loadTasks()[0];
+}
 
 test('the dialog renders the title, the description and the notes list and nothing else', () => {
   initializeTaskModalHandlers(() => {});
@@ -173,7 +209,7 @@ test('the add form saves the title, description and notes through addTask', () =
   expect(Object.keys(fields)).toEqual(['keyPoints']);
 });
 
-test('the notes list appends and removes items', () => {
+test('the notes input appends one line per Enter press, clears itself and removes a line', () => {
   initializeTaskModalHandlers(() => {});
   showModal();
   document.getElementById('task-title').value = 'Notes task';
@@ -182,12 +218,19 @@ test('the notes list appends and removes items', () => {
   keyPointInput.value = 'First note';
   fireEvent.keyDown(keyPointInput, { key: 'Enter' });
   keyPointInput.value = 'Second note';
-  fireEvent.click(document.getElementById('task-key-point-add-btn'));
+  fireEvent.keyDown(keyPointInput, { key: 'Enter' });
+
+  expect(keyPointInput.value).toBe('');
+  expect(document.getElementById('task-key-point-add-btn')).toBeNull();
 
   let items = document.querySelectorAll('#task-key-points-list .key-point-item');
   expect(items).toHaveLength(2);
   expect(items[0].querySelector('.key-point-text').textContent).toBe('First note');
   expect(items[1].querySelector('.key-point-text').textContent).toBe('Second note');
+  expect(items[1].classList.contains('key-point-item--new')).toBe(true);
+
+  fireEvent.keyDown(keyPointInput, { key: 'Enter' });
+  expect(document.querySelectorAll('#task-key-points-list .key-point-item')).toHaveLength(2);
 
   fireEvent.click(items[1].querySelector('.key-point-remove-btn'));
   items = document.querySelectorAll('#task-key-points-list .key-point-item');
@@ -224,19 +267,15 @@ test('opening the edit dialog prefills the title, description and notes', () => 
 });
 
 test('editing a task saves the slim payload through updateTask', async () => {
-  mocks.loadTasks.mockReturnValue([
-    {
-      id: 't1',
-      title: 'Fine task',
-      description: 'old',
-      column: 'todo',
-      type: 'task',
-      estimate: 2,
-      relationships: [],
-      keyPoints: [],
-      comments: []
-    }
-  ]);
+  loadTaskAt(HIL_COLUMN_ID, {
+    title: 'Fine task',
+    description: 'old',
+    type: 'task',
+    estimate: 2,
+    relationships: [],
+    keyPoints: [],
+    comments: []
+  });
   initializeTaskModalHandlers(() => {});
   showEditModal('t1');
 
@@ -252,4 +291,72 @@ test('editing a task saves the slim payload through updateTask', async () => {
   expect(fields.column).toBeUndefined();
   expect(mocks.promptDialog).not.toHaveBeenCalled();
   expect(mocks.setTaskBlockedReason).not.toHaveBeenCalled();
+});
+
+test('a task outside HIL shows the agent title and description as content and only the notes stay interactive', () => {
+  initializeTaskModalHandlers(() => {});
+
+  for (const column of [BACKLOG_COLUMN_ID, BLOCKED_COLUMN_ID, FINISHED_COLUMN_ID]) {
+    loadTaskAt(column);
+    showEditModal('t1');
+
+    expect(document.getElementById('task-title').classList.contains('hidden'), column).toBe(true);
+    expect(document.getElementById('task-title-view').classList.contains('hidden'), column).toBe(false);
+    expect(document.getElementById('task-title-view-text').textContent, column).toBe('Agent title');
+    expect(document.getElementById('task-description').classList.contains('hidden'), column).toBe(true);
+    expect(document.getElementById('task-description-view').classList.contains('hidden'), column).toBe(false);
+    expect(document.getElementById('task-description-view-text').textContent, column).toBe('Agent description');
+    expect(document.getElementById('task-key-point-add-row').classList.contains('hidden'), column).toBe(false);
+    expect(document.getElementById('task-notes-view-notice').classList.contains('hidden'), column).toBe(true);
+    expect(document.querySelector('#task-key-points-list .key-point-remove-btn'), column).not.toBeNull();
+  }
+});
+
+test('a HIL task keeps the title and the description editable', () => {
+  loadTaskAt(HIL_COLUMN_ID);
+  initializeTaskModalHandlers(() => {});
+  showEditModal('t1');
+
+  expect(document.getElementById('task-title').classList.contains('hidden')).toBe(false);
+  expect(document.getElementById('task-title-view').classList.contains('hidden')).toBe(true);
+  expect(document.getElementById('task-description').classList.contains('hidden')).toBe(false);
+  expect(document.getElementById('task-description-view').classList.contains('hidden')).toBe(true);
+  expect(document.getElementById('task-key-point-add-row').classList.contains('hidden')).toBe(false);
+});
+
+test('an In Progress task is view-only with the notes control visibly unavailable', () => {
+  mocks.isTaskLocked.mockReturnValue(true);
+  loadTaskAt(IN_PROGRESS_COLUMN_ID);
+  initializeTaskModalHandlers(() => {});
+  showEditModal('t1');
+
+  expect(document.getElementById('task-title-view').classList.contains('hidden')).toBe(false);
+  expect(document.getElementById('task-description-view').classList.contains('hidden')).toBe(false);
+  expect(document.getElementById('task-key-point-add-row').classList.contains('hidden')).toBe(true);
+  expect(document.getElementById('task-notes-view-notice').classList.contains('hidden')).toBe(false);
+  expect(document.querySelector('#task-key-points-list .key-point-remove-btn')).toBeNull();
+
+  const keyPointInput = document.getElementById('task-key-point-input');
+  keyPointInput.value = 'Note that must not stick';
+  fireEvent.keyDown(keyPointInput, { key: 'Enter' });
+  expect(document.querySelectorAll('#task-key-points-list .key-point-item')).toHaveLength(1);
+});
+
+test('adding a note to a Backlog task saves the unchanged agent title and description', () => {
+  loadTaskAt(BACKLOG_COLUMN_ID);
+  initializeTaskModalHandlers(() => {});
+  showEditModal('t1');
+
+  const keyPointInput = document.getElementById('task-key-point-input');
+  keyPointInput.value = 'Please tighten the copy';
+  fireEvent.keyDown(keyPointInput, { key: 'Enter' });
+  fireEvent.submit(document.getElementById('task-form'));
+
+  expect(mocks.updateTask).toHaveBeenCalledTimes(1);
+  const [taskId, title, description, fields] = mocks.updateTask.mock.calls[0];
+  expect(taskId).toBe('t1');
+  expect(title).toBe('Agent title');
+  expect(description).toBe('Agent description');
+  expect(fields.keyPoints.map((point) => point.text)).toEqual(['Human note', 'Please tighten the copy']);
+  expect(Object.keys(fields)).toEqual(['keyPoints']);
 });

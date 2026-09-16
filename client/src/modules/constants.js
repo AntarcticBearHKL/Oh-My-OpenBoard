@@ -35,6 +35,11 @@ export const LEGACY_COLUMN_ALIASES = new Map([
   ['00000000-0000-4000-8000-000000000012', FIXED_COLUMNS[4].id]
 ]);
 
+export function canonicalColumnId(columnId) {
+  const id = typeof columnId === 'string' ? columnId.trim() : '';
+  return LEGACY_COLUMN_ALIASES.get(id) || id;
+}
+
 export const DEFAULT_COLUMN_COLOR = '#3b82f6';
 
 export const MAX_LABEL_NAME_LENGTH = 40;

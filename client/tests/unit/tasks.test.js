@@ -396,6 +396,24 @@ test('appending a key point in HIL sets needsDigest', () => {
   expect(updated.column).toBe(HIL_COLUMN_ID);
 });
 
+test('appending a key point in Blocked sets needsDigest without moving the task', () => {
+  saveTasks([{
+    id: 't1',
+    title: 'Blocked task',
+    column: BLOCKED_COLUMN_ID,
+    keyPoints: [],
+    columnHistory: [{ column: BLOCKED_COLUMN_ID, at: '2024-01-01T00:00:00.000Z' }]
+  }]);
+
+  updateTask('t1', 'Blocked task', '', {
+    keyPoints: [{ id: 'kp1', text: 'Needs a human decision', at: '2026-01-01T00:00:00.000Z' }]
+  });
+
+  const updated = loadTasks().find(t => t.id === 't1');
+  expect(updated.needsDigest).toBe(true);
+  expect(updated.column).toBe(BLOCKED_COLUMN_ID);
+});
+
 test('appending a key point to a Finished task returns it to Backlog with isRework', () => {
   addTask('Done task', '');
   const task = loadTasks()[0];

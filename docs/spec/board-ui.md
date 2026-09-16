@@ -10,10 +10,12 @@
 
 - The board always has exactly five fixed columns, in this order: Backlog, HIL, In Progress, Blocked, Finished
 - Backlog holds work the agent proposed
-- HIL (Human In The Loop) is the human's entry point and the only column with an add-task control in its header (standard and swim lane views)
-- In Progress is what an agent is actively working; tasks in it are read-only — the whole form is locked while a subagent works the task
+- HIL (Human In The Loop) is the human's entry point, the only column with an add-task control in its header (standard and swim lane views), and the only column whose task dialog is fully editable
+- Outside HIL the agent's title and description show as read-only content in the dialog and only the notes-to-the-agent list stays editable
+- In Progress is what an agent is actively working; tasks in it are read-only — the whole form is locked while a subagent works the task and the notes control is visibly unavailable
 - Blocked is work an agent could not finish and that needs a human decision, or work stuck on a resource conflict
 - Finished is completed work; it carries the done-column `role` and is the statistics source for velocity and cycle time
+- A task whose notes the agent has not digested yet carries a marker in Backlog, Blocked and Finished: a coloured pill with a lucide icon and a text label, so it reads in both themes and without colour
 - The column's id, order, and role are fixed, so keying behaviour off them survives display-name changes
 
 ## Controls Bar

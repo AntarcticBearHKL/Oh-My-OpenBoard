@@ -143,8 +143,11 @@
 
 .task-signal {
   align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   margin: 0 var(--space-2) 6px var(--space-3);
-  padding: 1px 6px;
+  padding: 1px 6px 1px 4px;
   border-radius: var(--radius-sm);
   font-size: var(--text-2xs);
   font-weight: 600;
@@ -152,4 +155,39 @@
   color: var(--text-muted);
   background-color: var(--surface-muted);
   border: 1px solid var(--border-subtle);
+}
+
+.task-signal svg {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+}
+
+.task-signal--digest {
+  color: var(--signal-digest-fg);
+  background-color: var(--signal-digest-bg);
+  border-color: var(--signal-digest-border);
+}
+
+.task-signal--rework {
+  color: var(--signal-rework-fg);
+  background-color: var(--signal-rework-bg);
+  border-color: var(--signal-rework-border);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .task-signal {
+    animation: task-signal-appear var(--transition-normal);
+  }
+}
+
+@keyframes task-signal-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

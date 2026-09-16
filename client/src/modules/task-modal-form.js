@@ -8,12 +8,14 @@ import { $id } from './dom.js';
 import { state } from './task-modal-state.js';
 import { setTaskModalFullscreen, updateDescriptionLinks } from './task-modal-chrome.js';
 import { renderKeyPointsList, resetTaskLock, setTaskLocked } from './task-modal-status.js';
+import { applyDialogAccess, dialogAccess } from './task-modal-access.js';
 
 export function showModal() {
   state.editingTaskId = null;
   state.selectedTaskKeyPoints = [];
 
   resetTaskLock();
+  applyDialogAccess(dialogAccess(null), null);
   $id('task-modal-key')?.classList.add('hidden');
 
   setTaskModalFullscreen(false);
@@ -49,6 +51,8 @@ export function showEditModal(taskId) {
   state.editingTaskId = taskId;
   state.selectedTaskKeyPoints = normalizeKeyPoints(task.keyPoints ?? task.acceptanceCriteria).map((entry) => ({ ...entry }));
 
+  const access = dialogAccess(task);
+
   setTaskModalFullscreen(false);
   $id('task-fullpage-btn')?.classList.remove('hidden');
 
@@ -78,13 +82,14 @@ export function showEditModal(taskId) {
   const keyPointInput = $id('task-key-point-input');
   if (keyPointInput) keyPointInput.value = '';
 
+  applyDialogAccess(access, task);
   renderKeyPointsList();
 
   const locked = isTaskLocked(task);
   setTaskLocked(locked, task);
 
   modal.classList.remove('hidden');
-  taskTitle.focus();
+  if (access.title) taskTitle.focus();
 }
 
 export function hideModal() {

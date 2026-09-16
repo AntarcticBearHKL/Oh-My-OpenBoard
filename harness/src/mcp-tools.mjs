@@ -63,6 +63,7 @@ function resolveColumn(boardId, ref) {
 }
 
 const BACKLOG_COLUMN_ID = '00000000-0000-4000-8000-000000000030';
+const IN_PROGRESS_COLUMN_ID = '00000000-0000-4000-8000-000000000031';
 
 function resolveBacklogColumn(boardId) {
   const columns = getColumns(boardId);
@@ -77,6 +78,15 @@ function findTaskOrThrow(taskId) {
   const found = findTask(taskId);
   if (!found) throw new Error(`Task not found: ${taskId}`);
   return found;
+}
+
+function assertNotesDigested(task) {
+  const keyPoints = Array.isArray(task?.keyPoints) ? task.keyPoints : [];
+  const pending = keyPoints.filter((point) => !point?.digestedAt);
+  if (task?.needsDigest !== true && pending.length === 0) return;
+  throw new Error(
+    `Task ${task.key || task.id} still has notes from the human that the agent has not digested; run digest_key_points first to fold them into the description before starting.`
+  );
 }
 
 function withoutRemovedFields(task) {
@@ -366,7 +376,7 @@ export function registerTools(server) {
 
   server.registerTool('update_task', {
     title: 'Update task',
-    description: 'Update a task\'s title, description, assignee or blocked reason. The notes to the agent (keyPoints) cannot be added, edited or removed here.',
+    description: 'Update a task\'s title, description, assignee or blocked reason. The notes to the agent (keyPoints) cannot be added, edited or removed here, and this tool cannot clear needsDigest: only digest_key_points does that.',
     inputSchema: {
       taskId: z.string(),
       title: z.string().optional(),
@@ -392,15 +402,16 @@ export function registerTools(server) {
 
   server.registerTool('move_task', {
     title: 'Move task',
-    description: 'Move a task to a column (id or name). Emits the full per-column ordering so the board converges.',
+    description: 'Move a task to a column (id or name). Emits the full per-column ordering so the board converges. Moving a task into In Progress is refused while it has undigested notes from the human; run digest_key_points first.',
     inputSchema: {
       taskId: z.string(),
       column: z.string(),
       position: z.number().int().optional().describe('0-based position within the target column; default appends')
     }
   }, async ({ taskId, column, position }) => {
-    const { boardId } = findTaskOrThrow(taskId);
+    const { task, boardId } = findTaskOrThrow(taskId);
     const targetColumn = resolveColumn(boardId, column);
+    if (targetColumn.id === IN_PROGRESS_COLUMN_ID) assertNotesDigested(task);
     const tasks = getTasks(boardId).slice();
     const moved = tasks.find((t) => t.id === taskId);
     moved.column = targetColumn.id;
@@ -612,16 +623,17 @@ export function registerTools(server) {
 
   server.registerTool('digest_key_points', {
     title: 'Digest key points',
-    description: 'Mark the human\'s notes (keyPoints) as folded into the description by stamping digestedAt on them and clear the needsDigest flag. Pass pointIds to stamp specific notes, or omit them to stamp every undigested note. Notes are never added, edited or removed here.',
+    description: 'Fold the human\'s notes (keyPoints) into the description: stamps digestedAt on the notes and clears the needsDigest flag. This is the only way to clear it; claim_task and moving into In Progress are refused until it runs. Pass pointIds to stamp specific notes, or omit them to stamp every undigested note. Notes are never added, edited or removed here.',
     inputSchema: { taskId: z.string(), pointIds: z.array(z.string()).optional() }
   }, async ({ taskId, pointIds }) => ok(digestKeyPoints(taskId, pointIds)));
 
   server.registerTool('claim_task', {
     title: 'Claim task',
-    description: 'Claim a task for the current subagent: records claimedBy/claimedAt and sets the assignee when empty.',
+    description: 'Claim a task for the current subagent: records claimedBy/claimedAt and sets the assignee when empty. Refused while the task still has undigested notes from the human; run digest_key_points first to fold them into the description.',
     inputSchema: { taskId: z.string(), agent: z.string().optional() }
   }, async ({ taskId, agent = AGENT_ID }) => {
     const { task, boardId } = findTaskOrThrow(taskId);
+    assertNotesDigested(task);
     const now = new Date().toISOString();
     const fields = { claimedBy: agent, claimedAt: now, changeDate: now };
     if (!task.assignee) fields.assignee = agent;

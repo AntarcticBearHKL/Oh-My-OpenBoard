@@ -139,6 +139,7 @@ export function reconcileBoard() {
     if (!usedIds.has(id)) el.remove();
   });
 
+  renderIcons();
   performance.mark('openagile:board-render:reconcile');
 
   return true;

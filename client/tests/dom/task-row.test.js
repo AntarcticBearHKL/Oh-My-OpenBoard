@@ -13,6 +13,15 @@ vi.mock('../../src/modules/storage.js', () => ({
 
 const { createTaskElement } = await import('../../src/modules/task-card.js');
 const { showEditModal } = await import('../../src/modules/modals.js');
+const {
+  BACKLOG_COLUMN_ID,
+  BLOCKED_COLUMN_ID,
+  FIXED_COLUMNS,
+  HIL_COLUMN_ID,
+  IN_PROGRESS_COLUMN_ID
+} = await import('../../src/modules/constants.js');
+
+const FINISHED_COLUMN_ID = FIXED_COLUMNS[4].id;
 
 function render(task, settings = {}) {
   const element = createTaskElement(task, settings);
@@ -81,6 +90,36 @@ test('shows needsDigest and isRework as quiet markers when set', () => {
   expect(signal.textContent).toContain('Needs digest');
   expect(signal.textContent).toContain('Rework');
   expect(signal.getAttribute('title')).toBe('Needs digest · Rework');
+  expect(signal.querySelector('[data-lucide="message-square"]')).not.toBeNull();
+  expect(signal.querySelector('.task-signal-label').textContent).toBe('Needs digest · Rework');
+});
+
+test('marks undigested notes in Backlog, Blocked and Finished only, with an icon and a label', () => {
+  for (const column of [BACKLOG_COLUMN_ID, BLOCKED_COLUMN_ID, FINISHED_COLUMN_ID]) {
+    const element = render({ ...baseTask, column, needsDigest: true });
+    const signal = element.querySelector('.task-signal');
+    expect(signal, column).not.toBeNull();
+    expect(signal.classList.contains('task-signal--digest'), column).toBe(true);
+    expect(signal.getAttribute('data-signal'), column).toBe('needs-digest');
+    expect(signal.querySelector('[data-lucide="message-square"]'), column).not.toBeNull();
+    expect(signal.querySelector('.task-signal-label').textContent, column).toBe('Needs digest');
+  }
+
+  for (const column of [HIL_COLUMN_ID, IN_PROGRESS_COLUMN_ID]) {
+    const element = render({ ...baseTask, column, needsDigest: true });
+    expect(element.querySelector('.task-signal'), column).toBeNull();
+  }
+});
+
+test('carries rework as its own marker with an icon and a label', () => {
+  const element = render({ ...baseTask, column: BACKLOG_COLUMN_ID, isRework: true });
+  const signal = element.querySelector('.task-signal');
+
+  expect(signal).not.toBeNull();
+  expect(signal.getAttribute('data-signal')).toBe('rework');
+  expect(signal.classList.contains('task-signal--rework')).toBe(true);
+  expect(signal.querySelector('[data-lucide="history"]')).not.toBeNull();
+  expect(signal.querySelector('.task-signal-label').textContent).toBe('Rework');
 });
 
 test('omits the signal marker when neither flag is set', () => {
