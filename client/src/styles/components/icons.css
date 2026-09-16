@@ -35,20 +35,23 @@
 /* Add task button (swimlane headers) */
 .add-task-btn-icon {
   padding: 3px;
-  border: 1px dashed var(--column-accent-hover);
-  background-color: color-mix(in srgb, var(--column-accent) 8%, transparent);
+  border: 1px solid var(--border);
+  background-color: color-mix(in srgb, var(--surface-raised) 55%, transparent);
+  color: var(--text-muted);
   opacity: 1;
-  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
 }
 
 .add-task-btn-icon:hover {
-  background-color: color-mix(in srgb, var(--column-accent) 22%, transparent);
-  border-style: solid;
+  background-color: var(--item-hover);
+  border-color: var(--column-accent-hover);
+  color: var(--column-accent-hover);
 }
 
 .add-task-btn-icon:active {
-  background-color: color-mix(in srgb, var(--column-accent) 32%, transparent);
-  border-style: solid;
+  background-color: var(--item-selected);
+  border-color: var(--column-accent-hover);
+  color: var(--column-accent-hover);
 }
 
 .add-task-btn-icon:focus-visible {
@@ -57,7 +60,7 @@
 }
 
 .add-task-btn-icon svg {
-  stroke: var(--column-accent-hover);
+  stroke: currentColor;
 }
 
 /* Delete task button */

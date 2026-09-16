@@ -176,7 +176,7 @@
   flex: 0 0 auto;
   padding: var(--space-1) var(--space-1) var(--space-2);
   border-top: 1px solid var(--row-divider);
-  background: color-mix(in srgb, var(--column-accent) 6%, transparent);
+  background: transparent;
 }
 
 .add-task-row-btn {
@@ -186,13 +186,13 @@
   gap: var(--space-2);
   width: 100%;
   padding: 5px var(--space-2);
-  border: 1px dashed var(--column-accent-hover);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--column-accent) 8%, transparent);
-  color: var(--text);
+  background: color-mix(in srgb, var(--surface-raised) 55%, transparent);
+  color: var(--text-subtle);
   font-family: inherit;
   font-size: var(--text-md);
-  font-weight: 600;
+  font-weight: 500;
   text-align: left;
   cursor: pointer;
   transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
@@ -201,21 +201,30 @@
 .add-task-row-btn svg {
   width: 16px;
   height: 16px;
-  stroke: var(--column-accent-hover);
+  stroke: var(--text-muted);
   stroke-width: 2;
   flex: 0 0 auto;
+  transition: stroke var(--transition-fast);
 }
 
 .add-task-row-btn:hover {
-  background-color: color-mix(in srgb, var(--column-accent) 22%, transparent);
-  border-style: solid;
+  background-color: var(--item-hover);
+  border-color: var(--column-accent-hover);
   color: var(--text);
 }
 
+.add-task-row-btn:hover svg {
+  stroke: var(--column-accent-hover);
+}
+
 .add-task-row-btn:active {
-  background-color: color-mix(in srgb, var(--column-accent) 32%, transparent);
+  background-color: var(--item-selected);
   border-color: var(--column-accent-hover);
-  border-style: solid;
+  color: var(--text);
+}
+
+.add-task-row-btn:active svg {
+  stroke: var(--column-accent-hover);
 }
 
 .add-task-row-btn:focus-visible {
@@ -547,9 +556,9 @@
   height: 24px;
   padding: 0;
   border-radius: var(--radius-sm);
-  border: 1px dashed var(--column-accent-hover);
-  background: color-mix(in srgb, var(--column-accent) 8%, transparent);
-  color: var(--column-accent-hover);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-raised) 55%, transparent);
+  color: var(--text-muted);
   cursor: pointer;
   flex: 0 0 auto;
   margin-left: auto;
@@ -557,14 +566,15 @@
 }
 
 .swimlane-cell-add-btn:hover {
-  background: color-mix(in srgb, var(--column-accent) 22%, transparent);
-  border-style: solid;
+  background: var(--item-hover);
+  border-color: var(--column-accent-hover);
   color: var(--column-accent-hover);
 }
 
 .swimlane-cell-add-btn:active {
-  background: color-mix(in srgb, var(--column-accent) 32%, transparent);
-  border-style: solid;
+  background: var(--item-selected);
+  border-color: var(--column-accent-hover);
+  color: var(--column-accent-hover);
 }
 
 .swimlane-cell-add-btn:focus-visible {
