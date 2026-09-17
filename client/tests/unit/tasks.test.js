@@ -4,7 +4,7 @@ import { createBoard, getActiveBoardId, loadDeletedTasksForBoard, loadTasks, sav
 import { addTask, deleteTask, setTaskBlockedReason } from '../../src/modules/tasks.js';
 import { updateTask } from '../../src/modules/task-update.js';
 import { EVENT_EMITTED, on, off } from '../../src/modules/events.js';
-import { BACKLOG_COLUMN_ID, HIL_COLUMN_ID, DONE_COLUMN_ID } from '../../src/modules/constants.js';
+import { BACKLOG_COLUMN_ID, HIL_COLUMN_ID, DONE_COLUMN_ID, FIXED_COLUMNS } from '../../src/modules/constants.js';
 
 const BLOCKED_COLUMN_ID = '00000000-0000-4000-8000-000000000032';
 
@@ -137,6 +137,30 @@ test('deleteTask removes task by ID', () => {
 
   deleteTask(tasks[0].id);
   expect(loadTasks().length).toBe(1);
+});
+
+test('deleteTask refuses a task in the Finished column', () => {
+  saveTasks([
+    { id: 'done-legacy', title: 'Legacy done', column: DONE_COLUMN_ID },
+    { id: 'done-fixed', title: 'Finished task', column: FIXED_COLUMNS[4].id }
+  ]);
+
+  const events = [];
+  const handler = (customEvent) => events.push(customEvent.detail);
+  on(EVENT_EMITTED, handler);
+  let legacyResult;
+  let fixedResult;
+  try {
+    legacyResult = deleteTask('done-legacy');
+    fixedResult = deleteTask('done-fixed');
+  } finally {
+    off(EVENT_EMITTED, handler);
+  }
+
+  expect(legacyResult).toBe(false);
+  expect(fixedResult).toBe(false);
+  expect(loadTasks().map(t => t.id).sort()).toEqual(['done-fixed', 'done-legacy']);
+  expect(events.some((event) => event.type === 'task.deleted')).toBe(false);
 });
 
 // ── permanent delete ───────────────────────────────────────────────

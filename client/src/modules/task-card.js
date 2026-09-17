@@ -1,6 +1,7 @@
 // Task row DOM construction — extracted from render.js
 
 import { deleteTask } from './tasks.js';
+import { isDoneColumnId } from './storage.js';
 import { showEditModal } from './modals.js';
 import { confirmDialog } from './dialog.js';
 import { h } from './dom.js';
@@ -100,26 +101,28 @@ export function createTaskElement(task, settings) {
 
   const actions = h('div', { class: 'task-actions' });
 
-  const deleteBtn = document.createElement('button');
-  deleteBtn.classList.add('delete-task-btn');
-  deleteBtn.setAttribute('aria-label', 'Delete task');
-  deleteBtn.type = 'button';
-  const deleteIcon = document.createElement('span');
-  deleteIcon.dataset.lucide = 'trash-2';
-  deleteIcon.setAttribute('aria-hidden', 'true');
-  deleteBtn.appendChild(deleteIcon);
-  deleteBtn.addEventListener('click', async (e) => {
-    e.stopPropagation();
-    const ok = await confirmDialog({
-      title: 'Delete task?',
-      message: 'This will permanently delete the task. There is no undo.',
-      confirmText: 'Delete'
+  if (!isDoneColumnId(task.column)) {
+    const deleteBtn = document.createElement('button');
+    deleteBtn.classList.add('delete-task-btn');
+    deleteBtn.setAttribute('aria-label', 'Delete task');
+    deleteBtn.type = 'button';
+    const deleteIcon = document.createElement('span');
+    deleteIcon.dataset.lucide = 'trash-2';
+    deleteIcon.setAttribute('aria-hidden', 'true');
+    deleteBtn.appendChild(deleteIcon);
+    deleteBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const ok = await confirmDialog({
+        title: 'Delete task?',
+        message: 'This will permanently delete the task. There is no undo.',
+        confirmText: 'Delete'
+      });
+      if (!ok) return;
+      deleteTask(task.id);
     });
-    if (!ok) return;
-    deleteTask(task.id);
-  });
 
-  actions.appendChild(deleteBtn);
+    actions.appendChild(deleteBtn);
+  }
 
   li.appendChild(h('div', { class: 'task-row' }, titleEl, actions));
 

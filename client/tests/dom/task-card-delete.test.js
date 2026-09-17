@@ -4,6 +4,8 @@ import { fireEvent } from '@testing-library/dom';
 const confirmDialog = vi.fn();
 const deleteTask = vi.fn();
 const emit = vi.fn();
+const isDoneColumnId = vi.fn(() => false);
+const showEditModal = vi.fn();
 
 vi.mock('../../src/modules/dialog.js', () => ({
   confirmDialog
@@ -19,23 +21,28 @@ vi.mock('../../src/modules/events.js', () => ({
 }));
 
 vi.mock('../../src/modules/modals.js', () => ({
-  showEditModal: vi.fn()
+  showEditModal
 }));
 
 vi.mock('../../src/modules/storage.js', () => ({
-  isDoneColumnId: vi.fn(() => false),
+  isDoneColumnId,
   loadLabels: vi.fn(() => [])
 }));
 
 const { createTaskElement } = await import('../../src/modules/task-card.js');
+const { BACKLOG_COLUMN_ID, FIXED_COLUMNS } = await import('../../src/modules/constants.js');
+
+const FINISHED_COLUMN_ID = FIXED_COLUMNS[4].id;
 
 beforeEach(() => {
   confirmDialog.mockReset();
   deleteTask.mockReset();
   emit.mockReset();
+  isDoneColumnId.mockReset();
+  isDoneColumnId.mockImplementation(() => false);
 });
 
-function renderTask() {
+function renderTask(overrides = {}) {
   const task = {
     id: 'task-1',
     title: 'Delete me',
@@ -43,7 +50,8 @@ function renderTask() {
     priority: 'none',
     dueDate: '',
     column: 'todo',
-    labels: []
+    labels: [],
+    ...overrides
   };
   const element = createTaskElement(task, {});
   document.body.appendChild(element);
@@ -82,4 +90,39 @@ test('confirming permanent delete calls deleteTask for the task', async () => {
   await Promise.resolve();
 
   expect(deleteTask).toHaveBeenCalledWith('task-1');
+});
+
+test('renders no delete control for a card in the Finished column', () => {
+  isDoneColumnId.mockImplementation((columnId) => columnId === FINISHED_COLUMN_ID);
+  const element = renderTask({ column: FINISHED_COLUMN_ID });
+
+  expect(element.querySelector('.delete-task-btn')).toBeNull();
+});
+
+test('keeps the delete control for a card in another column', () => {
+  isDoneColumnId.mockImplementation((columnId) => columnId === FINISHED_COLUMN_ID);
+  const element = renderTask({ column: BACKLOG_COLUMN_ID });
+
+  expect(element.querySelector('.task-actions .delete-task-btn')).not.toBeNull();
+});
+
+test('keeps the row actions container on both cards so the header does not shift', () => {
+  isDoneColumnId.mockImplementation((columnId) => columnId === FINISHED_COLUMN_ID);
+  const finished = renderTask({ column: FINISHED_COLUMN_ID });
+  const other = renderTask({ id: 'task-2', column: BACKLOG_COLUMN_ID });
+
+  expect(finished.querySelector('.task-row > .task-actions')).not.toBeNull();
+  expect(other.querySelector('.task-row > .task-actions')).not.toBeNull();
+});
+
+test('a Finished card still opens the task dialog and keeps its notes', () => {
+  isDoneColumnId.mockImplementation((columnId) => columnId === FINISHED_COLUMN_ID);
+  const element = renderTask({
+    column: FINISHED_COLUMN_ID,
+    keyPoints: [{ id: 'kp1', text: 'Works offline', at: '2026-01-01T00:00:00.000Z' }]
+  });
+
+  expect(element.querySelector('.task-key-points .task-key-point').textContent).toBe('Works offline');
+  fireEvent.click(element.querySelector('.task-title'));
+  expect(showEditModal).toHaveBeenCalledWith('task-1');
 });

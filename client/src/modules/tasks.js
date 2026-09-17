@@ -1,6 +1,6 @@
 import { generateUUID } from './utils.js';
 import { HIL_COLUMN_ID, IN_PROGRESS_COLUMN_ID } from './constants.js';
-import { getActiveBoardId, getActiveBoardName, loadTasks } from './storage.js';
+import { getActiveBoardId, getActiveBoardName, isDoneColumnId, loadTasks } from './storage.js';
 import { normalizeRelationships } from './normalize.js';
 import { nextTaskKey } from './agile.js';
 import { normalizeAgileFields, syncRelationshipInverses } from './task-helpers.js';
@@ -88,6 +88,7 @@ export function deleteTask(taskId) {
   const liveTasks = loadTasks();
   const task = liveTasks.find(t => t.id === taskId);
   if (!task) return false;
+  if (isDoneColumnId(task.column)) return false;
 
   // task.deleted removes the task; the projection is the sole writer (ADR-0005).
   scheduleDomainEvent({

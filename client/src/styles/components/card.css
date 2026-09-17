@@ -84,6 +84,8 @@
   align-items: center;
   gap: var(--space-1);
   flex: 0 0 auto;
+  min-width: var(--board-control-size-compact);
+  min-height: var(--board-control-size-compact);
 }
 
 .task .delete-task-btn {
