@@ -204,6 +204,10 @@
   --board-control-surface: color-mix(in srgb, var(--surface-raised) 55%, transparent);
   --board-control-gap: var(--space-2);
 
+  /* Column header — the accent dot sets the name inset the empty-column
+     placeholder reuses, so both start on the same x */
+  --column-header-dot-size: 8px;
+
   /* Column accent — the fallback when a column carries no inline accent */
   --column-accent-default: #8a9bb5;
 

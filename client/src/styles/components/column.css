@@ -86,15 +86,27 @@
   letter-spacing: 0.01em;
   text-align: left;
   min-width: 0;
+  /* Two lines: the longest fixed name wraps at the 170px column floor */
+  min-height: calc(2lh);
 }
 
 .column-header h2::before {
   content: "";
-  width: 8px;
-  height: 8px;
+  width: var(--column-header-dot-size);
+  height: var(--column-header-dot-size);
   border-radius: 50%;
   background: var(--column-accent-muted);
   flex: 0 0 auto;
+}
+
+/* Reserved on all five columns so the Human In The Loop button changes no geometry */
+.column-header-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: var(--board-control-size);
+  height: var(--board-control-size);
 }
 
 /* Tasks list — one compact row per task, no card chrome */
@@ -115,6 +127,7 @@
   content: "No tasks yet";
   display: block;
   padding: var(--space-4) var(--space-3);
+  padding-left: calc(var(--space-3) + var(--column-header-dot-size) + var(--space-2));
   color: var(--text-muted);
   font-size: var(--text-sm);
   font-style: italic;

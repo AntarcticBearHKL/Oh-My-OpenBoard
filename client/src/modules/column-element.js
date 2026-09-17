@@ -26,8 +26,10 @@ export function createColumnElement(column) {
     }, h('span', { 'data-lucide': 'plus', 'aria-hidden': 'true' }))
     : null;
 
+  const actionSlot = h('div', { class: 'column-header-slot' }, addTaskButton);
+
   const headerDiv = h('header', { class: 'column-header' },
-    columnTitle, addTaskButton);
+    columnTitle, actionSlot);
 
   const ul = h('ul', {
     class: 'tasks',
