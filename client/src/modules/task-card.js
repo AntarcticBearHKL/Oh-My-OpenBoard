@@ -76,7 +76,6 @@ export function createTaskElement(task, settings) {
   let pointerDownPos = null;
   const li = h('li', {
     class: 'task',
-    draggable: 'true',
     'data-task-id': task.id,
     role: 'listitem',
     'aria-label': `Task: ${task.title || task.text || 'Untitled'}`

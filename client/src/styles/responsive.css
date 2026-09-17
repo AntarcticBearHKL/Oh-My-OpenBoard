@@ -261,15 +261,6 @@
     padding: 10px;
   }
 
-  /* Disable snap during drag so tasks can move between columns */
-  body.dragging .board-container {
-    scroll-snap-type: none;
-  }
-
-  body.dragging .task-column {
-    scroll-snap-align: unset;
-  }
-
   /* Columns take full width (minus margins) and snap */
   .task-column {
     min-width: var(--compact-panel-width);

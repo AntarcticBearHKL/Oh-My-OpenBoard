@@ -1,9 +1,9 @@
 import { test, expect, beforeEach } from 'vitest';
 import { resetLocalStorage } from './setup.js';
 import { createBoard, getActiveBoardId, loadDeletedTasksForBoard, loadTasks, saveColumns, saveLabels, saveSettings, saveTasks } from '../../src/modules/storage.js';
-import { addTask, deleteTask, moveTaskToTopInColumn, setTaskBlockedReason } from '../../src/modules/tasks.js';
+import { addTask, deleteTask, setTaskBlockedReason } from '../../src/modules/tasks.js';
 import { updateTask } from '../../src/modules/task-update.js';
-import { updateTaskPositionsFromDrop } from '../../src/modules/task-position.js';
+import { EVENT_EMITTED, on, off } from '../../src/modules/events.js';
 import { BACKLOG_COLUMN_ID, HIL_COLUMN_ID, DONE_COLUMN_ID } from '../../src/modules/constants.js';
 
 const BLOCKED_COLUMN_ID = '00000000-0000-4000-8000-000000000032';
@@ -87,15 +87,23 @@ test('updateTask does nothing for empty title', () => {
   expect(after.title).toBe('Original');
 });
 
-test('updateTask appends to columnHistory when a column is passed explicitly', () => {
+test('updateTask ignores a column supplied by a front-end caller', () => {
   addTask('Task', '');
   const task = loadTasks()[0];
-  updateTask(task.id, 'Task', '', { column: 'inprogress' });
+
+  const events = [];
+  const handler = (customEvent) => events.push(customEvent.detail);
+  on(EVENT_EMITTED, handler);
+  try {
+    updateTask(task.id, 'Task', '', { column: 'inprogress' });
+  } finally {
+    off(EVENT_EMITTED, handler);
+  }
 
   const updated = loadTasks().find(t => t.id === task.id);
-  expect(updated.column).toBe('inprogress');
-  expect(updated.columnHistory.length).toBe(2);
-  expect(updated.columnHistory[1].column).toBe('inprogress');
+  expect(updated.column).toBe(HIL_COLUMN_ID);
+  expect(updated.columnHistory.length).toBe(1);
+  expect(events.some((event) => event.type === 'task.moved')).toBe(false);
 });
 
 test('updateTask keeps the current column when none is passed', () => {
@@ -106,26 +114,6 @@ test('updateTask keeps the current column when none is passed', () => {
   const updated = loadTasks().find(t => t.id === task.id);
   expect(updated.column).toBe(HIL_COLUMN_ID);
   expect(updated.columnHistory.length).toBe(1);
-});
-
-test('updateTask sets doneDate when moving to the done column', () => {
-  addTask('Task', '');
-  const task = loadTasks()[0];
-  updateTask(task.id, 'Task', '', { column: DONE_COLUMN_ID });
-
-  const updated = loadTasks().find(t => t.id === task.id);
-  expect(updated.doneDate).toBeTruthy();
-});
-
-test('updateTask removes doneDate when moving out of the done column', () => {
-  addTask('Task', '');
-  const task = loadTasks()[0];
-  updateTask(task.id, 'Task', '', { column: DONE_COLUMN_ID });
-  expect(loadTasks().find(t => t.id === task.id).doneDate).toBeTruthy();
-
-  updateTask(task.id, 'Task', '', { column: BACKLOG_COLUMN_ID });
-  const updated = loadTasks().find(t => t.id === task.id);
-  expect(updated.doneDate).toBeUndefined();
 });
 
 test('updateTask seeds columnHistory if missing', () => {
@@ -163,35 +151,6 @@ test('deleteTask permanently removes task from live and deleted task lists by de
   expect(loadDeletedTasksForBoard(getActiveBoardId()).find(t => t.id === task.id)).toBeUndefined();
 });
 
-test('updateTaskPositionsFromDrop preserves existing task tombstones', () => {
-  saveTasks([
-    { id: 't1', title: 'Live', column: 'todo', order: 1, columnHistory: [{ column: 'todo', at: '2024-01-01T00:00:00.000Z' }] },
-    { id: 't2', title: 'Trash', column: 'todo', order: 2, deleted: true }
-  ]);
-  const item = { dataset: { taskId: 't1' } };
-  const from = { dataset: { column: 'todo' }, closest: () => from };
-  const to = { dataset: { column: 'inprogress' }, closest: () => to };
-  const fromColumn = { dataset: { column: 'todo' }, querySelectorAll: () => [] };
-  const toColumn = { dataset: { column: 'inprogress' }, querySelectorAll: () => [item] };
-  const originalDocument = globalThis.document;
-  globalThis.document = {
-    getElementById: () => null,
-    querySelectorAll: () => [fromColumn, toColumn]
-  };
-
-  try {
-    updateTaskPositionsFromDrop({ from, to, item });
-  } finally {
-    if (originalDocument) {
-      globalThis.document = originalDocument;
-    } else {
-      delete globalThis.document;
-    }
-  }
-
-  expect(loadDeletedTasksForBoard(getActiveBoardId())).toHaveLength(1);
-});
-
 test('purgeDeleted hard-removes task tombstones from storage', async () => {
   const { purgeDeleted } = await import('../../src/modules/storage.js');
   saveTasks([
@@ -214,28 +173,6 @@ test('purgeDeleted with { tasks: false } keeps task tombstones', async () => {
   purgeDeleted(getActiveBoardId(), { tasks: false });
 
   expect(loadDeletedTasksForBoard(getActiveBoardId())).toHaveLength(1);
-});
-
-// ── moveTaskToTopInColumn ───────────────────────────────────────────
-
-test('moveTaskToTopInColumn moves specified task to order 1', () => {
-  addTask('First', '');
-  addTask('Second', '');
-  addTask('Third', '');
-
-  const tasks = loadTasks();
-  const first = tasks.find(t => t.title === 'First');
-
-  moveTaskToTopInColumn(first.id, HIL_COLUMN_ID);
-
-  const after = loadTasks();
-  const moved = after.find(t => t.id === first.id);
-  expect(moved.order).toBe(1);
-});
-
-test('moveTaskToTopInColumn returns null for missing args', () => {
-  expect(moveTaskToTopInColumn(null, 'todo')).toBeNull();
-  expect(moveTaskToTopInColumn('t1', null)).toBeNull();
 });
 
 // ── agile task fields ───────────────────────────────────────────────
@@ -415,16 +352,20 @@ test('appending a key point in Blocked sets needsDigest without moving the task'
 });
 
 test('appending a key point to a Finished task returns it to Backlog with isRework', () => {
-  addTask('Done task', '');
-  const task = loadTasks()[0];
-  updateTask(task.id, 'Done task', '', { column: DONE_COLUMN_ID });
-  expect(loadTasks().find(t => t.id === task.id).column).toBe(DONE_COLUMN_ID);
+  saveTasks([{
+    id: 't1',
+    title: 'Done task',
+    column: DONE_COLUMN_ID,
+    keyPoints: [],
+    doneDate: '2026-01-01T00:00:00.000Z',
+    columnHistory: [{ column: DONE_COLUMN_ID, at: '2026-01-01T00:00:00.000Z' }]
+  }]);
 
-  updateTask(task.id, 'Done task', '', {
+  updateTask('t1', 'Done task', '', {
     keyPoints: [{ id: 'kp1', text: 'Change the copy', at: '2026-01-01T00:00:00.000Z' }]
   });
 
-  const updated = loadTasks().find(t => t.id === task.id);
+  const updated = loadTasks().find(t => t.id === 't1');
   expect(updated.column).toBe(BACKLOG_COLUMN_ID);
   expect(updated.isRework).toBe(true);
   expect(updated.needsDigest).toBe(true);
@@ -466,81 +407,6 @@ test('a stored legacy acceptanceCriteria array is read as key points', () => {
 });
 
 // ── blocked reason transitions ──────────────────────────────────────
-
-function withDropDocument(fromColumnId, toColumnId, taskId, callback) {
-  const item = { dataset: { taskId } };
-  const from = { dataset: { column: fromColumnId }, closest: () => from };
-  const to = { dataset: { column: toColumnId }, closest: () => to };
-  const fromColumn = { dataset: { column: fromColumnId }, querySelectorAll: () => [] };
-  const toColumn = { dataset: { column: toColumnId }, querySelectorAll: () => [item] };
-  const originalDocument = globalThis.document;
-  globalThis.document = {
-    getElementById: () => null,
-    querySelectorAll: () => [fromColumn, toColumn]
-  };
-
-  try {
-    return callback({ from, to, item });
-  } finally {
-    if (originalDocument) {
-      globalThis.document = originalDocument;
-    } else {
-      delete globalThis.document;
-    }
-  }
-}
-
-test('updateTaskPositionsFromDrop flags and records a move into Blocked', () => {
-  addTask('Blocker', '');
-  const [task] = loadTasks();
-
-  const result = withDropDocument(BACKLOG_COLUMN_ID, BLOCKED_COLUMN_ID, task.id, (evt) =>
-    updateTaskPositionsFromDrop(evt, { blockedReason: 'Waiting on API keys' })
-  );
-
-  expect(result.enteredBlocked).toBe(true);
-  expect(result.leftBlocked).toBe(false);
-
-  const moved = loadTasks().find(t => t.id === task.id);
-  expect(moved.column).toBe(BLOCKED_COLUMN_ID);
-  expect(moved.blockedReason).toBe('Waiting on API keys');
-  expect(typeof moved.blockedAt).toBe('string');
-  expect(Number.isNaN(new Date(moved.blockedAt).getTime())).toBe(false);
-});
-
-test('updateTaskPositionsFromDrop leaves the reason empty when none is provided', () => {
-  addTask('Blocker', '');
-  const [task] = loadTasks();
-
-  withDropDocument(BACKLOG_COLUMN_ID, BLOCKED_COLUMN_ID, task.id, (evt) => updateTaskPositionsFromDrop(evt));
-
-  const moved = loadTasks().find(t => t.id === task.id);
-  expect(moved.blockedReason).toBe('');
-  expect(moved.blockedAt).toBeNull();
-});
-
-test('updateTaskPositionsFromDrop clears blocked fields when leaving Blocked', () => {
-  saveTasks([{
-    id: 't1',
-    title: 'Was blocked',
-    column: BLOCKED_COLUMN_ID,
-    order: 1,
-    blockedReason: 'Waiting on API keys',
-    blockedAt: '2026-01-01T00:00:00.000Z'
-  }]);
-
-  const result = withDropDocument(BLOCKED_COLUMN_ID, BACKLOG_COLUMN_ID, 't1', (evt) =>
-    updateTaskPositionsFromDrop(evt)
-  );
-
-  expect(result.leftBlocked).toBe(true);
-  expect(result.enteredBlocked).toBe(false);
-
-  const moved = loadTasks().find(t => t.id === 't1');
-  expect(moved.column).toBe(BACKLOG_COLUMN_ID);
-  expect(moved.blockedReason).toBe('');
-  expect(moved.blockedAt).toBeNull();
-});
 
 test('setTaskBlockedReason stores a trimmed reason and clears on empty', () => {
   addTask('Task', '');

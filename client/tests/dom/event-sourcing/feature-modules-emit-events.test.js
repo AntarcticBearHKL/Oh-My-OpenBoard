@@ -1,7 +1,7 @@
 import { beforeEach, expect, test } from 'vitest';
 import { deleteDB } from 'idb';
 import { EVENT_EMITTED, on, off } from '../../../src/modules/events.js';
-import { createBoard, initStorage, saveColumns, saveTasks, _flushPersistsForTesting, _resetStorageForTesting } from '../../../src/modules/storage.js';
+import { createBoard, initStorage, loadTasks, saveColumns, saveTasks, _flushPersistsForTesting, _resetStorageForTesting } from '../../../src/modules/storage.js';
 import { addColumn } from '../../../src/modules/columns.js';
 import { addLabel, deleteLabel } from '../../../src/modules/labels.js';
 import { deleteTask } from '../../../src/modules/tasks.js';
@@ -81,7 +81,7 @@ test('label mutations emit label entity events only', async () => {
   expect(deleteEvents.map((event) => event.type)).toEqual(['label.deleted']);
 });
 
-test('updateTask emits relationship and move events for non-scalar changes', async () => {
+test('updateTask emits relationship events for non-scalar changes and never a move', async () => {
   saveColumns([
     { id: 'todo', name: 'To Do', color: '#3b82f6', order: 1 },
     { id: 'doing', name: 'Doing', color: '#f59e0b', order: 2 }
@@ -99,10 +99,10 @@ test('updateTask emits relationship and move events for non-scalar changes', asy
   });
 
   expect(events.map((event) => event.type)).toEqual([
-    'task.moved',
     'relationship.added',
     'relationship.added'
   ]);
+  expect(loadTasks().find((task) => task.id === 'task-a').column).toBe('todo');
   // The forward link is emitted for task-a and its inverse for task-b, so the
   // bidirectional relationship replays from events alone (ADR-0005).
   const relationshipEvents = events.filter((event) => event.type === 'relationship.added');

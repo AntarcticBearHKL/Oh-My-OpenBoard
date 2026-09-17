@@ -15,6 +15,7 @@ import {
   toggleSwimLaneCellCollapsed
 } from './swimlane-collapse.js';
 import { createTaskElement } from './task-card.js';
+import { compareColumnEntry } from './task-helpers.js';
 import { emit, DATA_CHANGED } from './events.js';
 import { HIL_COLUMN_ID, isDoneColumn as isPermanentDoneColumn } from './constants.js';
 import { h, cx } from './dom.js';
@@ -176,7 +177,7 @@ export function renderSwimlaneBoard(container, sortedColumns, visibleTasks, labe
 
     const cellsWrapper = h('div', { class: 'swimlane-row-cells' });
     sortedColumns.forEach((column) => {
-      const tasksInCell = (lane.cells[column.id] || []).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      const tasksInCell = (lane.cells[column.id] || []).slice().sort(compareColumnEntry);
       const cellCollapsed = isSwimLaneCellCollapsed(lane.key, column.id, settings);
       const visibleTasksInCell = collapsed
         ? []

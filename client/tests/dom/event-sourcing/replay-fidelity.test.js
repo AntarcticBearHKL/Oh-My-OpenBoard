@@ -8,10 +8,9 @@ import { deleteDB } from 'idb';
 import { EVENT_EMITTED, on, off } from '../../../src/modules/events.js';
 import {
   createBoard,
+  getActiveBoardId,
   initStorage,
   saveColumns,
-  saveLabels,
-  saveSettings,
   saveTasks,
   loadTasks,
   _flushPersistsForTesting,
@@ -19,7 +18,7 @@ import {
 } from '../../../src/modules/storage.js';
 import { addTask } from '../../../src/modules/tasks.js';
 import { updateTask } from '../../../src/modules/task-update.js';
-import { updateTaskPositionsFromDrop } from '../../../src/modules/task-position.js';
+import { scheduleDomainEvent } from '../../../src/modules/event-sourcing/emitter.js';
 import { applyEvents, createProjectionState } from '../../../src/modules/reducer.js';
 import { DONE_COLUMN_ID, DONE_COLUMN_ROLE } from '../../../src/modules/constants.js';
 
@@ -114,7 +113,12 @@ test('moving a task into and out of the done column replays its doneDate', async
   await _flushPersistsForTesting();
 
   const toDone = await collectEvents(() => {
-    updateTask('task-a', 'A', '', { column: DONE_COLUMN_ID });
+    scheduleDomainEvent({
+      type: 'task.moved',
+      boardId: getActiveBoardId(),
+      entityId: 'task-a',
+      payload: { order: [{ id: 'task-a', column: DONE_COLUMN_ID, order: 1 }] }
+    });
   });
   let replayed = applyEvents(createProjectionState({ tasks: clone(seed), columns: clone(COLUMNS) }), toDone);
   expect(donePresenceById(replayed.tasks)).toEqual(donePresenceById(loadTasks()));
@@ -122,40 +126,14 @@ test('moving a task into and out of the done column replays its doneDate', async
 
   const afterDone = clone(loadTasks());
   const toTodo = await collectEvents(() => {
-    updateTask('task-a', 'A', '', { column: 'todo' });
+    scheduleDomainEvent({
+      type: 'task.moved',
+      boardId: getActiveBoardId(),
+      entityId: 'task-a',
+      payload: { order: [{ id: 'task-a', column: 'todo', order: 1 }] }
+    });
   });
   replayed = applyEvents(createProjectionState({ tasks: afterDone, columns: clone(COLUMNS) }), toTodo);
   expect(donePresenceById(replayed.tasks)).toEqual(donePresenceById(loadTasks()));
   expect(replayed.tasks[0].doneDate).toBeFalsy();
-});
-
-test('swimlane drag across label lanes replays the lane reassignment', async () => {
-  saveColumns(clone(COLUMNS));
-  saveLabels([{ id: 'label-a', name: 'Project A', color: '#2563eb', group: '' }]);
-  saveSettings({ swimLanesEnabled: true, swimLaneGroupBy: 'label' });
-  const seed = [
-    { id: 'task-a', title: 'A', column: 'todo', order: 1, relationships: [], columnHistory: [], swimlaneLabelId: '' }
-  ];
-  saveTasks(clone(seed));
-  await _flushPersistsForTesting();
-
-  const item = { dataset: { taskId: 'task-a' } };
-  const from = { dataset: { laneKey: '' }, closest: () => ({ dataset: { column: 'todo' } }) };
-  const to = { dataset: { laneKey: 'label-a' }, closest: () => ({ dataset: { column: 'todo' } }) };
-  const originalDocument = globalThis.document;
-
-  const events = await collectEvents(() => {
-    globalThis.document = { getElementById: () => ({ dataset: { viewMode: 'swimlanes' } }), querySelectorAll: () => [] };
-    try {
-      updateTaskPositionsFromDrop({ item, from, to });
-    } finally {
-      globalThis.document = originalDocument;
-    }
-  });
-
-  const replayed = applyEvents(createProjectionState({ tasks: clone(seed), columns: clone(COLUMNS) }), events);
-  const replayedTask = replayed.tasks.find((task) => task.id === 'task-a');
-  const liveTask = loadTasks().find((task) => task.id === 'task-a');
-  expect(replayedTask.swimlaneLabelId).toBe(liveTask.swimlaneLabelId);
-  expect(liveTask.swimlaneLabelId).toBe('label-a');
 });

@@ -1,4 +1,5 @@
 import { isDoneColumnId } from './storage.js';
+import { compareColumnEntry } from './task-helpers.js';
 
 let boardFilterQuery = '';
 
@@ -59,7 +60,7 @@ export function buildShowMoreButton(remaining, onShowMore) {
 export function selectColumnRenderPlan(columnId, visibleTasks) {
   const columnTasks = visibleTasks
     .filter((t) => t.column === columnId)
-    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    .sort(compareColumnEntry);
   const doneVisibleCount = getDoneVisibleCount();
   const shouldVirtualize = isDoneColumnId(columnId) && columnTasks.length > DONE_INITIAL_BATCH_SIZE;
   return {

@@ -24,28 +24,29 @@ export function sameJson(a, b) {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-export function reorderColumnTasks(tasks, columnId, pinnedTaskId = null) {
-  const columnTasks = tasks
-    .filter((task) => task.column === columnId)
-    .slice()
-    .sort((a, b) => {
-      if (a.id === pinnedTaskId) return -1;
-      if (b.id === pinnedTaskId) return 1;
-      return (a.order ?? 0) - (b.order ?? 0);
-    });
+export function columnEntryTime(task) {
+  const history = Array.isArray(task?.columnHistory) ? task.columnHistory : [];
+  for (let index = history.length - 1; index >= 0; index -= 1) {
+    const entry = history[index];
+    if (entry && entry.column === task.column && typeof entry.at === 'string' && entry.at) {
+      return entry.at;
+    }
+  }
+  return typeof task?.creationDate === 'string' ? task.creationDate : '';
+}
 
-  const orderById = new Map();
-  columnTasks.forEach((task, index) => {
-    orderById.set(task.id, index + 1);
-  });
+export function compareColumnEntry(left, right) {
+  const leftPending = left?.needsDigest === true ? 0 : 1;
+  const rightPending = right?.needsDigest === true ? 0 : 1;
+  if (leftPending !== rightPending) return leftPending - rightPending;
 
-  return tasks.map((task) => {
-    if (task.column !== columnId) return task;
-    const nextOrder = orderById.get(task.id);
-    return typeof nextOrder === 'number' && nextOrder !== task.order
-      ? { ...task, order: nextOrder }
-      : task;
-  });
+  const leftAt = columnEntryTime(left);
+  const rightAt = columnEntryTime(right);
+  if (leftAt !== rightAt) return leftAt < rightAt ? -1 : 1;
+
+  const leftId = String(left?.id ?? '');
+  const rightId = String(right?.id ?? '');
+  return leftId < rightId ? -1 : leftId > rightId ? 1 : 0;
 }
 
 export function relationshipKey(relationship) {

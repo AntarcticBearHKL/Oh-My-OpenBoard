@@ -5,9 +5,9 @@ Generated from test source. Do not edit by hand; run `npm run test:overview` fro
 ## Fast Scan
 
 - Test files: 54
-- Test cases: 476
-- Unit files: 30
-- DOM integration files: 24
+- Test cases: 466
+- Unit files: 31
+- DOM integration files: 23
 - E2E files: 0
 
 ## How To Use This
@@ -24,10 +24,10 @@ These lists compare source/spec filenames against test file names and test title
 ### Source Modules Without Obvious Named Coverage
 
 - `src/modules/armed-delete-button.js`
+- `src/modules/board-filters.js`
 - `src/modules/board-rename-modal.js`
 - `src/modules/board-serializer.js`
 - `src/modules/column-element.js`
-- `src/modules/drag-session.js`
 - `src/modules/idb-store.js`
 - `src/modules/import-board.js`
 - `src/modules/import-normalize.js`
@@ -169,6 +169,21 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/unit/claim-timer.test.js:80` returns null for invalid end timestamps
 - `tests/unit/claim-timer.test.js:95` accepts a millisecond timestamp for now
 - `tests/unit/claim-timer.test.js:100` claimTiming reports live windows for In Progress and frozen windows otherwise
+
+### Column Order
+
+- Path: `tests/unit/column-order.test.js`
+- Type: Unit
+- Test count: 8
+
+- `tests/unit/column-order.test.js:12` columnEntryTime uses the latest history entry that matches the current column
+- `tests/unit/column-order.test.js:27` columnEntryTime falls back to creationDate when no history entry matches the column
+- `tests/unit/column-order.test.js:38` needsDigest tasks sort to the front of their column
+- `tests/unit/column-order.test.js:47` tasks order by the time they entered the column, earliest first
+- `tests/unit/column-order.test.js:57` a task returning to a column is ordered by the return, not the first arrival
+- `tests/unit/column-order.test.js:74` equal entry times break deterministically by id, whatever the input order
+- `tests/unit/column-order.test.js:82` selectColumnRenderPlan derives the order and ignores the stored order field
+- `tests/unit/column-order.test.js:95` selectColumnRenderPlan puts an undigested note at the front of the Finished column too
 
 ### Columns
 
@@ -503,7 +518,7 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/unit/tasks.test.js`
 - Type: Unit
-- Test count: 38
+- Test count: 30
 
 - `tests/unit/tasks.test.js:21` addTask creates the task in Human In The Loop with order 1
 - `tests/unit/tasks.test.js:31` addTask with only title, description, type and estimate keeps the slim model
@@ -512,37 +527,29 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/unit/tasks.test.js:60` addTask sets creationDate, changeDate, and columnHistory
 - `tests/unit/tasks.test.js:72` updateTask updates title and description
 - `tests/unit/tasks.test.js:82` updateTask does nothing for empty title
-- `tests/unit/tasks.test.js:90` updateTask appends to columnHistory when a column is passed explicitly
-- `tests/unit/tasks.test.js:101` updateTask keeps the current column when none is passed
-- `tests/unit/tasks.test.js:111` updateTask sets doneDate when moving to the done column
-- `tests/unit/tasks.test.js:120` updateTask removes doneDate when moving out of the done column
-- `tests/unit/tasks.test.js:131` updateTask seeds columnHistory if missing
-- `tests/unit/tasks.test.js:144` deleteTask removes task by ID
-- `tests/unit/tasks.test.js:156` deleteTask permanently removes task from live and deleted task lists by default
-- `tests/unit/tasks.test.js:166` updateTaskPositionsFromDrop preserves existing task tombstones
-- `tests/unit/tasks.test.js:195` purgeDeleted hard-removes task tombstones from storage
-- `tests/unit/tasks.test.js:208` purgeDeleted with { tasks: false } keeps task tombstones
-- `tests/unit/tasks.test.js:221` moveTaskToTopInColumn moves specified task to order 1
-- `tests/unit/tasks.test.js:236` moveTaskToTopInColumn returns null for missing args
-- `tests/unit/tasks.test.js:243` addTask generates a board-prefixed key
-- `tests/unit/tasks.test.js:252` addTask defaults the agile fields
-- `tests/unit/tasks.test.js:267` addTask persists provided agile fields
-- `tests/unit/tasks.test.js:286` addTask persists key points as { id, text, at } and flags them for digest
-- `tests/unit/tasks.test.js:301` updateTask persists agile fields and rejects a self-parent
-- `tests/unit/tasks.test.js:321` updateTask without extraFields leaves agile fields untouched
-- `tests/unit/tasks.test.js:334` updateTask leaves assignee and parentId untouched when the payload omits them
-- `tests/unit/tasks.test.js:347` updateTask replaces key points and comments wholesale
-- `tests/unit/tasks.test.js:367` appending a key point in Backlog sets needsDigest
-- `tests/unit/tasks.test.js:386` appending a key point in Human In The Loop sets needsDigest
-- `tests/unit/tasks.test.js:399` appending a key point in Blocked sets needsDigest without moving the task
-- `tests/unit/tasks.test.js:417` appending a key point to a Finished task returns it to Backlog with isRework
-- `tests/unit/tasks.test.js:435` re-saving unchanged key points does not re-flag or move a Finished task
-- `tests/unit/tasks.test.js:455` a stored legacy acceptanceCriteria array is read as key points
-- `tests/unit/tasks.test.js:493` updateTaskPositionsFromDrop flags and records a move into Blocked
-- `tests/unit/tasks.test.js:511` updateTaskPositionsFromDrop leaves the reason empty when none is provided
-- `tests/unit/tasks.test.js:522` updateTaskPositionsFromDrop clears blocked fields when leaving Blocked
-- `tests/unit/tasks.test.js:545` setTaskBlockedReason stores a trimmed reason and clears on empty
-- `tests/unit/tasks.test.js:560` setTaskBlockedReason returns false for a missing task
+- `tests/unit/tasks.test.js:90` updateTask ignores a column supplied by a front-end caller
+- `tests/unit/tasks.test.js:109` updateTask keeps the current column when none is passed
+- `tests/unit/tasks.test.js:119` updateTask seeds columnHistory if missing
+- `tests/unit/tasks.test.js:132` deleteTask removes task by ID
+- `tests/unit/tasks.test.js:144` deleteTask permanently removes task from live and deleted task lists by default
+- `tests/unit/tasks.test.js:154` purgeDeleted hard-removes task tombstones from storage
+- `tests/unit/tasks.test.js:167` purgeDeleted with { tasks: false } keeps task tombstones
+- `tests/unit/tasks.test.js:180` addTask generates a board-prefixed key
+- `tests/unit/tasks.test.js:189` addTask defaults the agile fields
+- `tests/unit/tasks.test.js:204` addTask persists provided agile fields
+- `tests/unit/tasks.test.js:223` addTask persists key points as { id, text, at } and flags them for digest
+- `tests/unit/tasks.test.js:238` updateTask persists agile fields and rejects a self-parent
+- `tests/unit/tasks.test.js:258` updateTask without extraFields leaves agile fields untouched
+- `tests/unit/tasks.test.js:271` updateTask leaves assignee and parentId untouched when the payload omits them
+- `tests/unit/tasks.test.js:284` updateTask replaces key points and comments wholesale
+- `tests/unit/tasks.test.js:304` appending a key point in Backlog sets needsDigest
+- `tests/unit/tasks.test.js:323` appending a key point in Human In The Loop sets needsDigest
+- `tests/unit/tasks.test.js:336` appending a key point in Blocked sets needsDigest without moving the task
+- `tests/unit/tasks.test.js:354` appending a key point to a Finished task returns it to Backlog with isRework
+- `tests/unit/tasks.test.js:376` re-saving unchanged key points does not re-flag or move a Finished task
+- `tests/unit/tasks.test.js:396` a stored legacy acceptanceCriteria array is read as key points
+- `tests/unit/tasks.test.js:411` setTaskBlockedReason stores a trimmed reason and clears on empty
+- `tests/unit/tasks.test.js:426` setTaskBlockedReason returns false for a missing task
 
 ### Utils
 
@@ -622,6 +629,20 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/dom/board-create-modal.test.js:229` Human In The Loop manual add > the Human In The Loop add-task control opens the full task modal for that column
 - `tests/dom/board-create-modal.test.js:265` Human In The Loop manual add > columns other than Human In The Loop expose no manual add-task control
 
+### Board Order
+
+- Path: `tests/dom/board-order.test.js`
+- Type: DOM Integration
+- Test count: 7
+
+- `tests/dom/board-order.test.js:57` an undigested note sorts a task to the front of its own column
+- `tests/dom/board-order.test.js:76` a column orders by entry time, using the latest matching history entry
+- `tests/dom/board-order.test.js:98` the stored order field does not decide the display order
+- `tests/dom/board-order.test.js:110` equal entry times fall back to the id, not the input order
+- `tests/dom/board-order.test.js:123` the swim lane view applies the same ordering inside a cell
+- `tests/dom/board-order.test.js:138` the rendered board carries no drag or drop affordance
+- `tests/dom/board-order.test.js:150` the human column-move modules and styles are gone
+
 ### Board Sidebar
 
 - Path: `tests/dom/board-sidebar.test.js`
@@ -682,21 +703,6 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/dom/boards-select-refresh.test.js:50` #board-select refresh on DATA_CHANGED > rebuilds the dropdown when a remote board.created adds a board
 - `tests/dom/boards-select-refresh.test.js:65` #board-select refresh on DATA_CHANGED > updates an option label when a board is renamed remotely
 
-### Dragdrop
-
-- Path: `tests/dom/dragdrop.test.js`
-- Type: DOM Integration
-- Test count: 8
-
-- `tests/dom/dragdrop.test.js:109` task drop mutates state inside the reconcile window
-- `tests/dom/dragdrop.test.js:129` task drop wraps its state mutation in a reconcile window
-- `tests/dom/dragdrop.test.js:153` collapsed non-done drops still pin the moved task through state
-- `tests/dom/dragdrop.test.js:177` reinitializing during an active task drag clears transient drag state
-- `tests/dom/dragdrop.test.js:197` initDragDrop does not make columns reorderable
-- `tests/dom/dragdrop.test.js:207` dropping a task into Blocked prompts for a reason and stores it
-- `tests/dom/dragdrop.test.js:228` skipping the blocked-reason prompt leaves the reason empty
-- `tests/dom/dragdrop.test.js:248` a normal column drop does not prompt for a blocked reason
-
 ### Feature Modules Emit Events
 
 - Path: `tests/dom/event-sourcing/feature-modules-emit-events.test.js`
@@ -705,7 +711,7 @@ These lists compare source/spec filenames against test file names and test title
 
 - `tests/dom/event-sourcing/feature-modules-emit-events.test.js:34` updateTask emits one task.updated event with HLC entity id and minimal fields
 - `tests/dom/event-sourcing/feature-modules-emit-events.test.js:69` label mutations emit label entity events only
-- `tests/dom/event-sourcing/feature-modules-emit-events.test.js:84` updateTask emits relationship and move events for non-scalar changes
+- `tests/dom/event-sourcing/feature-modules-emit-events.test.js:84` updateTask emits relationship events for non-scalar changes and never a move
 - `tests/dom/event-sourcing/feature-modules-emit-events.test.js:113` deleteTask emits task.deleted
 
 ### Realtime
@@ -726,12 +732,11 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/dom/event-sourcing/replay-fidelity.test.js`
 - Type: DOM Integration
-- Test count: 4
+- Test count: 3
 
-- `tests/dom/event-sourcing/replay-fidelity.test.js:71` updateTask relationship change replays the inverse on the target task
-- `tests/dom/event-sourcing/replay-fidelity.test.js:87` addTask replays the sibling reorder in the column
-- `tests/dom/event-sourcing/replay-fidelity.test.js:108` moving a task into and out of the done column replays its doneDate
-- `tests/dom/event-sourcing/replay-fidelity.test.js:132` swimlane drag across label lanes replays the lane reassignment
+- `tests/dom/event-sourcing/replay-fidelity.test.js:70` updateTask relationship change replays the inverse on the target task
+- `tests/dom/event-sourcing/replay-fidelity.test.js:86` addTask replays the sibling reorder in the column
+- `tests/dom/event-sourcing/replay-fidelity.test.js:107` moving a task into and out of the done column replays its doneDate
 
 ### Snapshot Catchup
 
@@ -805,21 +810,6 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/dom/event-sourcing/sync-queue.test.js:233` sync-queue push > AC-007: pauses on auth failure and resumes on auth-changed
 - `tests/dom/event-sourcing/sync-queue.test.js:265` sync-queue push > AC-011: network failures advance the backoff tiers, capped at 5min
 - `tests/dom/event-sourcing/sync-queue.test.js:289` sync-queue push > AC-011: a permanent 4xx schedules a ~1h retry
-
-### Reconcile
-
-- Path: `tests/dom/reconcile.test.js`
-- Type: DOM Integration
-- Test count: 8
-
-- `tests/dom/reconcile.test.js:68` reconcileBoard moves a dragged task card into its new column, preserving the node
-- `tests/dom/reconcile.test.js:88` reconcileBoard leaves a legacy collapsed column title untouched
-- `tests/dom/reconcile.test.js:109` a data change inside a drag-reconcile window patches in place instead of rebuilding
-- `tests/dom/reconcile.test.js:126` reconcileBoard respects the active board filter, like a full render
-- `tests/dom/reconcile.test.js:148` reconcileBoard defers to a full rebuild when swimlane mode is on
-- `tests/dom/reconcile.test.js:161` reconcileBoard defers to a full rebuild when the column set changed
-- `tests/dom/reconcile.test.js:174` reconcileBoard virtualizes an overfull Done column instead of rendering every card
-- `tests/dom/reconcile.test.js:189` reconcileBoard renders a new card with only title, description and key points
 
 ### Settings Ui
 

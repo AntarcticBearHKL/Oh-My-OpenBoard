@@ -21,7 +21,7 @@
   border: none;
   border-bottom: 1px solid var(--row-divider);
   padding: 0;
-  cursor: grab;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   flex: 0 0 auto;
@@ -48,8 +48,6 @@
 .task:focus-within::before {
   opacity: 1;
 }
-
-.task:active { cursor: grabbing; }
 
 .task-row {
   box-sizing: border-box;

@@ -3,7 +3,7 @@ import { HIL_COLUMN_ID, IN_PROGRESS_COLUMN_ID } from './constants.js';
 import { getActiveBoardId, getActiveBoardName, loadTasks } from './storage.js';
 import { normalizeRelationships } from './normalize.js';
 import { nextTaskKey } from './agile.js';
-import { normalizeAgileFields, reorderColumnTasks, syncRelationshipInverses } from './task-helpers.js';
+import { normalizeAgileFields, syncRelationshipInverses } from './task-helpers.js';
 import { scheduleDomainEvent } from './event-sourcing/emitter.js';
 
 export function addTask(title, description, extraFields = {}) {
@@ -118,29 +118,6 @@ export function setTaskBlockedReason(taskId, reason) {
     }
   });
   return true;
-}
-
-export function moveTaskToTopInColumn(taskId, columnId, tasksCache) {
-  if (!taskId || !columnId) return null;
-
-  const tasks = tasksCache || loadTasks();
-  const updatedTasks = reorderColumnTasks(tasks, columnId, taskId);
-  const didUpdate = updatedTasks.some((task, index) => task !== tasks[index]);
-
-  if (didUpdate) {
-    scheduleDomainEvent({
-      type: 'task.moved',
-      boardId: getActiveBoardId(),
-      entityId: taskId,
-      payload: {
-        from_column: columnId,
-        to_column: columnId,
-        order: updatedTasks.map((task) => ({ id: task.id, column: task.column, order: task.order }))
-      }
-    });
-    return updatedTasks;
-  }
-  return tasks;
 }
 
 function emitTaskFields(taskId, fields) {

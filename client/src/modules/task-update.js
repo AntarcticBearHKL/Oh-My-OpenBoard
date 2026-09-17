@@ -20,15 +20,13 @@ export function updateTask(taskId, title, description, extraFields = undefined) 
   if (taskIndex !== -1) {
     const source = extraFields && typeof extraFields === 'object' ? extraFields : null;
     const prevColumn = tasks[taskIndex].column;
-    const requestedColumn = typeof source?.column === 'string' && source.column.trim() ? source.column.trim() : '';
-    let nextColumn = requestedColumn || prevColumn;
+    let nextColumn = prevColumn;
     const nowIso = new Date().toISOString();
 
     // Ensure we have a baseline history entry before appending transitions.
     if (!Array.isArray(tasks[taskIndex].columnHistory) || tasks[taskIndex].columnHistory.length === 0) {
       const seededAt = tasks[taskIndex].creationDate || tasks[taskIndex].changeDate || nowIso;
-      const seededColumn = typeof prevColumn === 'string' ? prevColumn : nextColumn;
-      tasks[taskIndex].columnHistory = [{ column: seededColumn, at: seededAt }];
+      tasks[taskIndex].columnHistory = [{ column: prevColumn, at: seededAt }];
     }
 
     const oldRelationships = Array.isArray(tasks[taskIndex].relationships) ? tasks[taskIndex].relationships : [];
@@ -42,7 +40,6 @@ export function updateTask(taskId, title, description, extraFields = undefined) 
 
     tasks[taskIndex].title = nextTitle;
     tasks[taskIndex].description = nextDescription;
-    tasks[taskIndex].column = nextColumn;
     tasks[taskIndex].relationships = newRelationships;
     if (has('type')) {
       tasks[taskIndex].type = normalizeTaskType(source.type);

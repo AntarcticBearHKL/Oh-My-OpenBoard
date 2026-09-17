@@ -8,10 +8,8 @@ import {
   getFallbackLaneDescriptor,
   getLabelsForSelectedGroup,
   getSelectedGroupLaneLabel,
-  getSelectedLabelGroup,
   normalizeGroupBy,
-  normalizeLabelCollection,
-  normalizeSelectedLabelGroup
+  normalizeLabelCollection
 } from './swimlane-lane-model.js';
 
 export function getSwimLaneDescriptor(task, groupBy, labelsInput, selectedLabelGroup = '') {
@@ -145,41 +143,6 @@ export function getVisibleTasksForLane(tasksInCell, columnId) {
 export function getHiddenTaskCountForLane(tasksInCell, columnId) {
   if (!isDoneColumnId(columnId)) return 0;
   return Array.isArray(tasksInCell) ? tasksInCell.length : 0;
-}
-
-export function applySwimLaneAssignment(task, groupBy, laneKey, labelsInput, selectedLabelGroup = '') {
-  const normalizedGroupBy = normalizeGroupBy(groupBy);
-  const labels = normalizeLabelCollection(labelsInput);
-  const nextLaneKey = typeof laneKey === 'string' && laneKey.trim() ? laneKey.trim() : NO_GROUP_LANE_KEY;
-  const nextTask = { ...task };
-
-  if (normalizedGroupBy === SWIMLANE_GROUP_BY_LABEL) {
-    if (nextLaneKey === NO_GROUP_LANE_KEY) {
-      nextTask.swimlaneLabelId = '';
-      return nextTask;
-    }
-
-    const label = labels.get(nextLaneKey);
-    if (!label) return nextTask;
-
-    nextTask.swimlaneLabelId = label.id;
-    return nextTask;
-  }
-
-  const group = getSelectedLabelGroup(selectedLabelGroup, labels);
-
-  if (nextLaneKey === NO_GROUP_LANE_KEY || !group) {
-    nextTask.swimlaneLabelId = '';
-    nextTask.swimlaneLabelGroup = '';
-    return nextTask;
-  }
-
-  const label = labels.get(nextLaneKey);
-  if (!label || normalizeSelectedLabelGroup(label.group) !== group) return nextTask;
-
-  nextTask.swimlaneLabelId = label.id;
-  nextTask.swimlaneLabelGroup = group;
-  return nextTask;
 }
 
 export { NO_GROUP_LANE_KEY, NO_GROUP_LANE_LABEL, SWIMLANE_GROUP_BY_LABEL, SWIMLANE_GROUP_BY_LABEL_GROUP };
