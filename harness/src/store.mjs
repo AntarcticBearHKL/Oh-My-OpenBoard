@@ -585,7 +585,7 @@ export const DEFAULT_SKILLS = [
   },
   {
     name: '迭代规划',
-    description: '如何用 group／迭代组织工作，以及如何读懂周期时间。',
+    description: '如何用 group／迭代组织工作。',
     content: [
       'group 是人命名的容器，可以改名（人在界面上改名，agent 用 rename_group），里面装着一个或多个迭代。',
       '迭代（iteration）是 group 里的一块看板，按顺序编号（Iteration 1、Iteration 2……），不能手工命名。',
@@ -599,7 +599,6 @@ export const DEFAULT_SKILLS = [
       '- 人只在 Human In The Loop 列手工建任务；Backlog 是 agent 立项的队列。',
       '',
       '读懂数字：',
-      '- 周期时间（cycle time）分布告诉你工作卡在哪；盯 p90，不要盯平均值。',
       '- 每个迭代的起止日期和 Finished 列一起，说明这一轮做完了什么。',
     ].join('\n')
   },

@@ -18,7 +18,7 @@
 ### Entry Points
 - `src/kanban.js` - Main entry, wires UI handlers and calls `renderBoard()`
 - `src/index.html` - Main board UI
-- `src/reports.html` - Separate reports page with ECharts visualizations
+- `src/roadmap.html` - Iterations roadmap page
 
 ### Module Structure (src/modules/)
 - **render.js** - Centralized rendering via `renderBoard()`. After any data change, call this to refresh UI. `reconcileBoard()` patches the board in place (and is forced for a drag drop), and `beginDragReconcile()` / `endDragReconcile()` open the drag-reconcile window.
@@ -35,7 +35,7 @@
 - **settings.js** - Per-board settings modal and persistence
 - **labels.js** - Label management modal UI
 - **dateutils.js** - Timestamp and elapsed-duration formatting
-- **reports.js** - Reports page with ECharts (lead time, completions, cumulative flow)
+- **roadmap.js** - Iterations roadmap page
 - **accordion.js** - Reusable collapsible accordion. `createAccordionSection(title, items, expanded, renderItem)` builds a section with chevron toggle, count badge, and a body populated via the `renderItem` callback.
 - **importexport.js** - Per-board JSON export/import. Must update if data shapes change.
 - **theme.js** - Light/dark theme toggle and persistence
@@ -60,7 +60,7 @@ Mutations generally follow: **load → modify → save → `renderBoard()`**.
   - Legacy migration exists for single-board keys (`kanbanColumns`, `kanbanTasks`, `kanbanLabels`). Keep backward-compat fields like `task.text` supported where relevant.
 
 ## Domain objects (what code expects)
-- **Task**: `id`, `key`, `title` (legacy: `text`), `description`, `type` (`story|bug|task|spike`), `estimate` (story points or `null`), `assignee`, `claimedBy`, `claimedAt`, `acceptanceCriteria[]`, `comments[]`, `relationships[]`, `column`, `order`, `creationDate`, `changeDate`, `doneDate`, `blockedAt`, `blockedReason`, `columnHistory[]`, `swimlaneLabelId`, `swimlaneLabelGroup`. There is no `priority`, `dueDate`, task `labels`, `subTasks`, `attachments`, `customFields` or `annotations` in the model, and the create dialog has no column picker (tasks always start in Backlog).
+- **Task**: `id`, `key`, `title` (legacy: `text`), `description`, `assignee`, `claimedBy`, `claimedAt`, `keyPoints[]`, `needsDigest`, `isRework`, `column`, `order`, `creationDate`, `changeDate`, `doneDate`, `blockedAt`, `blockedReason`, `columnHistory[]`, `swimlaneLabelId`, `swimlaneLabelGroup`. There is no `priority`, `dueDate`, `type`, `estimate`, task `labels`, `subTasks`, `comments`, `relationships`, `attachments`, `customFields` or `annotations` in the model, and the create dialog has no column picker (tasks always start in Backlog).
 - **Column**: `id`, `name`, `color` (hex), `order`, `collapsed`, `role` (`"done"` only on the fourth fixed column)
 - **Fixed columns**: the four columns are Backlog (everything not started), In Progress (what an agent is actively working; read-only), Blocked (work an agent could not finish and that needs a human decision, or work stuck on a resource conflict) and Finished (completed work). Ids, order and `role` are fixed — key behaviour off those, never the display name; `name` is display-only and the fixed definitions are reimposed on every board at load, so a rename needs no migration.
 - **Label**: `id`, `name` (max 40 chars), `color` (hex), `group`

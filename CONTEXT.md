@@ -196,7 +196,6 @@ all subscribe.
 | `swimlane-renderer.js` | Swimlane board DOM builder |
 | `dragdrop.js` | SortableJS initialization/teardown; swimlane-aware drop handling |
 | `importexport.js` | Board JSON export/import with preflight validation |
-| `reports.js` | ECharts: lead time, daily completions, cumulative flow diagram |
 | `reducer.js` | Pure event reducer — `applyEvent(state, event)` folds a domain event into projection state |
 | `event-sourcing/emitter.js` | `emitDomainEvent()` / `scheduleDomainEvent()` — stamp (UUID + HLC), persist, emit `EVENT_EMITTED` |
 | `event-sourcing/dispatcher.js` | `reduceEventAndNotify()` — runs the reducer and signals re-render |
@@ -339,7 +338,7 @@ Every event carries `actor: { type: string, id: string | null }`.
 
 AI agents are responsible for setting their own actor identity.
 
-**`columnHistory` relationship:** Kept as-is on the task for CFD/lead-time reports — independent of the
+**`columnHistory` relationship:** Kept as-is on the task — independent of the
 event stream.
 
 ---

@@ -10,7 +10,7 @@ The board always has exactly five fixed columns, in this order:
 | Human In The Loop | The human's entry point and the only column where a human can add a task by hand |
 | In Progress | What an agent is actively working; tasks are read-only there |
 | Blocked | Work an agent could not finish and that needs a human decision, or work stuck on a resource conflict |
-| Finished | Completed work; carries the done-column `role` and feeds velocity and cycle-time statistics |
+| Finished | Completed work; carries the done-column `role` |
 
 - The fixed definitions (id, name, order, role) are reimposed on every board at load, so an existing board gains Human In The Loop without losing its columns or tasks; `name` is display-only and behaviour keys off the fixed ids, never the display name
 - Human In The Loop has the fixed id `00000000-0000-4000-8000-000000000034` and order 2

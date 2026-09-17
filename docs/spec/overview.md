@@ -32,12 +32,6 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 | `docs/spec/sync.md` | "Go Online" auth flow: backend health probe, login modal, session management (event-sourced sync itself lives in `backend-storage-pb.md`) |
 
 
-### Reporting
-
-| Spec | Purpose |
-|---|---|
-| `docs/spec/reports.md` | Reports page: lead time, completions, cumulative flow (ECharts) |
-
 ### Testing
 
 | Spec | Purpose |
@@ -58,20 +52,18 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 - Minimal to no dependencies:
   - `lucide` for tree-shaken icons via `src/modules/icons.js`
   - `sortablejs` for task and column drag and drop
-  - `echarts` for reports visualizations only
 - Storage: browser **IndexedDB** via the `idb` wrapper (migrated from localStorage)
 - Data persistence: JSON import/export to local disk
 - No server, no frameworks
 - Build tooling: Vite with ES modules
 - Frontend package root: `client/` (`npm install`, `npm run dev`, and `npm run build` run from there)
-- Reports bundling keeps ECharts and ZRender in dedicated vendor chunks (`vendor-echarts`, `vendor-zrender`)
 - Production Docker builds use the repository root `Dockerfile`, build the frontend from `client/`, and publish the `prod` target as an nginx static image
 - Docker Compose development mounts `client/` as the frontend package root and runs Vite with browser auto-open disabled (`--open false`) to avoid desktop-launch calls inside containers
 
 ## Entry Points
 
 - `src/kanban.js` / `src/index.html` - main board UI, wires handlers, calls `renderBoard()`
-- `src/reports.html` - reports page (ECharts)
+- `src/roadmap.html` - iterations roadmap page
 - `src/impressum.html` - impressum/imprint page
 
 **Every entry point must call `await initStorage()` before accessing any storage functions.**
@@ -93,7 +85,7 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 - `src/modules/settings.js` - per-board settings modal and persistence
 - `src/modules/labels.js` - label management UI
 - `src/modules/dateutils.js` - date formatting helpers
-- `src/modules/reports.js` - reports page rendering
+- `src/modules/roadmap.js` - roadmap page rendering
 - `src/modules/accordion.js` - reusable collapsible accordion component
 - `src/modules/importexport.js` - board JSON export/import normalization
 - `src/modules/theme.js` - theme toggle and persistence

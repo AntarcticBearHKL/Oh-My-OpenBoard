@@ -97,7 +97,7 @@ Want to build on or contribute to the project?
 - **[CLAUDE.md](../CLAUDE.md)** — Coding conventions and architecture guidelines
 - **[Main README](../README.md)** — Setup, build commands, and deployment
 
-The app is built with **Vite**, uses **vanilla JavaScript/CSS/HTML**, and follows local-first principles. Dependencies are limited to Lucide icons, SortableJS, and ECharts (reports only).
+The app is built with **Vite**, uses **vanilla JavaScript/CSS/HTML**, and follows local-first principles. Dependencies are limited to Lucide icons and SortableJS.
 
 ---
 
@@ -136,14 +136,6 @@ The board has five fixed columns — **Backlog** (work the agent proposed), **Hu
 
 ### Labels & Groups
 Color-coded labels organized into groups. Labels are board-level and feed swim lane grouping — group by **label** or by **label group**. Manage them from **Manage Labels**; board search matches task titles and descriptions.
-
-### Reports
-Dedicated pages for productivity analytics:
-
-- **Activity Heatmap**: Daily updates calendar covering the last 365 days
-- **Lead Time & Completion**: Weekly lead time chart with trend line, completion KPIs, and sparklines
-- **Same-Day Completions**: Track ad-hoc tasks created and completed on the same day with KPIs and 12-week sparkline
-- **Cumulative Flow Diagram**: Stacked area chart showing task distribution across columns over time
 
 ### Settings
 Per-board configuration: locale, the updated-timestamp toggle, column summaries, and swim lane grouping mode, label-group source, lane order, and collapsed lane states.

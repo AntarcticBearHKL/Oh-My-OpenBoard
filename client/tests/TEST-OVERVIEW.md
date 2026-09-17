@@ -4,10 +4,10 @@ Generated from test source. Do not edit by hand; run `npm run test:overview` fro
 
 ## Fast Scan
 
-- Test files: 54
-- Test cases: 466
+- Test files: 55
+- Test cases: 483
 - Unit files: 31
-- DOM integration files: 23
+- DOM integration files: 24
 - E2E files: 0
 
 ## How To Use This
@@ -37,12 +37,6 @@ These lists compare source/spec filenames against test file names and test title
 - `src/modules/local-server.js`
 - `src/modules/modal-utils.js`
 - `src/modules/projection-task-handlers.js`
-- `src/modules/reports-cfd.js`
-- `src/modules/reports-completions.js`
-- `src/modules/reports-daily.js`
-- `src/modules/reports-main.js`
-- `src/modules/reports-utils.js`
-- `src/modules/reports-velocity.js`
 - `src/modules/roadmap.js`
 - `src/modules/spotlight.js`
 - `src/modules/storage-board-mutations.js`
@@ -120,35 +114,40 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/unit/board-groups.test.js`
 - Type: Unit
-- Test count: 27
+- Test count: 32
 
-- `tests/unit/board-groups.test.js:28` group store > starts with no groups
-- `tests/unit/board-groups.test.js:32` group store > createGroup persists the given name, order, collapsed and prefixCollapsed under openagile:groups
-- `tests/unit/board-groups.test.js:43` group store > createGroup falls back to New Group when the name is blank
-- `tests/unit/board-groups.test.js:52` group store > renameGroup changes the stored name without touching the order
-- `tests/unit/board-groups.test.js:63` group store > renameGroup rejects blank names and unknown ids
-- `tests/unit/board-groups.test.js:71` group store > listGroups keeps stored names, sorts by order, and falls back to Untitled group
-- `tests/unit/board-groups.test.js:82` group store > toggleGroupCollapsed flips and persists the collapsed flag
-- `tests/unit/board-groups.test.js:90` group store > setGroupCollapsed is a no-op for unknown groups
-- `tests/unit/board-groups.test.js:95` group store > toggleGroupPrefixCollapsed flips and persists the prefix flag
-- `tests/unit/board-groups.test.js:104` group store > setGroupPrefixCollapsed is a no-op for unknown groups
-- `tests/unit/board-groups.test.js:109` group store > deleteGroup removes the group and unassigns its boards
-- `tests/unit/board-groups.test.js:119` group store > deleteGroup ignores unknown ids
-- `tests/unit/board-groups.test.js:123` group store > deleteGroup keeps the names and order of the groups that remain
-- `tests/unit/board-groups.test.js:135` group store > ensureBoardsGrouped attaches ungrouped boards to the last group
-- `tests/unit/board-groups.test.js:143` group store > ensureBoardsGrouped creates a group when none exists
-- `tests/unit/board-groups.test.js:151` group store > iterationLabel numbers from one
-- `tests/unit/board-groups.test.js:156` group store > nextIterationName counts the boards already in the target group
-- `tests/unit/board-groups.test.js:164` group store > nextIterationName targets the last group when no group is given
-- `tests/unit/board-groups.test.js:172` group store > nextIterationName starts at Iteration 1 with no groups
-- `tests/unit/board-groups.test.js:177` group store > ensureBoardsGrouped ignores boards that are already grouped
-- `tests/unit/board-groups.test.js:186` group store > listGroups ignores malformed records and sorts by order
-- `tests/unit/board-groups.test.js:199` group store > listGroups survives invalid JSON
-- `tests/unit/board-groups.test.js:206` board → group mapping > assignBoardToGroup persists the mapping under openagile:boardGroup
-- `tests/unit/board-groups.test.js:214` board → group mapping > assignBoardToGroup with a null group removes the mapping (Ungrouped)
-- `tests/unit/board-groups.test.js:223` board → group mapping > assignBoardToGroup falls back to Ungrouped for unknown group ids
-- `tests/unit/board-groups.test.js:228` board → group mapping > getGroupIdForBoard returns null for unknown boards
-- `tests/unit/board-groups.test.js:233` board → group mapping > pruneBoardGroups drops mappings for boards that no longer exist
+- `tests/unit/board-groups.test.js:44` group store > starts with no groups
+- `tests/unit/board-groups.test.js:48` group store > createGroup persists the given name, order, collapsed and prefixCollapsed under openagile:groups
+- `tests/unit/board-groups.test.js:59` group store > createGroup falls back to New Group when the name is blank
+- `tests/unit/board-groups.test.js:68` group store > renameGroup changes the stored name without touching the order
+- `tests/unit/board-groups.test.js:79` group store > renameGroup rejects blank names and unknown ids
+- `tests/unit/board-groups.test.js:87` group store > listGroups keeps stored names, sorts by order, and falls back to Untitled group
+- `tests/unit/board-groups.test.js:98` group store > toggleGroupCollapsed flips and persists the collapsed flag
+- `tests/unit/board-groups.test.js:106` group store > setGroupCollapsed is a no-op for unknown groups
+- `tests/unit/board-groups.test.js:111` group store > toggleGroupPrefixCollapsed flips and persists the prefix flag
+- `tests/unit/board-groups.test.js:120` group store > setGroupPrefixCollapsed is a no-op for unknown groups
+- `tests/unit/board-groups.test.js:125` group store > deleteGroup removes the group and unassigns its boards
+- `tests/unit/board-groups.test.js:135` group store > deleteGroup ignores unknown ids
+- `tests/unit/board-groups.test.js:139` group store > deleteGroup keeps the names and order of the groups that remain
+- `tests/unit/board-groups.test.js:151` group store > ensureBoardsGrouped attaches ungrouped boards to the last group
+- `tests/unit/board-groups.test.js:159` group store > ensureBoardsGrouped creates a group when none exists
+- `tests/unit/board-groups.test.js:167` group store > iterationLabel numbers from one
+- `tests/unit/board-groups.test.js:172` group store > nextIterationName counts the boards already in the target group
+- `tests/unit/board-groups.test.js:180` group store > nextIterationName targets the last group when no group is given
+- `tests/unit/board-groups.test.js:188` group store > nextIterationName starts at Iteration 1 with no groups
+- `tests/unit/board-groups.test.js:193` group store > ensureBoardsGrouped ignores boards that are already grouped
+- `tests/unit/board-groups.test.js:202` group store > listGroups ignores malformed records and sorts by order
+- `tests/unit/board-groups.test.js:215` group store > listGroups survives invalid JSON
+- `tests/unit/board-groups.test.js:222` board → group mapping > assignBoardToGroup persists the mapping under openagile:boardGroup
+- `tests/unit/board-groups.test.js:230` board → group mapping > assignBoardToGroup with a null group removes the mapping (Ungrouped)
+- `tests/unit/board-groups.test.js:239` board → group mapping > assignBoardToGroup falls back to Ungrouped for unknown group ids
+- `tests/unit/board-groups.test.js:244` board → group mapping > getGroupIdForBoard returns null for unknown boards
+- `tests/unit/board-groups.test.js:249` board → group mapping > pruneBoardGroups drops mappings for boards that no longer exist
+- `tests/unit/board-groups.test.js:261` group sync guards > a burst of writes in one turn is pushed once
+- `tests/unit/board-groups.test.js:276` group sync guards > renaming a group to the name it already has does not push
+- `tests/unit/board-groups.test.js:288` group sync guards > the server echo of a push is not pushed back
+- `tests/unit/board-groups.test.js:302` group sync guards > adopting the state that is already stored writes nothing and emits nothing
+- `tests/unit/board-groups.test.js:317` group sync guards > a state from another client is adopted once and stays adopted
 
 ### Claim Timer
 
@@ -518,7 +517,7 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/unit/tasks.test.js`
 - Type: Unit
-- Test count: 30
+- Test count: 34
 
 - `tests/unit/tasks.test.js:21` addTask creates the task in Human In The Loop with order 1
 - `tests/unit/tasks.test.js:31` addTask with only title, description, type and estimate keeps the slim model
@@ -547,9 +546,13 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/unit/tasks.test.js:336` appending a key point in Blocked sets needsDigest without moving the task
 - `tests/unit/tasks.test.js:354` appending a key point to a Finished task returns it to Backlog with isRework
 - `tests/unit/tasks.test.js:376` re-saving unchanged key points does not re-flag or move a Finished task
-- `tests/unit/tasks.test.js:396` a stored legacy acceptanceCriteria array is read as key points
-- `tests/unit/tasks.test.js:411` setTaskBlockedReason stores a trimmed reason and clears on empty
-- `tests/unit/tasks.test.js:426` setTaskBlockedReason returns false for a missing task
+- `tests/unit/tasks.test.js:396` editing an undigested note keeps its id and leaves needsDigest set
+- `tests/unit/tasks.test.js:416` appending a note after every note was digested re-opens needsDigest
+- `tests/unit/tasks.test.js:437` deleting the last undigested note clears needsDigest
+- `tests/unit/tasks.test.js:454` deleting the last undigested note while a digested note remains clears needsDigest
+- `tests/unit/tasks.test.js:478` a stored legacy acceptanceCriteria array is read as key points
+- `tests/unit/tasks.test.js:493` setTaskBlockedReason stores a trimmed reason and clears on empty
+- `tests/unit/tasks.test.js:508` setTaskBlockedReason returns false for a missing task
 
 ### Utils
 
@@ -628,6 +631,17 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/dom/board-create-modal.test.js:208` board create modal > the create dialog asks for no board name and has no template picker
 - `tests/dom/board-create-modal.test.js:229` Human In The Loop manual add > the Human In The Loop add-task control opens the full task modal for that column
 - `tests/dom/board-create-modal.test.js:265` Human In The Loop manual add > columns other than Human In The Loop expose no manual add-task control
+
+### Board Groups Sync
+
+- Path: `tests/dom/board-groups-sync.test.js`
+- Type: DOM Integration
+- Test count: 4
+
+- `tests/dom/board-groups-sync.test.js:86` sidebar group sync > the first render writes the group state once, not once per write
+- `tests/dom/board-groups-sync.test.js:96` sidebar group sync > a group state pushed by another client is adopted without becoming a push of its own
+- `tests/dom/board-groups-sync.test.js:112` sidebar group sync > the server echo of the sidebar push does not push again or rebuild the tree
+- `tests/dom/board-groups-sync.test.js:125` sidebar group sync > a rename committed in the sidebar reaches the server exactly once
 
 ### Board Order
 
@@ -885,7 +899,7 @@ These lists compare source/spec filenames against test file names and test title
 
 - Path: `tests/dom/task-modal-agile.test.js`
 - Type: DOM Integration
-- Test count: 9
+- Test count: 13
 
 - `tests/dom/task-modal-agile.test.js:171` the dialog renders the title, the description and the notes list and nothing else
 - `tests/dom/task-modal-agile.test.js:195` the add form saves the title, description and notes through addTask
@@ -895,7 +909,11 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/dom/task-modal-agile.test.js:296` a task outside Human In The Loop shows the agent title and description as content and only the notes stay interactive
 - `tests/dom/task-modal-agile.test.js:315` a Human In The Loop task keeps the title and the description editable
 - `tests/dom/task-modal-agile.test.js:327` an In Progress task is view-only with the notes control visibly unavailable
-- `tests/dom/task-modal-agile.test.js:345` adding a note to a Backlog task saves the unchanged agent title and description
+- `tests/dom/task-modal-agile.test.js:345` an undigested note edits inline: Enter commits the new text and Escape reverts it
+- `tests/dom/task-modal-agile.test.js:384` an edit typed without Enter still reaches the save
+- `tests/dom/task-modal-agile.test.js:400` a digested note is read-only and carries a marker that says why
+- `tests/dom/task-modal-agile.test.js:425` a mixed notes list keeps edit and remove on the undigested note only
+- `tests/dom/task-modal-agile.test.js:451` adding a note to a Backlog task saves the unchanged agent title and description
 
 ### Task Row
 

@@ -14,7 +14,7 @@
 - Outside Human In The Loop the agent's title and description show as read-only content in the dialog and only the notes-to-the-agent list stays editable
 - In Progress is what an agent is actively working; tasks in it are read-only — the whole form is locked while a subagent works the task and the notes control is visibly unavailable
 - Blocked is work an agent could not finish and that needs a human decision, or work stuck on a resource conflict
-- Finished is completed work; it carries the done-column `role` and is the statistics source for velocity and cycle time
+- Finished is completed work; it carries the done-column `role`
 - A task whose notes the agent has not digested yet carries a marker in Backlog, Blocked and Finished: a coloured pill with a lucide icon and a text label, so it reads in both themes and without colour
 - The column's id, order, and role are fixed, so keying behaviour off them survives display-name changes
 
@@ -23,7 +23,7 @@
 - Includes board-level task search beside the brand area
 - Search filters the rendered board in memory only
 - Search matches task title and description
-- A menu button opens controls for boards, labels, settings, swim lanes, reports, roadmap, help, and legal/impressum (no add-column entry)
+- A menu button opens controls for boards, labels, settings, swim lanes, roadmap, help, and legal/impressum (no add-column entry)
 - On mobile, the top bar stays on a single row: the brand remains left, while the menu stays right; task search plus auth and sync controls move into the mobile menu overlay instead of consuming their own header rows
 - On mobile, opening the controls menu expands into a full-screen overlay with a dedicated close button, keeping search, session status, and the control list within easy thumb reach
 

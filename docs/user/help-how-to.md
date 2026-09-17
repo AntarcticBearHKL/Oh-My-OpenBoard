@@ -38,7 +38,7 @@ All controls are in the header menu (ellipsis **⋮**).
 - **Manage Boards**: open, export, import, edit an iteration's dates and goal, or delete an iteration
 - **Manage Labels**: create/edit/delete labels and groups
 - **Settings**: locale, timestamps, and swim lane options
-- **View Reports** / **View Roadmap**: analytics and iteration overview
+- **View Roadmap**: iteration overview
 - **Theme** / **Help**: appearance and help
 
 ## Boards

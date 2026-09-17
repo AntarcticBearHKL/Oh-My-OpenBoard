@@ -118,77 +118,6 @@ function nextTaskKey(boardId, tasks) {
   return `${prefix}-${max + 1}`;
 }
 
-function dayKey(iso) {
-  return typeof iso === 'string' && iso ? iso.slice(0, 10) : '';
-}
-
-function dayStats(values) {
-  const arr = values.filter((n) => Number.isFinite(n)).sort((a, b) => a - b);
-  if (arr.length === 0) return { count: 0, avg: 0, median: 0, p90: 0 };
-  const round = (n) => Math.round(n * 100) / 100;
-  return {
-    count: arr.length,
-    avg: round(arr.reduce((sum, n) => sum + n, 0) / arr.length),
-    median: round(arr[Math.floor(arr.length / 2)]),
-    p90: round(arr[Math.min(arr.length - 1, Math.floor(arr.length * 0.9))])
-  };
-}
-
-function computeMetrics(boardId) {
-  const board = getBoard(boardId) || {};
-  const columns = getColumns(boardId);
-  const doneColumnId = (columns.find((column) => column.role === 'done') || {}).id || '';
-  const tasks = getTasks(boardId);
-  const points = (task) => (Number.isFinite(task.estimate) ? task.estimate : 0);
-
-  const doneTasks = tasks.filter((task) => task.column === doneColumnId && task.doneDate);
-  const velocity = {
-    totalPoints: tasks.reduce((sum, task) => sum + points(task), 0),
-    completedPoints: doneTasks.reduce((sum, task) => sum + points(task), 0),
-    completedTasks: doneTasks.length
-  };
-
-  const burndown = [];
-  const start = board.startDate ? new Date(board.startDate) : null;
-  const end = board.endDate ? new Date(board.endDate) : null;
-  if (start && end && !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
-    for (const cursor = new Date(start); cursor <= end; cursor.setDate(cursor.getDate() + 1)) {
-      const dayEnd = new Date(cursor);
-      dayEnd.setHours(23, 59, 59, 999);
-      const remaining = tasks
-        .filter((task) => (!task.creationDate || new Date(task.creationDate) <= dayEnd) && (!task.doneDate || new Date(task.doneDate) > dayEnd))
-        .reduce((sum, task) => sum + points(task), 0);
-      burndown.push({ date: dayKey(cursor.toISOString()), remaining });
-    }
-  }
-
-  const perTask = doneTasks.map((task) => {
-    const created = task.creationDate ? new Date(task.creationDate).getTime() : null;
-    const doneAt = task.doneDate ? new Date(task.doneDate).getTime() : null;
-    let cycleDays = null;
-    if (Array.isArray(task.columnHistory) && doneAt) {
-      const firstWorking = task.columnHistory.find((entry) => entry.column && entry.column !== doneColumnId);
-      if (firstWorking?.at) cycleDays = (doneAt - new Date(firstWorking.at).getTime()) / 86400000;
-    }
-    return {
-      taskId: task.id,
-      key: task.key || '',
-      title: task.title,
-      leadDays: created && doneAt ? (doneAt - created) / 86400000 : null,
-      cycleDays
-    };
-  });
-
-  return {
-    boardId,
-    velocity,
-    burndown,
-    leadTimeDays: dayStats(perTask.map((entry) => entry.leadDays)),
-    cycleTimeDays: dayStats(perTask.map((entry) => entry.cycleDays)),
-    tasks: perTask
-  };
-}
-
 export function registerTools(server, { broadcastGroups = () => {} } = {}) {
   // ── Boards / reads ──────────────────────────────────────────────────────────
 
@@ -303,7 +232,7 @@ export function registerTools(server, { broadcastGroups = () => {} } = {}) {
     const tasks = getTasks(bid)
       .slice()
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-      .map((t) => ({ id: t.id, key: t.key || '', title: t.title, column: t.column, type: t.type || 'task', estimate: Number.isFinite(t.estimate) ? t.estimate : null }));
+      .map((t) => ({ id: t.id, key: t.key || '', title: t.title, column: t.column, type: t.type || 'task' }));
     return ok({ board, columns, labels, tasks, settings: getSettings(bid) });
   });
 
@@ -339,7 +268,7 @@ export function registerTools(server, { broadcastGroups = () => {} } = {}) {
       .map((t) => ({
         id: t.id, key: t.key || '', title: t.title, description: t.description || '',
         column: t.column, columnName: columnsById.get(t.column) || '',
-        type: t.type || 'task', estimate: Number.isFinite(t.estimate) ? t.estimate : null,
+        type: t.type || 'task',
         claimedBy: t.claimedBy || '', assignee: t.assignee || '',
         keyPoints: t.keyPoints || [], needsDigest: t.needsDigest === true, isRework: t.isRework === true
       }));
@@ -557,7 +486,7 @@ export function registerTools(server, { broadcastGroups = () => {} } = {}) {
 
   server.registerTool('set_board_dates', {
     title: 'Set iteration dates',
-    description: 'Set the start/end dates and the goal of an iteration. Needed for burndown.',
+    description: 'Set the start/end dates and the goal of an iteration. The dates and the goal show on the roadmap.',
     inputSchema: {
       boardId: z.string().optional(),
       startDate: z.string().optional(),
@@ -575,12 +504,6 @@ export function registerTools(server, { broadcastGroups = () => {} } = {}) {
     return ok({ boardId: bid, fields });
   });
 
-  server.registerTool('get_metrics', {
-    title: 'Get metrics',
-    description: 'Velocity, burndown series (needs iteration dates) and lead/cycle time stats.',
-    inputSchema: { boardId: z.string().optional() }
-  }, async ({ boardId }) => ok(computeMetrics(resolveBoard(boardId))));
-
   server.registerTool('list_roadmap', {
     title: 'List roadmap',
     description: 'List iterations with dates, goal and task counts.',
@@ -590,7 +513,6 @@ export function registerTools(server, { broadcastGroups = () => {} } = {}) {
     const columns = getColumns(board.id);
     const doneColumnId = (columns.find((column) => column.role === 'done') || {}).id || '';
     const tasks = getTasks(board.id);
-    const points = (task) => (Number.isFinite(task.estimate) ? task.estimate : 0);
     const doneTasks = tasks.filter((task) => task.column === doneColumnId);
     return {
       id: board.id,
@@ -600,9 +522,7 @@ export function registerTools(server, { broadcastGroups = () => {} } = {}) {
       endDate: row.endDate || '',
       goal: row.goal || '',
       tasks: tasks.length,
-      doneTasks: doneTasks.length,
-      points: tasks.reduce((sum, task) => sum + points(task), 0),
-      donePoints: doneTasks.reduce((sum, task) => sum + points(task), 0)
+      doneTasks: doneTasks.length
     };
   })));
 

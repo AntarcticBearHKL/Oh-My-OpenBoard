@@ -13,7 +13,6 @@ This file is the entrypoint to the canonical application specification. Detailed
 - `docs/spec/labels.md` - label groups, management modal, validation, swim lane use
 - `docs/spec/swimlanes.md` - swim lane layout, grouping rules, collapse, mobile behavior
 - `docs/spec/settings.md` - per-board settings and swim lane controls
-- `docs/spec/reports.md` - reports calculations and layout rules
 - `docs/spec/import-export.md` - board JSON import/export rules and compatibility expectations
 - `docs/spec/sub-tasks.md` - retired sub-task model; notes to the agent replaced it
 - `docs/spec/audit-trail.md` - two-log audit trail design, event types, actor model, storage keys, UI entry points
@@ -42,7 +41,6 @@ Use this mapping to decide which spec files to update alongside code changes.
 - `src/modules/boards.js`, `src/modules/boards-modal.js` -> `docs/spec/board-ui.md`
 - `src/modules/swimlanes.js`, `src/modules/swimlane-renderer.js` -> `docs/spec/swimlanes.md`, `docs/spec/settings.md`, `docs/spec/data-models.md`
 - `src/modules/settings.js` -> `docs/spec/settings.md`
-- `src/modules/reports.js` -> `docs/spec/reports.md`
 - `src/modules/render.js`, `src/modules/dragdrop.js`, `src/index.html`, `src/activity.html`, `src/styles/**` -> `docs/spec/board-ui.md` and any affected feature spec files
 - `src/modules/dom.js`, `src/modules/events.js`, `src/modules/constants.js`, `src/modules/security.js`, `src/modules/utils.js` -> `docs/spec/overview.md`
 - `src/modules/dialog.js`, `src/modules/modals.js` -> `docs/spec/board-ui.md`

@@ -68,7 +68,6 @@ Edit on your phone, see it on your laptop — within seconds. OpenAgile uses **e
 - **⌨️ Keyboard Shortcuts**: Move quickly through board management and task editing with context-aware keybindings. `Ctrl+B` opens Manage Boards, `Escape` closes active modals and menus, arrow keys navigate board and label lists, and `Enter` activates focused choices. Shortcuts are form-safe, so typing in inputs does not accidentally trigger global actions. See the full [keyboard shortcuts table](docs/user/keybindings.md).
 - **🚀 Blazing Fast & Simple**: Lightning-quick performance with a clean, intuitive interface
 - **🔍 Powerful Search**: Find tasks instantly by title or description
-- **📊 Productivity Reports**: Visualize your progress with Cumulative Flow Diagrams, weekly lead time, completion stats, same-day completions tracking, and an activity heatmap covering the last 365 days
 - **💻 Local-First**: Works fully offline with no backend required — your data lives in your browser and never leaves your device unless you opt into **Real-Time Multi-Device Sync**
 - **🎨 Drag & Drop**: Effortlessly move tasks and columns with optimized performance (handles 300+ tasks)
 - **🏷️ Custom Labels & Colors**: Board-level labels with groups and colors feed swim lane grouping — label text automatically switches between black and white for readability

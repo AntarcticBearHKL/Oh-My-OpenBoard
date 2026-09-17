@@ -18,7 +18,7 @@ provides auth and cloud sync when deployed.
 | Build | Vite 7 |
 | Tests | Vitest (unit + DOM), MSW (API mocks) |
 | Runtime storage | IndexedDB via `idb` library |
-| UI libs | Lucide icons, SortableJS, ECharts (reports) |
+| UI libs | Lucide icons, SortableJS |
 
 ---
 
@@ -27,10 +27,10 @@ provides auth and cloud sync when deployed.
 ```
 client/             Frontend app (the main product)
   src/
-    modules/        Feature modules: board, tasks, labels, reports, drag-drop, …
+    modules/        Feature modules: board, tasks, labels, roadmap, drag-drop, …
     kanban.js       Entry point — initialises storage, renders board
     index.html      Main board page
-    reports.html    Analytics page
+    roadmap.html    Iterations roadmap page
     activity.html   Board event log page
   tests/
     unit/           Vitest pure-unit tests
