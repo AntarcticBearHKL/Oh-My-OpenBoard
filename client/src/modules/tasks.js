@@ -47,7 +47,7 @@ export function addTask(title, description, extraFields = {}) {
     parentId: agileFields.parentId,
     keyPoints: agileFields.keyPoints,
     comments: agileFields.comments,
-    needsDigest: agileFields.keyPoints.length > 0,
+    needsDigest: agileFields.keyPoints.some((point) => !point.digestedAt),
     blockedReason: '',
     blockedAt: null,
     creationDate: nowIso,

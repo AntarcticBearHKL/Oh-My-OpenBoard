@@ -59,14 +59,12 @@ export function updateTask(taskId, title, description, extraFields = undefined) 
       const previousKeyPoints = normalizeKeyPoints(previousTask.keyPoints ?? previousTask.acceptanceCriteria);
       const appended = nextKeyPoints.some((point) => !previousKeyPoints.some((prev) => prev.id === point.id));
       tasks[taskIndex].keyPoints = nextKeyPoints;
+      tasks[taskIndex].needsDigest = nextKeyPoints.some((point) => !point.digestedAt);
 
       if (appended && isDoneColumnId(nextColumn)) {
         nextColumn = BACKLOG_COLUMN_ID;
         tasks[taskIndex].column = nextColumn;
         tasks[taskIndex].isRework = true;
-        tasks[taskIndex].needsDigest = true;
-      } else if (appended) {
-        tasks[taskIndex].needsDigest = true;
       }
     }
     if (has('comments')) {
@@ -103,8 +101,8 @@ export function updateTask(taskId, title, description, extraFields = undefined) 
     if (has('keyPoints') && !sameJson(normalizeKeyPoints(previousTask.keyPoints ?? previousTask.acceptanceCriteria), tasks[taskIndex].keyPoints)) {
       changedFields.keyPoints = tasks[taskIndex].keyPoints;
     }
-    if (tasks[taskIndex].needsDigest === true && previousTask.needsDigest !== true) {
-      changedFields.needsDigest = true;
+    if (has('keyPoints') && tasks[taskIndex].needsDigest !== (previousTask.needsDigest === true)) {
+      changedFields.needsDigest = tasks[taskIndex].needsDigest;
     }
     if (tasks[taskIndex].isRework === true && previousTask.isRework !== true) {
       changedFields.isRework = true;

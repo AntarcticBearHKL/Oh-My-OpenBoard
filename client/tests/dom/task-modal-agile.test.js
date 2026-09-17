@@ -342,6 +342,112 @@ test('an In Progress task is view-only with the notes control visibly unavailabl
   expect(document.querySelectorAll('#task-key-points-list .key-point-item')).toHaveLength(1);
 });
 
+test('an undigested note edits inline: Enter commits the new text and Escape reverts it', () => {
+  loadTaskAt(HIL_COLUMN_ID);
+  initializeTaskModalHandlers(() => {});
+  showEditModal('t1');
+
+  const editBtn = document.querySelector('#task-key-points-list .key-point-edit-btn');
+  expect(editBtn).not.toBeNull();
+  expect(editBtn.getAttribute('title')).toBe('Edit note');
+  expect(editBtn.getAttribute('aria-label')).toBe('Edit note "Human note"');
+  expect(editBtn.querySelector('[data-lucide="pencil"]')).not.toBeNull();
+
+  fireEvent.click(editBtn);
+  const input = document.querySelector('#task-key-points-list .key-point-edit-input');
+  expect(input).not.toBeNull();
+  expect(input.value).toBe('Human note');
+
+  input.value = 'Sharper note';
+  fireEvent.input(input);
+  fireEvent.keyDown(input, { key: 'Enter' });
+
+  expect(document.querySelector('#task-key-points-list .key-point-edit-input')).toBeNull();
+  expect(document.querySelector('#task-key-points-list .key-point-text').textContent).toBe('Sharper note');
+
+  fireEvent.click(document.querySelector('#task-key-points-list .key-point-edit-btn'));
+  const reopened = document.querySelector('#task-key-points-list .key-point-edit-input');
+  reopened.value = 'Discarded wording';
+  fireEvent.input(reopened);
+  fireEvent.keyDown(reopened, { key: 'Escape' });
+
+  expect(document.querySelector('#task-key-points-list .key-point-edit-input')).toBeNull();
+  expect(document.querySelector('#task-key-points-list .key-point-text').textContent).toBe('Sharper note');
+
+  fireEvent.submit(document.getElementById('task-form'));
+
+  expect(mocks.updateTask).toHaveBeenCalledTimes(1);
+  const fields = mocks.updateTask.mock.calls[0][3];
+  expect(fields.keyPoints).toEqual([{ id: 'k1', text: 'Sharper note', at: '2026-01-01T10:00:00.000Z' }]);
+});
+
+test('an edit typed without Enter still reaches the save', () => {
+  loadTaskAt(BACKLOG_COLUMN_ID);
+  initializeTaskModalHandlers(() => {});
+  showEditModal('t1');
+
+  fireEvent.click(document.querySelector('#task-key-points-list .key-point-edit-btn'));
+  const input = document.querySelector('#task-key-points-list .key-point-edit-input');
+  input.value = 'Typed but not confirmed';
+  fireEvent.input(input);
+
+  fireEvent.submit(document.getElementById('task-form'));
+
+  const fields = mocks.updateTask.mock.calls[0][3];
+  expect(fields.keyPoints).toEqual([{ id: 'k1', text: 'Typed but not confirmed', at: '2026-01-01T10:00:00.000Z' }]);
+});
+
+test('a digested note is read-only and carries a marker that says why', () => {
+  loadTaskAt(BACKLOG_COLUMN_ID, {
+    keyPoints: [{ id: 'k1', text: 'Folded in', at: '2026-01-01T10:00:00.000Z', digestedAt: '2026-01-02T10:00:00.000Z' }]
+  });
+  initializeTaskModalHandlers(() => {});
+  showEditModal('t1');
+
+  expect(document.querySelector('#task-key-points-list .key-point-edit-btn')).toBeNull();
+  expect(document.querySelector('#task-key-points-list .key-point-remove-btn')).toBeNull();
+
+  const marker = document.querySelector('#task-key-points-list .key-point-digested');
+  expect(marker).not.toBeNull();
+  expect(marker.textContent).toBe('Digested');
+  expect(marker.querySelector('[data-lucide="bot"]')).not.toBeNull();
+  expect(marker.getAttribute('title')).toContain('Digested by the agent');
+  expect(marker.getAttribute('aria-label')).toContain('read-only');
+
+  fireEvent.submit(document.getElementById('task-form'));
+
+  const fields = mocks.updateTask.mock.calls[0][3];
+  expect(fields.keyPoints).toEqual([
+    { id: 'k1', text: 'Folded in', at: '2026-01-01T10:00:00.000Z', digestedAt: '2026-01-02T10:00:00.000Z' }
+  ]);
+});
+
+test('a mixed notes list keeps edit and remove on the undigested note only', () => {
+  loadTaskAt(HIL_COLUMN_ID, {
+    keyPoints: [
+      { id: 'k1', text: 'Human note', at: '2026-01-01T10:00:00.000Z' },
+      { id: 'k2', text: 'Folded in', at: '2026-01-01T10:00:00.000Z', digestedAt: '2026-01-02T10:00:00.000Z' }
+    ]
+  });
+  initializeTaskModalHandlers(() => {});
+  showEditModal('t1');
+
+  const items = document.querySelectorAll('#task-key-points-list .key-point-item');
+  expect(items).toHaveLength(2);
+  expect(items[0].querySelector('.key-point-edit-btn')).not.toBeNull();
+  expect(items[0].querySelector('.key-point-remove-btn')).not.toBeNull();
+
+  expect(items[1].querySelector('.key-point-edit-btn')).toBeNull();
+  expect(items[1].querySelector('.key-point-remove-btn')).toBeNull();
+  expect(items[1].querySelector('.key-point-digested')).not.toBeNull();
+
+  fireEvent.click(items[0].querySelector('.key-point-remove-btn'));
+
+  const remaining = document.querySelectorAll('#task-key-points-list .key-point-item');
+  expect(remaining).toHaveLength(1);
+  expect(remaining[0].getAttribute('data-key-point-id')).toBe('k2');
+});
+
 test('adding a note to a Backlog task saves the unchanged agent title and description', () => {
   loadTaskAt(BACKLOG_COLUMN_ID);
   initializeTaskModalHandlers(() => {});

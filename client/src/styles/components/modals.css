@@ -263,6 +263,7 @@
 }
 
 .key-point-remove-btn,
+.key-point-edit-btn,
 .attachment-remove-btn,
 .custom-field-remove-btn {
   flex-shrink: 0;
@@ -281,6 +282,45 @@
 .custom-field-remove-btn:hover {
   color: var(--color-danger);
   background-color: var(--color-danger-bg);
+}
+
+.key-point-edit-btn:hover {
+  color: var(--color-primary);
+}
+
+.key-point-edit-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 2px 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background-color: var(--input-bg);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-family: inherit;
+}
+
+.key-point-edit-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.key-point-digested {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.key-point-digested svg {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
 }
 
 .attachment-link {

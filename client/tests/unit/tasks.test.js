@@ -378,19 +378,101 @@ test('re-saving unchanged key points does not re-flag or move a Finished task', 
     id: 't1',
     title: 'Settled',
     column: DONE_COLUMN_ID,
-    keyPoints: [{ id: 'kp1', text: 'Kept', at: '2026-01-01T00:00:00.000Z' }],
+    keyPoints: [{ id: 'kp1', text: 'Kept', at: '2026-01-01T00:00:00.000Z', digestedAt: '2026-01-02T00:00:00.000Z' }],
     needsDigest: false,
     doneDate: '2026-01-01T00:00:00.000Z'
   }]);
 
   updateTask('t1', 'Settled', '', {
-    keyPoints: [{ id: 'kp1', text: 'Kept', at: '2026-01-01T00:00:00.000Z' }]
+    keyPoints: [{ id: 'kp1', text: 'Kept', at: '2026-01-01T00:00:00.000Z', digestedAt: '2026-01-02T00:00:00.000Z' }]
   });
 
   const updated = loadTasks().find(t => t.id === 't1');
   expect(updated.column).toBe(DONE_COLUMN_ID);
   expect(updated.needsDigest).toBe(false);
   expect(updated.isRework).toBeUndefined();
+});
+
+test('editing an undigested note keeps its id and leaves needsDigest set', () => {
+  saveTasks([{
+    id: 't1',
+    title: 'Sharpen the copy',
+    column: BACKLOG_COLUMN_ID,
+    keyPoints: [{ id: 'kp1', text: 'First wording', at: '2026-01-01T00:00:00.000Z' }],
+    needsDigest: true,
+    columnHistory: [{ column: BACKLOG_COLUMN_ID, at: '2024-01-01T00:00:00.000Z' }]
+  }]);
+
+  updateTask('t1', 'Sharpen the copy', '', {
+    keyPoints: [{ id: 'kp1', text: 'Sharper wording', at: '2026-01-01T00:00:00.000Z' }]
+  });
+
+  const updated = loadTasks().find(t => t.id === 't1');
+  expect(updated.keyPoints).toEqual([{ id: 'kp1', text: 'Sharper wording', at: '2026-01-01T00:00:00.000Z' }]);
+  expect(updated.needsDigest).toBe(true);
+  expect(updated.column).toBe(BACKLOG_COLUMN_ID);
+});
+
+test('appending a note after every note was digested re-opens needsDigest', () => {
+  saveTasks([{
+    id: 't1',
+    title: 'Settled notes',
+    column: BACKLOG_COLUMN_ID,
+    keyPoints: [{ id: 'kp1', text: 'Folded in', at: '2026-01-01T00:00:00.000Z', digestedAt: '2026-01-02T00:00:00.000Z' }],
+    needsDigest: false,
+    columnHistory: [{ column: BACKLOG_COLUMN_ID, at: '2024-01-01T00:00:00.000Z' }]
+  }]);
+
+  updateTask('t1', 'Settled notes', '', {
+    keyPoints: [
+      { id: 'kp1', text: 'Folded in', at: '2026-01-01T00:00:00.000Z', digestedAt: '2026-01-02T00:00:00.000Z' },
+      { id: 'kp2', text: 'One more thing', at: '2026-01-03T00:00:00.000Z' }
+    ]
+  });
+
+  const updated = loadTasks().find(t => t.id === 't1');
+  expect(updated.needsDigest).toBe(true);
+});
+
+test('deleting the last undigested note clears needsDigest', () => {
+  saveTasks([{
+    id: 't1',
+    title: 'Drop the note',
+    column: BACKLOG_COLUMN_ID,
+    keyPoints: [{ id: 'kp1', text: 'Never mind', at: '2026-01-01T00:00:00.000Z' }],
+    needsDigest: true,
+    columnHistory: [{ column: BACKLOG_COLUMN_ID, at: '2024-01-01T00:00:00.000Z' }]
+  }]);
+
+  updateTask('t1', 'Drop the note', '', { keyPoints: [] });
+
+  const updated = loadTasks().find(t => t.id === 't1');
+  expect(updated.keyPoints).toEqual([]);
+  expect(updated.needsDigest).toBe(false);
+});
+
+test('deleting the last undigested note while a digested note remains clears needsDigest', () => {
+  saveTasks([{
+    id: 't1',
+    title: 'Mixed notes',
+    column: BACKLOG_COLUMN_ID,
+    keyPoints: [
+      { id: 'kp1', text: 'Pending', at: '2026-01-01T00:00:00.000Z' },
+      { id: 'kp2', text: 'Already folded', at: '2026-01-01T00:00:00.000Z', digestedAt: '2026-01-02T00:00:00.000Z' }
+    ],
+    needsDigest: true,
+    columnHistory: [{ column: BACKLOG_COLUMN_ID, at: '2024-01-01T00:00:00.000Z' }]
+  }]);
+
+  updateTask('t1', 'Mixed notes', '', {
+    keyPoints: [{ id: 'kp2', text: 'Already folded', at: '2026-01-01T00:00:00.000Z', digestedAt: '2026-01-02T00:00:00.000Z' }]
+  });
+
+  const updated = loadTasks().find(t => t.id === 't1');
+  expect(updated.keyPoints).toEqual([
+    { id: 'kp2', text: 'Already folded', at: '2026-01-01T00:00:00.000Z', digestedAt: '2026-01-02T00:00:00.000Z' }
+  ]);
+  expect(updated.needsDigest).toBe(false);
 });
 
 test('a stored legacy acceptanceCriteria array is read as key points', () => {

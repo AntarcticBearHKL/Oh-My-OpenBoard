@@ -13,6 +13,7 @@ import { applyDialogAccess, dialogAccess } from './task-modal-access.js';
 export function showModal() {
   state.editingTaskId = null;
   state.selectedTaskKeyPoints = [];
+  state.editingKeyPointId = null;
 
   resetTaskLock();
   applyDialogAccess(dialogAccess(null), null);
@@ -50,6 +51,7 @@ export function showEditModal(taskId) {
 
   state.editingTaskId = taskId;
   state.selectedTaskKeyPoints = normalizeKeyPoints(task.keyPoints ?? task.acceptanceCriteria).map((entry) => ({ ...entry }));
+  state.editingKeyPointId = null;
 
   const access = dialogAccess(task);
 
