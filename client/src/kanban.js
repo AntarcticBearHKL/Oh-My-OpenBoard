@@ -19,7 +19,6 @@ import { initSnapshotSync } from './modules/event-sourcing/snapshot-sync.js';
 import { initRealtime } from './modules/event-sourcing/realtime.js';
 import { initSyncIndicator } from './modules/event-sourcing/sync-indicator.js';
 import { initLocalServer } from './modules/local-server.js';
-import { startClaimTicker } from './modules/claim-timer.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   // Load all board data from IDB into memory before any rendering.
@@ -141,7 +140,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Initial render
   renderBoard();
-  startClaimTicker();
 
   if (openTaskId) {
     // Open after first render so the board is visible behind the modal.

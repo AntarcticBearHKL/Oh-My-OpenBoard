@@ -16,7 +16,6 @@ export const FIXED_COLUMNS = [
   { id: '00000000-0000-4000-8000-000000000033', name: 'Finished', color: '#16a34a', order: 5, role: DONE_COLUMN_ROLE }
 ];
 
-export const FIXED_COLUMN_IDS = FIXED_COLUMNS.map((column) => column.id);
 export const BACKLOG_COLUMN_ID = FIXED_COLUMNS[0].id;
 export const HIL_COLUMN_ID = FIXED_COLUMNS[1].id;
 export const IN_PROGRESS_COLUMN_ID = FIXED_COLUMNS[2].id;

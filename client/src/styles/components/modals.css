@@ -228,9 +228,7 @@
   }
 }
 
-.key-points-list,
-.attachments-list,
-.custom-fields-list {
+.key-points-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -241,9 +239,7 @@
   overflow-y: auto;
 }
 
-.key-point-item,
-.attachment-item,
-.custom-field-item {
+.key-point-item {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -263,9 +259,7 @@
 }
 
 .key-point-remove-btn,
-.key-point-edit-btn,
-.attachment-remove-btn,
-.custom-field-remove-btn {
+.key-point-edit-btn {
   flex-shrink: 0;
   padding: 2px 6px;
   border: none;
@@ -277,9 +271,7 @@
   cursor: pointer;
 }
 
-.key-point-remove-btn:hover,
-.attachment-remove-btn:hover,
-.custom-field-remove-btn:hover {
+.key-point-remove-btn:hover {
   color: var(--color-danger);
   background-color: var(--color-danger-bg);
 }
@@ -323,69 +315,19 @@
   height: 12px;
 }
 
-.attachment-link {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: var(--text-sm);
-  color: var(--color-primary);
-  text-decoration: none;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.attachment-link:hover {
-  text-decoration: underline;
-}
-
-.custom-field-key-input,
-.custom-field-value-input {
-  min-width: 0;
-  padding: 3px 6px;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background-color: var(--input-bg);
-  color: var(--text);
-  font-size: var(--text-sm);
-  font-family: inherit;
-}
-
-.custom-field-key-input {
-  flex: 0 0 38%;
-}
-
-.custom-field-value-input {
-  flex: 1 1 auto;
-}
-
-.custom-field-key-input:focus,
-.custom-field-value-input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-}
-
-.task-key-point-add-row,
-.task-attachment-add-row,
-.task-custom-field-add-row {
+.task-key-point-add-row {
   display: flex;
   align-items: center;
   gap: 6px;
   margin-top: 6px;
 }
 
-.task-key-point-add-row input,
-.task-attachment-add-row input,
-.task-custom-field-add-row input {
+.task-key-point-add-row input {
   width: auto;
   flex: 1 1 auto;
   min-width: 0;
   padding: 6px 8px;
   font-size: var(--text-sm);
-}
-
-.task-attachment-add-row input[type="url"].invalid {
-  border-color: var(--color-danger);
-  box-shadow: 0 0 0 3px var(--input-error-ring);
 }
 
 .key-point-enter-hint {

@@ -1,11 +1,4 @@
-import {
-  loadTasks,
-  loadColumns,
-  loadLabels,
-  loadSettings
-} from './storage.js';
-
-import { getActiveBoardName, listBoards, loadTasksForBoard, loadColumnsForBoard, loadLabelsForBoard, loadSettingsForBoard } from './storage.js';
+import { listBoards, loadTasksForBoard, loadColumnsForBoard, loadLabelsForBoard, loadSettingsForBoard } from './storage.js';
 import { isHexColor, boardDisplayName } from './normalize.js';
 import { DONE_COLUMN_ID } from './constants.js';
 import { alertDialog } from './dialog.js';
@@ -120,43 +113,6 @@ function normalizeTaskForExport(task, doneColumnIds = new Set([DONE_COLUMN_ID]))
     if (exported[field] === undefined) delete exported[field];
   }
   return exported;
-}
-
-// Export tasks and columns to JSON file
-export function exportTasks() {
-  const columns = loadColumns().map((c) => ({
-    ...c,
-    color: isHexColor(c?.color) ? c.color.trim() : '#3b82f6'
-  }));
-  const doneColumnIds = new Set(columns.filter((column) => column.role === 'done' || column.id === DONE_COLUMN_ID).map((column) => column.id));
-  doneColumnIds.add(DONE_COLUMN_ID);
-  const tasks = loadTasks().map((task) => normalizeTaskForExport(task, doneColumnIds));
-  const labels = loadLabels();
-  const settings = loadSettings();
-  const boardName = getActiveBoardName();
-  const exportMeta = buildExportMeta();
-  const exportData = { boardName, columns, tasks, labels, settings, exportMeta };
-
-  const integrity = inspectImportPayload(exportData, null);
-  if (integrity.errors.length > 0) {
-    void alertDialog({
-      title: 'Export Blocked',
-      message: integrity.errors.join(' ')
-    });
-    return;
-  }
-
-  const dataStr = JSON.stringify(exportData, null, 2);
-  const blob = new Blob([dataStr], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${boardName.replaceAll(' ', '_').replaceAll('.', '_')}_board_${new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-')}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
 
 // Export a specific board to JSON by boardId (does not switch active board).

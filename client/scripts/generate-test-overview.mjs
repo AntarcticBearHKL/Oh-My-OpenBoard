@@ -5,7 +5,7 @@ import process from 'node:process';
 const rootDir = process.cwd();
 const testsDir = path.join(rootDir, 'tests');
 const modulesDir = path.join(rootDir, 'src', 'modules');
-const specDir = path.join(rootDir, '..', 'docs', 'system', 'spec');
+const specDir = path.join(rootDir, '..', 'docs', 'spec');
 const outputPath = path.join(testsDir, 'TEST-OVERVIEW.md');
 
 const TEST_FILE_RE = /\.(test|spec)\.(js|ts)$/;
@@ -240,7 +240,7 @@ function renderOverview(testFiles, sourceModules, specFiles) {
   lines.push('');
   lines.push('- For a requested feature change, search this file for the feature, module, UI label, and spec name.');
   lines.push('- If matching tests exist, update the closest unit/DOM/E2E case first.');
-  lines.push('- If no matching tests exist, add coverage in the layer recommended by `docs/system/spec/testing-strategy.md`.');
+  lines.push('- If no matching tests exist, add coverage in the layer recommended by `docs/spec/testing-strategy.md`.');
   lines.push('- Treat the gap lists below as heuristics, not proof that behavior is untested.');
   lines.push('');
   lines.push('## Coverage Gaps By Name');

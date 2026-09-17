@@ -304,12 +304,6 @@
   .form-actions {
       padding-bottom: 24px; /* Extra padding for touch targets/safe area */
   }
-
-    /* Keep the label list scrollable on mobile (don't let it stretch the modal). */
-    #task-labels-selection {
-      max-height: 150px !important;
-      overflow-y: auto;
-    }
 }
 
 /* ==========================================================================

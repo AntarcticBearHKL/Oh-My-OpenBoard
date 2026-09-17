@@ -3,10 +3,6 @@ import { compareColumnEntry } from './task-helpers.js';
 
 let boardFilterQuery = '';
 
-export function setBoardFilterQuery(query) {
-  boardFilterQuery = typeof query === 'string' ? query : '';
-}
-
 // Done column virtualization state
 export const DONE_INITIAL_BATCH_SIZE = 50;
 const DONE_LOAD_MORE_SIZE = 50;

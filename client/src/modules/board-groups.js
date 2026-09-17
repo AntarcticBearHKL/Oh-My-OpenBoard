@@ -3,7 +3,6 @@ import { emit, DATA_CHANGED } from './events.js';
 
 export const GROUPS_KEY = 'openagile:groups';
 export const BOARD_GROUP_KEY = 'openagile:boardGroup';
-export const UNGROUPED_GROUP_ID = '__ungrouped__';
 export const UNTITLED_GROUP_NAME = 'Untitled group';
 
 const GROUPS_MIGRATED_KEY = 'openagile:groupsMigrated';

@@ -4,17 +4,17 @@ Generated from test source. Do not edit by hand; run `npm run test:overview` fro
 
 ## Fast Scan
 
-- Test files: 55
-- Test cases: 483
-- Unit files: 31
-- DOM integration files: 24
+- Test files: 52
+- Test cases: 460
+- Unit files: 29
+- DOM integration files: 23
 - E2E files: 0
 
 ## How To Use This
 
 - For a requested feature change, search this file for the feature, module, UI label, and spec name.
 - If matching tests exist, update the closest unit/DOM/E2E case first.
-- If no matching tests exist, add coverage in the layer recommended by `docs/system/spec/testing-strategy.md`.
+- If no matching tests exist, add coverage in the layer recommended by `docs/spec/testing-strategy.md`.
 - Treat the gap lists below as heuristics, not proof that behavior is untested.
 
 ## Coverage Gaps By Name
@@ -67,7 +67,13 @@ These lists compare source/spec filenames against test file names and test title
 
 ### Specs Without Obvious Named Coverage
 
-- None detected
+- `../docs/spec/audit-trail.md`
+- `../docs/spec/backend-storage-pb.md`
+- `../docs/spec/board-ui.md`
+- `../docs/spec/data-models.md`
+- `../docs/spec/overview.md`
+- `../docs/spec/testing-strategy.md`
+- `../docs/spec/testing.md`
 
 ## Test Files
 
@@ -149,26 +155,6 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/unit/board-groups.test.js:302` group sync guards > adopting the state that is already stored writes nothing and emits nothing
 - `tests/unit/board-groups.test.js:317` group sync guards > a state from another client is adopted once and stays adopted
 
-### Claim Timer
-
-- Path: `tests/unit/claim-timer.test.js`
-- Type: Unit
-- Test count: 13
-
-- `tests/unit/claim-timer.test.js:14` counts from claimedAt while the task is In Progress
-- `tests/unit/claim-timer.test.js:19` freezes at doneDate in the done column
-- `tests/unit/claim-timer.test.js:24` detects the legacy done column id by default
-- `tests/unit/claim-timer.test.js:29` freezes at blockedAt in the Blocked column
-- `tests/unit/claim-timer.test.js:34` returns null outside the timing columns
-- `tests/unit/claim-timer.test.js:39` falls back to the first In Progress entry in columnHistory when claimedAt is missing
-- `tests/unit/claim-timer.test.js:52` returns null when neither claimedAt nor an In Progress history entry exists
-- `tests/unit/claim-timer.test.js:58` returns null when the claim start cannot be derived
-- `tests/unit/claim-timer.test.js:63` returns null for negative durations
-- `tests/unit/claim-timer.test.js:71` treats an unparseable claimedAt as missing and falls back to history
-- `tests/unit/claim-timer.test.js:80` returns null for invalid end timestamps
-- `tests/unit/claim-timer.test.js:95` accepts a millisecond timestamp for now
-- `tests/unit/claim-timer.test.js:100` claimTiming reports live windows for In Progress and frozen windows otherwise
-
 ### Column Order
 
 - Path: `tests/unit/column-order.test.js`
@@ -208,18 +194,6 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/unit/constants.test.js:28` DEFAULT_COLUMN_COLOR is a valid hex color
 - `tests/unit/constants.test.js:32` MAX_LABEL_NAME_LENGTH is a positive integer
 - `tests/unit/constants.test.js:37` open boards modal shortcut defaults to Ctrl+B
-
-### Dateutils
-
-- Path: `tests/unit/dateutils.test.js`
-- Type: Unit
-- Test count: 5
-
-- `tests/unit/dateutils.test.js:6` formatElapsedDuration returns empty string for invalid or negative values
-- `tests/unit/dateutils.test.js:13` formatElapsedDuration shows under a minute
-- `tests/unit/dateutils.test.js:18` formatElapsedDuration shows whole minutes under an hour
-- `tests/unit/dateutils.test.js:24` formatElapsedDuration shows hours with zero-padded minutes
-- `tests/unit/dateutils.test.js:30` formatElapsedDuration shows days with remaining hours
 
 ### Backfill
 
@@ -851,18 +825,6 @@ These lists compare source/spec filenames against test file names and test title
 - `tests/dom/skills-modal.test.js:211` skills modal > blur cancels an armed delete
 - `tests/dom/skills-modal.test.js:226` skills modal > Escape closes the modal
 - `tests/dom/skills-modal.test.js:235` skills modal > re-renders when DATA_CHANGED is emitted
-
-### Task Card Claim Timer
-
-- Path: `tests/dom/task-card-claim-timer.test.js`
-- Type: DOM Integration
-- Test count: 5
-
-- `tests/dom/task-card-claim-timer.test.js:63` the card renders no claimant or elapsed chip for a claimed in-progress task
-- `tests/dom/task-card-claim-timer.test.js:71` the shared tick refreshes the elapsed text of any claim chip in the DOM
-- `tests/dom/task-card-claim-timer.test.js:83` the tick skips hidden documents and catches up when visible again
-- `tests/dom/task-card-claim-timer.test.js:96` starting the ticker twice does not leave extra intervals behind
-- `tests/dom/task-card-claim-timer.test.js:110` a frozen end time is left alone by the tick
 
 ### Task Card Delete
 
