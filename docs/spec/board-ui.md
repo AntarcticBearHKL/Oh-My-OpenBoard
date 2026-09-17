@@ -36,7 +36,7 @@
 - The last remaining board cannot be deleted
 - On mobile, the board selector has a larger touch target and the controls menu stays open while the selector is used
 - Clicking a sidebar group's name or its chevron collapses or expands that group; double-clicking the name renames the group inline
-- A group is named by the user and can be renamed; an iteration is a board inside a group, numbered in order (Iteration 1, Iteration 2, …) and never named by hand
+- A group is named by the user and can be renamed from the sidebar or by the agent's `rename_group` tool; an iteration is a board inside a group, numbered in order (Iteration 1, Iteration 2, …) and never named by hand
 - A group is the only home for iterations: a board can never live outside a group
 - A group's leading run of iterations whose tasks are all in Finished collapses behind a single control
 

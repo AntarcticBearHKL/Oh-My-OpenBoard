@@ -22,7 +22,6 @@ import {
   iterationLabel,
   listGroups,
   nextIterationName,
-  pruneBoardGroups,
   readBoardGroupMap,
   renameGroup,
   toggleGroupCollapsed,
@@ -156,6 +155,7 @@ export function initializeBoardSidebar() {
 
     const deleteBtn = createArmedDeleteButton('board-list-delete', `Delete iteration ${label}`, () => {
       if (deleteBoardById(board.id)) {
+        assignBoardToGroup(board.id, null);
         emit(DATA_CHANGED);
       } else {
         render();
@@ -330,7 +330,6 @@ export function initializeBoardSidebar() {
       const activeId = getActiveBoardId();
       const boardIds = boards.map((board) => board.id);
 
-      pruneBoardGroups(boardIds);
       ensureBoardsGrouped(boardIds);
 
       const groups = listGroups();

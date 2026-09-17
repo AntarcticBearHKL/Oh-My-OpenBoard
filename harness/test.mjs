@@ -17,7 +17,11 @@ const { registerTools } = await import('./src/mcp-tools.mjs');
 store.initStore();
 
 const tools = new Map();
-registerTools({ registerTool: (name, config, handler) => { tools.set(name, { config, handler }); } });
+const groupsBroadcasts = [];
+registerTools(
+  { registerTool: (name, config, handler) => { tools.set(name, { config, handler }); } },
+  { broadcastGroups: () => groupsBroadcasts.push(Date.now()) }
+);
 const callTool = (name, args = {}) => tools.get(name).handler(args);
 const toolValue = async (name, args) => JSON.parse((await callTool(name, args)).content[0].text);
 
@@ -354,6 +358,37 @@ test('a group keeps the name it was given', async () => {
   assert.equal(group.name, 'Frontend Page');
   assert.equal(store.getGroups().find((entry) => entry.id === group.id).name, 'Frontend Page');
   assert.equal(store.getGroups().some((entry) => /^Iterations \d+$/.test(entry.name)), false, 'no group is auto-named');
+});
+
+test('rename_group renames a group, refuses unknown groups, and never renames an iteration', async () => {
+  assert.deepEqual(Object.keys(tools.get('rename_group').config.inputSchema), ['groupId', 'name']);
+
+  const group = await toolValue('create_group', { name: 'Draft' });
+  const renamed = await toolValue('rename_group', { groupId: group.id, name: '  Q3 Delivery  ' });
+
+  assert.equal(renamed.name, 'Q3 Delivery');
+  assert.equal(store.getGroups().find((entry) => entry.id === group.id).name, 'Q3 Delivery');
+
+  const listed = (await toolValue('list_groups', {})).groups.find((entry) => entry.id === group.id);
+  assert.equal(listed.name, 'Q3 Delivery', 'the renamed group keeps the name it was given');
+  assert.equal(groupsBroadcasts.length, 1, 'the rename is published the way the client publishes it');
+
+  await assert.rejects(
+    () => callTool('rename_group', { groupId: 'no-such-group', name: 'Nope' }),
+    /Group not found/
+  );
+  await assert.rejects(
+    () => callTool('rename_group', { groupId: group.id, name: '   ' }),
+    /name is required/
+  );
+  assert.equal(store.getGroups().find((entry) => entry.id === group.id).name, 'Q3 Delivery', 'a refused rename changed nothing');
+
+  const board = await toolValue('create_board', { groupId: group.id });
+  await assert.rejects(
+    () => callTool('rename_board', { boardId: board.id, name: 'Renamed by hand' }),
+    /numbered by their position in a group and cannot be renamed/
+  );
+  assert.equal(store.getBoard(board.id).name, 'Iteration 1', 'the iteration still cannot be renamed');
 });
 
 test('an iteration is numbered from its position in its group', async () => {

@@ -587,7 +587,7 @@ export const DEFAULT_SKILLS = [
     name: '迭代规划',
     description: '如何用 group／迭代组织工作，以及如何读懂周期时间。',
     content: [
-      'group 是人命名的容器，可以改名，里面装着一个或多个迭代。',
+      'group 是人命名的容器，可以改名（人在界面上改名，agent 用 rename_group），里面装着一个或多个迭代。',
       '迭代（iteration）是 group 里的一块看板，按顺序编号（Iteration 1、Iteration 2……），不能手工命名。',
       '一块看板永远属于某个 group，不会独立存在。',
       'group 开头连续若干个「任务全部在 Finished」的迭代，可以用一个控件折叠起来。',

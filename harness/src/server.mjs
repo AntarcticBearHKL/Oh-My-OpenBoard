@@ -154,7 +154,7 @@ async function handleMcp(req, res) {
       });
       transport.onclose = () => { if (transport.sessionId) transports.delete(transport.sessionId); };
       const server = new McpServer({ name: 'openagile-harness', version: VERSION });
-      registerTools(server);
+      registerTools(server, { broadcastGroups });
       await server.connect(transport);
       await transport.handleRequest(req, res, parsedBody);
       return;

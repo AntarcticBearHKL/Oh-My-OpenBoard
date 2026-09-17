@@ -189,7 +189,7 @@ function computeMetrics(boardId) {
   };
 }
 
-export function registerTools(server) {
+export function registerTools(server, { broadcastGroups = () => {} } = {}) {
   // ── Boards / reads ──────────────────────────────────────────────────────────
 
   server.registerTool('list_boards', {
@@ -237,6 +237,24 @@ export function registerTools(server) {
     const group = { id: randomUUID(), name: trimmed, order, collapsed: false };
     setGroups([...groups, group]);
     return ok(group);
+  });
+
+  server.registerTool('rename_group', {
+    title: 'Rename group',
+    description: 'Rename a group: a group is the user-named container that holds iterations. The numbered iterations inside it (Iteration 1, Iteration 2, ...) cannot be renamed.',
+    inputSchema: {
+      groupId: z.string(),
+      name: z.string().describe('New group name, as given by the user')
+    }
+  }, async ({ groupId, name }) => {
+    const trimmed = typeof name === 'string' ? name.trim() : '';
+    if (!trimmed) throw new Error('name is required');
+    const groups = getGroups();
+    if (!groups.some((group) => group.id === groupId)) throw new Error(`Group not found: ${groupId}`);
+    const next = groups.map((group) => (group.id === groupId ? { ...group, name: trimmed } : group));
+    setGroups(next);
+    broadcastGroups();
+    return ok(next.find((group) => group.id === groupId));
   });
 
   server.registerTool('delete_group', {

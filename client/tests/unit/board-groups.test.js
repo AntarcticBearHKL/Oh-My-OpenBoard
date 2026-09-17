@@ -1,8 +1,10 @@
-import { beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { resetLocalStorage } from './setup.js';
+import { DATA_CHANGED, on } from '../../src/modules/events.js';
 import {
   BOARD_GROUP_KEY,
   GROUPS_KEY,
+  adoptGroupsState,
   assignBoardToGroup,
   createGroup,
   deleteGroup,
@@ -23,6 +25,20 @@ import {
 beforeEach(() => {
   resetLocalStorage();
 });
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+function countPushes() {
+  const fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({}) }));
+  vi.stubGlobal('fetch', fetchMock);
+  return () => fetchMock.mock.calls.filter(([, opts]) => opts?.method === 'POST');
+}
+
+function nextTurn() {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
 
 describe('group store', () => {
   test('starts with no groups', () => {
@@ -238,5 +254,80 @@ describe('board → group mapping', () => {
     expect(pruneBoardGroups(['board-1'])).toBe(true);
     expect(readBoardGroupMap()).toEqual({ 'board-1': group.id });
     expect(pruneBoardGroups(['board-1'])).toBe(false);
+  });
+});
+
+describe('group sync guards', () => {
+  test('a burst of writes in one turn is pushed once', async () => {
+    const pushes = countPushes();
+
+    const group = createGroup('Delivery');
+    assignBoardToGroup('board-1', group.id);
+    assignBoardToGroup('board-2', group.id);
+    await nextTurn();
+
+    expect(pushes()).toHaveLength(1);
+    expect(JSON.parse(pushes()[0][1].body).boardGroups).toEqual({
+      'board-1': group.id,
+      'board-2': group.id
+    });
+  });
+
+  test('renaming a group to the name it already has does not push', async () => {
+    const group = createGroup('Delivery');
+    const pushes = countPushes();
+    await nextTurn();
+    expect(pushes()).toHaveLength(1);
+
+    expect(renameGroup(group.id, 'Delivery')).toBe(true);
+    await nextTurn();
+
+    expect(pushes()).toHaveLength(1);
+  });
+
+  test('the server echo of a push is not pushed back', async () => {
+    const pushes = countPushes();
+
+    createGroup('Delivery');
+    await nextTurn();
+    expect(pushes()).toHaveLength(1);
+
+    const echoed = JSON.parse(pushes()[0][1].body);
+    expect(adoptGroupsState(echoed)).toBe(false);
+    await nextTurn();
+
+    expect(pushes()).toHaveLength(1);
+  });
+
+  test('adopting the state that is already stored writes nothing and emits nothing', async () => {
+    const group = createGroup('Delivery');
+    assignBoardToGroup('board-1', group.id);
+    const pushes = countPushes();
+    await nextTurn();
+    expect(pushes()).toHaveLength(1);
+
+    const changed = vi.fn();
+    on(DATA_CHANGED, changed);
+
+    expect(adoptGroupsState({ groups: listGroups(), boardGroups: readBoardGroupMap() })).toBe(false);
+    expect(changed).not.toHaveBeenCalled();
+    expect(pushes()).toHaveLength(1);
+  });
+
+  test('a state from another client is adopted once and stays adopted', async () => {
+    const group = createGroup('Delivery');
+    assignBoardToGroup('board-1', group.id);
+    const pushes = countPushes();
+    await nextTurn();
+
+    expect(adoptGroupsState({
+      groups: listGroups(),
+      boardGroups: { ...readBoardGroupMap(), 'board-9': group.id }
+    })).toBe(true);
+    expect(readBoardGroupMap()['board-9']).toBe(group.id);
+
+    await nextTurn();
+    expect(pushes()).toHaveLength(1);
+    expect(readBoardGroupMap()['board-9']).toBe(group.id);
   });
 });

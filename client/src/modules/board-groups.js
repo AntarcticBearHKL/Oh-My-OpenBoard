@@ -30,13 +30,42 @@ export function iterationLabel(index) {
   return `${ITERATION_NAME_PREFIX} ${index + 1}`;
 }
 
+function groupSignature(group) {
+  return [group.id, group.name, group.order, group.collapsed === true, group.prefixCollapsed === true];
+}
+
+function stateSignature(groups, boardGroups) {
+  const groupKeys = (Array.isArray(groups) ? groups : [])
+    .slice()
+    .sort((a, b) => (a.order - b.order) || String(a.id).localeCompare(String(b.id)))
+    .map(groupSignature);
+  const mapKeys = Object.keys(boardGroups || {})
+    .sort()
+    .map((boardId) => [boardId, boardGroups[boardId]]);
+  return JSON.stringify([groupKeys, mapKeys]);
+}
+
+let syncedSignature = null;
+let pushQueued = false;
+
+// The server echoes every POST /api/groups back over SSE: the signature keeps
+// that echo from being adopted as a local change and pushed again.
 function pushToServer() {
-  const body = { groups: listGroups(), boardGroups: readBoardGroupMap() };
-  fetch(GROUPS_API, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body)
-  }).catch(() => {});
+  if (pushQueued) return;
+  pushQueued = true;
+  queueMicrotask(() => {
+    pushQueued = false;
+    const groups = listGroups();
+    const boardGroups = readBoardGroupMap();
+    const signature = stateSignature(groups, boardGroups);
+    if (signature === syncedSignature) return;
+    syncedSignature = signature;
+    fetch(GROUPS_API, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ groups, boardGroups })
+    }).catch(() => {});
+  });
 }
 
 export function listGroups() {
@@ -140,8 +169,7 @@ export function deleteGroup(groupId) {
   return true;
 }
 
-export function readBoardGroupMap() {
-  const raw = readJson(BOARD_GROUP_KEY, {});
+function normalizeBoardGroupMap(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
 
   const map = {};
@@ -151,6 +179,10 @@ export function readBoardGroupMap() {
     }
   }
   return map;
+}
+
+export function readBoardGroupMap() {
+  return normalizeBoardGroupMap(readJson(BOARD_GROUP_KEY, {}));
 }
 
 export function getGroupIdForBoard(boardId) {
@@ -221,13 +253,25 @@ export function ensureBoardsGrouped(boardIds) {
 }
 
 export function adoptGroupsState(state) {
-  if (!state || typeof state !== 'object') return;
-  if (Array.isArray(state.groups)) {
-    writeJson(GROUPS_KEY, state.groups.map((group, index) => normalizeGroup(group, index)).filter(Boolean));
+  if (!state || typeof state !== 'object') return false;
+  const hasGroups = Array.isArray(state.groups);
+  const incomingMap = state.boardGroups && typeof state.boardGroups === 'object' && !Array.isArray(state.boardGroups);
+  if (!hasGroups && !incomingMap) return false;
+
+  const groups = hasGroups
+    ? state.groups.map((group, index) => normalizeGroup(group, index)).filter(Boolean)
+    : listGroups();
+  const boardGroups = incomingMap ? normalizeBoardGroupMap(state.boardGroups) : readBoardGroupMap();
+  const signature = stateSignature(groups, boardGroups);
+  if (signature === stateSignature(listGroups(), readBoardGroupMap())) {
+    syncedSignature = signature;
+    return false;
   }
-  if (state.boardGroups && typeof state.boardGroups === 'object' && !Array.isArray(state.boardGroups)) {
-    writeJson(BOARD_GROUP_KEY, state.boardGroups);
-  }
+
+  if (hasGroups) writeJson(GROUPS_KEY, groups);
+  if (incomingMap) writeJson(BOARD_GROUP_KEY, boardGroups);
+  syncedSignature = signature;
+  return true;
 }
 
 export function initGroupSync() {
@@ -239,9 +283,8 @@ export function initGroupSync() {
     .then((state) => {
       if (!state) return;
       if (Array.isArray(state.groups) && state.groups.length > 0) {
-        adoptGroupsState(state);
+        if (adoptGroupsState(state)) emit(DATA_CHANGED, { affectsBoard: false });
         markMigrated();
-        emit(DATA_CHANGED, { affectsBoard: false });
       } else if (!isMigrated() && listGroups().length > 0) {
         pushToServer();
         markMigrated();
@@ -250,7 +293,7 @@ export function initGroupSync() {
     .catch(() => {});
 
   window.addEventListener('openagile:groups-changed', (event) => {
-    adoptGroupsState(event.detail);
+    if (!adoptGroupsState(event.detail)) return;
     emit(DATA_CHANGED, { affectsBoard: false });
   });
 }
