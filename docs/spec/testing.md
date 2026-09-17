@@ -63,5 +63,6 @@ expect(loadTasks().some(t => t.title === 'Persisted task')).toBe(true);
 - Finished-column virtualization behavior
 - Swim lane rendering, settings persistence, and lane-aware moves
 - Claim timing and the stale-claim watchdog
+- The browser event bridge: the digest gate on a move into In Progress and on client digests/claims, and the local/same-origin request checks
 - IDB storage: cross-session persistence, migration, and data integrity
 - Event sourcing: HLC, reducer, outbound queue, realtime/catch-up, snapshots, and the sync indicator

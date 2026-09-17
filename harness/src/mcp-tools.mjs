@@ -22,6 +22,7 @@ import {
   getSkills,
   getSnapshot,
   getTasks,
+  pendingNotesMessage,
   resolveGroup,
   setBoardGroupMap,
   setGroups,
@@ -81,12 +82,8 @@ function findTaskOrThrow(taskId) {
 }
 
 function assertNotesDigested(task) {
-  const keyPoints = Array.isArray(task?.keyPoints) ? task.keyPoints : [];
-  const pending = keyPoints.filter((point) => !point?.digestedAt);
-  if (task?.needsDigest !== true && pending.length === 0) return;
-  throw new Error(
-    `Task ${task.key || task.id} still has notes from the human that the agent has not digested; run digest_key_points first to fold them into the description before starting.`
-  );
+  const message = pendingNotesMessage(task);
+  if (message) throw new Error(message);
 }
 
 function withoutRemovedFields(task) {

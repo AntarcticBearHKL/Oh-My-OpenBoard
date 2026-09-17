@@ -16,8 +16,9 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 
-import { DEFAULT_BOARD_ID, appendEvents, getBoards, getEventsSince, getGroupsState, getSeq, getSkillsState, getSnapshot, getStats, initStore, flushStore, setBoardGroupMap, setGroups, setSkills, sweepStaleClaims } from './store.mjs';
+import { DEFAULT_BOARD_ID, getBoards, getEventsSince, getGroupsState, getSeq, getSkillsState, getSnapshot, getStats, initStore, flushStore, setBoardGroupMap, setGroups, setSkills, sweepStaleClaims } from './store.mjs';
 import { registerTools } from './mcp-tools.mjs';
+import { appendBridgeEvents, bridgeRequestDenial } from './bridge.mjs';
 
 process.on('uncaughtException', (err) => console.error('[harness] uncaught', err));
 process.on('unhandledRejection', (err) => console.error('[harness] unhandled rejection', err));
@@ -293,10 +294,22 @@ async function handleRequest(req, res) {
     }
 
     if (path === '/api/events' && req.method === 'POST') {
-      const body = await readJsonBody(req);
-      const appended = appendEvents(body);
-      broadcast(appended, url.searchParams.get('clientId') || '');
-      sendJson(res, 200, { ok: true, appended: appended.length, seq: getSeq() });
+      const denial = bridgeRequestDenial(req);
+      if (denial) { sendJson(res, 403, { ok: false, error: denial }); return; }
+      let body;
+      try {
+        body = await readJsonBody(req);
+      } catch {
+        sendJson(res, 400, { ok: false, error: 'Invalid JSON body' });
+        return;
+      }
+      try {
+        const appended = appendBridgeEvents(body);
+        broadcast(appended, url.searchParams.get('clientId') || '');
+        sendJson(res, 200, { ok: true, appended: appended.length, seq: getSeq() });
+      } catch (err) {
+        sendJson(res, 422, { ok: false, error: err?.message || 'Event refused' });
+      }
       return;
     }
 

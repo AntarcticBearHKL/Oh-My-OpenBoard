@@ -46,7 +46,7 @@
 
 - `title` is the only required field; a task needs only a title and a description to be created
 - `keyPoints` are the notes to the agent (the human's input) and the agent may only read them: each entry is `{ id, text, at }`, `text` is required, and there is no done flag. `digestedAt` is stamped by `digest_key_points` once the agent folds the note into the description
-- `needsDigest` is set when the human appends a note while the task is in Backlog or Human In The Loop, and cleared by `digest_key_points`; it means the agent must fold the notes into the description before starting work
+- `needsDigest` is set when the human appends a note while the task is in Backlog or Human In The Loop, and cleared by `digest_key_points`; it means the agent must fold the notes into the description before starting work. Only `digest_key_points` clears it or stamps `digestedAt` — the browser event bridge refuses a client event that would do either while a note is pending
 - `isRework` is set when the human appends a note to a Finished task; the task returns to Backlog, the move is emitted like any other move, and the agent must digest the new notes before redoing the work
 - Legacy `acceptanceCriteria` arrays are read as notes to the agent: `text` is kept and the old `done` flags are dropped
 - `assignee` is who the task is assigned to; `claim_task` sets it when empty, and `claimedBy`/`claimedAt` record the claim (releasing keeps `claimedAt` so the claim duration stays derivable)

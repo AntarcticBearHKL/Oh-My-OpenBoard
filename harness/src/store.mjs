@@ -31,7 +31,7 @@ export const STABLE_COLUMNS = [
   { id: '00000000-0000-4000-8000-000000000033', name: 'Finished', color: '#16a34a', order: 5, role: 'done' }
 ];
 
-const IN_PROGRESS_COLUMN_ID = STABLE_COLUMNS[2].id;
+export const IN_PROGRESS_COLUMN_ID = STABLE_COLUMNS[2].id;
 const BLOCKED_COLUMN_ID = STABLE_COLUMNS[3].id;
 
 export const STABLE_LABELS = [
@@ -410,6 +410,17 @@ export function sweepStaleClaims(now = Date.now()) {
     moved.push(taskId);
   }
   return moved;
+}
+
+// Digest gate shared by the MCP tools and the browser bridge: both paths must
+// refuse the same states, so the predicate and its message live here.
+export function pendingNotes(task) {
+  return (Array.isArray(task?.keyPoints) ? task.keyPoints : []).filter((point) => !point?.digestedAt);
+}
+
+export function pendingNotesMessage(task) {
+  if (task?.needsDigest !== true && pendingNotes(task).length === 0) return null;
+  return `Task ${task.key || task.id} still has notes from the human that the agent has not digested; run digest_key_points first to fold them into the description before starting.`;
 }
 
 export function digestKeyPoints(taskId, pointIds) {

@@ -13,6 +13,7 @@ process.env.OPENAGILE_DATA_DIR = dataDir;
 
 const store = await import('./src/store.mjs');
 const { registerTools } = await import('./src/mcp-tools.mjs');
+const { appendBridgeEvents, bridgeRequestDenial } = await import('./src/bridge.mjs');
 
 store.initStore();
 
@@ -45,6 +46,25 @@ function makeTask(boardId, id, fields) {
   const event = makeEvent('task.created', boardId, id);
   event.payload = { task: { id, ...fields } };
   return event;
+}
+
+function makeBridgeEvent(type, boardId, entityId, payload) {
+  const event = makeEvent(type, boardId, entityId);
+  event.actor = { type: 'human', id: null };
+  event.payload = payload;
+  return event;
+}
+
+function bridgeMove(boardId, taskId, column) {
+  return makeBridgeEvent('task.moved', boardId, taskId, {
+    from_column: null,
+    to_column: column,
+    order: store.getTasks(boardId).map((task) => ({
+      id: task.id,
+      column: task.id === taskId ? column : task.column,
+      order: task.order ?? 1
+    }))
+  });
 }
 
 const CLAIM_STALE_MS = 5 * 60 * 1000;
@@ -521,6 +541,179 @@ test('comments and relationships are gone from the tools and ignored on read', a
 
   const created = await toolValue('create_task', { title: 'No comments', comments: [{ id: 'injected' }] });
   assert.equal('comments' in created.task, false, 'create_task writes no comments');
+});
+
+test('the browser bridge refuses a forged move into In Progress while notes are undigested', () => {
+  store.appendEvents([makeTask(BOARD_A, 'task-bridge-forged', {
+    title: 'Bridge guarded',
+    column: FIXED_COLUMN_IDS[0],
+    order: 1,
+    keyPoints: [{ id: 'kp-bridge', text: 'Fold me into the description first', at: minutesAgo(0) }],
+    needsDigest: true
+  })]);
+  const seqBefore = store.getSeq();
+
+  assert.throws(
+    () => appendBridgeEvents([bridgeMove(BOARD_A, 'task-bridge-forged', FIXED_COLUMN_IDS[2])]),
+    /digest_key_points/
+  );
+  assert.equal(store.findTask('task-bridge-forged').task.column, FIXED_COLUMN_IDS[0], 'a refused move is not applied');
+  assert.equal(store.getSeq(), seqBefore, 'a refused move is not appended');
+});
+
+test('the forged bridge move lands once the agent has digested the notes', () => {
+  store.digestKeyPoints('task-bridge-forged');
+
+  const accepted = appendBridgeEvents([bridgeMove(BOARD_A, 'task-bridge-forged', FIXED_COLUMN_IDS[2])]);
+
+  assert.equal(accepted.length, 1, 'the move is accepted after digest_key_points');
+  assert.equal(store.findTask('task-bridge-forged').task.column, FIXED_COLUMN_IDS[2]);
+});
+
+test('the bridge still accepts the events the browser legitimately publishes', () => {
+  const created = makeBridgeEvent('task.created', BOARD_A, 'task-bridge-hil', {
+    task: {
+      id: 'task-bridge-hil',
+      title: 'Created in the dialog',
+      column: FIXED_COLUMN_IDS[1],
+      order: 1,
+      keyPoints: [],
+      needsDigest: false,
+      changeDate: minutesAgo(0)
+    }
+  });
+  assert.equal(appendBridgeEvents([created]).length, 1, 'a hand-created Human In The Loop task lands');
+
+  store.appendEvents([makeTask(BOARD_A, 'task-bridge-rework', {
+    title: 'Finished work',
+    column: FIXED_COLUMN_IDS[4],
+    order: 1,
+    keyPoints: [{ id: 'kp-done', text: 'Already folded', at: minutesAgo(60 * 1000), digestedAt: minutesAgo(50 * 1000) }],
+    needsDigest: false,
+    changeDate: minutesAgo(0)
+  })]);
+
+  const appendedNote = makeBridgeEvent('task.updated', BOARD_A, 'task-bridge-rework', {
+    fields: {
+      keyPoints: [
+        { id: 'kp-done', text: 'Already folded', at: minutesAgo(60 * 1000), digestedAt: minutesAgo(50 * 1000) },
+        { id: 'kp-new', text: 'New note from the human', at: minutesAgo(0) }
+      ],
+      needsDigest: true,
+      isRework: true
+    }
+  });
+  assert.equal(appendBridgeEvents([appendedNote]).length, 1, 'appending a note from the dialog lands');
+
+  assert.equal(
+    appendBridgeEvents([bridgeMove(BOARD_A, 'task-bridge-rework', FIXED_COLUMN_IDS[0])]).length,
+    1,
+    'the internal rework move back to Backlog lands'
+  );
+
+  const reworked = store.findTask('task-bridge-rework').task;
+  assert.equal(reworked.column, FIXED_COLUMN_IDS[0]);
+  assert.equal(reworked.isRework, true);
+  assert.equal(reworked.needsDigest, true);
+  assert.equal(reworked.keyPoints[1].digestedAt, undefined, 'the new note stays undigested');
+  assert.ok(reworked.keyPoints[0].digestedAt, 'the already digested note keeps its stamp');
+});
+
+test('the browser bridge refuses events that would bypass the digest workflow', () => {
+  store.appendEvents([makeTask(BOARD_A, 'task-bridge-bypass', {
+    title: 'Bypass attempts',
+    column: FIXED_COLUMN_IDS[0],
+    order: 1,
+    keyPoints: [{ id: 'kp-open', text: 'Still open', at: minutesAgo(0) }],
+    needsDigest: true
+  })]);
+
+  assert.throws(
+    () => appendBridgeEvents([makeBridgeEvent('task.updated', BOARD_A, 'task-bridge-bypass', {
+      fields: { keyPoints: [{ id: 'kp-open', text: 'Still open', at: minutesAgo(0), digestedAt: minutesAgo(0) }] }
+    })]),
+    /digest_key_points/,
+    'stamping an undigested note from the browser is refused'
+  );
+
+  assert.throws(
+    () => appendBridgeEvents([makeBridgeEvent('task.updated', BOARD_A, 'task-bridge-bypass', {
+      fields: { needsDigest: false }
+    })]),
+    /digest_key_points/,
+    'clearing the flag while a note is still pending is refused'
+  );
+
+  assert.throws(
+    () => appendBridgeEvents([makeBridgeEvent('task.updated', BOARD_A, 'task-bridge-bypass', {
+      fields: { column: FIXED_COLUMN_IDS[2] }
+    })]),
+    /task\.moved/,
+    'writing the column through task.updated is refused'
+  );
+
+  assert.throws(
+    () => appendBridgeEvents([makeBridgeEvent('task.updated', BOARD_A, 'task-bridge-bypass', {
+      fields: { claimedBy: 'forged-agent', claimedAt: minutesAgo(0) }
+    })]),
+    /claim_task/,
+    'claiming from the browser is refused'
+  );
+
+  const task = store.findTask('task-bridge-bypass').task;
+  assert.equal(task.needsDigest, true, 'the flag is untouched');
+  assert.equal(task.column, FIXED_COLUMN_IDS[0], 'the column is untouched');
+  assert.equal(task.claimedBy, undefined, 'no claim was written');
+  assert.equal(task.keyPoints[0].digestedAt, undefined, 'no note was stamped');
+});
+
+test('the bridge refuses requests that are not local and same-origin', () => {
+  const boardPage = {
+    socket: { remoteAddress: '127.0.0.1' },
+    headers: { host: '127.0.0.1:8787', origin: 'http://127.0.0.1:8787', 'sec-fetch-site': 'same-origin' }
+  };
+  assert.equal(bridgeRequestDenial(boardPage), null, 'the board page itself is allowed');
+  assert.equal(
+    bridgeRequestDenial({ socket: { remoteAddress: '127.0.0.1' }, headers: { host: 'localhost:8787' } }),
+    null,
+    'a local process with a loopback Host and no Origin still passes'
+  );
+
+  assert.match(
+    bridgeRequestDenial({ socket: { remoteAddress: '192.168.1.10' }, headers: { host: '127.0.0.1:8787' } }),
+    /local machine/
+  );
+  assert.match(
+    bridgeRequestDenial({ socket: { remoteAddress: '127.0.0.1' }, headers: { host: 'evil.example' } }),
+    /loopback Host/
+  );
+  assert.match(
+    bridgeRequestDenial({ socket: { remoteAddress: '127.0.0.1' }, headers: { host: '127.0.0.1:8787', origin: 'http://evil.example' } }),
+    /same-origin/
+  );
+  assert.match(
+    bridgeRequestDenial({ socket: { remoteAddress: '127.0.0.1' }, headers: { host: '127.0.0.1:8787', 'sec-fetch-site': 'cross-site' } }),
+    /cross-site/
+  );
+});
+
+test('the bridge lets the human remove their last note and clear the stale flag', () => {
+  store.appendEvents([makeTask(BOARD_A, 'task-bridge-remove', {
+    title: 'Note removal',
+    column: FIXED_COLUMN_IDS[1],
+    order: 1,
+    keyPoints: [{ id: 'kp-remove', text: 'Take this back', at: minutesAgo(0) }],
+    needsDigest: true
+  })]);
+
+  const removed = makeBridgeEvent('task.updated', BOARD_A, 'task-bridge-remove', {
+    fields: { keyPoints: [], needsDigest: false }
+  });
+  assert.equal(appendBridgeEvents([removed]).length, 1, 'removing the only note lands');
+
+  const task = store.findTask('task-bridge-remove').task;
+  assert.deepEqual(task.keyPoints, []);
+  assert.equal(task.needsDigest, false, 'nothing is left to digest, so the flag is no longer meaningful');
 });
 
 after(() => {
