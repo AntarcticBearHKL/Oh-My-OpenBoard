@@ -200,7 +200,6 @@ all subscribe.
 | `event-sourcing/emitter.js` | `emitDomainEvent()` / `scheduleDomainEvent()` — stamp (UUID + HLC), persist, emit `EVENT_EMITTED` |
 | `event-sourcing/dispatcher.js` | `reduceEventAndNotify()` — runs the reducer and signals re-render |
 | `event-sourcing/{hlc,sync-queue,realtime,snapshot,snapshot-sync,sync-indicator}.js` | Sync layer — see §4 |
-| `dateutils.js` | Date/time formatting utilities (timestamps, elapsed durations) |
 | `modals.js` | Modal coordination and shared modal state |
 | `dialog.js` | `alertDialog` / `confirmDialog` helpers |
 | `validation.js` | Field validators (column name, task, etc.) |
@@ -235,12 +234,6 @@ rebuild) for swimlane mode or a structural column-set change.
 ```
 drop onEnd → beginDragReconcile() → updateTaskPositionsFromDrop() → …DATA_CHANGED…
            → reconcileBoard() [patch in place]  → endDragReconcile()
-```
-
-### Task Card Meta
-```
-claimTiming → formatElapsedDuration → buildTaskMeta
-  → createTaskElement
 ```
 
 ### Column Management
@@ -352,5 +345,5 @@ event stream.
 | API mocking | MSW | `client/tests/mocks/*.js` |
 
 Key coverage areas: storage CRUD, UUID migration, swimlane utilities, import/export preflight,
-claim timing, notes to the agent (`keyPoints`), validation, normalization, and the event-sourcing
+notes to the agent (`keyPoints`), validation, normalization, and the event-sourcing
 layer (HLC, reducer, outbound queue, realtime/catch-up, snapshots, sync indicator).
