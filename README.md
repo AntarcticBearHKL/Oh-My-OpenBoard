@@ -1,254 +1,212 @@
-# OpenAgile: The Personal + AI Agent Kanban Board
+# OpenAgile
 
-```js
-openagile == "Kanban" + "Nirvana" # smooth flow
-```
+**English** | [中文](README.zh-CN.md)
 
-[![GitHub stars](https://img.shields.io/github/stars/mdiener21/kanvana.svg?style=social)](https://github.com/mdiener21/kanvana/stargazers)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Now-blue)](https://kanvana.com)
-[![Version](https://img.shields.io/badge/version-1.7.1-brightgreen)](CHANGELOG.md)
+A local-first kanban board for supervising AI agents. The agent proposes, claims, moves and finishes the work; you read the board, add notes and make the calls.
 
-> **Transform your productivity with a sleek, local-first Kanban board.** No servers, no tracking—just pure efficiency in your browser.
+## What this is
 
-A beautiful, modern-designed personal + AI-Agent Kanban board that runs entirely in your browser. No backend, no cloud, no data tracking. Everything stays local with browser IndexedDB persistence. Perfect for personal task management, work tracking, and staying organized.
+OpenAgile is a kanban board whose job is to let one person supervise AI agents. The board runs entirely in the browser and keeps its data in IndexedDB. No server is required for it.
 
-**Building with AI agents?** Try the new **AI Agent Ops Starter** board template to track 2–5 agents in parallel, review handoffs, and improve prompts in one local-first workspace. If that sounds useful, give the repo a ⭐ and help more agent builders discover it.
+Agents do not need a browser. They talk to the optional harness in `harness/`, a small Node process that serves the built client, speaks MCP, and keeps the same event log the browser projects. When both are connected, an agent moving a card shows up on the board, and a board edit reaches the agent.
 
-## 🚀 Live Demo
+This is built for a person running one or a few agents who wants to see, at a glance, what each one picked up, what is stuck, and what needs a decision.
 
-Experience it firsthand: **[Try the Live Demo](https://kanvana.com)**
+## The five columns
 
+Every board has the same five columns, in the same order.
 
-<div align="center">
-   <a href="https://kanvana.com"><img width="1462" height="895" alt="image" src="https://github.com/user-attachments/assets/0d0ade47-e931-4caa-b1ec-4e0148733d5b"></a>
-</div>
+| Column | Meaning |
+|---|---|
+| **Backlog** | Work the agent proposed and has not started. This is the agent's queue. |
+| **Human In The Loop** | The only column where a person can add a task by hand. |
+| **In Progress** | An agent is working the task. The task form is read-only for the human here. |
+| **Blocked** | Work that needs a human decision, or that is stuck on a resource conflict. |
+| **Finished** | Completed work. |
 
+The column ids, their order and the Finished role are fixed. Display names are just labels, and the column tools refuse to create, delete or reorder columns.
 
-## ✨ Key Features
+## Who owns what: the description and the notes
 
-### 📝 Notes to the Agent (New!)
+A task has two writing surfaces, and they belong to different people.
 
-Every task carries an append-only list of notes the human writes for the agent:
+- The **description** belongs to the agent. It is where the agent writes its plan and its result.
+- The **notes** belong to the person. Adding a note is how a human gives the agent input. No agent tool can add, edit or delete a note.
 
-- **The description belongs to the agent**: it is the agent's full write-up and reply surface
-- **The notes list belongs to the human**: appending a note sets `needsDigest`
-- **The agent folds each note into the description** before starting work, then stamps it digested
-- **A note added to a finished task** sends it back to Backlog as rework
+The two are tied together by a small loop:
 
-Notes travel with the task and survive export/import round-trips.
+1. You append a note, while the task is not In Progress. That sets `needsDigest` on the task.
+2. The agent folds the notes into the description and calls `digest_key_points`. This stamps each note as digested and clears `needsDigest`.
+3. Only once that is done may the agent start the task.
 
-### 🏊 Swim Lanes
+`digest_key_points` is the only way to clear the flag. Nothing else stamps a note or clears it.
 
-Organize your board into horizontal swim lanes for a powerful two-dimensional view of your workflow:
+### What is refused, and when
 
-- **Flexible Grouping**: Group tasks by **label** or **label group** — each mode creates distinct swim lane rows
-- **Drag & Drop Across Lanes**: Move tasks between columns, lanes, or both in a single gesture — lane assignments update automatically
-- **Per-Cell Control**: Collapse/expand individual swim lane cells, entire rows, or workflow columns independently
-- **Agent-First Creation**: Tasks are created by agents through the API; the Human In The Loop column also accepts tasks added by hand, and the rest of the UI is for viewing, editing, and moving them
-- **Smart Finished Column**: Finished tasks are hidden in swim lanes to keep rows compact, while the Finished column remains a drag-and-drop target
-- **Sticky Headers**: Lane headers stay pinned during horizontal scrolling; workflow headers stay visible during vertical scrolling
-- **Mobile Optimized**: Responsive flex layout with sticky lane headers and snap-scrolling columns on mobile
-- **Persistent State**: All swim lane settings, collapsed states, and lane assignments are saved per board
+Two things are blocked while a task still has notes the agent has not digested:
 
-Configure swim lanes in **Settings** or use the quick-access toggle in the board controls menu. Lane order is customizable via drag-and-drop in Settings.
+- `claim_task` is refused.
+- `move_task` into **In Progress** is refused. Moving to any other column is allowed.
 
-### 🔄 Real-Time Multi-Device Sync (New!)
+The same rule holds on the browser's event bridge (`POST /api/events`), so the web page cannot do what the agent is forbidden to do. The bridge returns `422` and refuses, among other things:
 
-Edit on your phone, see it on your laptop — within seconds. OpenAgile uses **event-sourced sync**: every change is a domain event ordered by a Hybrid Logical Clock (HLC), so independent edits across devices converge without overwriting each other. Tasks, columns, and labels in your browser are projections rebuilt from the event stream.
+- a `task.moved` whose target is In Progress while the task has pending notes;
+- a `task.updated` or `task.created` that would stamp `digestedAt`, or clear `needsDigest` while a note is still pending;
+- a `task.updated` that writes `column` (a move is a `task.moved`);
+- a `task.updated` that writes `claimedBy` or `claimedAt` (a claim is `claim_task`).
 
-- **Opt-in, never required** — stays 100% local until you choose to sign in. No account, no cloud, no problem.
-- **Live across devices** — an optional PocketBase backend streams remote changes over Server-Sent Events in real time; a catch-up pull on launch means a just-opened device is immediately up to date.
-- **At-a-glance sync indicator** — the header shows `Live ●` (synced), `Syncing… (N)` (events draining), `⚠ N unsynced` (retrying), or `Offline` (no network / signed out).
-- **Offline-first, always** — the fully-offline experience is never compromised; the cloud is just an optional fan-out, not a dependency.
+A refused request appends nothing. If one event in a batch is refused, the whole batch is refused.
 
-### Core Features
+A digested note is read-only. An undigested note can still be edited or removed. Removing the last undigested note clears `needsDigest`, because there is nothing left to digest. Adding a note to a task in **Finished** sends it back to **Backlog** as rework.
 
-- **🔗 Clickable URLs in Descriptions**: Paste any `http://` or `https://` link into a task description and it becomes a clickable link on the card — opens in a new tab, no page refresh. A live link preview strip also appears below the description field in the task modal as you type, so you can click URLs without saving first
-- **⌨️ Keyboard Shortcuts**: Move quickly through board management and task editing with context-aware keybindings. `Ctrl+B` opens Manage Boards, `Escape` closes active modals and menus, arrow keys navigate board and label lists, and `Enter` activates focused choices. Shortcuts are form-safe, so typing in inputs does not accidentally trigger global actions. See the full [keyboard shortcuts table](docs/user/keybindings.md).
-- **🚀 Blazing Fast & Simple**: Lightning-quick performance with a clean, intuitive interface
-- **🔍 Powerful Search**: Find tasks instantly by title or description
-- **💻 Local-First**: Works fully offline with no backend required — your data lives in your browser and never leaves your device unless you opt into **Real-Time Multi-Device Sync**
-- **🎨 Drag & Drop**: Effortlessly move tasks and columns with optimized performance (handles 300+ tasks)
-- **🏷️ Custom Labels & Colors**: Board-level labels with groups and colors feed swim lane grouping — label text automatically switches between black and white for readability
-- **🧱 Five Fixed Columns**: **Backlog** (work the agent proposed), **Human In The Loop** (the human's hand-entry point), **In Progress** (what an agent is actively working; read-only), **Blocked** (work an agent could not finish and that needs a human decision, or work stuck on a resource conflict) and **Finished** (completed work). Ids, order and the done-column role are fixed, so the display names can change without a migration
-- **📋 Multiple Boards**: Create and manage multiple boards with board templates
-- **💾 Easy Backup**: Export/import boards as JSON via **Manage Boards** — save backups to your favorite cloud storage (OneDrive, Google Drive, Dropbox)
-- **📱 Fully Responsive**: Optimized for mobile and desktop — work from anywhere
-- **🌗 Light & Dark Theme**: Toggle between themes with automatic persistence
-- **⚡ Collapsible Swim Lane Cells**: Collapse swim lane rows and cells to save space while still accepting drag-and-drop
-- **🥇 Free & Open Source**: Always free, no hidden costs or subscriptions
+## How cards move
 
-## 📸 Screenshots
+Only the agent moves cards, through `move_task`. The board gives the human no way to change a task's column: there is no drag, no column picker, and the dialog only shows the column as context. The rule behind that is simple. The agent acts; the human decides.
 
-<div align="center">
-   <a href="https://kanvana.com"><img width="1462" height="895" alt="image" src="https://github.com/user-attachments/assets/0d0ade47-e931-4caa-b1ec-4e0148733d5b"></a>
-   <br><br>Label Manager
-   <a href="https://kanvana.com"><img width="582" height="703" alt="image" src="https://github.com/user-attachments/assets/dec3484f-2156-4163-8b87-b30d2a837c4d"></a>
-   <br><br>Control Menu
-   <a href="https://kanvana.com"><img width="273" height="556" alt="image" src="https://github.com/user-attachments/assets/2fbc476d-226a-4c5f-a1bd-a2d6713e5c01"></a>
-   <br><br>
-   <a href="https://kanvana.com"><img width="1273" height="1168" alt="image" src="https://github.com/user-attachments/assets/871a95fb-f7f7-41f8-a1b3-dc74f38ff6a2"></a>
+## Claim timing and the five-minute auto-block
 
-</div>
+`claim_task` records who claimed the task and when, and sets the assignee if it was empty.
 
+The harness sweeps every 30 seconds. A task in **In Progress** that carries a claim marker and has not changed for more than five minutes is moved to **Blocked**. The watchdog records the reason `Auto-blocked: no agent sync for over 5 minutes.` and sets `blockedAt`, which freezes the elapsed time. The move is emitted exactly like an agent move, as a `task.moved` plus a `task.updated` with the blocked fields, and it is written to `columnHistory`.
 
-## 🛡️ Data Security & Persistence
+The sweep only looks at tasks in **In Progress** that carry a claim. Unclaimed, recently updated and already-blocked tasks are left alone. Once a card leaves **In Progress**, the window no longer applies. If the agent moves the card to **Finished** or **Blocked** itself, the watchdog never sees it.
 
-Your data is stored securely in your browser's IndexedDB. It persists across sessions and page reloads. For extra safety, use the built-in export feature to save backups to your preferred cloud storage.
+## Groups and iterations
 
-If you opt into **Real-Time Multi-Device Sync**, your event stream is also synced to a PocketBase backend so the same boards stay in step across your devices. Sync is entirely optional — without an account, nothing leaves your browser.
+- A **group** is a user-named container that holds iterations. Rename it by hand in the sidebar, or through the `rename_group` MCP tool.
+- An **iteration** is a board inside a group. It is numbered from its position in the group: "Iteration 1", "Iteration 2", and so on. An iteration cannot be named by hand, and `rename_board` always refuses.
+- A board can never live outside a group. Creating a board without a group attaches it to the last group, and assigning an empty group id does the same.
+- Deleting a group deletes the iterations it holds.
+- A group's leading run of iterations whose tasks are all in **Finished** can be folded away behind one control.
+- An iteration can carry a start date, an end date and a goal, which the roadmap page shows.
 
-## 🚀 Quick Start
+## Install and run
 
-Get up and running in minutes!
+You need Node.js and npm.
 
-### For Users: Try It Now
-1. Visit the **[Live Demo](https://kanvana.com)**.
-2. Start creating boards, tasks, and labels immediately.
-3. Export your data anytime for backup.
-
-### For Developers: Host Your Own
-Build the static site from source and upload it to any web host.
-
-1. Build the client: `cd client && npm install && npm run build` — the built site is written to `client/dist/`.
-2. Upload the `client/dist/` folder to your web host (e.g., [Hetzner](https://www.hetzner.com/de/webhosting), Netlify, Vercel).
-3. Done! Your OpenAgile achieved and the Kanban board is live.
-
-## 🛠️ Development
-
-### Prerequisites
-- Node.js (v18 or higher)
-- npm or yarn
-
-### Installation
-1. Clone the repo:
-   ```bash
-   git clone https://github.com/mdiener21/kanvana.git
-   cd openagile
-   ```
-
-2. Install dependencies:
-   ```bash
-   cd client
-   npm install
-   ```
-
-3. Start the dev server:
-   ```bash
-   cd client
-   npm run dev
-   ```
-   The app will open at `http://localhost:3000`.
-
-### Build for Production
-```bash
-cd client
-npm run build
-```
-Built files are in `client/dist/`.
-
-### Preview Production Build
-```bash
-cd client
-npm run preview
-```
-
-### Releasing a New Version
-
-Releases are cut manually — this project has no GitHub Actions / CI pipelines.
-
-**Step 1 — Keep `CHANGELOG.md` up to date**
-
-Add bullet points under `## [Unreleased]` in `CHANGELOG.md`:
-
-```markdown
-## [Unreleased]
-
-### Added
-- Some new feature
-
-### Fixed
-- Some bug fix
-```
-
-**Step 2 — Run the tests locally**
+### The client
 
 ```bash
 cd client
-npm test
+npm install
+npm run dev      # Vite dev server at http://localhost:5173
+npm run build    # production build into client/dist
+npm run preview  # serve the production build
 ```
 
-**Step 3 — Bump the version and promote the changelog**
+### The harness
+
+The harness is the process agents talk to. It also serves the built client.
+
+```bash
+cd harness
+npm install
+node src/server.mjs
+```
+
+Install dependencies once; the harness only needs its own `npm install`. Build the client first (`npm run build` in `client/`), or the harness has no static files to serve and reports that `client/dist` is missing.
+
+The harness reads a few environment variables:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `OPENAGILE_HOST` | `127.0.0.1` | Bind address. |
+| `OPENAGILE_PORT` (or `PORT`) | `8787` | Listen port. |
+| `OPENAGILE_DATA_DIR` | `harness/data` | Where the event log is persisted. |
+| `OPENAGILE_AGENT_NAME` | `openagile-harness` | Actor id the tools report. |
+
+Once it is running, it serves the board at `http://127.0.0.1:8787/` and MCP at `http://127.0.0.1:8787/mcp`.
+
+On Windows, `harness/start-bg.ps1` and `harness/stop-bg.ps1` start and stop the harness detached. Do not start a long-lived server from a tool call; the call waits for the process and stalls.
+
+## Tests
+
+The client has two Vitest layers, unit and DOM:
 
 ```bash
 cd client
-npm run release:prepare
-```
-
-This bumps `package.json`, promotes `## [Unreleased]` to a dated release section, and updates the README version badge.
-
-**Step 4 — Commit, tag and push**
-
-```bash
-git add -A
-git commit -m "Release vX.Y.Z"
-git tag vX.Y.Z
-git push origin main --tags
-```
-
-### Run Tests
-
-This project uses a three-layer test stack:
-
-- `Vitest` for pure unit tests in `tests/unit/`
-- `Vitest` + `jsdom` + `@testing-library/dom` for DOM integration tests in `tests/dom/`, with `MSW` mocking API behavior from `tests/mocks/`
-- `node harness/test.mjs` for harness tests
-
-For page-level behavior, use a browser as the manual check — the harness serves the build on port `8787`.
-
-Run the full automated test stack:
-
-```bash
-npm test
-```
-
-Run only the unit tests:
-
-```bash
+npm test          # unit then DOM
 npm run test:unit
-```
-
-Run only the DOM integration tests:
-
-```bash
 npm run test:dom
 ```
 
-Run the harness tests (from the repository root):
+The harness has its own test file. Run it from the repository root:
 
 ```bash
 node harness/test.mjs
 ```
 
-The detailed strategy, folder layout, and naming convention live in [docs/testing-strategy.md](docs/testing-strategy.md).
+At the time of writing: `npm run build` is clean, unit is 305 passing, DOM is 178 passing, and the harness is 33 passing.
 
-## 📚 Documentation
+## Connect an agent over MCP
 
-Dive deeper with our comprehensive docs: **[View Documentation](https://github.com/mdiener21/kanvana/tree/main/docs)**
+The harness exposes MCP over Streamable HTTP at `http://127.0.0.1:8787/mcp`. It is an HTTP endpoint, not a stdio command, so point an MCP client at that URL.
 
-## 🤝 Contributing
+A minimal client using the official SDK:
 
-We love contributions! Whether it's bug fixes, features, or docs—every star and fork helps grow the community.
+```js
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
-- **Star this repo** ⭐ to show your support!
-- **Fork and contribute** code or ideas.
-- **Report issues** for bugs or suggestions.
+const client = new Client({ name: 'my-agent', version: '1.0.0' });
+await client.connect(new StreamableHTTPClientTransport(new URL('http://127.0.0.1:8787/mcp')));
 
-## 📄 License
+const { tools } = await client.listTools();
+console.log(tools.map((tool) => tool.name));
+```
 
-Licensed under the MIT License. See [LICENSE.md](LICENSE.md) for details.
+The tools the harness registers include:
 
----
+- Boards and iterations: `list_boards`, `create_board`, `delete_board`, `get_board`, `list_roadmap`, `set_board_dates`.
+- Groups: `list_groups`, `create_group`, `rename_group`, `delete_group`, `assign_board_to_group`.
+- Tasks: `create_task`, `update_task`, `move_task`, `delete_task`, `list_tasks`, `get_task`, `set_blocked_reason`.
+- Notes and claims: `digest_key_points`, `claim_task`, `release_task`.
+- Reading state: `list_columns`, `get_board_snapshot`, `get_settings`, `update_settings`, `list_events`.
+- Skills: `list_skills`, `get_skill`, `create_skill`, `update_skill`, `delete_skill`.
 
-**Made with ❤️ for productivity enthusiasts. Star us on GitHub to stay updated!**
+A few tools always refuse, on purpose: `create_column`, `delete_column` and `reorder_columns`, because the columns are fixed, and `rename_board`, because iterations are numbered.
+
+This is a representative list. The server advertises the full set.
+
+## Project layout
+
+```
+client/       Browser app (vanilla JS ES modules, built with Vite)
+  src/        Entry points (index.html, roadmap.html) and modules/
+  tests/      unit/ and dom/ Vitest suites
+  dist/       Production build output (generated)
+harness/      Node harness: static server, MCP tools, event bridge
+  src/        server.mjs, mcp-tools.mjs, store.mjs, bridge.mjs, hlc.mjs
+  test.mjs    Harness tests
+  data/       Persisted event log (generated)
+docs/         Specifications, ADRs, user docs and plans
+backend/      Optional PocketBase backend assets
+agents/       Agent configuration notes
+devops/       Deployment scripts and configuration
+scripts/      Release and spec tooling
+```
+
+## Rules this product enforces
+
+These hold on every path, MCP and browser alike.
+
+- Five fixed columns. The ids, their order and the Finished role do not change, and the column tools refuse to create, delete or reorder columns.
+- Only the agent moves cards. The front end has no way to change a task's column.
+- The agent owns the description; the human owns the notes. No agent tool can add, edit or delete a note.
+- The agent may not start a task with undigested notes. `claim_task` and a move into **In Progress** are refused until the notes are digested, on both the MCP path and the browser's event bridge.
+- `digest_key_points` is the only way to stamp a note or clear `needsDigest`.
+- A task is only a title, a description, the notes, and the lifecycle timestamps. There is no priority, due date, task label, sub-task, attachment, custom field, type, estimate, comment, relationship or annotation.
+- Every iteration belongs to a group and is numbered from its position. It cannot be named by hand.
+- A note added to a **Finished** task returns it to **Backlog** as rework.
+- There is no reports page and no points, velocity or burndown metric.
+- The board canvas is plain paper: no dot grid, and text selection is off except inside form controls.
+
+## Documentation
+
+- [CONTEXT.md](CONTEXT.md): the domain model.
+- [AGENTS.md](AGENTS.md): the agent and developer guide.
+- [docs/spec/columns.md](docs/spec/columns.md), [docs/spec/tasks.md](docs/spec/tasks.md), [docs/spec/data-models.md](docs/spec/data-models.md): feature and data specifications.
+
+## License
+
+Released under the O'Saasy License Agreement. See [LICENSE.md](LICENSE.md).
