@@ -716,6 +716,151 @@ test('the bridge lets the human remove their last note and clear the stale flag'
   assert.equal(task.needsDigest, false, 'nothing is left to digest, so the flag is no longer meaningful');
 });
 
+test('heartbeat_task rewrites only changeDate and is refused outside a claimed In Progress task', async () => {
+  const old = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  store.appendEvents([
+    makeTask(BOARD_A, 'task-heartbeat', {
+      title: 'Long running work',
+      description: 'do not touch me',
+      column: FIXED_COLUMN_IDS[2],
+      order: 1,
+      claimedBy: 'agent-a',
+      claimedAt: old,
+      changeDate: old,
+      keyPoints: [{ id: 'kp-hb', text: 'an already folded note', at: old, digestedAt: old }],
+      needsDigest: false,
+      isRework: true,
+      blockedReason: '',
+      blockedAt: null,
+      columnHistory: [{ column: FIXED_COLUMN_IDS[2], at: old }]
+    }),
+    makeTask(BOARD_A, 'task-heartbeat-backlog', {
+      title: 'Claimed but not started',
+      column: FIXED_COLUMN_IDS[0],
+      order: 1,
+      claimedBy: 'agent-a',
+      claimedAt: old,
+      changeDate: old
+    }),
+    makeTask(BOARD_A, 'task-heartbeat-unclaimed', {
+      title: 'Started but not claimed',
+      column: FIXED_COLUMN_IDS[2],
+      order: 2,
+      changeDate: old
+    })
+  ]);
+
+  const before = store.findTask('task-heartbeat').task;
+  const heartbeat = await toolValue('heartbeat_task', { taskId: 'task-heartbeat' });
+  assert.ok(Date.parse(heartbeat.changeDate) > Date.parse(old), 'the heartbeat stamps a fresh changeDate');
+
+  const after = store.findTask('task-heartbeat').task;
+  assert.notEqual(after.changeDate, before.changeDate, 'changeDate moves');
+  assert.deepEqual({ ...after, changeDate: null }, { ...before, changeDate: null }, 'nothing but changeDate moves');
+  assert.equal(after.claimedBy, 'agent-a', 'the claim is kept');
+  assert.equal(after.isRework, true, 'the heartbeat does not touch the rework marker');
+
+  await assert.rejects(
+    () => callTool('heartbeat_task', { taskId: 'task-heartbeat-backlog' }),
+    /In Progress/
+  );
+  await assert.rejects(
+    () => callTool('heartbeat_task', { taskId: 'task-heartbeat-unclaimed' }),
+    /claim_task/
+  );
+  assert.equal(store.findTask('task-heartbeat-backlog').task.changeDate, old, 'a refused heartbeat writes nothing');
+  assert.equal(store.findTask('task-heartbeat-unclaimed').task.changeDate, old, 'a refused heartbeat writes nothing');
+});
+
+test('a move into In Progress restarts the stale clock for MCP and bridge moves', async () => {
+  const stale = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  store.appendEvents([
+    makeTask(BOARD_A, 'task-clock-mcp', {
+      title: 'Moved by MCP',
+      column: FIXED_COLUMN_IDS[0],
+      order: 1,
+      claimedBy: 'agent-a',
+      claimedAt: stale,
+      changeDate: stale
+    }),
+    makeTask(BOARD_A, 'task-clock-bridge', {
+      title: 'Moved by the browser',
+      column: FIXED_COLUMN_IDS[0],
+      order: 2,
+      claimedBy: 'agent-b',
+      claimedAt: stale,
+      changeDate: stale
+    })
+  ]);
+
+  await toolValue('move_task', { taskId: 'task-clock-mcp', column: FIXED_COLUMN_IDS[2] });
+  assert.equal(store.findTask('task-clock-mcp').task.column, FIXED_COLUMN_IDS[2], 'the MCP move lands');
+  const bridgeEvent = bridgeMove(BOARD_A, 'task-clock-bridge', FIXED_COLUMN_IDS[2]);
+  bridgeEvent.at = new Date().toISOString();
+  assert.equal(appendBridgeEvents([bridgeEvent]).length, 1, 'the bridge move lands');
+
+  for (const taskId of ['task-clock-mcp', 'task-clock-bridge']) {
+    const task = store.findTask(taskId).task;
+    assert.equal(task.column, FIXED_COLUMN_IDS[2]);
+    const enteredAt = task.columnHistory.at(-1).at;
+    const moved = store.sweepStaleClaims(Date.parse(enteredAt) + 1000);
+    assert.equal(moved.includes(taskId), false, `${taskId} is not stale right after entering In Progress`);
+    assert.equal(store.findTask(taskId).task.column, FIXED_COLUMN_IDS[2]);
+  }
+
+  const enteredAt = store.findTask('task-clock-mcp').task.columnHistory.at(-1).at;
+  const lateSweep = store.sweepStaleClaims(Date.parse(enteredAt) + CLAIM_STALE_MS + 1);
+  assert.ok(lateSweep.includes('task-clock-mcp'), 'the watchdog still fires once the window has really elapsed');
+});
+
+test('digest_key_points clears the rework marker it was holding', async () => {
+  store.appendEvents([makeTask(BOARD_A, 'task-rework-flag', {
+    title: 'Back from Finished',
+    column: FIXED_COLUMN_IDS[0],
+    order: 1,
+    isRework: true,
+    needsDigest: true,
+    keyPoints: [{ id: 'kp-rework', text: 'Change the ending', at: minutesAgo(0) }]
+  })]);
+
+  assert.equal(store.findTask('task-rework-flag').task.isRework, true);
+
+  await callTool('digest_key_points', { taskId: 'task-rework-flag' });
+
+  const after = store.findTask('task-rework-flag').task;
+  assert.equal(after.needsDigest, false);
+  assert.equal(after.isRework, false, 'digesting the notes is the agent taking the rework on');
+  assert.ok(after.keyPoints[0].digestedAt);
+});
+
+test('delete_task refuses a finished task and still deletes any other', async () => {
+  store.appendEvents([
+    makeTask(BOARD_A, 'task-done-guard', {
+      title: 'Completed work',
+      column: FIXED_COLUMN_IDS[4],
+      order: 1,
+      doneDate: minutesAgo(0),
+      changeDate: minutesAgo(0)
+    }),
+    makeTask(BOARD_A, 'task-deletable', {
+      title: 'Scratch work',
+      column: FIXED_COLUMN_IDS[0],
+      order: 2,
+      changeDate: minutesAgo(0)
+    })
+  ]);
+
+  await assert.rejects(
+    () => callTool('delete_task', { taskId: 'task-done-guard' }),
+    /Finished column cannot be deleted/
+  );
+  assert.ok(store.findTask('task-done-guard'), 'the finished task survives the refusal');
+
+  const result = await toolValue('delete_task', { taskId: 'task-deletable' });
+  assert.equal(result.deleted, 'task-deletable');
+  assert.equal(store.findTask('task-deletable'), null, 'a task outside Finished is still deletable');
+});
+
 after(() => {
   store.flushStore();
   rmSync(dataDir, { recursive: true, force: true });

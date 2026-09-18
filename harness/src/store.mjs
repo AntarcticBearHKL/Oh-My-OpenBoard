@@ -382,6 +382,19 @@ function buildBoardOrder(boardId, taskId, targetColumnId) {
 const CLAIM_STALE_MS = 5 * 60 * 1000;
 const CLAIM_STALE_REASON = 'Auto-blocked: no agent sync for over 5 minutes.';
 
+// task.moved is structural and never writes changeDate, so activity is the later of
+// changeDate and the moment the task entered the column it sits in (last history entry).
+function lastActivityAt(task) {
+  let latest = Date.parse(task.changeDate);
+  const history = Array.isArray(task.columnHistory) ? task.columnHistory : [];
+  const entered = history[history.length - 1];
+  if (entered && entered.column === task.column) {
+    const enteredAt = Date.parse(entered.at);
+    if (Number.isFinite(enteredAt)) latest = Number.isFinite(latest) ? Math.max(latest, enteredAt) : enteredAt;
+  }
+  return latest;
+}
+
 // Stale claims move with two events, exactly like a client drag: task.moved plus the blocked task.updated.
 export function sweepStaleClaims(now = Date.now()) {
   const stale = [];
@@ -389,7 +402,7 @@ export function sweepStaleClaims(now = Date.now()) {
     for (const task of tasks) {
       if (task.deleted || task.column !== IN_PROGRESS_COLUMN_ID) continue;
       if (!task.claimedBy && !task.claimedAt) continue;
-      const changedAt = Date.parse(task.changeDate);
+      const changedAt = lastActivityAt(task);
       if (Number.isFinite(changedAt) && now - changedAt > CLAIM_STALE_MS) stale.push({ boardId, taskId: task.id });
     }
   }
@@ -437,10 +450,12 @@ export function digestKeyPoints(taskId, pointIds) {
     digested.push(point.id);
     return { ...point, digestedAt: now };
   });
+  const fields = { keyPoints: next, needsDigest: false, changeDate: now };
+  if (task.isRework === true) fields.isRework = false;
   emit('task.updated', {
     boardId,
     entityId: taskId,
-    payload: { fields: { keyPoints: next, needsDigest: false, changeDate: now } }
+    payload: { fields }
   });
   return { taskId, digested };
 }
@@ -574,7 +589,7 @@ export const DEFAULT_SKILLS = [
       '- 人写在「给 agent 的备注」里的指示必须回应：把它折进描述，不要让人的话悬着。',
       '- 评审者需要知道的任何事，都写进任务的描述（description）。',
       '',
-      '【计时提醒】任务从 claim_task 那一刻开始计时，任何更新都会重置 5 分钟窗口；细则见「认领工作」。'
+      '【计时提醒】任务从 claim_task 那一刻开始计时，任何更新都会重置 5 分钟窗口；只想续命、不改任何内容时用 heartbeat_task（只写 changeDate），把任务移进 In Progress 也会重新开始窗口；细则见「认领工作」。'
     ].join('\n')
   },
   {
@@ -628,6 +643,9 @@ export const DEFAULT_SKILLS = [
       '- 认领那一刻就开始计时：claim_task 会写入认领时间戳；看门狗按它判断你是否还在线。',
       '- 如果预计还要超过约 5 分钟才能做完，agent 必须在到点前同步一次：任务上的任何更新都算同步',
       '  （改描述、digest_key_points 或重新认领），并重新开始 5 分钟窗口。',
+      '- 只想续命、不想动任何内容时，用 heartbeat_task：它只写 changeDate，不动描述、备注、消化标记和列；',
+      '  只有「已认领且在 In Progress」的任务能用，其他状态会被拒绝。',
+      '- 把任务移进 In Progress 同样算一次活动：窗口从进列那一刻重新开始，刚开工的任务不会被误判为卡住。',
       '- 如果大约 5 分钟内没有任何同步，服务端会把任务移到 Blocked、记录原因，计时随即停止。',
       '- 正常流程是由 agent 自己移动卡片：主工作完成就移到 Finished；做不下去或需要人拍板就移到',
       '  Blocked 并写原因。移动卡片才是停止计时的方式，计时因此始终如实。',
@@ -636,7 +654,7 @@ export const DEFAULT_SKILLS = [
       '【备注与返工】',
       '- 任务带 needsDigest 时先别开工：把给 agent 的备注折进描述，再 digest_key_points 标记已消化；未消化就 claim_task 会被直接拒绝。',
       '- 已 Finished 的任务若被人加了新备注，会自动回到 Backlog 并带上 isRework——按返工处理，',
-      '  消化新备注后再做。',
+      '  消化新备注后再做；digest_key_points 之后 isRework 会被清掉，它只表示还有活要干，不表示曾经返工过。',
       '',
       '备注与回复：',
       '- 给 agent 的备注（keyPoints）是人给 agent 下指令的通道。动手前先读（get_task），人的话不要删。',

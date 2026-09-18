@@ -346,7 +346,7 @@ export function registerTools(server, { broadcastGroups = () => {} } = {}) {
 
   server.registerTool('move_task', {
     title: 'Move task',
-    description: 'Move a task to a column (id or name). Emits the full per-column ordering so the board converges. Moving a task into In Progress is refused while it has undigested notes from the human; run digest_key_points first.',
+    description: 'Move a task to a column (id or name). Emits the full per-column ordering so the board converges. Moving a task into In Progress is refused while it has undigested notes from the human; run digest_key_points first. Entering In Progress counts as activity and restarts the task\'s five-minute sync window.',
     inputSchema: {
       taskId: z.string(),
       column: z.string(),
@@ -357,22 +357,24 @@ export function registerTools(server, { broadcastGroups = () => {} } = {}) {
     const targetColumn = resolveColumn(boardId, column);
     if (targetColumn.id === IN_PROGRESS_COLUMN_ID) assertNotesDigested(task);
     const tasks = getTasks(boardId).slice();
-    const moved = tasks.find((t) => t.id === taskId);
-    moved.column = targetColumn.id;
 
     const byColumn = new Map();
-    for (const task of tasks) {
-      if (!byColumn.has(task.column)) byColumn.set(task.column, []);
-      byColumn.get(task.column).push(task);
+    for (const entry of tasks) {
+      const columnId = entry.id === taskId ? targetColumn.id : entry.column;
+      if (!byColumn.has(columnId)) byColumn.set(columnId, []);
+      byColumn.get(columnId).push(entry);
     }
     const order = [];
     for (const [columnId, list] of byColumn) {
       list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
       if (columnId === targetColumn.id && Number.isInteger(position)) {
         const current = list.findIndex((t) => t.id === taskId);
-        if (current >= 0) { list.splice(current, 1); list.splice(Math.max(0, Math.min(position, list.length)), 0, moved); }
+        if (current >= 0) {
+          const [entry] = list.splice(current, 1);
+          list.splice(Math.max(0, Math.min(position, list.length)), 0, entry);
+        }
       }
-      list.forEach((task, index) => order.push({ id: task.id, column: columnId, order: index + 1 }));
+      list.forEach((entry, index) => order.push({ id: entry.id, column: columnId, order: index + 1 }));
     }
     emit('task.moved', { boardId, entityId: taskId, payload: { order }, actor: AGENT });
     return ok({ taskId, column: targetColumn.id, columnName: targetColumn.name, order });
@@ -380,10 +382,12 @@ export function registerTools(server, { broadcastGroups = () => {} } = {}) {
 
   server.registerTool('delete_task', {
     title: 'Delete task',
-    description: 'Delete a task by id.',
+    description: 'Delete a task by id. A task in the Finished column cannot be deleted — the board keeps completed work, so tidying up can never erase it.',
     inputSchema: { taskId: z.string() }
   }, async ({ taskId }) => {
-    const { boardId } = findTaskOrThrow(taskId);
+    const { task, boardId } = findTaskOrThrow(taskId);
+    const column = getColumns(boardId).find((c) => c.id === task.column);
+    if (isDoneColumn(column)) throw new Error(`Task ${task.key || task.id}: a task in the Finished column cannot be deleted; completed work is kept.`);
     emit('task.deleted', { boardId, entityId: taskId, payload: {}, actor: AGENT });
     return ok({ deleted: taskId });
   });
@@ -558,7 +562,7 @@ export function registerTools(server, { broadcastGroups = () => {} } = {}) {
 
   server.registerTool('digest_key_points', {
     title: 'Digest key points',
-    description: 'Fold the human\'s notes (keyPoints) into the description: stamps digestedAt on the notes and clears the needsDigest flag. This is the only way to clear it; claim_task and moving into In Progress are refused until it runs. Pass pointIds to stamp specific notes, or omit them to stamp every undigested note. Notes are never added, edited or removed here.',
+    description: 'Fold the human\'s notes (keyPoints) into the description: stamps digestedAt on the notes and clears the needsDigest flag. This is the only way to clear it; claim_task and moving into In Progress are refused until it runs. Pass pointIds to stamp specific notes, or omit them to stamp every undigested note. Notes are never added, edited or removed here. Digesting also clears the task\'s isRework marker: taking the rework on is the action the marker asks for.',
     inputSchema: { taskId: z.string(), pointIds: z.array(z.string()).optional() }
   }, async ({ taskId, pointIds }) => ok(digestKeyPoints(taskId, pointIds)));
 
@@ -590,6 +594,23 @@ export function registerTools(server, { broadcastGroups = () => {} } = {}) {
       actor: AGENT
     });
     return ok({ taskId, claimedBy: '' });
+  });
+
+  server.registerTool('heartbeat_task', {
+    title: 'Heartbeat task',
+    description: 'Keep a claim alive without changing anything else: writes only changeDate, so it counts as a sync and restarts the five-minute window. It never touches the description, the notes, the digests, the column or the claim. Allowed only for a task that is in In Progress and carries a claim, because that is the only state the stale-claim watchdog measures; every other state is refused.',
+    inputSchema: { taskId: z.string() }
+  }, async ({ taskId }) => {
+    const { task, boardId } = findTaskOrThrow(taskId);
+    if (task.column !== IN_PROGRESS_COLUMN_ID) {
+      throw new Error(`Task ${task.key || task.id} is not in In Progress; the five-minute claim window is not running for it, so a heartbeat would change nothing.`);
+    }
+    if (!task.claimedBy && !task.claimedAt) {
+      throw new Error(`Task ${task.key || task.id} has no claim; run claim_task first, or there is no claim to keep alive.`);
+    }
+    const now = new Date().toISOString();
+    emit('task.updated', { boardId, entityId: taskId, payload: { fields: { changeDate: now } }, actor: AGENT });
+    return ok({ taskId, changeDate: now });
   });
 
   server.registerTool('list_skills', {
