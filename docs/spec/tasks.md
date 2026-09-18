@@ -3,6 +3,7 @@
 ## Create and Edit
 
 - Tasks are created by agents through the API (`create_task`), which always lands in Backlog; a human adds a task by hand only through the Human In The Loop column's add control
+- Agents can build a whole wave in one call with `create_tasks` (a board plus a list of items, each a title with an optional description): every item lands in Backlog and the result carries the created `id` and `key` per item. The batch validates every item before writing — one empty title or a missing board creates nothing — and emits one `task.created` event per task, not a batch event, because the reducer and the SSE stream project event by event
 - Dialog creation always lands in Human In The Loop: the create dialog has no column picker
 - Create and edit form fields, in one column: title (required, validated inline with red error styling), description, and the notes-to-the-agent list. The dialog shows nothing else
 - The dialog is the whole task surface: the title, the description and the notes-to-the-agent list. The model has no priority, no due date, no task labels, no sub-tasks, no attachments and no custom fields
@@ -18,7 +19,7 @@
 ## Placement and Ordering
 
 - New tasks are inserted at the top of Human In The Loop with `order = 1`
-- The UI cannot move a task between columns: only the agent moves a card, through the MCP tools (`move_task`, `claim_next`)
+- The UI cannot move a task between columns: only the agent moves a card, through the MCP tools (`move_task`, `move_tasks`, `claim_next`)
 - Storage keeps task ordering flattened per column even while swim lanes are enabled
 
 ## Claim Timing and the Stale-Claim Watchdog
@@ -27,6 +28,7 @@
 - A claim whose last activity is older than the five-minute window is expired. `list_tasks` and `get_task` report `claimedBy`, `claimedAt`, `changeDate`, `blockedReason` and `claimExpired`, so an orchestrator can see who holds a task and whether the holder has gone quiet; `list_tasks` also filters by `claimedBy`, `needsDigest` and `ready`
 - Claiming over an expired claim succeeds as a takeover and the result says `tookOver`; a live foreign claim is always refused. The watchdog never clears a claim — it only moves a stale In Progress task to Blocked
 - `claim_next` picks and claims the next ready task for the calling agent in one step. Ready means in Backlog or Human In The Loop, notes digested, and unclaimed or expired-claimed; the deterministic order is Backlog before Human In The Loop, then ascending task `order`, then task id
+- A waiter does not poll `list_events`: `wait_for_event` takes the last `seq` the caller has seen and resolves when a later event is appended, optionally filtered by `type` or `boardId`, so a worker can wait for change on its own board. No matching event within the bounded `timeoutMs` (ceiling 30000 ms) resolves cleanly with `timedOut: true`; the append listener is registered per call and removed when the wait settles, so repeated waits leave nothing behind
 - A claim (`claim_task`) starts a five-minute sync window; any update that bumps `changeDate` (a description edit, a digest, a re-claim, or `heartbeat_task`) restarts it, and so does entering In Progress: the sweep measures from the later of `changeDate` and the time the task entered its current column (`columnHistory`), so a move can never leave a just-started task looking stuck
 - `heartbeat_task` is the low-cost sync for an agent that is still working but has nothing to change: it writes only `changeDate` and leaves the description, the notes, the digests, the column and every other field untouched. It is allowed only for a claimed task in In Progress — the only state the watchdog measures — and refused everywhere else
 - The harness sweeps every 30 seconds and moves a claimed In Progress task whose last sync is older than five minutes to Blocked, exactly as an agent move does: it emits `task.moved` with the column ordering (recorded in `columnHistory`) and a `task.updated` that carries the blocked fields
@@ -50,6 +52,7 @@
 - Notes are human-authored: the task tools and the agent surface expose them read-only. The agent must not add, edit or delete them
 - Appending a note while the task is in Backlog, Human In The Loop or Blocked sets `needsDigest` on the task: the agent must fold the notes into the description before starting work
 - While a task has undigested notes the agent must not start it: `claim_task` and a `move_task` into In Progress are refused with a message telling the agent to run `digest_key_points` first. Moving a task to any other column is unaffected
+- The batch move runs the same digest gate over the whole batch: `move_tasks` (a list of task ids plus one target column) refuses the entire batch and appends nothing when any task does not exist, the column is not one of the five, or one of the tasks would enter In Progress with undigested notes; the error names the offending item
 - The same gate holds on the browser event bridge: `POST /api/events` refuses, with `422` and the refusal message in the JSON body, a client `task.moved` whose target is In Progress while the task has `needsDigest` or an undigested note, a `task.updated` or `task.created` that would stamp `digestedAt` on a note the agent has not digested or clear `needsDigest` while a note is still pending, a `task.updated` that writes `column` (a move is a `task.moved`), and a `task.updated` that writes `claimedBy`/`claimedAt` (a claim is `claim_task`). A refused request appends nothing; if one event of a batch is refused, the whole batch is
 - The bridge accepts local requests only: a loopback remote address, a loopback `Host`, a same-origin `Origin` when one is present, and `Sec-Fetch-Site: same-origin` when the browser sends it. It has no token, so it does not stop a local process from posting; the MCP tools remain the agent's path
 - Appending a note to a task in Finished moves the task back to Backlog, sets `isRework`, and emits the move exactly like a normal move (`task.moved` with the full column ordering plus a `task.updated` with the flag), so history and the projector stay consistent

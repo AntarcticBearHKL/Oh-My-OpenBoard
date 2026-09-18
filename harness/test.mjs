@@ -1074,6 +1074,177 @@ test('list_roadmap marks unfinished work and the active iteration in group order
   assert.equal(activeRows[0].id, expectedActive);
 });
 
+test('a batch create with one invalid item creates nothing', async () => {
+  const before = store.getTasks(BOARD_A).length;
+  const seqBefore = store.getSeq();
+
+  await assert.rejects(
+    () => callTool('create_tasks', { boardId: BOARD_A, tasks: [{ title: 'Batch ok' }, { title: '   ' }, { title: 'Batch ok too' }] }),
+    /tasks\[1\]: title is required/
+  );
+  assert.equal(store.getTasks(BOARD_A).length, before, 'the valid items are not created either');
+  assert.equal(store.getSeq(), seqBefore, 'nothing is appended');
+
+  await assert.rejects(
+    () => callTool('create_tasks', { boardId: 'no-such-board', tasks: [{ title: 'Orphan' }] }),
+    /Board not found/
+  );
+  assert.equal(store.getTasks(BOARD_A).length, before);
+
+  await assert.rejects(
+    () => callTool('create_tasks', { boardId: BOARD_A, tasks: [] }),
+    /non-empty array/
+  );
+  assert.equal(store.getSeq(), seqBefore);
+});
+
+test('a batch move that violates the digest gate moves nothing', async () => {
+  store.appendEvents([
+    makeTask(BOARD_A, 'batch-plain', {
+      title: 'Batch plain', column: FIXED_COLUMN_IDS[0], order: 950, changeDate: minutesAgo(0)
+    }),
+    makeTask(BOARD_A, 'batch-guarded', {
+      title: 'Batch guarded',
+      column: FIXED_COLUMN_IDS[0],
+      order: 951,
+      keyPoints: [{ id: 'batch-note-1', text: 'Fold first', at: minutesAgo(0) }],
+      needsDigest: true
+    })
+  ]);
+  const seqBefore = store.getSeq();
+
+  await assert.rejects(
+    () => callTool('move_tasks', { taskIds: ['batch-plain', 'batch-guarded'], column: FIXED_COLUMN_IDS[2] }),
+    /digest_key_points/
+  );
+  assert.equal(store.findTask('batch-plain').task.column, FIXED_COLUMN_IDS[0], 'the valid item is not moved');
+  assert.equal(store.findTask('batch-guarded').task.column, FIXED_COLUMN_IDS[0]);
+  assert.equal(store.getSeq(), seqBefore, 'nothing is appended');
+
+  await assert.rejects(
+    () => callTool('move_tasks', { taskIds: ['batch-plain', 'batch-missing'], column: FIXED_COLUMN_IDS[1] }),
+    /Task not found: batch-missing/
+  );
+  assert.equal(store.findTask('batch-plain').task.column, FIXED_COLUMN_IDS[0], 'a missing task refuses the whole batch');
+
+  await assert.rejects(
+    () => callTool('move_tasks', { taskIds: ['batch-plain'], column: 'Nowhere' }),
+    /Column not found/
+  );
+  assert.equal(store.findTask('batch-plain').task.column, FIXED_COLUMN_IDS[0], 'an unknown column refuses the batch');
+  assert.equal(store.getSeq(), seqBefore);
+});
+
+test('a valid batch creates and moves every item with one result per item', async () => {
+  const created = await toolValue('create_tasks', {
+    boardId: BOARD_A,
+    tasks: [{ title: 'Wave one' }, { title: 'Wave two', description: 'second task' }]
+  });
+
+  assert.equal(created.created, 2);
+  assert.equal(created.boardId, BOARD_A);
+  assert.equal(created.results.length, 2);
+  for (const result of created.results) {
+    assert.ok(result.id, 'each result carries the created id');
+    assert.ok(result.key, 'each result carries the created key');
+    assert.equal(result.columnName, 'Backlog');
+    const task = store.findTask(result.id).task;
+    assert.equal(task.title.startsWith('Wave'), true);
+    assert.equal(task.column, FIXED_COLUMN_IDS[0], 'created in Backlog');
+    assert.equal(result.key, task.key);
+  }
+  assert.notEqual(created.results[0].key, created.results[1].key, 'each created task gets its own key');
+
+  const createEvents = store.getEventsSince(0).filter((event) => event.type === 'task.created'
+    && created.results.some((result) => result.id === event.entity_id));
+  assert.equal(createEvents.length, 2, 'one task.created event per item, not one batch event');
+
+  const ids = created.results.map((result) => result.id);
+  const moved = await toolValue('move_tasks', { taskIds: ids, column: 'Human In The Loop' });
+
+  assert.equal(moved.moved, 2);
+  assert.equal(moved.columnName, 'Human In The Loop');
+  assert.equal(moved.results.length, 2);
+  for (const result of moved.results) {
+    assert.ok(result.key, 'each move result carries the task key');
+    assert.equal(result.column, FIXED_COLUMN_IDS[1]);
+    assert.equal(store.findTask(result.taskId).task.column, FIXED_COLUMN_IDS[1]);
+  }
+
+  const moveEvents = store.getEventsSince(0).filter((event) => event.type === 'task.moved' && ids.includes(event.entity_id));
+  assert.equal(moveEvents.length, 2, 'one task.moved event per task, not one batch event');
+  assert.ok(
+    moveEvents.at(-1).payload.order.some((entry) => entry.id === ids[1] && entry.column === FIXED_COLUMN_IDS[1]),
+    'the last move carries the full per-column ordering'
+  );
+});
+
+test('wait_for_event resolves when an event is appended after the caller seq', async () => {
+  assert.equal(store.getEventListenerCount(), 0, 'no listener is left over from earlier tests');
+
+  const since = store.getSeq();
+  const waiting = toolValue('wait_for_event', { since, timeoutMs: 5000 });
+  await new Promise((resolve) => setImmediate(resolve));
+
+  store.emit('task.updated', {
+    boardId: BOARD_A,
+    entityId: 'batch-plain',
+    payload: { fields: { changeDate: new Date().toISOString() } }
+  });
+  const result = await waiting;
+
+  assert.equal(result.timedOut, false);
+  assert.equal(result.seq, since + 1);
+  assert.equal(result.event.type, 'task.updated');
+  assert.equal(result.event.entityId, 'batch-plain');
+  assert.equal(store.getEventListenerCount(), 0, 'the resolved wait removed its listener');
+});
+
+test('wait_for_event resolves immediately when the event is already there', async () => {
+  const since = store.getSeq();
+  store.emit('task.updated', { boardId: BOARD_A, entityId: 'batch-plain', payload: { fields: {} } });
+
+  const result = await toolValue('wait_for_event', { since, timeoutMs: 50 });
+
+  assert.equal(result.timedOut, false);
+  assert.equal(result.seq, since + 1);
+  assert.equal(store.getEventListenerCount(), 0, 'an immediate resolve registers no listener');
+});
+
+test('wait_for_event times out cleanly and leaves no listener behind', async () => {
+  const since = store.getSeq();
+
+  const result = await toolValue('wait_for_event', { since, timeoutMs: 40, type: 'task.created', boardId: BOARD_A });
+
+  assert.equal(result.timedOut, true);
+  assert.equal(result.seq, since, 'the timeout reports the seq the caller already had');
+  assert.equal(store.getEventListenerCount(), 0, 'the timed-out wait removed its listener');
+});
+
+test('wait_for_event honors its filters and repeated waits leave nothing behind', async () => {
+  const since = store.getSeq();
+  const waiting = toolValue('wait_for_event', { since, timeoutMs: 2000, type: 'task.updated', boardId: BOARD_B });
+  await new Promise((resolve) => setImmediate(resolve));
+
+  store.emit('task.updated', { boardId: BOARD_A, entityId: 'batch-plain', payload: { fields: {} } });
+  assert.equal(store.getEventListenerCount(), 1, 'the wait is still listening after an event it did not ask for');
+
+  store.emit('task.updated', { boardId: BOARD_B, entityId: 'task-stale-b', payload: { fields: {} } });
+  const result = await waiting;
+
+  assert.equal(result.event.boardId, BOARD_B);
+  assert.equal(result.event.entityId, 'task-stale-b');
+  assert.equal(result.event.type, 'task.updated');
+  assert.equal(store.getEventListenerCount(), 0);
+
+  for (let index = 0; index < 5; index += 1) {
+    const seq = store.getSeq();
+    const timedOut = await toolValue('wait_for_event', { since: seq, timeoutMs: 15 });
+    assert.equal(timedOut.timedOut, true);
+  }
+  assert.equal(store.getEventListenerCount(), 0, 'five more waits left no listener behind');
+});
+
 after(() => {
   store.flushStore();
   rmSync(dataDir, { recursive: true, force: true });

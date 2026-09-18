@@ -62,6 +62,8 @@ const settingsByBoard = new Map();
 
 let persistTimer = null;
 
+const eventListeners = new Set();
+
 // ── Projection (mirrors read-model-projector.js) ──────────────────────────────
 
 function project(event) {
@@ -95,6 +97,12 @@ function entityExists(type, entityId, boardId) {
   return false;
 }
 
+function notifyEventListeners(event) {
+  for (const listener of eventListeners) {
+    try { listener(event); } catch (err) { console.error('[OpenAgile] event listener failed', err); }
+  }
+}
+
 // Append one already-built event. Idempotent: duplicate ids and duplicate
 // *.created entities (browser scaffold vs server scaffold) are dropped.
 function appendEvent(raw) {
@@ -116,6 +124,7 @@ function appendEvent(raw) {
   meta.seq = nextSeq;
   events.push(event);
   seenIds.add(event.id);
+  notifyEventListeners(event);
   schedulePersist();
   if (events.length >= COMPACT_AFTER_EVENTS) compactEvents();
   return event;
@@ -499,6 +508,43 @@ export function getSeq() {
   return meta.seq;
 }
 
+export const MAX_WAIT_MS = 30_000;
+
+export function subscribeEvents(listener) {
+  eventListeners.add(listener);
+  return () => { eventListeners.delete(listener); };
+}
+
+export function getEventListenerCount() {
+  return eventListeners.size;
+}
+
+export function waitForEvent({ since = 0, timeoutMs = MAX_WAIT_MS, type = '', boardId = '' } = {}) {
+  const after = Number.isFinite(since) ? since : 0;
+  const matches = (event) => (event.seq ?? 0) > after
+    && (!type || event.type === type)
+    && (!boardId || event.board_id === boardId);
+  const existing = events.find(matches);
+  if (existing) return Promise.resolve(existing);
+
+  const bounded = Math.max(1, Math.min(MAX_WAIT_MS, Number.isFinite(timeoutMs) ? timeoutMs : MAX_WAIT_MS));
+  return new Promise((resolveWait) => {
+    let settled = false;
+    let timer = null;
+    let unsubscribe = null;
+    const finish = (event) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (unsubscribe) unsubscribe();
+      resolveWait(event);
+    };
+    timer = setTimeout(() => finish(null), bounded);
+    timer.unref();
+    unsubscribe = subscribeEvents((event) => { if (matches(event)) finish(event); });
+  });
+}
+
 export function getEventsSince(since) {
   return events.filter((e) => (e.seq ?? 0) > since);
 }
@@ -584,6 +630,7 @@ export const DEFAULT_SKILLS = [
       '- 描述由 agent 维护；人的备注不得删改，只能折进描述后标记已消化。',
       '- 开工前必须先消化：把备注折进描述，再用 digest_key_points 清掉 needsDigest；没消化就 claim_task、或把任务移进 In Progress，都会被拒绝。',
       '- 卡住时移到 Blocked 并写 set_blocked_reason。',
+      '- 等变化不要轮询 list_events：用 wait_for_event（带上你已经见过的 seq，可加 type / boardId 过滤）；等人的备注或等同波任务收尾都靠它。',
       '',
       '【任务字段（当前模型）】',
       '- 创建任务只需要标题和描述；没有优先级、没有截止日期、没有标签、没有子任务。',
@@ -615,6 +662,7 @@ export const DEFAULT_SKILLS = [
       '协作规则：',
       '- 看板上没有的工作不要凭空开做：先用 create_task 建任务，再做。建任务只需要标题和描述——',
       '  没有优先级、没有截止日期、没有标签、没有子任务。',
+      '- 一波任务用 create_tasks 一次建完：{boardId, tasks:[{title, description?}]}，全部落在 Backlog；整批先校验后写入，一条不合法就整批拒绝，绝不部分生效。',
       '- 描述是 agent 的，备注是人的：agent 不得增删改 keyPoints，只能读。',
       '- 动手前先消化：任务带 needsDigest 时，先把新备注折进描述，再用 digest_key_points 标记已消化；没消化就 claim_task、或把任务移进 In Progress，都会被拒绝。',
       '- 只有真的动了才移动任务：开始做时移到 In Progress，做不下去时移到 Blocked 并写原因，',
@@ -664,6 +712,7 @@ export const DEFAULT_SKILLS = [
       '',
       '【迭代 = 一波工作（wave）】',
       '- 同一波、可以同时进行的工作放进同一个迭代；必须等前一波做完才能开始的工作，放进下一个迭代（create_board 新建）。',
+      '- 一波任务用 create_tasks 一次建完（全部落 Backlog）；整批换列用 move_tasks。',
       '- 一个迭代里的工作全部完成之前，不开始下一个迭代里的工作：先收掉当前这一波，再开新的。',
       '- 这是给 agent 的协作约定，不是硬性闸门：工具不会因为你认领了后面迭代的任务而拒绝，但请自觉按波次推进。',
       '- list_roadmap 会给出每个迭代还有多少没完成（unfinishedTasks），并标出当前的活动迭代（isActive：按 group 顺序第一个没有全部完成的迭代）。',
@@ -704,6 +753,10 @@ export const DEFAULT_SKILLS = [
       '- 任务带 needsDigest 时先别开工：把给 agent 的备注折进描述，再 digest_key_points 标记已消化；未消化就 claim_task 会被直接拒绝。',
       '- 已 Finished 的任务若被人加了新备注，会自动回到 Backlog 并带上 isRework——按返工处理，',
       '  消化新备注后再做；digest_key_points 之后 isRework 会被清掉，它只表示还有活要干，不表示曾经返工过。',
+      '',
+      '【等变化，不要轮询】',
+      '- 等人的新备注、或等同波其他任务收尾时，不要循环调用 list_events：用 wait_for_event 传你已经见过的 seq，有事件追加会立刻返回；超时返回 timedOut: true。',
+      '- wait_for_event 可以加 type、boardId 过滤；timeoutMs 上限 30000 毫秒（默认 15000）；每次等待结束都会自动清理，反复调用不会留下残留。',
       '',
       '备注与回复：',
       '- 给 agent 的备注（keyPoints）是人给 agent 下指令的通道。动手前先读（get_task），人的话不要删。',

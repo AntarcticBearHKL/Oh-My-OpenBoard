@@ -57,7 +57,7 @@
 ## Card Movement
 
 - There is no drag and drop for tasks: cards cannot be moved within or across columns from the UI
-- Only the agent changes a task's column, through the MCP tools (`move_task`, `claim_next`); the human directs work with the notes-to-the-agent list
+- Only the agent changes a task's column, through the MCP tools (`move_task`, `move_tasks`, `claim_next`); the human directs work with the notes-to-the-agent list
 - Columns are fixed: they are not draggable, reorderable, or editable from the board
 - The only drag-and-drop left in the app is lane ordering in the Settings modal
 

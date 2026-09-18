@@ -6,6 +6,7 @@ import { randomUUID } from 'node:crypto';
 import * as z from 'zod/v4';
 import {
   DEFAULT_BOARD_ID,
+  MAX_WAIT_MS,
   createBoard,
   deleteBoard,
   digestKeyPoints,
@@ -18,6 +19,7 @@ import {
   getGroups,
   getLabels,
   getRecentEvents,
+  getSeq,
   getSettings,
   getSkills,
   getSnapshot,
@@ -30,7 +32,8 @@ import {
   resolveGroup,
   setBoardGroupMap,
   setGroups,
-  setSkills
+  setSkills,
+  waitForEvent
 } from './store.mjs';
 
 const AGENT_ID = process.env.OPENAGILE_AGENT_NAME || 'openagile-harness';
@@ -127,6 +130,51 @@ function nextTaskKey(boardId, tasks) {
     if (match) max = Math.max(max, Number(match[1]));
   }
   return `${prefix}-${max + 1}`;
+}
+
+function prepareNewTask({ boardId, title, description = '', assignee = '' }, tasks, label = '') {
+  if (!title || !String(title).trim()) throw new Error(label ? `${label}: title is required` : 'title is required');
+  const backlogColumn = resolveBacklogColumn(boardId);
+  const now = new Date().toISOString();
+  const id = randomUUID();
+  const task = {
+    id,
+    key: nextTaskKey(boardId, tasks),
+    title: String(title).trim(),
+    description,
+    assignee,
+    column: backlogColumn.id,
+    order: maxOrder(backlogColumn.id, tasks) + 1,
+    creationDate: now,
+    changeDate: now,
+    columnHistory: [{ column: backlogColumn.id, at: now }],
+    blockedReason: '',
+    blockedAt: null
+  };
+  return { task, column: backlogColumn };
+}
+
+function buildMoveOrder(boardId, taskId, targetColumnId, position) {
+  const tasks = getTasks(boardId).slice();
+  const byColumn = new Map();
+  for (const entry of tasks) {
+    const columnId = entry.id === taskId ? targetColumnId : entry.column;
+    if (!byColumn.has(columnId)) byColumn.set(columnId, []);
+    byColumn.get(columnId).push(entry);
+  }
+  const order = [];
+  for (const [columnId, list] of byColumn) {
+    list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    if (columnId === targetColumnId && Number.isInteger(position)) {
+      const current = list.findIndex((t) => t.id === taskId);
+      if (current >= 0) {
+        const [entry] = list.splice(current, 1);
+        list.splice(Math.max(0, Math.min(position, list.length)), 0, entry);
+      }
+    }
+    list.forEach((entry, index) => order.push({ id: entry.id, column: columnId, order: index + 1 }));
+  }
+  return order;
 }
 
 export function registerTools(server, { broadcastGroups = () => {} } = {}) {
@@ -323,27 +371,48 @@ export function registerTools(server, { broadcastGroups = () => {} } = {}) {
     }
   }, async ({ title, description = '', assignee = '', boardId }) => {
     const bid = resolveBoard(boardId);
-    if (!title || !String(title).trim()) throw new Error('title is required');
-    const backlogColumn = resolveBacklogColumn(bid);
-    const tasks = getTasks(bid);
-    const now = new Date().toISOString();
-    const id = randomUUID();
-    const task = {
-      id,
-      key: nextTaskKey(bid, tasks),
-      title: String(title).trim(),
-      description,
-      assignee,
-      column: backlogColumn.id,
-      order: maxOrder(backlogColumn.id, tasks) + 1,
-      creationDate: now,
-      changeDate: now,
-      columnHistory: [{ column: backlogColumn.id, at: now }],
-      blockedReason: '',
-      blockedAt: null
-    };
-    emit('task.created', { boardId: bid, entityId: id, payload: { task }, actor: AGENT });
-    return ok({ id, key: task.key, boardId: bid, column: backlogColumn.id, columnName: backlogColumn.name, task });
+    const { task, column } = prepareNewTask({ boardId: bid, title, description, assignee }, getTasks(bid));
+    emit('task.created', { boardId: bid, entityId: task.id, payload: { task }, actor: AGENT });
+    return ok({ id: task.id, key: task.key, boardId: bid, column: column.id, columnName: column.name, task });
+  });
+
+  server.registerTool('create_tasks', {
+    title: 'Create tasks',
+    description: 'Create a batch of tasks in one call: pass a board and a list of items, each with a title and an optional description. Every item lands in Backlog. The whole batch is validated before anything is written — an empty title or a board that does not exist refuses the entire batch with an error naming the offending item, so a partial batch is never applied. Emits one task.created event per created task, not one batch event: the reducer and the SSE stream project event by event, so each task lands exactly as a single create_task would. Returns one result per item with the created id and key.',
+    inputSchema: {
+      boardId: z.string().optional().describe('Board that receives the tasks; defaults to the default board'),
+      tasks: z.array(z.object({
+        title: z.string().optional(),
+        description: z.string().optional(),
+        assignee: z.string().optional()
+      })).describe('Tasks to create, in order; every item needs a non-empty title, description and assignee are optional')
+    }
+  }, async ({ boardId, tasks }) => {
+    const bid = resolveBoard(boardId);
+    const list = Array.isArray(tasks) ? tasks : [];
+    if (list.length === 0) throw new Error('tasks must be a non-empty array');
+    const planned = [];
+    const planning = getTasks(bid).slice();
+    list.forEach((item, index) => {
+      const label = `tasks[${index}]`;
+      if (!item || typeof item !== 'object' || Array.isArray(item)) throw new Error(`${label}: an item must be an object with a title`);
+      const { task, column } = prepareNewTask({
+        boardId: bid,
+        title: item.title,
+        description: item.description ?? '',
+        assignee: item.assignee ?? ''
+      }, planning, label);
+      planned.push({ task, column });
+      planning.push(task);
+    });
+    for (const { task } of planned) {
+      emit('task.created', { boardId: bid, entityId: task.id, payload: { task }, actor: AGENT });
+    }
+    return ok({
+      created: planned.length,
+      boardId: bid,
+      results: planned.map(({ task, column }) => ({ id: task.id, key: task.key, boardId: bid, column: column.id, columnName: column.name }))
+    });
   });
 
   server.registerTool('update_task', {
@@ -384,28 +453,36 @@ export function registerTools(server, { broadcastGroups = () => {} } = {}) {
     const { task, boardId } = findTaskOrThrow(taskId);
     const targetColumn = resolveColumn(boardId, column);
     if (targetColumn.id === IN_PROGRESS_COLUMN_ID) assertNotesDigested(task);
-    const tasks = getTasks(boardId).slice();
-
-    const byColumn = new Map();
-    for (const entry of tasks) {
-      const columnId = entry.id === taskId ? targetColumn.id : entry.column;
-      if (!byColumn.has(columnId)) byColumn.set(columnId, []);
-      byColumn.get(columnId).push(entry);
-    }
-    const order = [];
-    for (const [columnId, list] of byColumn) {
-      list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-      if (columnId === targetColumn.id && Number.isInteger(position)) {
-        const current = list.findIndex((t) => t.id === taskId);
-        if (current >= 0) {
-          const [entry] = list.splice(current, 1);
-          list.splice(Math.max(0, Math.min(position, list.length)), 0, entry);
-        }
-      }
-      list.forEach((entry, index) => order.push({ id: entry.id, column: columnId, order: index + 1 }));
-    }
+    const order = buildMoveOrder(boardId, taskId, targetColumn.id, position);
     emit('task.moved', { boardId, entityId: taskId, payload: { order }, actor: AGENT });
     return ok({ taskId, column: targetColumn.id, columnName: targetColumn.name, order });
+  });
+
+  server.registerTool('move_tasks', {
+    title: 'Move tasks',
+    description: 'Move a batch of tasks to one target column (id or name) in a single call. The whole batch is validated before anything is moved — a task that does not exist, a column that is not one of the five, or a move into In Progress while any item still has undigested notes refuses the entire batch with an error naming the offending item, so a partial batch is never applied. Reuses the exact checks move_task enforces, including the digest gate. Emits one task.moved event per task, each carrying the full per-column ordering, not one batch event: the reducer and the SSE stream project event by event, so the board converges exactly as single moves would. Returns one result per item.',
+    inputSchema: {
+      taskIds: z.array(z.string()).describe('Task ids to move, in the order they should land in the target column'),
+      column: z.string().describe('Target column id or one of the five fixed names')
+    }
+  }, async ({ taskIds, column }) => {
+    const list = Array.isArray(taskIds) ? taskIds : [];
+    if (list.length === 0) throw new Error('taskIds must be a non-empty array');
+    const moves = list.map((rawId, index) => {
+      const taskId = typeof rawId === 'string' ? rawId.trim() : '';
+      if (!taskId) throw new Error(`taskIds[${index}]: taskId is required`);
+      const { task, boardId } = findTaskOrThrow(taskId);
+      const targetColumn = resolveColumn(boardId, column);
+      if (targetColumn.id === IN_PROGRESS_COLUMN_ID) assertNotesDigested(task);
+      return { task, boardId, targetColumn };
+    });
+    const results = [];
+    for (const { task, boardId, targetColumn } of moves) {
+      const order = buildMoveOrder(boardId, task.id, targetColumn.id);
+      emit('task.moved', { boardId, entityId: task.id, payload: { order }, actor: AGENT });
+      results.push({ taskId: task.id, key: task.key || '', boardId, column: targetColumn.id, columnName: targetColumn.name });
+    }
+    return ok({ moved: results.length, column: moves[0].targetColumn.id, columnName: moves[0].targetColumn.name, results });
   });
 
   server.registerTool('delete_task', {
@@ -790,4 +867,33 @@ export function registerTools(server, { broadcastGroups = () => {} } = {}) {
     description: 'Return the most recent domain events (the audit trail), oldest first.',
     inputSchema: { limit: z.number().int().optional() }
   }, async ({ limit }) => ok(getRecentEvents(limit)));
+
+  server.registerTool('wait_for_event', {
+    title: 'Wait for the next event',
+    description: 'Wait until a domain event is appended after the sequence number you have already seen, then return it. Resolves on the next append rather than polling — no list_events loop. Optional type and boardId filters narrow the wait, for example to a worker\'s own board. When no matching event arrives within timeoutMs the wait ends cleanly with timedOut: true and the current seq; timeoutMs is capped at 30000 ms (default 15000). The append listener is removed when the wait ends, so repeated calls leak nothing.',
+    inputSchema: {
+      since: z.number().int().describe('The seq you have already seen; the wait resolves on an event with a greater seq'),
+      timeoutMs: z.number().int().optional().describe('Upper bound in milliseconds, capped at 30000; defaults to 15000'),
+      type: z.string().optional().describe('Only resolve for this event type, e.g. task.updated'),
+      boardId: z.string().optional().describe('Only resolve for events on this board')
+    }
+  }, async ({ since, timeoutMs, type = '', boardId = '' }) => {
+    const bounded = Math.max(1, Math.min(MAX_WAIT_MS, Number.isFinite(timeoutMs) ? timeoutMs : 15000));
+    const event = await waitForEvent({ since, timeoutMs: bounded, type, boardId });
+    if (!event) return ok({ timedOut: true, seq: getSeq(), since });
+    return ok({
+      timedOut: false,
+      seq: event.seq,
+      since,
+      event: {
+        seq: event.seq,
+        type: event.type,
+        boardId: event.board_id,
+        entityId: event.entity_id,
+        at: event.at,
+        actor: event.actor,
+        payload: event.payload
+      }
+    });
+  });
 }
