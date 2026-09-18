@@ -21,13 +21,13 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 
 | Spec | Purpose |
 |---|---|
-| `docs/spec/board-ui.md` | Main board layout, column/card rendering, drag-drop, mobile behavior |
+| `docs/spec/board-ui.md` | Main board layout, column/card rendering, mobile behavior |
 | `docs/spec/tasks.md` | Task CRUD, notes to the agent, the digest workflow, claim timing, card display rules |
 | `docs/spec/columns.md` | Fixed columns, column UI, WIP limits, Finished column invariants |
 | `docs/spec/labels.md` | Label management, groups, color constraints, and their use by swim lanes |
 | `docs/spec/settings.md` | Per-board settings fields and persistence |
 | `docs/spec/sub-tasks.md` | Retired sub-task model — notes to the agent replaced it |
-| `docs/spec/swimlanes.md` | Swim lane grouping modes, collapse state, lane-aware drag-drop |
+| `docs/spec/swimlanes.md` | Swim lane grouping modes, collapse state, lane ordering |
 | `docs/spec/import-export.md` | Board JSON export/import format and ID-remapping rules |
 | `docs/spec/sync.md` | "Go Online" auth flow: backend health probe, login modal, session management (event-sourced sync itself lives in `backend-storage-pb.md`) |
 
@@ -51,7 +51,7 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 - Only vanilla CSS, JavaScript, and HTML
 - Minimal to no dependencies:
   - `lucide` for tree-shaken icons via `src/modules/icons.js`
-  - `sortablejs` for task and column drag and drop
+  - `sortablejs` for lane ordering in the Settings modal
 - Storage: browser **IndexedDB** via the `idb` wrapper (migrated from localStorage)
 - Data persistence: JSON import/export to local disk
 - No server, no frameworks
@@ -71,14 +71,13 @@ All canonical specs live under `docs/spec/`. Start here when adding, changing, o
 ## Module Map
 
 - `src/modules/schema.js` - canonical factory functions for all domain objects (`createTask`, `createColumn`, `createLabel`, `createBoard`)
-- `src/modules/render.js` - centralized board rendering (`renderBoard`) plus the keyed in-place patch (`reconcileBoard`) and the drag-reconcile window
+- `src/modules/render.js` - centralized board rendering (`renderBoard`) plus the keyed in-place patch (`reconcileBoard`)
 - `src/modules/idb-store.js` - IDB singleton, key helpers (`keyFor`, `getBoardEventsKey`), `schedulePersist`, `scheduleDelete`
 - `src/modules/board-serializer.js` - board import ID-remapping (`normalizeBoardModelIds`)
 - `src/modules/storage.js` - in-memory state, all CRUD helpers (`load*`/`save*`), `initStorage()`, migration, default data
-- `src/modules/tasks.js` - task CRUD and drop-position updates
+- `src/modules/tasks.js` - task CRUD, task ordering, and the rework move back to Backlog
 - `src/modules/columns.js` - column collapse state helpers
 - `src/modules/boards.js` - board management
-- `src/modules/dragdrop.js` - SortableJS-based task/column drag and drop
 - `src/modules/modals.js` - modal open/close wiring and Escape/backdrop behavior
 - `src/modules/dialog.js` - confirm and alert dialog helpers
 - `src/modules/icons.js` - Lucide icon registration and `renderIcons()`
@@ -152,7 +151,6 @@ Styles are organized under `src/styles/` with `src/styles/index.css` importing f
 - `components/modals.css`
 - `components/accordion.css`
 - `components/labels.css`
-- `components/dragdrop.css`
 - `components/reports.css`
 - `components/auth.css` - auth modal and sync button styles
 - `components/impressum.css` - impressum page styles

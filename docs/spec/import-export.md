@@ -23,7 +23,7 @@
 - Imports reject schema mismatches such as malformed sections or task references to unknown imported columns
 - Unknown task column references are rejected with explicit manual-fix instructions (add the missing column ids in `columns[]` or remap `task.column` to an existing id)
 - Swim lane label references that cannot be resolved against the imported label list are cleared, and swim lane label IDs are remapped with the other IDs
-- An older export that still carries the removed task fields (`priority`, `dueDate`, task `labels`, `subTasks`, `attachments`, `customFields`, `annotations`) imports cleanly: those fields are dropped rather than rejected
+- An older export that still carries the removed task fields (`priority`, `dueDate`, task `labels`, `subTasks`, `attachments`, `customFields`, `annotations`, `comments`, `relationships`, `type`, `estimate`, `parentId`) imports cleanly: those fields are dropped rather than rejected
 - An older export that still carries `acceptanceCriteria` imports cleanly: the entries are read into `keyPoints` with `text` kept and the old `done` flags dropped
 - Legacy imported IDs, including `done`, `todo`, slug label IDs, and prefixed board IDs, are remapped to UUIDs before persistence
 - Import rewrites task column references, column history entries, and swim lane label IDs when IDs are remapped

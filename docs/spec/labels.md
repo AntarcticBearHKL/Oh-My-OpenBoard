@@ -25,7 +25,7 @@
 ## Swim Lane Use
 
 - A task's lane assignment is stored as `swimlaneLabelId` (plus `swimlaneLabelGroup` in `label-group` mode); it is a single value, not a label list
-- Assigning a lane happens by dragging the task into that swim lane row
+- The UI does not assign a lane: there is no card drag and no lane picker; a task's `swimlaneLabelId` is carried by the task and survives import/export
 - Deleting a label tombstones it: it disappears from the Manage Labels list and from swim lane grouping, and tasks that referenced it fall back to `No Group`
 
 ## Delete Behavior

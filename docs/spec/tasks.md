@@ -18,16 +18,19 @@
 ## Placement and Ordering
 
 - New tasks are inserted at the top of Human In The Loop with `order = 1`
-- Standard drag and drop can move tasks between columns
-- In swim lane mode, a single drag can change both column and lane
+- The UI cannot move a task between columns: only the agent moves a card, through the MCP tools (`move_task`, `claim_next`)
 - Storage keeps task ordering flattened per column even while swim lanes are enabled
 
 ## Claim Timing and the Stale-Claim Watchdog
 
+- `claim_task` is a hard lock: it is refused when another agent holds a live claim and the refusal names the holder. Re-claiming the same task as the same agent renews the claim (refreshes `claimedAt` and `changeDate`) instead of conflicting
+- A claim whose last activity is older than the five-minute window is expired. `list_tasks` and `get_task` report `claimedBy`, `claimedAt`, `changeDate`, `blockedReason` and `claimExpired`, so an orchestrator can see who holds a task and whether the holder has gone quiet; `list_tasks` also filters by `claimedBy`, `needsDigest` and `ready`
+- Claiming over an expired claim succeeds as a takeover and the result says `tookOver`; a live foreign claim is always refused. The watchdog never clears a claim — it only moves a stale In Progress task to Blocked
+- `claim_next` picks and claims the next ready task for the calling agent in one step. Ready means in Backlog or Human In The Loop, notes digested, and unclaimed or expired-claimed; the deterministic order is Backlog before Human In The Loop, then ascending task `order`, then task id
 - A claim (`claim_task`) starts a five-minute sync window; any update that bumps `changeDate` (a description edit, a digest, a re-claim, or `heartbeat_task`) restarts it, and so does entering In Progress: the sweep measures from the later of `changeDate` and the time the task entered its current column (`columnHistory`), so a move can never leave a just-started task looking stuck
 - `heartbeat_task` is the low-cost sync for an agent that is still working but has nothing to change: it writes only `changeDate` and leaves the description, the notes, the digests, the column and every other field untouched. It is allowed only for a claimed task in In Progress — the only state the watchdog measures — and refused everywhere else
 - The harness sweeps every 30 seconds and moves a claimed In Progress task whose last sync is older than five minutes to Blocked, exactly as an agent move does: it emits `task.moved` with the column ordering (recorded in `columnHistory`) and a `task.updated` that carries the blocked fields
-- The server sets `blockedAt` (which stops the card's elapsed timer) and `blockedReason` to `Auto-blocked: no agent sync for over 5 minutes.`
+- The server sets `blockedAt` and `blockedReason` to `Auto-blocked: no agent sync for over 5 minutes.`
 - The sweep keys off the fixed In Progress and Blocked column ids, never column names, and only touches tasks that carry a claim marker (`claimedBy` or `claimedAt`); unclaimed, fresh, and already-blocked tasks are left alone
 - An agent that moves the card to Finished or Blocked itself stops the clock before the watchdog ever sees the task
 - The threshold is `CLAIM_STALE_MS` (five minutes) in `harness/src/store.mjs`; the interval is 30 seconds, started once at server boot
@@ -37,7 +40,6 @@
 - A task card shows exactly what the task is: title, description preview, and the notes-to-the-agent list (field `keyPoints`), stacked vertically. The card conveys no other status than the column it sits in — the key/code, claimant, elapsed timer, notes indicator and blocked badge were removed
 - Two markers stay because someone must act on them: `needsDigest` (the human changed the task and the agent has not folded the note into the description) and `isRework` (the task came back from Finished). They render only in Backlog, Blocked and Finished — keyed to the fixed column ids — as a coloured pill that also carries a lucide icon and its label text, so the meaning survives colour-blindness and holds up in both themes. They are not decoration
 - Clicking anywhere on a task card opens the edit modal, except the delete button which triggers deletion
-- Drag-and-drop is distinguished from clicks by pointer movement threshold
 - Titles are clamped to one line and descriptions to a short preview
 - URLs (`http://` or `https://`) in the description are rendered as clickable `<a>` links that open in a new tab (`target="_blank" rel="noopener noreferrer"`); clicking a link does not open the edit modal. Plain-text editing in the modal is unchanged — linkification is display-only on the card.
 - In the task modal (add and edit), a live link preview strip appears below the description textarea whenever one or more `http://`/`https://` URLs are detected. Each unique URL renders as a clickable chip that opens in a new tab. The strip updates on every keystroke/paste and hides itself when no URLs are present. Existing URLs are shown immediately when the edit modal opens.
@@ -97,7 +99,7 @@ Update this file when you change:
 
 - task fields or validation
 - task card layout or meta rules
-- task ordering or drag behavior
+- task ordering or card movement
 - task modal fields or notes-list UX
 - the notes-to-the-agent digest workflow (`needsDigest`, `isRework`, `digestedAt`)
 - deletion confirmation wording or event propagation

@@ -146,21 +146,23 @@ export function initializeBoardSidebar() {
     input.focus();
   };
 
-  const buildBoardItem = (board, activeId, label) => {
+  const buildBoardItem = (board, activeId, label, isLast) => {
     const isActive = board.id === activeId;
 
     const nameEl = document.createElement('span');
     nameEl.className = 'board-list-item-name';
     nameEl.textContent = label;
 
-    const deleteBtn = createArmedDeleteButton('board-list-delete', `Delete iteration ${label}`, () => {
-      if (deleteBoardById(board.id)) {
-        assignBoardToGroup(board.id, null);
-        emit(DATA_CHANGED);
-      } else {
-        render();
-      }
-    });
+    const deleteBtn = isLast
+      ? createArmedDeleteButton('board-list-delete', `Delete iteration ${label}`, () => {
+          if (deleteBoardById(board.id)) {
+            assignBoardToGroup(board.id, null);
+            emit(DATA_CHANGED);
+          } else {
+            render();
+          }
+        })
+      : null;
 
     const item = document.createElement('li');
     item.className = `board-list-item${isActive ? ' board-list-item--active' : ''}`;
@@ -179,7 +181,8 @@ export function initializeBoardSidebar() {
       }
     });
 
-    item.append(nameEl, deleteBtn);
+    item.append(nameEl);
+    if (deleteBtn) item.append(deleteBtn);
     return item;
   };
 
@@ -306,7 +309,7 @@ export function initializeBoardSidebar() {
 
     const finishedPrefixIds = new Set(finishedPrefix.map((board) => board.id));
     boards.forEach((board, index) => {
-      const item = buildBoardItem(board, activeId, iterationLabel(index));
+      const item = buildBoardItem(board, activeId, iterationLabel(index), index === boards.length - 1);
       if (finishedPrefixIds.has(board.id)) item.classList.add('board-list-item--finished-prefix');
       items.appendChild(item);
     });

@@ -25,9 +25,8 @@
 
 ## Lane Assignment Rules
 
-- Dragging between swim lanes persists the new lane assignment immediately
-- In `label` mode, dropping into a lane sets `task.swimlaneLabelId`; dropping into `No Group` clears it
-- In `label-group` mode, dropping into a lane sets `swimlaneLabelId` and records the selected group in `swimlaneLabelGroup`; dropping into `No Group` clears both
+- The UI does not assign a task to a lane: cards are not draggable and there is no lane picker
+- A task's lane assignment is stored as `swimlaneLabelId` (plus `swimlaneLabelGroup` in `label-group` mode); it survives import/export, and tasks without one appear in `No Group`
 - Tasks do not carry a label list; the swim lane assignment is the only label reference on a task
 
 ## Layout Behavior
@@ -40,8 +39,6 @@
 ## Finished-Column Behavior
 
 - Expanded swim lane rows hide task cards already in the Finished column to keep lanes compact
-- The Finished cell remains an active drop target and shows compact helper text instead of the hidden cards
-- Dragging into Finished still persists the move and inserts the task at the top of the flattened Finished order
 
 ## Collapse and Expand Controls
 

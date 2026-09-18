@@ -33,6 +33,8 @@ export const STABLE_COLUMNS = [
 
 export const IN_PROGRESS_COLUMN_ID = STABLE_COLUMNS[2].id;
 const BLOCKED_COLUMN_ID = STABLE_COLUMNS[3].id;
+const BACKLOG_COLUMN_ID = STABLE_COLUMNS[0].id;
+const HUMAN_IN_THE_LOOP_COLUMN_ID = STABLE_COLUMNS[1].id;
 
 export const STABLE_LABELS = [
   { id: '00000000-0000-4000-8000-000000000020', name: 'Task', color: '#f59e0b', group: 'Activity' },
@@ -395,6 +397,39 @@ function lastActivityAt(task) {
   return latest;
 }
 
+export function isClaimExpired(task, now = Date.now()) {
+  if (!task || !task.claimedBy) return false;
+  const activity = lastActivityAt(task);
+  if (!Number.isFinite(activity)) return true;
+  return now - activity > CLAIM_STALE_MS;
+}
+
+export function isReadyTask(task, now = Date.now()) {
+  if (!task || task.deleted) return false;
+  if (task.column !== BACKLOG_COLUMN_ID && task.column !== HUMAN_IN_THE_LOOP_COLUMN_ID) return false;
+  if (pendingNotesMessage(task)) return false;
+  if (task.claimedBy && !isClaimExpired(task, now)) return false;
+  return true;
+}
+
+const READY_COLUMN_RANK = new Map([[BACKLOG_COLUMN_ID, 0], [HUMAN_IN_THE_LOOP_COLUMN_ID, 1]]);
+
+export function nextReadyTask(boardId, now = Date.now()) {
+  return getTasks(boardId)
+    .filter((task) => isReadyTask(task, now))
+    .sort((a, b) => (READY_COLUMN_RANK.get(a.column) - READY_COLUMN_RANK.get(b.column))
+      || ((a.order ?? 0) - (b.order ?? 0))
+      || String(a.id).localeCompare(String(b.id)))[0] || null;
+}
+
+export function isLastBoardInGroup(boardId) {
+  const board = getBoard(boardId);
+  if (!board) throw new Error(`Board not found: ${boardId}`);
+  const groupId = boardGroups[boardId] || '';
+  const siblings = getBoards().filter((entry) => (entry.groupId || '') === groupId);
+  return siblings.length === 0 || siblings[siblings.length - 1].id === boardId;
+}
+
 // Stale claims move with two events, exactly like a client drag: task.moved plus the blocked task.updated.
 export function sweepStaleClaims(now = Date.now()) {
   const stale = [];
@@ -545,7 +580,7 @@ export const DEFAULT_SKILLS = [
       '',
       '【AI / subagent 的职责】',
       '- 动手前先读：get_task（含给 agent 的备注）、list_tasks、list_skills。',
-      '- 认领：claim_task 写明是哪个 subagent 在做；做完或中断时 release_task；任务还有未消化的备注时 claim_task 会被拒绝。',
+      '- 认领：claim_task 写明是哪个 subagent 在做；已被别人认领且认领未过期时会被拒绝；认领超过 5 分钟没有活动即过期，过期后才能接管（结果里会写 tookOver）。做完或中断时 release_task；任务还有未消化的备注时 claim_task 会被拒绝。',
       '- 描述由 agent 维护；人的备注不得删改，只能折进描述后标记已消化。',
       '- 开工前必须先消化：把备注折进描述，再用 digest_key_points 清掉 needsDigest；没消化就 claim_task、或把任务移进 In Progress，都会被拒绝。',
       '- 卡住时移到 Blocked 并写 set_blocked_reason。',
@@ -562,7 +597,7 @@ export const DEFAULT_SKILLS = [
       '- Finished：已完成，是完成情况的统计来源。',
       '',
       '【交接约定】',
-      '- 同一时刻一个任务只应被一个 subagent 认领；已被别人认领的任务不要动。',
+      '- 同一时刻一个任务只应被一个 subagent 认领；已被别人认领（且认领未过期）的任务不要动，认领过期后才允许接管。',
       '- 交接前把进展写进描述，让人不用逐个点开也知道发生了什么。',
       '- 人加了备注后，agent 应把它当成新的输入，折进描述，再用 digest_key_points 标记已消化；备注未消化前不能开工，claim_task 会被拒绝。'
     ].join('\n')
@@ -626,6 +661,12 @@ export const DEFAULT_SKILLS = [
       '',
       '读懂数字：',
       '- 每个迭代的起止日期和 Finished 列一起，说明这一轮做完了什么。',
+      '',
+      '【迭代 = 一波工作（wave）】',
+      '- 同一波、可以同时进行的工作放进同一个迭代；必须等前一波做完才能开始的工作，放进下一个迭代（create_board 新建）。',
+      '- 一个迭代里的工作全部完成之前，不开始下一个迭代里的工作：先收掉当前这一波，再开新的。',
+      '- 这是给 agent 的协作约定，不是硬性闸门：工具不会因为你认领了后面迭代的任务而拒绝，但请自觉按波次推进。',
+      '- list_roadmap 会给出每个迭代还有多少没完成（unfinishedTasks），并标出当前的活动迭代（isActive：按 group 顺序第一个没有全部完成的迭代）。',
     ].join('\n')
   },
   {
@@ -637,7 +678,15 @@ export const DEFAULT_SKILLS = [
       '认领：',
       '- 动手前先认领（claim_task 填上你的 agent 名），让人看得见任务归谁；任务还有未消化的备注时认领会被拒绝。',
       '- 停下时释放（release_task），即使任务还没做完。',
-      '- 不要做没人认领的任务；已被别人认领的就别碰。',
+      '- 不要做没人认领的任务；已被别人认领的就别碰——除非那份认领已经过期（见下）。',
+      '',
+      '【认领是硬锁，过期才可接管】',
+      '- 认领是硬锁：任务已被别的 subagent 认领、且认领还新鲜时，claim_task 会被拒绝，并在错误里点名持有人。',
+      '- 同一 agent 再次认领自己的任务是续期：刷新认领时间和 changeDate，不是冲突。',
+      '- 最后一次活动超过 5 分钟，认领即过期；list_tasks / get_task 会返回 claimedBy、claimedAt、changeDate、blockedReason 和 claimExpired，谁持有、持有多久、是否安静一眼可见。',
+      '- 看门狗不会替你清掉认领：它只把仍然卡住的 In Progress 任务移进 Blocked 并记录原因；认领是否过期由时间判定，是否接管由 agent 决定。',
+      '- 认领过期后可以接管：claim_task 会成功并在结果里说明 tookOver: true；仍然 live 的认领永远不能抢。',
+      '- 不知道从哪个任务开始时用 claim_next：它原子地认领下一个 ready 任务。ready = 在 Backlog 或 Human In The Loop、备注已消化、且无人认领或认领已过期；顺序固定为 Backlog 先于 Human In The Loop，再按任务 order，最后按任务 id。',
       '',
       '【计时约定】',
       '- 认领那一刻就开始计时：claim_task 会写入认领时间戳；看门狗按它判断你是否还在线。',
@@ -646,7 +695,7 @@ export const DEFAULT_SKILLS = [
       '- 只想续命、不想动任何内容时，用 heartbeat_task：它只写 changeDate，不动描述、备注、消化标记和列；',
       '  只有「已认领且在 In Progress」的任务能用，其他状态会被拒绝。',
       '- 把任务移进 In Progress 同样算一次活动：窗口从进列那一刻重新开始，刚开工的任务不会被误判为卡住。',
-      '- 如果大约 5 分钟内没有任何同步，服务端会把任务移到 Blocked、记录原因，计时随即停止。',
+      '- 如果大约 5 分钟内没有任何同步，服务端会把任务移到 Blocked、记录原因，计时随即停止；它不会清掉认领，认领是否过期只由时间判定，接管与否由 agent 决定。',
       '- 正常流程是由 agent 自己移动卡片：主工作完成就移到 Finished；做不下去或需要人拍板就移到',
       '  Blocked 并写原因。移动卡片才是停止计时的方式，计时因此始终如实。',
       '- 任务主要由 agent 用 create_task 创建（落在 Backlog）；人只能在 Human In The Loop 列手工建任务。',

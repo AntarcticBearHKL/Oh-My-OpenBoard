@@ -71,9 +71,15 @@ const CLAIM_STALE_MS = 5 * 60 * 1000;
 const NOW = 1_800_000_000_000;
 const STALE_REASON = 'Auto-blocked: no agent sync for over 5 minutes.';
 const minutesAgo = (ms) => new Date(NOW - ms).toISOString();
+const realMinutesAgo = (ms) => new Date(Date.now() - ms).toISOString();
 
 const BOARD_A = '00000000-0000-4000-8000-0000000000a1';
 const BOARD_B = '00000000-0000-4000-8000-0000000000b1';
+const BOARD_C = '00000000-0000-4000-8000-0000000000c1';
+const BOARD_D = '00000000-0000-4000-8000-0000000000d1';
+const BOARD_E = '00000000-0000-4000-8000-0000000000e1';
+const BOARD_F = '00000000-0000-4000-8000-0000000000f1';
+const BOARD_G = '00000000-0000-4000-8000-0000000000f2';
 const FIXED_COLUMN_IDS = [
   '00000000-0000-4000-8000-000000000030',
   '00000000-0000-4000-8000-000000000034',
@@ -859,6 +865,213 @@ test('delete_task refuses a finished task and still deletes any other', async ()
   const result = await toolValue('delete_task', { taskId: 'task-deletable' });
   assert.equal(result.deleted, 'task-deletable');
   assert.equal(store.findTask('task-deletable'), null, 'a task outside Finished is still deletable');
+});
+
+test('a live claim by another agent is refused and names the holder', async () => {
+  store.appendEvents([makeTask(BOARD_A, 'task-live-lock', {
+    title: 'Live lock', column: FIXED_COLUMN_IDS[0], order: 900, changeDate: realMinutesAgo(0)
+  })]);
+
+  const first = await toolValue('claim_task', { taskId: 'task-live-lock', agent: 'agent-a' });
+  assert.equal(first.claimedBy, 'agent-a');
+
+  await assert.rejects(
+    () => callTool('claim_task', { taskId: 'task-live-lock', agent: 'agent-b' }),
+    /agent-a/,
+    'the refusal names the holder'
+  );
+  assert.equal(store.findTask('task-live-lock').task.claimedBy, 'agent-a', 'the refused claim changes nothing');
+});
+
+test('re-claiming as the same agent renews the claim instead of conflicting', async () => {
+  store.appendEvents([makeTask(BOARD_A, 'task-renew', {
+    title: 'Renew me', column: FIXED_COLUMN_IDS[0], order: 901, changeDate: realMinutesAgo(60 * 1000)
+  })]);
+
+  const first = await toolValue('claim_task', { taskId: 'task-renew', agent: 'agent-a' });
+  const second = await toolValue('claim_task', { taskId: 'task-renew', agent: 'agent-a' });
+
+  assert.equal(second.renewed, true, 'the result says it renewed');
+  assert.ok(Date.parse(second.claimedAt) >= Date.parse(first.claimedAt), 'the claim timestamp is refreshed');
+  assert.equal(store.findTask('task-renew').task.changeDate, second.claimedAt, 'changeDate moves with the renewal');
+  assert.equal(store.findTask('task-renew').task.claimedBy, 'agent-a');
+});
+
+test('a claim older than the stale window can be taken over', async () => {
+  store.appendEvents([makeTask(BOARD_A, 'task-takeover', {
+    title: 'Crash recovery',
+    column: FIXED_COLUMN_IDS[0],
+    order: 902,
+    claimedBy: 'agent-a',
+    claimedAt: realMinutesAgo(10 * 60 * 1000),
+    changeDate: realMinutesAgo(10 * 60 * 1000),
+    columnHistory: [{ column: FIXED_COLUMN_IDS[0], at: realMinutesAgo(10 * 60 * 1000) }]
+  })]);
+
+  const taken = await toolValue('claim_task', { taskId: 'task-takeover', agent: 'agent-b' });
+
+  assert.equal(taken.tookOver, true, 'the result says it took over');
+  assert.equal(taken.previousHolder, 'agent-a');
+  assert.equal(store.findTask('task-takeover').task.claimedBy, 'agent-b');
+});
+
+test('task reads expose the claim holder, its timestamps and whether the claim is expired', async () => {
+  store.appendEvents([
+    makeTask(BOARD_A, 'task-expired-read', {
+      title: 'Expired read',
+      column: FIXED_COLUMN_IDS[0],
+      order: 903,
+      claimedBy: 'agent-a',
+      claimedAt: realMinutesAgo(10 * 60 * 1000),
+      changeDate: realMinutesAgo(10 * 60 * 1000)
+    }),
+    makeTask(BOARD_A, 'task-live-read', {
+      title: 'Live read',
+      column: FIXED_COLUMN_IDS[0],
+      order: 904,
+      claimedBy: 'agent-live',
+      claimedAt: realMinutesAgo(60 * 1000),
+      changeDate: realMinutesAgo(60 * 1000)
+    })
+  ]);
+
+  const listed = (await toolValue('list_tasks', { boardId: BOARD_A })).find((task) => task.id === 'task-expired-read');
+  assert.equal(listed.claimedBy, 'agent-a');
+  assert.ok(listed.claimedAt);
+  assert.ok(listed.changeDate);
+  assert.equal(listed.blockedReason, '');
+  assert.equal(listed.claimExpired, true, 'a stale claim is reported as expired');
+
+  const fetched = (await toolValue('get_task', { taskId: 'task-live-read' })).task;
+  assert.equal(fetched.claimedBy, 'agent-live');
+  assert.equal(fetched.claimExpired, false, 'a fresh claim is reported as live');
+});
+
+test('the watchdog does not clear a claim when it auto-blocks a stale task', () => {
+  store.appendEvents([makeTask(BOARD_A, 'task-watchdog-claim', {
+    title: 'Watchdog keeps the claim',
+    column: FIXED_COLUMN_IDS[2],
+    claimedBy: 'agent-a',
+    claimedAt: minutesAgo(10 * 60 * 1000),
+    changeDate: minutesAgo(CLAIM_STALE_MS + 1)
+  })]);
+
+  const moved = store.sweepStaleClaims(NOW);
+
+  assert.ok(moved.includes('task-watchdog-claim'));
+  const task = store.getTasks(BOARD_A).find((entry) => entry.id === 'task-watchdog-claim');
+  assert.equal(task.column, FIXED_COLUMN_IDS[3]);
+  assert.equal(task.claimedBy, 'agent-a', 'the owner is still recorded');
+  assert.ok(task.claimedAt, 'and the claim timestamp is untouched');
+  assert.equal(task.blockedReason, STALE_REASON);
+});
+
+test('list_tasks filters by claimedBy, needsDigest and readiness', async () => {
+  store.appendEvents([makeEvent('board.created', BOARD_D, BOARD_D)]);
+  store.appendEvents([
+    makeTask(BOARD_D, 'd-ready', { title: 'Ready', column: FIXED_COLUMN_IDS[0], order: 10, changeDate: realMinutesAgo(2 * 60 * 1000) }),
+    makeTask(BOARD_D, 'd-ready-hil', { title: 'Ready in HIL', column: FIXED_COLUMN_IDS[1], order: 11, changeDate: realMinutesAgo(2 * 60 * 1000) }),
+    makeTask(BOARD_D, 'd-notes', { title: 'Notes', column: FIXED_COLUMN_IDS[0], order: 12, keyPoints: [{ id: 'd-note-1', text: 'fold me', at: minutesAgo(0) }], needsDigest: true }),
+    makeTask(BOARD_D, 'd-claimed', { title: 'Claimed', column: FIXED_COLUMN_IDS[0], order: 13, claimedBy: 'agent-x', claimedAt: realMinutesAgo(60 * 1000), changeDate: realMinutesAgo(60 * 1000) }),
+    makeTask(BOARD_D, 'd-started', { title: 'Started', column: FIXED_COLUMN_IDS[2], order: 14, changeDate: realMinutesAgo(60 * 1000) })
+  ]);
+
+  const ready = await toolValue('list_tasks', { boardId: BOARD_D, ready: true });
+  assert.deepEqual(ready.map((task) => task.id), ['d-ready', 'd-ready-hil']);
+
+  const mine = await toolValue('list_tasks', { boardId: BOARD_D, claimedBy: 'agent-x' });
+  assert.deepEqual(mine.map((task) => task.id), ['d-claimed']);
+
+  const undigested = await toolValue('list_tasks', { boardId: BOARD_D, needsDigest: true });
+  assert.deepEqual(undigested.map((task) => task.id), ['d-notes']);
+
+  const unclaimed = await toolValue('list_tasks', { boardId: BOARD_D, claimedBy: '' });
+  assert.deepEqual(unclaimed.map((task) => task.id).sort(), ['d-notes', 'd-ready', 'd-ready-hil', 'd-started']);
+});
+
+test('claim_next deterministically takes the first ready task and never a live claim', async () => {
+  store.appendEvents([makeEvent('board.created', BOARD_C, BOARD_C)]);
+  store.appendEvents([
+    makeTask(BOARD_C, 'c-notes', { title: 'Undigested', column: FIXED_COLUMN_IDS[0], order: 0, keyPoints: [{ id: 'c-note', text: 'fold first', at: realMinutesAgo(0) }], needsDigest: true }),
+    makeTask(BOARD_C, 'c-hil', { title: 'HIL task', column: FIXED_COLUMN_IDS[1], order: 1, changeDate: realMinutesAgo(2 * 60 * 1000) }),
+    makeTask(BOARD_C, 'c-live', { title: 'Live foreign claim', column: FIXED_COLUMN_IDS[0], order: 1, claimedBy: 'agent-other', claimedAt: realMinutesAgo(60 * 1000), changeDate: realMinutesAgo(60 * 1000) }),
+    makeTask(BOARD_C, 'c-backlog', { title: 'Backlog task', column: FIXED_COLUMN_IDS[0], order: 5, changeDate: realMinutesAgo(2 * 60 * 1000) })
+  ]);
+
+  const first = await toolValue('claim_next', { boardId: BOARD_C, agent: 'agent-d' });
+  assert.equal(first.claimed, true);
+  assert.equal(first.taskId, 'c-backlog', 'Backlog beats Human In The Loop even at a higher order');
+  assert.equal(store.findTask('c-backlog').task.claimedBy, 'agent-d');
+
+  const second = await toolValue('claim_next', { boardId: BOARD_C, agent: 'agent-d' });
+  assert.equal(second.taskId, 'c-hil', 'the next dispatch moves on to the next ready task');
+
+  const third = await toolValue('claim_next', { boardId: BOARD_C, agent: 'agent-d' });
+  assert.equal(third.claimed, false, 'a live foreign claim is never returned');
+  assert.equal(store.findTask('c-live').task.claimedBy, 'agent-other', 'the live holder is untouched');
+
+  const expire = makeEvent('task.updated', BOARD_C, 'c-live');
+  expire.payload = { fields: { changeDate: realMinutesAgo(10 * 60 * 1000) } };
+  store.appendEvents([expire]);
+
+  const taken = await toolValue('claim_next', { boardId: BOARD_C, agent: 'agent-d' });
+  assert.equal(taken.taskId, 'c-live', 'the expired claim is taken over');
+  assert.equal(taken.tookOver, true);
+  assert.equal(taken.previousHolder, 'agent-other');
+});
+
+test('delete_board refuses a non-last iteration and allows the last', async () => {
+  const group = await toolValue('create_group', { name: 'Delete Guard' });
+  const first = await toolValue('create_board', { groupId: group.id });
+  const second = await toolValue('create_board', { groupId: group.id });
+
+  await assert.rejects(
+    () => callTool('delete_board', { boardId: first.id }),
+    /not the last iteration/
+  );
+  assert.ok(store.getBoard(first.id), 'the earlier iteration survives');
+
+  const removed = await toolValue('delete_board', { boardId: second.id });
+  assert.equal(removed.deleted, second.id);
+  assert.equal(store.getBoard(second.id), null);
+
+  const nowLast = await toolValue('delete_board', { boardId: first.id });
+  assert.equal(nowLast.deleted, first.id, 'once it is the last iteration it can be deleted');
+});
+
+test('list_roadmap marks unfinished work and the active iteration in group order', async () => {
+  const group = await toolValue('create_group', { name: 'Wave Check' });
+  const unfinished = await toolValue('create_board', { groupId: group.id });
+  const finished = await toolValue('create_board', { groupId: group.id });
+  store.appendEvents([
+    makeTask(unfinished.id, 'wave-open', { title: 'Open', column: FIXED_COLUMN_IDS[0], order: 1 }),
+    makeTask(finished.id, 'wave-done', { title: 'Done', column: FIXED_COLUMN_IDS[4], order: 1 })
+  ]);
+
+  const roadmap = await toolValue('list_roadmap', {});
+
+  assert.equal(roadmap.find((row) => row.id === unfinished.id).unfinishedTasks, 1);
+  assert.equal(roadmap.find((row) => row.id === finished.id).unfinishedTasks, 0);
+
+  const groups = store.getGroups();
+  const ordered = [];
+  for (const entry of groups) {
+    for (const board of store.getBoards()) {
+      if ((board.groupId || '') === entry.id) ordered.push(board.id);
+    }
+  }
+  for (const board of store.getBoards()) {
+    if (!groups.some((entry) => entry.id === (board.groupId || ''))) ordered.push(board.id);
+  }
+  const expectedActive = ordered.find((boardId) => {
+    const tasks = store.getTasks(boardId);
+    const done = tasks.filter((task) => task.column === FIXED_COLUMN_IDS[4]).length;
+    return !(tasks.length > 0 && done === tasks.length);
+  });
+
+  const activeRows = roadmap.filter((row) => row.isActive);
+  assert.equal(activeRows.length, 1, 'exactly one iteration is active');
+  assert.equal(activeRows[0].id, expectedActive);
 });
 
 after(() => {

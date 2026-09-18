@@ -56,9 +56,9 @@
 - `blockedAt`/`blockedReason` record why a task is blocked; leaving Blocked clears both
 - `columnHistory` is appended when a task changes columns
 - `swimlaneLabelId`/`swimlaneLabelGroup` preserve explicit swim lane assignment metadata
-- `key` is the per-board `PREFIX-N` identifier shown on the card
+- `key` is the per-board `PREFIX-N` identifier (the slimmed card does not render it)
 - `deleted` marks internal tombstones/deleted records; normal read functions filter `deleted: true`
-- The task carries no `priority`, `dueDate`, task `labels`, `subTasks`, `attachments`, `customFields`, or `annotations`; older exported files that still carry them are read with those fields dropped on import
+- The task carries no `priority`, `dueDate`, task `labels`, `subTasks`, `attachments`, `customFields`, `annotations`, `comments`, `relationships`, `type`, `estimate`, or `parentId`; older exported files that still carry them are read with those fields dropped on import
 - The task no longer carries an inline `activityLog` — the audit-trail feature was removed (issue #110); mutation history now lives in the event stream (see [ADR-0004](../adr/0004-event-sourced-sync.md))
 
 ## Column Model

@@ -10,6 +10,17 @@ function isDigested(point) {
   return typeof point?.digestedAt === 'string' && point.digestedAt.trim() !== '';
 }
 
+function formatClaimDuration(claimedAt) {
+  const startedAt = Date.parse(claimedAt);
+  if (!Number.isFinite(startedAt)) return '';
+  const minutes = Math.floor(Math.max(0, Date.now() - startedAt) / 60000);
+  if (minutes < 1) return 'less than a minute';
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'}`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest === 0 ? `${hours}h` : `${hours}h ${rest}m`;
+}
+
 export function setTaskLocked(locked, task) {
   const form = $id('task-form');
   if (form) {
@@ -23,12 +34,18 @@ export function setTaskLocked(locked, task) {
   const notice = $id('task-lock-notice');
   if (notice) {
     const claimedBy = task && typeof task.claimedBy === 'string' ? task.claimedBy.trim() : '';
-    notice.textContent = locked
-      ? (claimedBy
-          ? `Subagent ${claimedBy} is working on this task — everything is read-only.`
-          : 'This task is read-only while a subagent works on it.')
-      : '';
-    notice.classList.toggle('hidden', !locked);
+    const duration = task && typeof task.claimedAt === 'string' ? formatClaimDuration(task.claimedAt) : '';
+    let message = '';
+    if (claimedBy) {
+      message = duration
+        ? `Subagent ${claimedBy} has held this claim for ${duration}.`
+        : `Subagent ${claimedBy} holds this claim.`;
+      if (locked) message += ' Everything is read-only while the subagent works.';
+    } else if (locked) {
+      message = 'This task is read-only while a subagent works on it.';
+    }
+    notice.textContent = message;
+    notice.classList.toggle('hidden', !message);
   }
 }
 export function resetTaskLock() {

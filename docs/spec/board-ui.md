@@ -33,7 +33,7 @@
 - Manage Boards supports create, open, export, import, edit an iteration's dates and goal, and delete actions
 - Clicking the brand text or pressing `Ctrl+B` opens the Manage Boards modal; the shortcut is ignored while focus is in an input, textarea, or select
 - New iterations start blank
-- The last remaining board cannot be deleted
+- Only the last iteration in a group can be deleted: earlier iterations fold away and are kept, and the sidebar offers the delete control only on the last one. Deleting a group still deletes the iterations it holds
 - On mobile, the board selector has a larger touch target and the controls menu stays open while the selector is used
 - Clicking a sidebar group's name or its chevron collapses or expands that group; double-clicking the name renames the group inline
 - A group is named by the user and can be renamed from the sidebar or by the agent's `rename_group` tool; an iteration is a board inside a group, numbered in order (Iteration 1, Iteration 2, …) and never named by hand
@@ -54,14 +54,12 @@
 - Dynamic DOM updates should re-run `renderIcons()`
 - Finished-column virtualization renders completed tasks in batches when the column is large
 
-## Drag and Drop Behavior
+## Card Movement
 
-- Tasks are draggable within and across columns
+- There is no drag and drop for tasks: cards cannot be moved within or across columns from the UI
+- Only the agent changes a task's column, through the MCP tools (`move_task`, `claim_next`); the human directs work with the notes-to-the-agent list
 - Columns are fixed: they are not draggable, reorderable, or editable from the board
-- Dragging near the top or bottom of a long task list auto-scrolls the list
-- In swim lane mode, collapsed cells and collapsed columns accept drops and place the task at the top
-- Finished column internal reordering is disabled and dropped tasks are inserted at the top
-- Task drops use incremental updates so card content refreshes without a full board rebuild
+- The only drag-and-drop left in the app is lane ordering in the Settings modal
 
 ## Scrolling and Responsiveness
 

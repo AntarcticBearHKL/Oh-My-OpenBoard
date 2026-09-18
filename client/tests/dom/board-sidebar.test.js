@@ -196,15 +196,35 @@ describe('sidebar group tree', () => {
     expect(iterationLabels('Delivery')).toEqual(['Iteration 1', 'Iteration 2', 'Iteration 3']);
 
     const deleteBtn = document.querySelector(
-      '.board-list-item[data-board-id="board-2"] .board-list-delete'
+      '.board-list-item[data-board-id="board-3"] .board-list-delete'
     );
     fireEvent.click(deleteBtn);
     fireEvent.click(deleteBtn);
 
-    expect(document.querySelector('.board-list-item[data-board-id="board-2"]')).toBeNull();
+    expect(document.querySelector('.board-list-item[data-board-id="board-3"]')).toBeNull();
     expect(iterationLabels('Delivery')).toEqual(['Iteration 1', 'Iteration 2']);
     expect(mocks.boards).toHaveLength(2);
-    expect(mocks.boards.find((board) => board.id === 'board-3').name).toBe('Iteration 2');
+  });
+
+  test('only the last iteration in a group offers a delete control', () => {
+    const group = createGroup('Delivery');
+    mocks.boards = [
+      { id: 'board-1', name: 'Iteration 1' },
+      { id: 'board-2', name: 'Iteration 2' },
+      { id: 'board-3', name: 'Iteration 3' }
+    ];
+    ['board-1', 'board-2', 'board-3'].forEach((id) => assignBoardToGroup(id, group.id));
+    initializeBoardSidebar();
+
+    expect(
+      document.querySelector('.board-list-item[data-board-id="board-1"] .board-list-delete')
+    ).toBeNull();
+    expect(
+      document.querySelector('.board-list-item[data-board-id="board-2"] .board-list-delete')
+    ).toBeNull();
+    expect(
+      document.querySelector('.board-list-item[data-board-id="board-3"] .board-list-delete')
+    ).not.toBeNull();
   });
 
   test('renumbers both groups when an iteration moves between them', () => {
@@ -458,12 +478,12 @@ describe('sidebar group tree', () => {
   test('deleting an iteration needs two clicks', () => {
     initializeBoardSidebar();
 
-    const first = document.querySelector('.board-list-item[data-board-id="board-1"] .board-list-delete');
+    const first = document.querySelector('.board-list-item[data-board-id="board-2"] .board-list-delete');
     fireEvent.click(first);
     expect(first.classList.contains('is-armed')).toBe(true);
 
     fireEvent.click(first);
-    expect(document.querySelector('.board-list-item[data-board-id="board-1"]')).toBeNull();
+    expect(document.querySelector('.board-list-item[data-board-id="board-2"]')).toBeNull();
   });
 
   test('the finished prefix gets one collapse control that hides only the prefix', () => {

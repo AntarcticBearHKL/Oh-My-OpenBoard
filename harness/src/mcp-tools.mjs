@@ -22,6 +22,10 @@ import {
   getSkills,
   getSnapshot,
   getTasks,
+  isClaimExpired,
+  isLastBoardInGroup,
+  isReadyTask,
+  nextReadyTask,
   pendingNotesMessage,
   resolveGroup,
   setBoardGroupMap,
@@ -91,6 +95,16 @@ function withoutRemovedFields(task) {
   return rest;
 }
 
+function claimReadFields(task) {
+  return {
+    claimedBy: task.claimedBy || '',
+    claimedAt: task.claimedAt || '',
+    changeDate: task.changeDate || '',
+    blockedReason: task.blockedReason || '',
+    claimExpired: isClaimExpired(task)
+  };
+}
+
 function maxOrder(columnId, tasks) {
   return tasks
     .filter((t) => t.column === columnId)
@@ -141,9 +155,16 @@ export function registerTools(server, { broadcastGroups = () => {} } = {}) {
 
   server.registerTool('delete_board', {
     title: 'Delete board',
-    description: 'Delete an iteration and its tasks. The last iteration can also be deleted; the app then shows an empty state until another is created.',
+    description: 'Delete an iteration (board) that is the last one in its group. Earlier iterations fold away and are kept, so only the last iteration of a group can be deleted. To remove a whole group together with its iterations, use delete_group — that is the deliberate exception.',
     inputSchema: { boardId: z.string() }
-  }, async ({ boardId }) => ok(deleteBoard(boardId)));
+  }, async ({ boardId }) => {
+    const board = getBoard(boardId);
+    if (!board) throw new Error(`Board not found: ${boardId}`);
+    if (!isLastBoardInGroup(boardId)) {
+      throw new Error(`${board.name} is not the last iteration in its group; earlier iterations fold away and are kept. Delete the last iteration, or delete the group to remove all of its iterations.`);
+    }
+    return ok(deleteBoard(boardId));
+  });
 
   server.registerTool('list_groups', {
     title: 'List groups',
@@ -185,7 +206,7 @@ export function registerTools(server, { broadcastGroups = () => {} } = {}) {
 
   server.registerTool('delete_group', {
     title: 'Delete group',
-    description: 'Delete a group and the iterations it holds. A board can never live outside a group, so its iterations are deleted with it.',
+    description: 'Delete a group and the iterations it holds. A board can never live outside a group, so its iterations are deleted with it — this is the deliberate exception to the rule that only a group\'s last iteration can be deleted.',
     inputSchema: { groupId: z.string() }
   }, async ({ groupId }) => {
     const groups = getGroups();
@@ -247,13 +268,16 @@ export function registerTools(server, { broadcastGroups = () => {} } = {}) {
 
   server.registerTool('list_tasks', {
     title: 'List tasks',
-    description: 'List tasks in an iteration, optionally filtered by column (id or name) or a text search over title/description.',
+    description: 'List tasks in an iteration, optionally filtered by column (id or name), a text search over title/description, claimedBy (exact match; an empty string selects unclaimed tasks), needsDigest (boolean) or ready (boolean; the state claim_next dispatches — Backlog or Human In The Loop, notes digested, and unclaimed or expired-claimed). Every task reports who holds the claim and when it was last active: claimedBy, claimedAt, changeDate, blockedReason and claimExpired.',
     inputSchema: {
       boardId: z.string().optional(),
       column: z.string().optional(),
-      search: z.string().optional()
+      search: z.string().optional(),
+      claimedBy: z.string().optional(),
+      needsDigest: z.boolean().optional(),
+      ready: z.boolean().optional()
     }
-  }, async ({ boardId, column, search }) => {
+  }, async ({ boardId, column, search, claimedBy, needsDigest, ready }) => {
     const bid = resolveBoard(boardId);
     const columnId = column ? resolveColumn(bid, column).id : null;
     const needle = search ? String(search).toLowerCase() : null;
@@ -261,25 +285,29 @@ export function registerTools(server, { broadcastGroups = () => {} } = {}) {
     const tasks = getTasks(bid)
       .filter((t) => (columnId ? t.column === columnId : true))
       .filter((t) => (needle ? `${t.title || ''} ${t.description || ''}`.toLowerCase().includes(needle) : true))
+      .filter((t) => (claimedBy !== undefined ? (t.claimedBy || '') === claimedBy : true))
+      .filter((t) => (needsDigest !== undefined ? (t.needsDigest === true) === needsDigest : true))
+      .filter((t) => (ready !== undefined ? isReadyTask(t) === ready : true))
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
       .map((t) => ({
         id: t.id, key: t.key || '', title: t.title, description: t.description || '',
         column: t.column, columnName: columnsById.get(t.column) || '',
         type: t.type || 'task',
-        claimedBy: t.claimedBy || '', assignee: t.assignee || '',
-        keyPoints: t.keyPoints || [], needsDigest: t.needsDigest === true, isRework: t.isRework === true
+        assignee: t.assignee || '',
+        keyPoints: t.keyPoints || [], needsDigest: t.needsDigest === true, isRework: t.isRework === true,
+        ...claimReadFields(t)
       }));
     return ok(tasks);
   });
 
   server.registerTool('get_task', {
     title: 'Get task',
-    description: 'Get a single task by id: its title, description and the notes to the agent (keyPoints).',
+    description: 'Get a single task by id: its title, description, the notes to the agent (keyPoints) and its claim state — who holds it (claimedBy), since when (claimedAt), when it was last active (changeDate), its blocked reason and whether the claim is expired (claimExpired).',
     inputSchema: { taskId: z.string() }
   }, async ({ taskId }) => {
     const { task, boardId } = findTaskOrThrow(taskId);
     const column = getColumns(boardId).find((c) => c.id === task.column);
-    return ok({ boardId, columnName: column?.name || '', task: withoutRemovedFields(task) });
+    return ok({ boardId, columnName: column?.name || '', task: { ...withoutRemovedFields(task), claimExpired: isClaimExpired(task) } });
   });
 
   // ── Task mutations ──────────────────────────────────────────────────────────
@@ -507,25 +535,43 @@ export function registerTools(server, { broadcastGroups = () => {} } = {}) {
 
   server.registerTool('list_roadmap', {
     title: 'List roadmap',
-    description: 'List iterations with dates, goal and task counts.',
+    description: 'List iterations with dates, goal and task counts. Each iteration reports unfinishedTasks (tasks not in the Finished column) and isActive: the active iteration is the first one not fully finished, in group order, then by the iteration\'s position in its group. An iteration with no tasks is not fully finished.',
     inputSchema: {}
-  }, async () => ok(getBoards().map((board) => {
-    const row = getBoard(board.id) || {};
-    const columns = getColumns(board.id);
-    const doneColumnId = (columns.find((column) => column.role === 'done') || {}).id || '';
-    const tasks = getTasks(board.id);
-    const doneTasks = tasks.filter((task) => task.column === doneColumnId);
-    return {
-      id: board.id,
-      name: board.name,
-      groupId: board.groupId || '',
-      startDate: row.startDate || '',
-      endDate: row.endDate || '',
-      goal: row.goal || '',
-      tasks: tasks.length,
-      doneTasks: doneTasks.length
-    };
-  })));
+  }, async () => {
+    const groups = getGroups();
+    const boards = getBoards();
+    const position = new Map(boards.map((board, index) => [board.id, index]));
+    const groupRank = new Map(groups.map((group, index) => [group.id, index]));
+    const ordered = boards.slice().sort((a, b) => {
+      const rankA = groupRank.has(a.groupId) ? groupRank.get(a.groupId) : groups.length;
+      const rankB = groupRank.has(b.groupId) ? groupRank.get(b.groupId) : groups.length;
+      return rankA - rankB || position.get(a.id) - position.get(b.id);
+    });
+    const rows = new Map();
+    let activeId = '';
+    for (const board of ordered) {
+      const row = getBoard(board.id) || {};
+      const columns = getColumns(board.id);
+      const doneColumnId = (columns.find((column) => column.role === 'done') || {}).id || '';
+      const tasks = getTasks(board.id);
+      const doneTasks = tasks.filter((task) => task.column === doneColumnId);
+      const unfinishedTasks = tasks.length - doneTasks.length;
+      if (!activeId && !(tasks.length > 0 && unfinishedTasks === 0)) activeId = board.id;
+      rows.set(board.id, {
+        id: board.id,
+        name: board.name,
+        groupId: board.groupId || '',
+        startDate: row.startDate || '',
+        endDate: row.endDate || '',
+        goal: row.goal || '',
+        tasks: tasks.length,
+        doneTasks: doneTasks.length,
+        unfinishedTasks,
+        isActive: false
+      });
+    }
+    return ok(ordered.map((board) => ({ ...rows.get(board.id), isActive: board.id === activeId })));
+  });
 
   server.registerTool('update_label', {
     title: 'Update label',
@@ -568,16 +614,52 @@ export function registerTools(server, { broadcastGroups = () => {} } = {}) {
 
   server.registerTool('claim_task', {
     title: 'Claim task',
-    description: 'Claim a task for the current subagent: records claimedBy/claimedAt and sets the assignee when empty. Refused while the task still has undigested notes from the human; run digest_key_points first to fold them into the description.',
+    description: 'Claim a task for the current subagent: a hard lock. Refused while the task still has undigested notes from the human (run digest_key_points first) and refused when another agent holds a live claim, naming the holder. Re-claiming your own task is a renewal: the claim timestamp and changeDate are refreshed, and the result says renewed. A claim whose last activity is older than the five-minute window is expired; claiming over an expired claim succeeds as a takeover and the result says tookOver.',
     inputSchema: { taskId: z.string(), agent: z.string().optional() }
   }, async ({ taskId, agent = AGENT_ID }) => {
     const { task, boardId } = findTaskOrThrow(taskId);
     assertNotesDigested(task);
     const now = new Date().toISOString();
+    const holder = typeof task.claimedBy === 'string' ? task.claimedBy.trim() : '';
+    if (holder && holder !== agent && !isClaimExpired(task)) {
+      throw new Error(`Task ${task.key || task.id} is already claimed by ${holder} and that claim is still live; wait for it to expire or have ${holder} release it.`);
+    }
     const fields = { claimedBy: agent, claimedAt: now, changeDate: now };
     if (!task.assignee) fields.assignee = agent;
     emit('task.updated', { boardId, entityId: taskId, payload: { fields }, actor: AGENT });
-    return ok({ taskId, claimedBy: agent, claimedAt: now });
+    if (holder && holder !== agent) {
+      return ok({ taskId, key: task.key || '', claimedBy: agent, claimedAt: now, tookOver: true, previousHolder: holder, message: `Took over the expired claim from ${holder}.` });
+    }
+    if (holder === agent) {
+      return ok({ taskId, key: task.key || '', claimedBy: agent, claimedAt: now, renewed: true, message: 'Renewed the existing claim.' });
+    }
+    return ok({ taskId, key: task.key || '', claimedBy: agent, claimedAt: now, message: 'Claimed.' });
+  });
+
+  server.registerTool('claim_next', {
+    title: 'Claim next task',
+    description: 'Atomically claim the next ready task for the calling agent, so a coordinator can dispatch without racing. Ready means: in Backlog or Human In The Loop, no undigested notes, and either unclaimed or holding an expired claim. Deterministic ordering rule: Backlog before Human In The Loop, then ascending task order, then task id. Returns claimed: false when nothing is ready; a takeover of an expired claim returns tookOver: true.',
+    inputSchema: { boardId: z.string().optional(), agent: z.string().optional() }
+  }, async ({ boardId, agent = AGENT_ID }) => {
+    const bid = resolveBoard(boardId);
+    const now = new Date();
+    const task = nextReadyTask(bid, now.getTime());
+    if (!task) return ok({ claimed: false, boardId: bid, reason: 'No ready task in Backlog or Human In The Loop.' });
+    const holder = typeof task.claimedBy === 'string' ? task.claimedBy.trim() : '';
+    const at = now.toISOString();
+    const fields = { claimedBy: agent, claimedAt: at, changeDate: at };
+    if (!task.assignee) fields.assignee = agent;
+    emit('task.updated', { boardId: bid, entityId: task.id, payload: { fields }, actor: AGENT });
+    return ok({
+      claimed: true,
+      taskId: task.id,
+      key: task.key || '',
+      boardId: bid,
+      column: task.column,
+      claimedBy: agent,
+      claimedAt: at,
+      ...(holder && holder !== agent ? { tookOver: true, previousHolder: holder } : {})
+    });
   });
 
   server.registerTool('release_task', {

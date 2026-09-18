@@ -16,7 +16,7 @@ The board always has exactly five fixed columns, in this order:
 - Human In The Loop has the fixed id `00000000-0000-4000-8000-000000000034` and order 2
 - Task-dialog write access is keyed to the fixed column id: Human In The Loop is the only fully editable column; Backlog, Blocked and Finished keep the agent's title and description read-only and let the human edit only the notes list; In Progress is fully view-only. A task with undigested notes is refused as a start (`claim_task`, a move into In Progress) until `digest_key_points` clears the flag; the browser event bridge (`POST /api/events`) refuses the same move
 - The Finished column keeps `role: "done"` and the fixed id `00000000-0000-4000-8000-000000000033`
-- A claimed task that sits in In Progress with no update for five minutes is moved to Blocked by the server watchdog, with the reason recorded on the card (see [tasks.md](tasks.md))
+- A claimed task that sits in In Progress with no update for five minutes is moved to Blocked by the server watchdog, with the reason recorded on the task (see [tasks.md](tasks.md))
 
 ## Column UI
 
@@ -28,7 +28,7 @@ The board always has exactly five fixed columns, in this order:
 ## WIP Limits
 
 - Each column stores an advisory `wipLimit`; `0` means unlimited (the default)
-- WIP limits are never enforced: nothing blocks adding, dragging, importing, or syncing a task into a column at or over its limit
+- WIP limits are never enforced: nothing blocks adding, importing, or syncing a task into a column at or over its limit
 
 ## Color Behavior
 
@@ -38,6 +38,4 @@ The board always has exactly five fixed columns, in this order:
 ## Finished Column Rules
 
 - The column with `role: "done"` is permanent and cannot be deleted
-- Finished-column sorting via drag reordering is disabled for performance
-- Dropping into Finished always inserts tasks at the top
 - Appending a note to a task in Finished returns it to Backlog as rework (see [tasks.md](tasks.md))

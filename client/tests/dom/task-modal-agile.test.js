@@ -342,6 +342,30 @@ test('an In Progress task is view-only with the notes control visibly unavailabl
   expect(document.querySelectorAll('#task-key-points-list .key-point-item')).toHaveLength(1);
 });
 
+test('the dialog shows who holds the claim and for how long', () => {
+  const claimedAt = new Date(Date.now() - 12 * 60 * 1000).toISOString();
+  mocks.isTaskLocked.mockReturnValue(true);
+  loadTaskAt(IN_PROGRESS_COLUMN_ID, { claimedBy: 'agent-z', claimedAt });
+  initializeTaskModalHandlers(() => {});
+  showEditModal('t1');
+
+  const notice = document.getElementById('task-lock-notice');
+  expect(notice.classList.contains('hidden')).toBe(false);
+  expect(notice.textContent).toContain('agent-z');
+  expect(notice.textContent).toContain('12 minutes');
+  expect(notice.textContent).toContain('read-only');
+});
+
+test('the claim line is hidden when nobody holds the task', () => {
+  loadTaskAt(BACKLOG_COLUMN_ID);
+  initializeTaskModalHandlers(() => {});
+  showEditModal('t1');
+
+  const notice = document.getElementById('task-lock-notice');
+  expect(notice.classList.contains('hidden')).toBe(true);
+  expect(notice.textContent).toBe('');
+});
+
 test('an undigested note edits inline: Enter commits the new text and Escape reverts it', () => {
   loadTaskAt(HIL_COLUMN_ID);
   initializeTaskModalHandlers(() => {});

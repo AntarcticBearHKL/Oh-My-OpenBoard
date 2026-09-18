@@ -61,7 +61,7 @@ expect(loadTasks().some(t => t.title === 'Persisted task')).toBe(true);
 - Task modal: title, description and the notes-to-the-agent list, and the read-only lock on an In Progress task
 - Notes-to-the-agent workflow: digest flags on append, Finished-to-Backlog rework, and `digest_key_points`
 - Finished-column virtualization behavior
-- Swim lane rendering, settings persistence, and lane-aware moves
+- Swim lane rendering, settings persistence, and lane ordering
 - Claim timing and the stale-claim watchdog
 - The browser event bridge: the digest gate on a move into In Progress and on client digests/claims, and the local/same-origin request checks
 - IDB storage: cross-session persistence, migration, and data integrity
